@@ -21,28 +21,38 @@
         {
             <RadzenAccordion Multiple="false" Style="border: 0px; box-shadow: none;" >
                 <Items>
-                    <RadzenAccordionItem Style = "border: 1px solid #bbb; padding: 0px;" >
+                    <RadzenAccordionItem >
                         <Template>
                             <div style="margin: 0px; padding: 0px; width: 100%;">
                                 <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="width: 100%; padding: 10px">
-                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%;">
-                                        <span>Name <RadzenTextBox @bind-Value="NewFaculty.Name" Style="padding: 10px;" /></span>
-                                        <span>Code <RadzenTextBox @bind-Value="NewFaculty.Code" Style="padding: 10px;" /></span>
-                                        <div>
-                                            <RadzenButton Icon="save"
-                                            ButtonStyle=ButtonStyle.Success
-                                            Click="@(() => SaveFaculty(NewFaculty))"
-                                            MouseEnter="@(args => ShowTooltip(args, "Save"))"
-                                            Disabled="(String.IsNullOrEmpty(NewFaculty.Name) || String.IsNullOrEmpty(NewFaculty.Code))"
-                                            @onclick:stopPropagation="true" />
+                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                                                 AlignItems="AlignItems.Center"
+                                                 class="col">
+                                        <RadzenText Text="Name" Style="margin-bottom: 0;"/>
+                                        <RadzenTextBox @bind-Value="NewFaculty.Name" Style="padding: 10px;" />
+                                    </RadzenStack>
+                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                                                 AlignItems="AlignItems.Center"
+                                                 class="col">
+                                        <RadzenText Text="Code" Style="margin-bottom: 0;" />
+                                        <RadzenTextBox @bind-Value="NewFaculty.Code" Style="padding: 10px;" />
+                                    </RadzenStack>
+                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                                                    AlignItems="AlignItems.Center"
+                                                    class="col-auto">
+                                        <RadzenButton Icon="save"
+                                                        ButtonStyle=ButtonStyle.Success
+                                                        Click="@(() => SaveFaculty(NewFaculty))"
+                                                        MouseEnter="@(args => ShowTooltip(args, "Save"))"
+                                                        Disabled="(String.IsNullOrEmpty(NewFaculty.Name) || String.IsNullOrEmpty(NewFaculty.Code))"
+                                                        @onclick:stopPropagation="true" />
 
-                                            <RadzenButton Icon="cancel"
-                                            ButtonStyle=ButtonStyle.Danger
-                                            Style="margin-left:5px"
-                                            Click="@(() => CancelNewFacultyAdd(NewFaculty))"
-                                            MouseEnter="@(args => ShowTooltip(args, "Cancel Editing"))"
-                                            @onclick:stopPropagation="true" />
-                                        </div>
+                                        <RadzenButton Icon="cancel"
+                                                        ButtonStyle=ButtonStyle.Danger
+                                                        Style="margin-left:5px"
+                                                        Click="@(() => CancelNewFacultyAdd(NewFaculty))"
+                                                        MouseEnter="@(args => ShowTooltip(args, "Cancel Editing"))"
+                                                        @onclick:stopPropagation="true" />
                                     </RadzenStack>
                                 </RadzenRow>
                             </div>
@@ -56,30 +66,40 @@
             <Items>
                 @foreach (var faculty in Faculties)
                 {
-                    <RadzenAccordionItem @key="faculty.FacultyId" Style="border: 1px solid #bbb; padding: 0px;">
+                    <RadzenAccordionItem @key="faculty.FacultyId" Style="margin-top: .5rem;">
                         <Template>
                             <div class="@GetFacultyCss" style="margin: 0px; padding: 0px; width: 100%;">
                                 <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="width: 100%; padding: 10px" class="@GetFacultyCss(faculty)">
                                     @if (EditingFaculty == faculty)
                                     {
-                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%;">
-                                            <span>Name <RadzenTextBox @bind-Value="faculty.Name" Style="padding: 10px;" /></span>
-                                            <span>Code <RadzenTextBox @bind-Value="faculty.Code" Style="padding: 10px;" /></span>
-                                            <div>
-                                                <RadzenButton Icon="save" 
-                                                              ButtonStyle=ButtonStyle.Success
-                                                              Click="@(() => SaveFaculty(faculty))"
-                                                              MouseEnter="@(args => ShowTooltip(args, "Save"))"
-                                                              Disabled="(String.IsNullOrEmpty(NewFaculty.Name) || String.IsNullOrEmpty(NewFaculty.Code))"
-                                                              @onclick:stopPropagation="true" />
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                                                     AlignItems="AlignItems.Center"
+                                                     class="col">
+                                            <RadzenText Text="Name" Style="margin-bottom: 0;" />
+                                            <RadzenTextBox @bind-Value="faculty.Name" Style="padding: 10px;" />
+                                        </RadzenStack>
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                                                     AlignItems="AlignItems.Center"
+                                                     class="col">
+                                            <RadzenText Text="Code" Style="margin-bottom: 0;" />
+                                            <RadzenTextBox @bind-Value="faculty.Code" Style="padding: 10px;" />
+                                        </RadzenStack>
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                                                        AlignItems="AlignItems.Center"
+                                                        class="col-auto">
+                                            <RadzenButton Icon="save"
+                                                            ButtonStyle=ButtonStyle.Success
+                                                            Click="@(() => SaveFaculty(faculty))"
+                                                            MouseEnter="@(args => ShowTooltip(args, "Save"))"
+                                                            Disabled="(String.IsNullOrEmpty(faculty.Name) || String.IsNullOrEmpty(faculty.Code))"
+                                                            @onclick:stopPropagation="true" />
 
-                                                <RadzenButton Icon="cancel"
-                                                              ButtonStyle=ButtonStyle.Danger
-                                                              Style ="margin-left:5px"
-                                                              Click="@(() => CancelFacultyEdit(faculty))"
-                                                              MouseEnter="@(args => ShowTooltip(args, "Cancel Editing"))"
-                                                              @onclick:stopPropagation="true" />
-                                            </div>
+                                            <RadzenButton Icon="cancel"
+                                                            ButtonStyle=ButtonStyle.Danger
+                                                            Style="margin-left:5px"
+                                                            Click="@(() => CancelFacultyEdit(faculty))"
+                                                            MouseEnter="@(args => ShowTooltip(args, "Cancel Editing"))"
+                                                            @onclick:stopPropagation="true" />
                                         </RadzenStack>
                                     }
                                     else
@@ -95,12 +115,13 @@
 
                                                 <RadzenText Text="@faculty.GetSensibleObjectName()" TextStyle="TextStyle.DisplayH2" />
                                             </RadzenStack>
-                                            <div>
-                                                ACTIVE <RadzenSwitch @bind-Value="faculty.IsActive" 
-                                                                     Name="IsActive" 
-                                                                     Change="@((value) => ToggleFacultyActive(faculty, value))" @onclick:stopPropagation="true" 
-                                                                     MouseEnter="@(args => ShowTooltip(args, "Toggle Active Status"))" />
-                                            </div>
+                                            <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                                               <RadzenText Text="ACTIVE" />
+                                               <RadzenSwitch @bind-Value="faculty.IsActive"
+                                                             Name="IsActive"
+                                                             Change="@((value) => ToggleFacultyActive(faculty, value))" @onclick:stopPropagation="true"
+                                                             MouseEnter="@(args => ShowTooltip(args, "Toggle Active Status"))" />
+                                            </RadzenStack>
                                         </RadzenStack>
                                     }
                                 </RadzenRow>
@@ -116,24 +137,34 @@
                                         <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
                                             @if (EditingSchool == school)
                                             {
-                                                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%;">
-                                                    <span>Name <RadzenTextBox @bind-Value="school.Name" Style="padding: 10px;" /></span>
-                                                    <span>Code <RadzenTextBox @bind-Value="school.Code" Style="padding: 10px;" /></span>
-                                                    <div>
-                                                        <RadzenButton Icon="save" 
-                                                                      Size=ButtonSize.Small 
-                                                                      ButtonStyle=ButtonStyle.Success
-                                                                      Click="@(() => SaveSchool(faculty, school))"
-                                                                      Disabled="(String.IsNullOrEmpty(school.Name) || String.IsNullOrEmpty(school.Code))"
-                                                                      MouseEnter="@(args => ShowTooltip(args, "Save"))" />
+                                                <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                                                             AlignItems="AlignItems.Center"
+                                                             class="col">
+                                                    <RadzenText Text="Name" Style="margin-bottom: 0;" />
+                                                    <RadzenTextBox @bind-Value="school.Name" Style="padding: 10px;" />
+                                                </RadzenStack>
+                                                <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                                                             AlignItems="AlignItems.Center"
+                                                             class="col">
+                                                    <RadzenText Text="Code" Style="margin-bottom: 0;" />
+                                                    <RadzenTextBox @bind-Value="school.Code" Style="padding: 10px;" />
+                                                </RadzenStack>
+                                                <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                                                             AlignItems="AlignItems.Center"
+                                                             class="col-auto">
+                                                    <RadzenButton Icon="save"
+                                                                  ButtonStyle=ButtonStyle.Success
+                                                                  Click="@(() => SaveSchool(faculty, school))"
+                                                                  MouseEnter="@(args => ShowTooltip(args, "Save"))"
+                                                                  Disabled="(String.IsNullOrEmpty(school.Name) || String.IsNullOrEmpty(school.Code))"
+                                                                  @onclick:stopPropagation="true" />
 
-                                                        <RadzenButton Icon="cancel" 
-                                                                      Size=ButtonSize.Small 
-                                                                      ButtonStyle=ButtonStyle.Danger 
-                                                                      Style ="margin-left:5px"
-                                                                      Click="@(() => CancelSchoolEdit(school))"
-                                                                      MouseEnter="@(args => ShowTooltip(args, "Cancel Editing"))" />
-                                                    </div>
+                                                    <RadzenButton Icon="cancel"
+                                                                  ButtonStyle=ButtonStyle.Danger
+                                                                  Style="margin-left:5px"
+                                                                  Click="@(() => CancelSchoolEdit(school))"
+                                                                  MouseEnter="@(args => ShowTooltip(args, "Cancel Editing"))"
+                                                                  @onclick:stopPropagation="true" />
                                                 </RadzenStack>
                                             }
                                             else
@@ -149,12 +180,13 @@
 
                                                         <RadzenText Text="@school.GetSensibleObjectName()" TextStyle="TextStyle.DisplayH2" />
                                                     </RadzenStack>
-                                                    <div>
-                                                        ACTIVE <RadzenSwitch @bind-Value="school.IsActive" 
-                                                                             Name="IsActive" 
-                                                                             Change="@((value) => ToggleSchoolActive(school, value))"
-                                                                             MouseEnter="@(args => ShowTooltip(args, "Toggle Active Status"))" />
-                                                    </div>
+                                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                                                        <RadzenText Text="ACTIVE" />
+                                                        <RadzenSwitch @bind-Value="school.IsActive"
+                                                                      Name="IsActive"
+                                                                      Change="@((value) => ToggleSchoolActive(school, value))" @onclick:stopPropagation="true"
+                                                                      MouseEnter="@(args => ShowTooltip(args, "Toggle Active Status"))" />
+                                                    </RadzenStack>
                                                 </RadzenStack>
                                             }
                                         </RadzenRow>
@@ -165,25 +197,37 @@
                             @if (IsAddingSchool)
                             {
                                 <div class="accordion-orgsubunit">
-                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%;">
-                                        <span>Name <RadzenTextBox @bind-Value="NewSchool.Name" Style="padding: 10px;" /></span>
-                                        <span>Code <RadzenTextBox @bind-Value="NewSchool.Code" Style="padding: 10px;" /></span>
-                                        <div>
+                                    <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                                                     AlignItems="AlignItems.Center"
+                                                     class="col">
+                                            <RadzenText Text="Name" Style="margin-bottom: 0;" />
+                                            <RadzenTextBox @bind-Value="NewSchool.Name" Style="padding: 10px;" />
+                                        </RadzenStack>
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                                                     AlignItems="AlignItems.Center"
+                                                     class="col">
+                                            <RadzenText Text="Code" Style="margin-bottom: 0;" />
+                                            <RadzenTextBox @bind-Value="NewSchool.Code" Style="padding: 10px;" />
+                                        </RadzenStack>
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                                                     AlignItems="AlignItems.Center"
+                                                     class="col-auto">
                                             <RadzenButton Icon="save"
-                                                          Size=ButtonSize.Small
                                                           ButtonStyle=ButtonStyle.Success
                                                           Click="@(() => SaveSchool(faculty, NewSchool))"
+                                                          MouseEnter="@(args => ShowTooltip(args, "Save"))"
                                                           Disabled="(String.IsNullOrEmpty(NewSchool.Name) || String.IsNullOrEmpty(NewSchool.Code))"
-                                                          MouseEnter="@(args => ShowTooltip(args, "Save"))" />
+                                                          @onclick:stopPropagation="true" />
 
                                             <RadzenButton Icon="cancel"
-                                                          Size=ButtonSize.Small
                                                           ButtonStyle=ButtonStyle.Danger
                                                           Style="margin-left:5px"
                                                           Click="@(() => CancelNewSchoolAdd(NewSchool))"
-                                                          MouseEnter="@(args => ShowTooltip(args, "Cancel Editing"))" />
-                                        </div>
-                                    </RadzenStack>
+                                                          MouseEnter="@(args => ShowTooltip(args, "Cancel Editing"))"
+                                                          @onclick:stopPropagation="true" />
+                                        </RadzenStack>
+                                    </RadzenRow>
                                 </div>
                             }
 

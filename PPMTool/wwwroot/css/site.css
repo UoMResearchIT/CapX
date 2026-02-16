@@ -362,8 +362,7 @@ span.mention {
 
 .orgunits-accordion .rz-accordion .rz-accordion-header {
     padding: 0px;
-    border-radius: 5px;
-    margin-bottom: 0.5rem;
+    border: var(--rz-card-border);
 }
 
 .orgunits-accordion .rz-accordion .rz-accordion-header .rzi {
@@ -372,19 +371,18 @@ span.mention {
 
 .orgunits-accordion .rz-accordion-header a[role="tab"] {
     padding: 0px;
-    background-color: #fff;
+    background-color: var(--rz-card-background-color);
 }
 
 .orgunits-accordion .rz-accordion-content {
-    border: 1px solid #ccc;
+    border: var(--rz-card-border);
     padding: 0px;
-    background-color: #fff;
-    margin-top: -10px;
+    background-color: var(--rz-card-background-color);
     margin-bottom: 15px;
 }
 
 .orgunits-accordion .accordion-orgsubunit {
-    border: 1px solid #ccc;
+    border: var(--rz-card-border);
     padding: 10px;
     padding-left: 30px;
     margin: 0px;
@@ -400,10 +398,6 @@ span.mention {
     margin: 0px;
 }
 
-.active {
-    background-color: lightgreen;
-}
-
 .inactive {
-    background-color: #ddd;
+    background-color: var(--rz-switch-checked);
 }

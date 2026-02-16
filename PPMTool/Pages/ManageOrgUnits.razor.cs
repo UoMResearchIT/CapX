@@ -1,12 +1,7 @@
-﻿using System.Diagnostics;
-using System.Linq.Dynamic.Core;
-using DocumentFormat.OpenXml.InkML;
-using DocumentFormat.OpenXml.Vml.Office;
+﻿using System.Linq.Dynamic.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -33,8 +28,9 @@ namespace PPMTool.Pages
         protected School NewSchool;
         protected Faculty NewFaculty;
 
-        protected override async Task OnInitializedAsync()
+        protected override void OnInitialized()
         {
+            base.OnInitialized();
             LoadData();
         }
 
@@ -65,7 +61,7 @@ namespace PPMTool.Pages
             EditingFaculty = faculty;
         }
 
-        protected async Task SaveFaculty(Faculty faculty)
+        protected void SaveFaculty(Faculty faculty)
         {
             if (faculty.FacultyId == 0)
             {
@@ -163,7 +159,7 @@ namespace PPMTool.Pages
             EditingSchool = school;
         }
 
-        protected async Task SaveSchool(Faculty faculty, School school)
+        protected void SaveSchool(Faculty faculty, School school)
         {
             if (school.SchoolId == 0)
                 SchoolService.Add(Context, school);
@@ -194,7 +190,12 @@ namespace PPMTool.Pages
             NewSchool = null;
         }
 
-        protected async Task ToggleSchoolActive(School school, bool value)
+        /// <summary>
+        /// ????
+        /// </summary>
+        /// <param name="school"></param>
+        /// <param name="value"></param>
+        protected void ToggleSchoolActive(School school, bool value)
         {
             school.IsActive = value;
             FacultyService.Update(Context, school.Faculty);
