@@ -28,8 +28,16 @@
             ReadValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref overridingValues);
             ReadValue("CONNECTION_STRING", "ConnectionStrings:PPMToolContextConnection", ref overridingValues);
 
+            // Get email settings
+            ReadValue("MAIL_SMTP_SERVER", "Email:SmtpServer", ref overridingValues);
+            ReadValue("MAIL_FROM_ADDRESS", "Email:From", ref overridingValues);
 
+            // Get CAS settings
+            ReadValue("CAS_PROTOCOL", "Authentication:CAS:ProtocolVersion", ref overridingValues);
+            ReadValue("CAS_BASE_URL", "Authentication:CAS:ServerUrlBase", ref overridingValues);
 
+            // Generic auth settings
+            ReadValue("AUTH_HOST_URL", "Authentication:HostUrl", ref overridingValues);
 
             // Set seed dummy data flag if environment variable is set to true (case insensitive)
             var seedDummyData = Environment.GetEnvironmentVariable("SEED_DUMMY_DATA");
