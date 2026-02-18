@@ -16,57 +16,47 @@
             builder.Configuration.AddEnvironmentVariables();
             var overridingValues = new Dictionary<string, string>();
 
-            // Get the API key from the environment
-            var apiKeySecret = Environment.GetEnvironmentVariable("API_KEY_SECRET");
-            if (!string.IsNullOrEmpty(apiKeySecret))
-            {
-                overridingValues.Add("Jwt:SecretKey", apiKeySecret);
-            }
+            // Get the API key secret
+            ReadValue("API_KEY_SECRET", "Jwt:SecretKey", ref overridingValues);
 
-            // Get Sentry DSN from the environment
-            var sentryDsn = Environment.GetEnvironmentVariable("SENTRY_DSN");
-            if (!string.IsNullOrEmpty(sentryDsn))
-            {
-                overridingValues.Add("Sentry:Dsn", sentryDsn);
-            }
+            // Get Sentry DSN
+            ReadValue("SENTRY_DSN", "Sentry:Dsn", ref overridingValues);
 
-            // Seed dummy data if environment variable is set to true (case insensitive)
+            // Get superuser details
+            ReadValue("SUPERUSER_NAME", "DeveloperSettings:DefaultSuperUserName", ref overridingValues);
+            ReadValue("SUPERUSER_USERNAME", "DeveloperSettings:DefaultSuperUserUserName", ref overridingValues);
+            ReadValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref overridingValues);
+            ReadValue("CONNECTION_STRING", "ConnectionStrings:PPMToolContextConnection", ref overridingValues);
+
+
+
+
+            // Set seed dummy data flag if environment variable is set to true (case insensitive)
             var seedDummyData = Environment.GetEnvironmentVariable("SEED_DUMMY_DATA");
             if (seedDummyData?.ToLowerInvariant() == true.ToString().ToLowerInvariant())
             {
                 overridingValues.Add("DeveloperSettings:SeedDummyData", true.ToString().ToLowerInvariant());
             }
 
-            // Get superuser name from the environment
-            var suName = Environment.GetEnvironmentVariable("SUPERUSER_NAME");
-            if (!string.IsNullOrWhiteSpace(suName))
-            {
-                overridingValues.Add("DeveloperSettings:DefaultSuperUserName", suName);
-            }
-
-            // Get superuser username from the environment
-            var suUserName = Environment.GetEnvironmentVariable("SUPERUSER_USERNAME");
-            if (!string.IsNullOrWhiteSpace(suUserName))
-            {
-                overridingValues.Add("DeveloperSettings:DefaultSuperUserUserName", suUserName);
-            }
-
-            // Get superuser email from the environment
-            var suEmail = Environment.GetEnvironmentVariable("SUPERUSER_EMAIL");
-            if (!string.IsNullOrWhiteSpace(suEmail))
-            {
-                overridingValues.Add("DeveloperSettings:DefaultSuperUserEmail", suEmail);
-            }
-
-            // Get connection string from the environment
-            var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
-            if (!string.IsNullOrWhiteSpace(connectionString))
-            {
-                overridingValues.Add("ConnectionStrings:PPMToolContextConnection", connectionString);
-            }
-
             // Add the overriding values to the configuration
             builder.Configuration.AddInMemoryCollection(overridingValues);
+        }
+
+        /// <summary>
+        /// Takes an existing dictionary and inserts a key-value pair.
+        /// Key is the configuration key and the value is the value of the environment variable.
+        /// Does nothing if the value is null or whitespace.
+        /// </summary>
+        /// <param name="envVar"></param>
+        /// <param name="configKey"></param>
+        /// <param name="overridingValues"></param>
+        private static void ReadValue(string envVar, string configKey, ref Dictionary<string, string> overridingValues)
+        {
+            var value = Environment.GetEnvironmentVariable(envVar);
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                overridingValues.Add(configKey, value);
+            }
         }
 
         /// <summary>
