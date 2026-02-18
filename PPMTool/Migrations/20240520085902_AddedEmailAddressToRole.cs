@@ -13,18 +13,6 @@ namespace PPMTool.Migrations
                 table: "Roles",
                 type: "TEXT",
                 nullable: true);
-
-            migrationBuilder.Sql(
-                @"
-                    UPDATE Roles
-                    SET EmailAddress = (
-                        SELECT LOWER(REPLACE(Name, ' ', '.')) || '@manchester.ac.uk'
-                        FROM People
-                        WHERE People.PersonID = Roles.PersonID
-                    )
-                    WHERE RoleType IN (2, 3);
-                "
-            );
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
