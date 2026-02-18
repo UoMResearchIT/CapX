@@ -175,11 +175,15 @@ using (var connection = new SqliteConnection(connectionString))
     connection.Close();
 }
 
-// Seed dummy data if the database is empty
+// Seed the default superuser from the settings if it doesn't already exist
+using var scope = app.Services.CreateScope();
+SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
+
+// Seed dummy data if the flag is set to do so.
+// This is intended for development and testing purposes only and should be used with caution as it will delete existing data.
 var shouldSeed = builder.Configuration.GetValue<bool>("DeveloperSettings:SeedDummyData");
 if (shouldSeed)
 {
-    using var scope = app.Services.CreateScope();
     var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
 
     // Clear the existing DB and recreate a vanilla file
@@ -189,7 +193,8 @@ if (shouldSeed)
         context.Database.Migrate();
     }
 
-    // Seed tables with suitable values -- Note that competencies are already seeded
+    // Seed tables with suitable values -- Note that competencies are already seeded by migrations
+    SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
     SeedHelper.SeedPeople(scope.ServiceProvider);
     SeedHelper.SeedAbsences(scope.ServiceProvider);
     SeedHelper.SeedUsers(scope.ServiceProvider);
