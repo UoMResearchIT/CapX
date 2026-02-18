@@ -119,28 +119,35 @@ namespace PPMTool.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "Schools");
+            // 1. Disable FK enforcement OUTSIDE transaction
+            migrationBuilder.Sql(
+                "PRAGMA foreign_keys = OFF;",
+                suppressTransaction: true);
 
-            migrationBuilder.DropTable(
-                name: "Faculties");
-
-            migrationBuilder.DropIndex(
-                name: "IX_Projects_FacultyId",
-                table: "Projects");
-
-            migrationBuilder.DropIndex(
-                name: "IX_Projects_SchoolId",
-                table: "Projects");
-
+            // 2. Undo enum shift
             migrationBuilder.Sql(
                 @"
                     UPDATE Projects
                     SET Faculty = Faculty - 1;
                     UPDATE Projects
                     SET School = School - 1;
-                "
-            );
+                ");
+
+            // 3. Drop indexes defensively (SQLite-safe)
+            migrationBuilder.Sql(
+                @"DROP INDEX IF EXISTS ""IX_Projects_FacultyId"";");
+
+            migrationBuilder.Sql(
+                @"DROP INDEX IF EXISTS ""IX_Projects_SchoolId"";");
+
+            // 4. Drop dependent tables
+            migrationBuilder.DropTable(name: "Schools");
+            migrationBuilder.DropTable(name: "Faculties");
+
+            // 5. Re-enable FK enforcement OUTSIDE transaction
+            migrationBuilder.Sql(
+                "PRAGMA foreign_keys = ON;",
+                suppressTransaction: true);
         }
     }
 }
