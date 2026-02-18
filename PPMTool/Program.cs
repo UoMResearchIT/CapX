@@ -179,20 +179,6 @@ using (var connection = new SqliteConnection(connectionString))
 var shouldSeed = builder.Configuration.GetValue<bool>("DeveloperSettings:SeedDummyData");
 if (shouldSeed)
 {
-    // Throw exceptions if variables are not set
-    if (string.IsNullOrWhiteSpace(builder.Configuration["DeveloperSettings:DefaultSuperUserUserName"]))
-    {
-        throw new InvalidOperationException("Superuser user name not set!");
-    }
-    if (string.IsNullOrWhiteSpace(builder.Configuration["DeveloperSettings:DefaultSuperUserName"]))
-    {
-        throw new InvalidOperationException("Superuser name not set!");
-    }
-    if (string.IsNullOrWhiteSpace(builder.Configuration["DeveloperSettings:DefaultSuperUserEmail"]))
-    {
-        throw new InvalidOperationException("Superuser email not set!");
-    }
-
     using var scope = app.Services.CreateScope();
     var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
 

@@ -26,6 +26,8 @@
             ReadValue("SUPERUSER_NAME", "DeveloperSettings:DefaultSuperUserName", ref overridingValues);
             ReadValue("SUPERUSER_USERNAME", "DeveloperSettings:DefaultSuperUserUserName", ref overridingValues);
             ReadValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref overridingValues);
+
+            // Connection string for EF Core tools at design time and runtime
             ReadValue("CONNECTION_STRING", "ConnectionStrings:PPMToolContextConnection", ref overridingValues);
 
             // Get email settings
@@ -51,6 +53,31 @@
         }
 
         /// <summary>
+        /// Method to validate critical configuration settings are present.
+        /// </summary>
+        /// <param name="builder"></param>
+        internal static void ValidateConfiguration(WebApplicationBuilder builder)
+        {
+            // Validation of values that are used at runtime only
+            ValidateValue("API_KEY_SECRET", "Jwt:SecretKey", ref builder);
+
+#if !LOCAL
+            ValidateValue("SENTRY_DSN", "Sentry:Dsn", ref builder);
+            ValidateValue("MAIL_SMTP_SERVER", "Email:SmtpServer", ref builder);
+            ValidateValue("MAIL_FROM_ADDRESS", "Email:From", ref builder);
+            ValidateValue("CAS_PROTOCOL", "Authentication:CAS:ProtocolVersion", ref builder);
+            ValidateValue("CAS_BASE_URL", "Authentication:CAS:ServerUrlBase", ref builder);
+            ValidateValue("AUTH_HOST_URL", "Authentication:HostUrl", ref builder);
+#endif
+
+            // Connection string used by EF Core tools at design time, so we need to validate it even at design time
+            ValidateValue("CONNECTION_STRING", "ConnectionStrings:PPMToolContextConnection", ref builder, true);
+            ValidateValue("SUPERUSER_NAME", "DeveloperSettings:DefaultSuperUserName", ref builder, true);
+            ValidateValue("SUPERUSER_USERNAME", "DeveloperSettings:DefaultSuperUserUserName", ref builder, true);
+            ValidateValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref builder, true);
+        }
+
+        /// <summary>
         /// Takes an existing dictionary and inserts a key-value pair.
         /// Key is the configuration key and the value is the value of the environment variable.
         /// Does nothing if the value is null or whitespace.
@@ -68,24 +95,22 @@
         }
 
         /// <summary>
-        /// Method to validate critical configuration settings are present.
+        /// Validates that a critical configuration value is present and not null or whitespace.
+        /// Will not check at design time by default.
+        /// Throws an exception if the value is not valid.
         /// </summary>
+        /// <param name="envVar"></param>
+        /// <param name="configKey"></param>
         /// <param name="builder"></param>
+        /// <param name="checkAtDesignTime"></param>
         /// <exception cref="InvalidOperationException"></exception>
-        internal static void ValidateConfiguration(WebApplicationBuilder builder)
+        private static void ValidateValue(string envVar, string configKey, ref WebApplicationBuilder builder, bool checkAtDesignTime = false)
         {
             var isDesignTime = AppDomain.CurrentDomain.FriendlyName == "ef";
-            if (!isDesignTime && string.IsNullOrWhiteSpace(builder.Configuration["Jwt:SecretKey"]))
+            var checkShouldRun = !isDesignTime || (isDesignTime && checkAtDesignTime);
+            if (checkShouldRun && string.IsNullOrWhiteSpace(builder.Configuration[configKey]))
             {
-                throw new InvalidOperationException("API_KEY_SECRET environment variable is not set!");
-            }
-            if (!isDesignTime && builder.Environment.IsProduction() && string.IsNullOrWhiteSpace(builder.Configuration["Sentry:Dsn"]))
-            {
-                throw new InvalidOperationException("SENTRY_DSN environment variable is not set!");
-            }
-            if (string.IsNullOrWhiteSpace(builder.Configuration["ConnectionStrings:PPMToolContextConnection"]))
-            {
-                throw new InvalidOperationException("CONNECTION_STRING environment variable is not set!");
+                throw new InvalidOperationException($"{envVar} environment variable is not set!");
             }
         }
     }
