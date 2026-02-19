@@ -49,7 +49,7 @@ namespace PPMTool.API.Tests
                 {
                     var report = context.People
                         .Include(x => x.LineManager)
-                        .FirstOrDefault(p => key.Owner.Person != null && p.LineManager.PersonId == key.Owner.Person.PersonId);
+                        .FirstOrDefault(p => key.Owner.Person != null && p.LineManager != null && p.LineManager.PersonId == key.Owner.Person.PersonId);
 
                     // If a report is found, check valid
                     if (report != null)

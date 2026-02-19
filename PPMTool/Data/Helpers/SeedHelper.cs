@@ -55,6 +55,10 @@ namespace PPMTool.Data.Helpers
                 context.People.Add(person);
                 context.SaveChanges();
 
+                // First person manages self so add after save
+                person.LineManager = person;
+                context.SaveChanges();
+
                 // Perm currently with us
                 person = new Person();
                 person.Name = "Nigel Overfetch-Nelson";
