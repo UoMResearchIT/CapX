@@ -46,8 +46,8 @@ namespace PPMTool.Data.Helpers
             logger.LogInformation("Seeding people...");
             using (var context = dbContextFactory.CreateDbContext())
             {
-                // Update superuser to anonymous
-                var person = context.People.First();
+                // Perm currently with us
+                var person = new Person();
                 person.Name = "Mavis Ledger";
                 person.ShortName = "ML";
                 person.FTE = 1.0;
