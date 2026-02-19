@@ -79,7 +79,13 @@ The following variables need only be set when not using the "Local" solution con
 | `MAIL_SMTP_SERVER` | URL of the SMTP server to send email requests to |
 | `CAS_PROTOCOL` | The protocol that CAS/Shib should use (either 2 or 3) |
 | `CAS_BASE_URL` | The base URL of the CAS/Shib authentication endpoint |
-| `AUTH_HOST_URL` | The URL of the site (the return URL used by the authentication provider |
+| `ENTRA_INSTANCE` | Base URL of the Entra ID authentication service |
+| `ENTRA_DOMAIN` | The primary domain of the tenant |
+| `ENTRA_TENANT_ID` | ID of the tenant |
+| `ENTRA_CLIENT_ID` | ID of the registered app |
+| `ENTRA_CALLBACK_PATH` | Local path where Entra redirects the browser after successful authentication |
+| `AUTH_TYPE` | Whether to use "CAS" or "AzureAd" as the authentication provider |
+| `AUTH_HOST_URL` | The URL of the site (the service URL used by some auth providers) |
 
 An example `.env` file is provided in the source code as `.env.sample`.
 

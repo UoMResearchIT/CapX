@@ -2,6 +2,8 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using PPMTool.Enums;
+#else
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 #endif
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -19,6 +21,7 @@ namespace PPMTool.Pages.Account
         private UserService userService;
         private ILogger<LoginModel> logger;
         private IDbContextFactory<PPMToolContext> contextFactory;
+        private IConfiguration configuration;
 
         [FromQuery(Name = "returnUrl")]
         public string ReturnUrl { get; set; }
@@ -26,19 +29,41 @@ namespace PPMTool.Pages.Account
         [FromQuery(Name = "username")]
         public string Username { get; set; }
 
-        public LoginModel(UserService userService, ILogger<LoginModel> logger, IDbContextFactory<PPMToolContext> contextFactory)
+        public LoginModel(
+            UserService userService,
+            ILogger<LoginModel> logger,
+            IDbContextFactory<PPMToolContext> contextFactory,
+            IConfiguration configuration)
         {
             this.userService = userService;
             this.logger = logger;
             this.contextFactory = contextFactory;
+            this.configuration = configuration;
         }
 
 #if !LOCAL
         public async Task OnGet()
         {
+
+            // Set up properties
+            var redirectUri = string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl;
+            var props = new AuthenticationProperties { RedirectUri = redirectUri };
+            var authType = configuration.GetValue<string>("Authentication:Type", "CAS");
+
             // Challenge to force authentication
-            var props = new AuthenticationProperties { RedirectUri = $"{(string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl)}" };
-            await HttpContext.ChallengeAsync("CAS", props);
+            if (authType == "CAS")
+            {
+                await HttpContext.ChallengeAsync("CAS", props);
+            }
+            else if (authType == "AzureAd")
+            {
+
+                await HttpContext.ChallengeAsync(OpenIdConnectDefaults.AuthenticationScheme, props);
+            }
+            else
+            {
+                throw new InvalidOperationException($"Unsupported authentication type: {authType}");
+            }
         }
 #else
         public async Task OnGet()

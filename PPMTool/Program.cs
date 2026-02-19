@@ -17,7 +17,9 @@ using System.Web;
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.Identity.Web;
 using Serilog;
 #endif
 
@@ -90,17 +92,28 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
     options.Secure = CookieSecurePolicy.Always;
     options.MinimumSameSitePolicy = SameSiteMode.None;
 });
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
+
+// Choose the authentication type based on configuration
+var authenticationType = builder.Configuration.GetValue("Authentication:Type", "CAS");
+
+#if RELEASE
+if (authenticationType == "CAS")
+{
+    // Set up cookie details
+    builder.Services.AddAuthentication(options =>
     {
-        options.LoginPath = new PathString("/Account/Login");
-        options.LogoutPath = new PathString("/Account/Logout");
-        options.Cookie.IsEssential = true;
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    })
+    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+    {
         options.Cookie.Name = "CapXAuth";
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.None;
+        options.Cookie.IsEssential = true;
+        options.LoginPath = new PathString("/Account/Login");
+        options.LogoutPath = new PathString("/Account/Logout");
 
-#if RELEASE
         // Set expiration to match CAS session timeout
         int time = builder.Configuration.GetValue("Authentication:CAS:CookieExpiryTimeInHours", 24);
         options.ExpireTimeSpan = TimeSpan.FromHours(time);
@@ -110,9 +123,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         {
             OnSigningOut = args => OnCookieSigningOut(args, builder.Configuration),
         };
-#endif
     })
-#if RELEASE
     .AddCAS(options =>
     {
         options.CasServerUrlBase = builder.Configuration["Authentication:CAS:ServerUrlBase"];
@@ -127,25 +138,58 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
                 _ => null
             };
         }
-
         options.Events = new CasEvents
         {
             OnCreatingTicket = OnCreatingTicket,
             OnRemoteFailure = OnRemoteFailure
         };
+    });
+}
+else if (authenticationType == "AzureAd")
+{
+    builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+
     })
+    .AddMicrosoftIdentityWebApp(options =>
+    {
+        builder.Configuration.Bind("Authentication:AzureAd", options);
+    })
+    .EnableTokenAcquisitionToCallDownstreamApi()
+    .AddInMemoryTokenCaches();
+
+    // Cookie settings
+    builder.Services.PostConfigure<CookieAuthenticationOptions>(
+        CookieAuthenticationDefaults.AuthenticationScheme,
+        options =>
+        {
+            options.Cookie.Name = "CapXAuth";
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            options.Cookie.SameSite = SameSiteMode.None;
+            options.Cookie.IsEssential = true;
+
+        });
+}
+else
+{
+    throw new Exception($"Unsupported authentication type: {authenticationType}");
+}
 #endif
-    ;
+
 builder.Services.AddAuthorization();
 
 // Build the application from the configuration
 var app = builder.Build();
 
+// Get logger
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+
 // Check configuration is correct
-EnvironmentHelper.ValidateConfiguration(builder);
+EnvironmentHelper.ValidateConfiguration(logger, builder, authenticationType);
 
 // Set up middleware
-var logger = app.Services.GetRequiredService<ILogger<Program>>();
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
