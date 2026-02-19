@@ -38,7 +38,15 @@
             ReadValue("CAS_PROTOCOL", "Authentication:CAS:ProtocolVersion", ref overridingValues);
             ReadValue("CAS_BASE_URL", "Authentication:CAS:ServerUrlBase", ref overridingValues);
 
+            // Get Azure AD (Entra) setttings
+            ReadValue("ENTRA_INSTANCE", "Authentication:AzureAd:Instance", ref overridingValues);
+            ReadValue("ENTRA_DOMAIN", "Authentication:AzureAd:Domain", ref overridingValues);
+            ReadValue("ENTRA_TENANT_ID", "Authentication:AzureAd:TenantId", ref overridingValues);
+            ReadValue("ENTRA_CLIENT_ID", "Authentication:AzureAd:ClientId", ref overridingValues);
+            ReadValue("ENTRA_CALLBACK_PATH", "Authentication:AzureAd:CallbackPath", ref overridingValues);
+
             // Generic auth settings
+            ReadValue("AUTH_TYPE", "Authentication:Type", ref overridingValues);
             ReadValue("AUTH_HOST_URL", "Authentication:HostUrl", ref overridingValues);
 
             // Set seed dummy data flag if environment variable is set to true (case insensitive)
@@ -56,25 +64,38 @@
         /// Method to validate critical configuration settings are present.
         /// </summary>
         /// <param name="builder"></param>
-        internal static void ValidateConfiguration(WebApplicationBuilder builder)
+        internal static void ValidateConfiguration(WebApplicationBuilder builder, string authenticationType)
         {
             // Validation of values that are used at runtime only
             ValidateValue("API_KEY_SECRET", "Jwt:SecretKey", ref builder);
+            ValidateValue("SUPERUSER_NAME", "DeveloperSettings:DefaultSuperUserName", ref builder, true);
+            ValidateValue("SUPERUSER_USERNAME", "DeveloperSettings:DefaultSuperUserUserName", ref builder, true);
+            ValidateValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref builder, true);
 
 #if RELEASE
             ValidateValue("SENTRY_DSN", "Sentry:Dsn", ref builder);
             ValidateValue("MAIL_SMTP_SERVER", "Email:SmtpServer", ref builder);
             ValidateValue("MAIL_FROM_ADDRESS", "Email:From", ref builder);
-            ValidateValue("CAS_PROTOCOL", "Authentication:CAS:ProtocolVersion", ref builder);
-            ValidateValue("CAS_BASE_URL", "Authentication:CAS:ServerUrlBase", ref builder);
+            ValidateValue("AUTH_TYPE", "Authentication:Type", ref builder);
+
+            if (authenticationType == "CAS")
+            {
+                ValidateValue("CAS_PROTOCOL", "Authentication:CAS:ProtocolVersion", ref builder);
+                ValidateValue("CAS_BASE_URL", "Authentication:CAS:ServerUrlBase", ref builder);
+            }
+            else if (authenticationType == "AzureAd")
+            {
+                ValidateValue("ENTRA_INSTANCE", "Authentication:AzureAd:Instance", ref builder);
+                ValidateValue("ENTRA_DOMAIN", "Authentication:AzureAd:Domain", ref builder);
+                ValidateValue("ENTRA_TENANT_ID", "Authentication:AzureAd:TenantId", ref builder);
+                ValidateValue("ENTRA_CLIENT_ID", "Authentication:AzureAd:ClientId", ref builder);
+                ValidateValue("ENTRA_CALLBACK_PATH", "Authentication:AzureAd:CallbackPath", ref builder);
+            }
             ValidateValue("AUTH_HOST_URL", "Authentication:HostUrl", ref builder);
 #endif
 
             // Connection string used by EF Core tools at design time, so we need to validate it even at design time
             ValidateValue("CONNECTION_STRING", "ConnectionStrings:PPMToolContextConnection", ref builder, true);
-            ValidateValue("SUPERUSER_NAME", "DeveloperSettings:DefaultSuperUserName", ref builder, true);
-            ValidateValue("SUPERUSER_USERNAME", "DeveloperSettings:DefaultSuperUserUserName", ref builder, true);
-            ValidateValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref builder, true);
         }
 
         /// <summary>

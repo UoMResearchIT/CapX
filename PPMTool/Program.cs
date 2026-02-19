@@ -2,10 +2,10 @@ using System.Globalization;
 using Blazored.LocalStorage;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Web;
 using PPMTool.Data.Context;
 using PPMTool.Data.Helpers;
 using PPMTool.Services;
@@ -18,7 +18,6 @@ using System.Web;
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Identity.Web;
 using Serilog;
@@ -127,8 +126,10 @@ builder.Services.AddAuthentication(options =>
             OnSigningOut = args => OnCookieSigningOut(args, builder.Configuration),
         };
     }
+#endif
 });
 
+#if RELEASE
 // Add specific authentication handlers
 if (authenticationType == "CAS")
 {
@@ -176,7 +177,7 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 // Check configuration is correct
-EnvironmentHelper.ValidateConfiguration(builder);
+EnvironmentHelper.ValidateConfiguration(builder, authenticationType);
 
 // Set up middleware
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
