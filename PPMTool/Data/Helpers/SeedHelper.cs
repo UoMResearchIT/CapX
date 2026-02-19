@@ -52,6 +52,11 @@ namespace PPMTool.Data.Helpers
                 person.ShortName = "ML";
                 person.FTE = 1.0;
                 person.StartDate = ApplyDateOffset(2023, 7, 1);    // Date required by first project
+                context.People.Add(person);
+                context.SaveChanges();
+
+                // First person manages self so add after save
+                person.LineManager = person;
                 context.SaveChanges();
 
                 // Perm currently with us
