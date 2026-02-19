@@ -331,10 +331,11 @@ namespace PPMTool.Pages
                     }
 
                     // Add data
+                    var numberRows = chartSourceTemp.DistinctBy(x => x.Label).Count();
                     chartModels.Add(new ChartModel
                     {
                         ChartTitle = customChartTitleGenerator?.Invoke(null) ?? "Load for All",
-                        ChartOptions = BuildNewChartOptionsObject(),
+                        ChartOptions = BuildNewChartOptionsObject(numberRows),
                         ConfirmedChartItems = chartSourceTemp.Where(x => !x.IsHatched()).ToList(),
                         ProvisionalChartItems = chartSourceTemp.Where(x => x.IsHatched()).ToList()
                     });
@@ -400,10 +401,11 @@ namespace PPMTool.Pages
                         );
 
                         // Add data
+                        var numberRows = confirmedChartItemsComplete.Concat(provisionalChartItemsComplete).DistinctBy(x => x.Label).Count();
                         chartModels.Add(new ChartModel
                         {
                             ChartTitle = customChartTitleGenerator?.Invoke(name) ?? $"Load for {name}",
-                            ChartOptions = BuildNewChartOptionsObject(),
+                            ChartOptions = BuildNewChartOptionsObject(numberRows),
                             ConfirmedChartItems = confirmedChartItemsComplete,
                             ProvisionalChartItems = provisionalChartItemsComplete
                         });
@@ -660,8 +662,9 @@ namespace PPMTool.Pages
         /// <summary>
         /// Creates a standard chart options object to be pass to all chart instances -- they cannot share the same object
         /// </summary>
+        /// <param name="totalRowsOnChart"></param>
         /// <returns></returns>
-        protected virtual ApexChartOptions<ChartItem> BuildNewChartOptionsObject()
+        protected virtual ApexChartOptions<ChartItem> BuildNewChartOptionsObject(int totalRowsOnChart)
         {
             return new ApexChartOptions<ChartItem>
             {
@@ -690,6 +693,7 @@ namespace PPMTool.Pages
                 },
                 Chart = new Chart
                 {
+                    Height = $"{(totalRowsOnChart * 30) + 100}px",
                     Zoom = new Zoom
                     {
                         AllowMouseWheelZoom = false

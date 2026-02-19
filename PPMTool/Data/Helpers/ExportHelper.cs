@@ -139,7 +139,6 @@ namespace PPMTool.Data.Helpers
                 // Create a line representing the full, un-chunked task to start off with
                 var initialChunk = new AssignmentChunk(resKey)
                 {
-                    PostNumber = string.Empty,
                     EmployeeName = person.Name,
                     Grade = defaultWLM.Grade,
                     FTE = resource.AssignmentFTE,

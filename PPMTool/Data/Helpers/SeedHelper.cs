@@ -46,12 +46,17 @@ namespace PPMTool.Data.Helpers
             logger.LogInformation("Seeding people...");
             using (var context = dbContextFactory.CreateDbContext())
             {
-                // Update superuser to anonymous
-                var person = context.People.First();
+                // Perm currently with us
+                var person = new Person();
                 person.Name = "Mavis Ledger";
                 person.ShortName = "ML";
                 person.FTE = 1.0;
                 person.StartDate = ApplyDateOffset(2023, 7, 1);    // Date required by first project
+                context.People.Add(person);
+                context.SaveChanges();
+
+                // First person manages self so add after save
+                person.LineManager = person;
                 context.SaveChanges();
 
                 // Perm currently with us
@@ -247,6 +252,36 @@ namespace PPMTool.Data.Helpers
         }
 
         /// <summary>
+        /// Add a superuser with the default values from the configuration if there isn't one
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        public static void SeedSuperUserIfNotExist(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Create a new superuser if there isn't one
+                var superUser = context.Users.Include(x => x.Person).FirstOrDefault(x => x.RoleType == RoleType.Superuser);
+                if (superUser == null)
+                {
+                    logger.LogWarning("No superuser found! Adding default...");
+                    superUser = new User
+                    {
+                        RoleType = RoleType.Superuser,
+                        Name = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserName"),
+                        CASUserName = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserUserName"),
+                        EmailAddress = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserEmail"),
+                        Person = null
+                    };
+                    context.Users.Add(superUser);
+                    context.SaveChanges();
+                }
+            }
+        }
+
+        /// <summary>
         /// Add some user accounts at least one for each role
         /// </summary>
         /// <param name="serviceProvider"></param>
@@ -258,13 +293,16 @@ namespace PPMTool.Data.Helpers
             var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             using (var context = dbContextFactory.CreateDbContext())
             {
-                // Update super user
-                var superUser = context.Users.Include(x => x.Person).First(x => x.RoleType == RoleType.Superuser);
-                superUser.Name = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserName");
-                superUser.CASUserName = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserUserName");
-                superUser.EmailAddress = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserEmail");
-                superUser.Person = null;
-                context.SaveChanges();
+                // Update super user if there is one to match the configuration defaults
+                var superUser = context.Users.Include(x => x.Person).FirstOrDefault(x => x.RoleType == RoleType.Superuser);
+                if (superUser != null)
+                {
+                    superUser.Name = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserName");
+                    superUser.CASUserName = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserUserName");
+                    superUser.EmailAddress = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserEmail");
+                    superUser.Person = null;
+                    context.SaveChanges();
+                }
 
                 // Manager -- Mavis and Nigel are managers
                 var manager = new User
