@@ -64,7 +64,7 @@
         /// Method to validate critical configuration settings are present.
         /// </summary>
         /// <param name="builder"></param>
-        internal static void ValidateConfiguration(WebApplicationBuilder builder, string authenticationType)
+        internal static void ValidateConfiguration(ILogger logger, WebApplicationBuilder builder, string authenticationType)
         {
             // Validation of values that are used at runtime only
             ValidateValue("API_KEY_SECRET", "Jwt:SecretKey", ref builder);
@@ -73,9 +73,9 @@
             ValidateValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref builder, true);
 
 #if RELEASE
-            ValidateValue("SENTRY_DSN", "Sentry:Dsn", ref builder);
-            ValidateValue("MAIL_SMTP_SERVER", "Email:SmtpServer", ref builder);
-            ValidateValue("MAIL_FROM_ADDRESS", "Email:From", ref builder);
+            ValidateValue("SENTRY_DSN", "Sentry:Dsn", ref builder, justLog: true, logger: logger);
+            ValidateValue("MAIL_SMTP_SERVER", "Email:SmtpServer", ref builder, justLog: true, logger: logger);
+            ValidateValue("MAIL_FROM_ADDRESS", "Email:From", ref builder, justLog: true, logger: logger);
             ValidateValue("AUTH_TYPE", "Authentication:Type", ref builder);
 
             if (authenticationType == "CAS")
@@ -124,14 +124,23 @@
         /// <param name="configKey"></param>
         /// <param name="builder"></param>
         /// <param name="checkAtDesignTime"></param>
+        /// <param name="justLog">Whether failed validation should only write to log rather than throwing an exception</param>
         /// <exception cref="InvalidOperationException"></exception>
-        private static void ValidateValue(string envVar, string configKey, ref WebApplicationBuilder builder, bool checkAtDesignTime = false)
+        private static void ValidateValue(string envVar, string configKey, ref WebApplicationBuilder builder, bool checkAtDesignTime = false, bool justLog = false, ILogger logger = null)
         {
             var isDesignTime = AppDomain.CurrentDomain.FriendlyName == "ef";
             var checkShouldRun = !isDesignTime || (isDesignTime && checkAtDesignTime);
             if (checkShouldRun && string.IsNullOrWhiteSpace(builder.Configuration[configKey]))
             {
-                throw new InvalidOperationException($"{envVar} environment variable is not set!");
+                var message = $"{envVar} environment variable is not set!";
+                if (justLog)
+                {
+                    logger?.LogError(message);
+                }
+                else
+                {
+                    throw new InvalidOperationException(message);
+                }
             }
         }
     }
