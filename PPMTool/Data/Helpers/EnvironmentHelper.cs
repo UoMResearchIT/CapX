@@ -61,7 +61,7 @@
             // Validation of values that are used at runtime only
             ValidateValue("API_KEY_SECRET", "Jwt:SecretKey", ref builder);
 
-#if !LOCAL
+#if RELEASE
             ValidateValue("SENTRY_DSN", "Sentry:Dsn", ref builder);
             ValidateValue("MAIL_SMTP_SERVER", "Email:SmtpServer", ref builder);
             ValidateValue("MAIL_FROM_ADDRESS", "Email:From", ref builder);
