@@ -1,14 +1,7 @@
 using System.Globalization;
-using System.Linq.Dynamic.Core;
-using System.Security.Claims;
-using System.Web;
 using Blazored.LocalStorage;
 using Blazored.SessionStorage;
-using GSS.Authentication.CAS.AspNetCore;
-using GSS.Authentication.CAS.Validation;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +9,15 @@ using PPMTool.Data.Context;
 using PPMTool.Data.Helpers;
 using PPMTool.Services;
 using Radzen;
+
 #if RELEASE
+using System.Linq.Dynamic.Core;
+using System.Security.Claims;
+using System.Web;
+using GSS.Authentication.CAS.AspNetCore;
+using GSS.Authentication.CAS.Validation;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http.Extensions;
 using Serilog;
 #endif
 
@@ -99,6 +100,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.None;
 
+#if RELEASE
         // Set expiration to match CAS session timeout
         int time = builder.Configuration.GetValue("Authentication:CAS:CookieExpiryTimeInHours", 24);
         options.ExpireTimeSpan = TimeSpan.FromHours(time);
@@ -108,7 +110,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         {
             OnSigningOut = args => OnCookieSigningOut(args, builder.Configuration),
         };
+#endif
     })
+#if RELEASE
     .AddCAS(options =>
     {
         options.CasServerUrlBase = builder.Configuration["Authentication:CAS:ServerUrlBase"];
@@ -129,7 +133,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             OnCreatingTicket = OnCreatingTicket,
             OnRemoteFailure = OnRemoteFailure
         };
-    });
+    })
+#endif
+    ;
 builder.Services.AddAuthorization();
 
 // Build the application from the configuration
@@ -224,6 +230,7 @@ FileHelper.CleanLocalApplicationFilePath(logger);
 // Run the app
 app.Run();
 
+#if RELEASE
 /// <summary>
 /// What to do when a ticket is to be created from a CAS callback
 /// </summary>
@@ -335,3 +342,4 @@ async Task OnRemoteFailure(RemoteFailureContext context)
     context.Response.Redirect($"/Account/ExternalLoginFailure?message={HttpUtility.UrlEncode(failure?.Message)}");
     context.HandleResponse();
 }
+#endif
