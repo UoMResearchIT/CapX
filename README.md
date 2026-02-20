@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+-->
+
 # Capacity eXtended (CapX)
 This is tool initially started as a basic project and portfolio management (PPM) tool. Its first feature was capacity management, but it has since been extended to incorporate a much larger, more complex data model useful for an increased number of operational management activities. Written in .NET Blazor (Server) with a SQLite database, it is used for managing many aspects of the service delivery of the RSE department and the development of its staff.
 
