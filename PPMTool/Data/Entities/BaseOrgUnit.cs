@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PPMTool.Data.Entities
 {
@@ -46,5 +47,8 @@ namespace PPMTool.Data.Entities
         {
             return (Code != null && Code.Length > 0 ? $"{Name} ({Code})" : $"{Name}");
         }
+
+        [NotMapped]
+        public bool InEditMode { get; set; } = false;
     }
 }
