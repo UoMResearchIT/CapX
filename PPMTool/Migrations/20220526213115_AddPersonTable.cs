@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace PPMTool.Migrations
 {
