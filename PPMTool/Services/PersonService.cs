@@ -186,7 +186,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal IEnumerable<Person> GetManagedStaff(PPMToolContext context, Person activeUser)
         {
-            return context.People.Where(x => activeUser == null ? false : x.LineManager.PersonId == activeUser.PersonId);
+            return context.People.Where(x => activeUser != null && x.LineManager != null && x.LineManager.PersonId == activeUser.PersonId);
         }
 
         /// <summary>

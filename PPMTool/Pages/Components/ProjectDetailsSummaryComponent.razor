@@ -28,11 +28,36 @@ else
                     {
                         <th>Day Rate</th>
                     }
-                    <th>Agreed Budget</th>
-                    <th>Planned Cost</th>
-                    <th>Actual Cost (Hours)</th>
-                    <th>Funds Requested</th>
-                    <th>Funds Received</th>
+                    <th>
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                            <span>Agreed Budget</span>
+                            <RadzenIcon Icon="info" IconStyle="IconStyle.Info" title="The sum of all funding sources attached to the project." />
+                        </RadzenStack>
+                    </th>
+                    <th>
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                            <span>Planned Cost</span>
+                            <RadzenIcon Icon="info" IconStyle="IconStyle.Info" title="The estimated cost of the planned tasks based on effort and resources assigned. Computed using mid-grade salary estimates." />
+                        </RadzenStack>
+                    </th>
+                    <th>
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                            <span>Actual Cost (Hours)</span>
+                            <RadzenIcon Icon="info" IconStyle="IconStyle.Info" title="The estimated value delivered based on CapX timesheet entries. Computed using mid-grade salary estimates." />
+                        </RadzenStack>
+                    </th>
+                    <th>
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                            <span>Funds Requested</span>
+                            <RadzenIcon Icon="info" IconStyle="IconStyle.Info" title="For DI and DA, equal to Agreed Budget. For Other, the sum of all invoice amounts." />
+                        </RadzenStack>
+                    </th>
+                    <th>
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                            <span>Funds Received</span>
+                            <RadzenIcon Icon="info" IconStyle="IconStyle.Info" title="For DI and DA, equal to Agreed Budget. For Other, the sum of all payment amounts." />
+                        </RadzenStack>
+                    </th>
                     <th>Funding Sources</th>
                 </tr>
             </thead>
@@ -142,7 +167,7 @@ else
                             }
                         }
                         <br />
-                        @($" ({FinanceSummaryItem.ActualHours.ToString("F2")} hrs)")                        
+                        @($" (Hours: {FinanceSummaryItem.ActualHours.ToString("F2")})")                        
                     </td>
                     <td>
                         @((MarkupString)$"<span>Total:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.FundsRequestedColour}\">{FinanceSummaryItem.GetAllRequested().ToString("C0")}</span>")

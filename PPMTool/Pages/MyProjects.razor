@@ -37,14 +37,14 @@
         <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.3rem">
             @foreach (var projectAndNotes in ownedProjectsAndDueNotes.OrderBy(x => x.Key.ProjectStatus))
             {
-                <ProjectSummaryComponent Project="projectAndNotes.Key"
-                                         EditAuthorised="EditAuthorised"
-                                         DetailsButtonClicked="DetailsButtonClicked"
-                                         OverDueNoteCount="@(projectAndNotes.Value.Where(x => x.IsOverDue()).Count())"
-                                         DueNoteCount="@(projectAndNotes.Value.Where(x => x.IsDue()).Count())"
-                                         NextDueDate="@(projectAndNotes.Value.Where(x => x.DueDate != null && !x.IsCompleted()).OrderBy(x => x.DueDate).FirstOrDefault()?.DueDate)"
-                                         DueButtonClicked="DueButtonClicked"
-                                         ShowTooltip="@((elem, text) => ShowTooltip(elem, text))" />
+                <MyProjectSummaryComponent Project="projectAndNotes.Key"
+                                           EditAuthorised="EditAuthorised"
+                                           DetailsButtonClicked="DetailsButtonClicked"
+                                           OverDueNoteCount="@(projectAndNotes.Value.Where(x => x.IsOverDue()).Count())"
+                                           DueNoteCount="@(projectAndNotes.Value.Where(x => x.IsDue()).Count())"
+                                           NextDueDate="@(projectAndNotes.Value.Where(x => x.DueDate != null && !x.IsCompleted()).OrderBy(x => x.DueDate).FirstOrDefault()?.DueDate)"
+                                           DueButtonClicked="DueButtonClicked"
+                                           ShowTooltip="@((elem, text) => ShowTooltip(elem, text))" />
             }
         </RadzenStack>
     }

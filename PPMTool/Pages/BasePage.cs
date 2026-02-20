@@ -155,7 +155,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected bool IsSuperuserOrLineManagerOfThisPerson(Person person)
         {
-            var lm = (person?.LineManager.PersonId ?? 0) == (ActiveUser?.Person?.PersonId ?? -1);
+            var lm = (person?.LineManager?.PersonId ?? 0) == (ActiveUser?.Person?.PersonId ?? -1);
             var su = ActiveUserRoleType == RoleType.Superuser;
             return lm || su;
         }

@@ -20,53 +20,44 @@ namespace PPMTool.Data.Helpers
             builder.Configuration.AddEnvironmentVariables();
             var overridingValues = new Dictionary<string, string>();
 
-            // Get the API key from the environment
-            var apiKeySecret = Environment.GetEnvironmentVariable("API_KEY_SECRET");
-            if (!string.IsNullOrEmpty(apiKeySecret))
-            {
-                overridingValues.Add("Jwt:SecretKey", apiKeySecret);
-            }
+            // Get the API key secret
+            ReadValue("API_KEY_SECRET", "Jwt:SecretKey", ref overridingValues);
 
-            // Get Sentry DSN from the environment
-            var sentryDsn = Environment.GetEnvironmentVariable("SENTRY_DSN");
-            if (!string.IsNullOrEmpty(sentryDsn))
-            {
-                overridingValues.Add("Sentry:Dsn", sentryDsn);
-            }
+            // Get Sentry DSN
+            ReadValue("SENTRY_DSN", "Sentry:Dsn", ref overridingValues);
 
-            // Seed dummy data if environment variable is set to true (case insensitive)
+            // Get superuser details
+            ReadValue("SUPERUSER_NAME", "DeveloperSettings:DefaultSuperUserName", ref overridingValues);
+            ReadValue("SUPERUSER_USERNAME", "DeveloperSettings:DefaultSuperUserUserName", ref overridingValues);
+            ReadValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref overridingValues);
+
+            // Connection string for EF Core tools at design time and runtime
+            ReadValue("CONNECTION_STRING", "ConnectionStrings:PPMToolContextConnection", ref overridingValues);
+
+            // Get email settings
+            ReadValue("MAIL_SMTP_SERVER", "Email:SmtpServer", ref overridingValues);
+            ReadValue("MAIL_FROM_ADDRESS", "Email:From", ref overridingValues);
+
+            // Get CAS settings
+            ReadValue("CAS_PROTOCOL", "Authentication:CAS:ProtocolVersion", ref overridingValues);
+            ReadValue("CAS_BASE_URL", "Authentication:CAS:ServerUrlBase", ref overridingValues);
+
+            // Get Azure AD (Entra) setttings
+            ReadValue("ENTRA_INSTANCE", "Authentication:AzureAd:Instance", ref overridingValues);
+            ReadValue("ENTRA_DOMAIN", "Authentication:AzureAd:Domain", ref overridingValues);
+            ReadValue("ENTRA_TENANT_ID", "Authentication:AzureAd:TenantId", ref overridingValues);
+            ReadValue("ENTRA_CLIENT_ID", "Authentication:AzureAd:ClientId", ref overridingValues);
+            ReadValue("ENTRA_CALLBACK_PATH", "Authentication:AzureAd:CallbackPath", ref overridingValues);
+
+            // Generic auth settings
+            ReadValue("AUTH_TYPE", "Authentication:Type", ref overridingValues);
+            ReadValue("AUTH_HOST_URL", "Authentication:HostUrl", ref overridingValues);
+
+            // Set seed dummy data flag if environment variable is set to true (case insensitive)
             var seedDummyData = Environment.GetEnvironmentVariable("SEED_DUMMY_DATA");
             if (seedDummyData?.ToLowerInvariant() == true.ToString().ToLowerInvariant())
             {
                 overridingValues.Add("DeveloperSettings:SeedDummyData", true.ToString().ToLowerInvariant());
-            }
-
-            // Get superuser name from the environment
-            var suName = Environment.GetEnvironmentVariable("SUPERUSER_NAME");
-            if (!string.IsNullOrWhiteSpace(suName))
-            {
-                overridingValues.Add("DeveloperSettings:DefaultSuperUserName", suName);
-            }
-
-            // Get superuser username from the environment
-            var suUserName = Environment.GetEnvironmentVariable("SUPERUSER_USERNAME");
-            if (!string.IsNullOrWhiteSpace(suUserName))
-            {
-                overridingValues.Add("DeveloperSettings:DefaultSuperUserUserName", suUserName);
-            }
-
-            // Get superuser email from the environment
-            var suEmail = Environment.GetEnvironmentVariable("SUPERUSER_EMAIL");
-            if (!string.IsNullOrWhiteSpace(suEmail))
-            {
-                overridingValues.Add("DeveloperSettings:DefaultSuperUserEmail", suEmail);
-            }
-
-            // Get connection string from the environment
-            var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
-            if (!string.IsNullOrWhiteSpace(connectionString))
-            {
-                overridingValues.Add("ConnectionStrings:PPMToolContextConnection", connectionString);
             }
 
             // Add the overriding values to the configuration
@@ -77,21 +68,83 @@ namespace PPMTool.Data.Helpers
         /// Method to validate critical configuration settings are present.
         /// </summary>
         /// <param name="builder"></param>
+        internal static void ValidateConfiguration(ILogger logger, WebApplicationBuilder builder, string authenticationType)
+        {
+            // Validation of values that are used at runtime only
+            ValidateValue("API_KEY_SECRET", "Jwt:SecretKey", ref builder);
+            ValidateValue("SUPERUSER_NAME", "DeveloperSettings:DefaultSuperUserName", ref builder, true);
+            ValidateValue("SUPERUSER_USERNAME", "DeveloperSettings:DefaultSuperUserUserName", ref builder, true);
+            ValidateValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref builder, true);
+
+#if RELEASE
+            ValidateValue("SENTRY_DSN", "Sentry:Dsn", ref builder, justLog: true, logger: logger);
+            ValidateValue("MAIL_SMTP_SERVER", "Email:SmtpServer", ref builder, justLog: true, logger: logger);
+            ValidateValue("MAIL_FROM_ADDRESS", "Email:From", ref builder, justLog: true, logger: logger);
+            ValidateValue("AUTH_TYPE", "Authentication:Type", ref builder);
+
+            if (authenticationType == "CAS")
+            {
+                ValidateValue("CAS_PROTOCOL", "Authentication:CAS:ProtocolVersion", ref builder);
+                ValidateValue("CAS_BASE_URL", "Authentication:CAS:ServerUrlBase", ref builder);
+            }
+            else if (authenticationType == "AzureAd")
+            {
+                ValidateValue("ENTRA_INSTANCE", "Authentication:AzureAd:Instance", ref builder);
+                ValidateValue("ENTRA_DOMAIN", "Authentication:AzureAd:Domain", ref builder);
+                ValidateValue("ENTRA_TENANT_ID", "Authentication:AzureAd:TenantId", ref builder);
+                ValidateValue("ENTRA_CLIENT_ID", "Authentication:AzureAd:ClientId", ref builder);
+                ValidateValue("ENTRA_CALLBACK_PATH", "Authentication:AzureAd:CallbackPath", ref builder);
+            }
+            ValidateValue("AUTH_HOST_URL", "Authentication:HostUrl", ref builder);
+#endif
+
+            // Connection string used by EF Core tools at design time, so we need to validate it even at design time
+            ValidateValue("CONNECTION_STRING", "ConnectionStrings:PPMToolContextConnection", ref builder, true);
+        }
+
+        /// <summary>
+        /// Takes an existing dictionary and inserts a key-value pair.
+        /// Key is the configuration key and the value is the value of the environment variable.
+        /// Does nothing if the value is null or whitespace.
+        /// </summary>
+        /// <param name="envVar"></param>
+        /// <param name="configKey"></param>
+        /// <param name="overridingValues"></param>
+        private static void ReadValue(string envVar, string configKey, ref Dictionary<string, string> overridingValues)
+        {
+            var value = Environment.GetEnvironmentVariable(envVar);
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                overridingValues.Add(configKey, value);
+            }
+        }
+
+        /// <summary>
+        /// Validates that a critical configuration value is present and not null or whitespace.
+        /// Will not check at design time by default.
+        /// Throws an exception if the value is not valid.
+        /// </summary>
+        /// <param name="envVar"></param>
+        /// <param name="configKey"></param>
+        /// <param name="builder"></param>
+        /// <param name="checkAtDesignTime"></param>
+        /// <param name="justLog">Whether failed validation should only write to log rather than throwing an exception</param>
         /// <exception cref="InvalidOperationException"></exception>
-        internal static void ValidateConfiguration(WebApplicationBuilder builder)
+        private static void ValidateValue(string envVar, string configKey, ref WebApplicationBuilder builder, bool checkAtDesignTime = false, bool justLog = false, ILogger logger = null)
         {
             var isDesignTime = AppDomain.CurrentDomain.FriendlyName == "ef";
-            if (!isDesignTime && string.IsNullOrWhiteSpace(builder.Configuration["Jwt:SecretKey"]))
+            var checkShouldRun = !isDesignTime || (isDesignTime && checkAtDesignTime);
+            if (checkShouldRun && string.IsNullOrWhiteSpace(builder.Configuration[configKey]))
             {
-                throw new InvalidOperationException("API_KEY_SECRET environment variable is not set!");
-            }
-            if (!isDesignTime && builder.Environment.IsProduction() && string.IsNullOrWhiteSpace(builder.Configuration["Sentry:Dsn"]))
-            {
-                throw new InvalidOperationException("SENTRY_DSN environment variable is not set!");
-            }
-            if (string.IsNullOrWhiteSpace(builder.Configuration["ConnectionStrings:PPMToolContextConnection"]))
-            {
-                throw new InvalidOperationException("CONNECTION_STRING environment variable is not set!");
+                var message = $"{envVar} environment variable is not set!";
+                if (justLog)
+                {
+                    logger?.LogError(message);
+                }
+                else
+                {
+                    throw new InvalidOperationException(message);
+                }
             }
         }
     }

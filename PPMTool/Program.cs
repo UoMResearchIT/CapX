@@ -3,16 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Globalization;
-using System.Linq.Dynamic.Core;
-using System.Security.Claims;
-using System.Web;
 using Blazored.LocalStorage;
 using Blazored.SessionStorage;
-using GSS.Authentication.CAS.AspNetCore;
-using GSS.Authentication.CAS.Validation;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +13,17 @@ using PPMTool.Data.Context;
 using PPMTool.Data.Helpers;
 using PPMTool.Services;
 using Radzen;
+
 #if RELEASE
+using System.Linq.Dynamic.Core;
+using System.Security.Claims;
+using System.Web;
+using GSS.Authentication.CAS.AspNetCore;
+using GSS.Authentication.CAS.Validation;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.Identity.Web;
 using Serilog;
 #endif
 
@@ -93,15 +96,27 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
     options.Secure = CookieSecurePolicy.Always;
     options.MinimumSameSitePolicy = SameSiteMode.None;
 });
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
+
+// Choose the authentication type based on configuration
+var authenticationType = builder.Configuration.GetValue("Authentication:Type", "CAS");
+
+#if RELEASE
+if (authenticationType == "CAS")
+{
+    // Set up cookie details
+    builder.Services.AddAuthentication(options =>
     {
-        options.LoginPath = new PathString("/Account/Login");
-        options.LogoutPath = new PathString("/Account/Logout");
-        options.Cookie.IsEssential = true;
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    })
+    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+    {
         options.Cookie.Name = "CapXAuth";
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.None;
+        options.Cookie.IsEssential = true;
+        options.LoginPath = new PathString("/Account/Login");
+        options.LogoutPath = new PathString("/Account/Logout");
 
         // Set expiration to match CAS session timeout
         int time = builder.Configuration.GetValue("Authentication:CAS:CookieExpiryTimeInHours", 24);
@@ -127,23 +142,58 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
                 _ => null
             };
         }
-
         options.Events = new CasEvents
         {
             OnCreatingTicket = OnCreatingTicket,
             OnRemoteFailure = OnRemoteFailure
         };
     });
+}
+else if (authenticationType == "AzureAd")
+{
+    builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+
+    })
+    .AddMicrosoftIdentityWebApp(options =>
+    {
+        builder.Configuration.Bind("Authentication:AzureAd", options);
+    })
+    .EnableTokenAcquisitionToCallDownstreamApi()
+    .AddInMemoryTokenCaches();
+
+    // Cookie settings
+    builder.Services.PostConfigure<CookieAuthenticationOptions>(
+        CookieAuthenticationDefaults.AuthenticationScheme,
+        options =>
+        {
+            options.Cookie.Name = "CapXAuth";
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            options.Cookie.SameSite = SameSiteMode.None;
+            options.Cookie.IsEssential = true;
+
+        });
+}
+else
+{
+    throw new Exception($"Unsupported authentication type: {authenticationType}");
+}
+#endif
+
 builder.Services.AddAuthorization();
 
 // Build the application from the configuration
 var app = builder.Build();
 
+// Get logger
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+
 // Check configuration is correct
-EnvironmentHelper.ValidateConfiguration(builder);
+EnvironmentHelper.ValidateConfiguration(logger, builder, authenticationType);
 
 // Set up middleware
-var logger = app.Services.GetRequiredService<ILogger<Program>>();
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -179,25 +229,15 @@ using (var connection = new SqliteConnection(connectionString))
     connection.Close();
 }
 
-// Seed dummy data if the database is empty
+// Seed the default superuser from the settings if it doesn't already exist
+using var scope = app.Services.CreateScope();
+SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
+
+// Seed dummy data if the flag is set to do so.
+// This is intended for development and testing purposes only and should be used with caution as it will delete existing data.
 var shouldSeed = builder.Configuration.GetValue<bool>("DeveloperSettings:SeedDummyData");
 if (shouldSeed)
 {
-    // Throw exceptions if variables are not set
-    if (string.IsNullOrWhiteSpace(builder.Configuration["DeveloperSettings:DefaultSuperUserUserName"]))
-    {
-        throw new InvalidOperationException("Superuser user name not set!");
-    }
-    if (string.IsNullOrWhiteSpace(builder.Configuration["DeveloperSettings:DefaultSuperUserName"]))
-    {
-        throw new InvalidOperationException("Superuser name not set!");
-    }
-    if (string.IsNullOrWhiteSpace(builder.Configuration["DeveloperSettings:DefaultSuperUserEmail"]))
-    {
-        throw new InvalidOperationException("Superuser email not set!");
-    }
-
-    using var scope = app.Services.CreateScope();
     var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
 
     // Clear the existing DB and recreate a vanilla file
@@ -207,7 +247,8 @@ if (shouldSeed)
         context.Database.Migrate();
     }
 
-    // Seed tables with suitable values -- Note that competencies are already seeded
+    // Seed tables with suitable values -- Note that competencies are already seeded by migrations
+    SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
     SeedHelper.SeedPeople(scope.ServiceProvider);
     SeedHelper.SeedAbsences(scope.ServiceProvider);
     SeedHelper.SeedUsers(scope.ServiceProvider);
@@ -237,6 +278,7 @@ FileHelper.CleanLocalApplicationFilePath(logger);
 // Run the app
 app.Run();
 
+#if RELEASE
 /// <summary>
 /// What to do when a ticket is to be created from a CAS callback
 /// </summary>
@@ -348,3 +390,4 @@ async Task OnRemoteFailure(RemoteFailureContext context)
     context.Response.Redirect($"/Account/ExternalLoginFailure?message={HttpUtility.UrlEncode(failure?.Message)}");
     context.HandleResponse();
 }
+#endif

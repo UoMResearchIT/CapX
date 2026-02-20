@@ -2,8 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -13,6 +12,8 @@ namespace PPMTool.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+
+
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
@@ -58,13 +59,6 @@ namespace PPMTool.Migrations
                 name: "IX_Roles_PersonId",
                 table: "Roles",
                 column: "PersonId");
-
-            migrationBuilder.Sql(
-                @"
-                    INSERT INTO Roles (RoleType, CASUserName, PersonId)
-                    VALUES (3, 'mbgm6ah3', 1);
-                "
-            );
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

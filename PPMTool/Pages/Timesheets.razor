@@ -134,7 +134,7 @@
                                     @kvp.Key.Name
                                     @if (SuperuserShowSynopsisForAllStaff)
                                     {
-                                        <span class="badge badge-pill badge-info" style="padding: 0.3rem; margin-left: 0.25rem;" title="Line Manager : @kvp.Key.LineManager.Name">@kvp.Key.LineManager.ShortName</span>
+                                        <span class="badge badge-pill badge-info" style="padding: 0.3rem; margin-left: 0.25rem;" title="Line Manager : @kvp.Key.LineManager?.Name">@kvp.Key.LineManager?.ShortName</span>
                                     }
                                     <span class="badge badge-warning" style="padding: 0.3rem; float: right;">@kvp.Key.ShortName</span>
                                 </td>
