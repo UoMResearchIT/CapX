@@ -1,4 +1,5 @@
 ﻿using System.Linq.Dynamic.Core;
+using DocumentFormat.OpenXml.Vml.Office;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
@@ -21,12 +22,14 @@ namespace PPMTool.Pages
 
         protected List<Faculty> Faculties = new();
 
-        protected Faculty EditingFaculty;
-        protected School EditingSchool;
-        protected bool IsAddingSchool = false;
+        protected Faculty EditingFaculty = new Faculty();
+        protected School EditingSchool = new School();
+
         protected bool IsAddingFaculty = false;
-        protected School NewSchool;
+        protected bool IsAddingSchool = false;
         protected Faculty NewFaculty;
+        protected School NewSchool;
+
 
         protected override void OnInitialized()
         {
@@ -34,17 +37,45 @@ namespace PPMTool.Pages
             LoadData();
         }
 
+        /// <summary>
+        /// Data loading method. Gets the faculties (ordered by name) and deeploads the schools.
+        /// </summary>
         private void LoadData()
         {
             Faculties = FacultyService.GetAll(Context).OrderBy(f => f.Name).ToList();
         }
 
-        protected string GetFacultyCss(Faculty f) => f.IsActive ? "" : "inactive";
-        protected string GetSchoolCss(School s) => s.IsActive ? "" : "inactive";
+        /// <summary>
+        /// Shared "Toggle Active" method
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        private async Task ToggleActive((BaseOrgUnit unit, bool newValue) args)
+        {
+            var (unit, newValue) = args;
 
+            switch (unit)
+            {
+                case Faculty faculty:
+                    await ToggleFacultyActive(faculty, newValue);
+                    break;
+
+                case School school:
+                    ToggleSchoolActive(school, newValue);
+                    break;
+
+                default:
+                    throw new InvalidOperationException(
+                        $"Unsupported org unit type: {unit.GetType().Name}");
+            }
+        }
 
         // ---------------- FACULTY CRUD ----------------
 
+        /// <summary>
+        /// Creates a new Faculty entity to populate in the view, and sets
+        /// the flag to show the relevant fields in the component
+        /// </summary>
         protected void StartAddingFaculty()
         {
             NewFaculty = new Faculty
@@ -56,43 +87,73 @@ namespace PPMTool.Pages
             IsAddingFaculty = true;
         }
 
+        /// <summary>
+        /// Sets the flag on the relevant entity so that the view
+        /// shows the fields for editing it. Resets the flag on all other entities.
+        /// </summary>
+        /// <param name="faculty"></param>
         protected void EditFaculty(Faculty faculty)
         {
             EditingFaculty = faculty;
+            foreach (Faculty f in Faculties)
+            {
+                f.InEditMode = (f.FacultyId == EditingFaculty.FacultyId ? true : false);
+            }
         }
 
-        protected void SaveFaculty(Faculty faculty)
+        /// <summary>
+        /// Saves adjustments made to the Faculty entity being edited
+        /// </summary>
+        /// <param name="entity"></param>
+        protected void SaveFaculty(Faculty entity)
         {
-            if (faculty.FacultyId == 0)
+            if (entity.FacultyId == 0)
             {
-                FacultyService.Add(Context, faculty);
+                FacultyService.Add(Context, entity);
+                Faculties.Add(entity);
+                Faculties = Faculties.OrderBy(x => x.Name).ToList();
             }
             else
             {
-                FacultyService.Update(Context, faculty);
+                FacultyService.Update(Context, entity);
             }
 
             EditingFaculty = null;
-            NewFaculty = null;
             IsAddingFaculty = false;
-            LoadData();
+            entity.InEditMode = false;
         }
 
+        /// <summary>
+        /// Cancels the editing in progress. 
+        /// Restores the previous values and exits Edit Mode.
+        /// </summary>
+        /// <param name="entity"></param>
         protected void CancelFacultyEdit(Faculty entity)
         {
-            if (EditingFaculty?.FacultyId == 0)
-                Faculties.Remove(EditingFaculty);
             FacultyService.RestoreModel(Context, ref entity);
-
+            entity.InEditMode = false;
             EditingFaculty = null;
         }
 
+        /// <summary>
+        /// Cancels the adding a new faculty process. 
+        /// </summary>
+        /// <param name="entity"></param>
         protected void CancelNewFacultyAdd(Faculty entity)
         {
             IsAddingFaculty = false;
             NewFaculty = null;
         }
 
+        /// <summary>
+        /// Toggles the active status of a Faculty. 
+        /// Checks if there are schools and performs different
+        /// actions based on this (prompts user to confirm marking
+        /// all schools as inactive too).
+        /// </summary>
+        /// <param name="faculty"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
         protected async Task ToggleFacultyActive(Faculty faculty, bool value)
         {
             if (!value)
@@ -142,6 +203,11 @@ namespace PPMTool.Pages
 
         // ---------------- SCHOOL CRUD ----------------
 
+        /// <summary>
+        /// Sets up a new School object ready to be altered and
+        /// sets the view into Edit Mode
+        /// </summary>
+        /// <param name="faculty"></param>
         protected void StartAddingSchool(Faculty faculty)
         {
             NewSchool = new School
@@ -154,36 +220,57 @@ namespace PPMTool.Pages
             IsAddingSchool = true;
         }
 
+        /// <summary>
+        /// Sets the view into Edit Mode and unsets others schools 
+        /// in the same Faculty
+        /// </summary>
+        /// <param name="school"></param>
         protected void EditSchool(School school)
         {
             EditingSchool = school;
-        }
-
-        protected void SaveSchool(Faculty faculty, School school)
-        {
-            if (school.SchoolId == 0)
-                SchoolService.Add(Context, school);
-            else
-                SchoolService.Update(Context, school);
-
-            EditingSchool = null;
-            NewSchool = null;
-            IsAddingSchool = false;
-            LoadData();
-        }
-
-        protected void CancelSchoolEdit(School entity)
-        {
-            if (EditingSchool?.SchoolId == 0)
+            foreach (School s in school.Faculty.Schools)
             {
-                var parent = Faculties.First(f => f.FacultyId == EditingSchool.Faculty.FacultyId);
-                parent.Schools.Remove(EditingSchool);
+                s.InEditMode = (s.SchoolId == EditingSchool.SchoolId ? true : false);
+            }
+        }
+
+        /// <summary>
+        /// Saves/Updates a School in the db
+        /// </summary>
+        /// <param name="school"></param>
+        protected void SaveSchool(School entity)
+        {
+            if (entity.SchoolId == 0)
+            {
+                SchoolService.Add(Context, entity);
+                Faculty faculty = entity.Faculty;
+                faculty.Schools.OrderBy(x => x.Name);
+            }
+            else
+            {
+                SchoolService.Update(Context, entity);
             }
 
+            EditingSchool = null;
+            IsAddingSchool = false;
+            entity.InEditMode = false;
+        }
+
+        /// <summary>
+        /// Cancels Edit Mode for the school and restores the previous data
+        /// </summary>
+        /// <param name="entity"></param>
+        protected void CancelSchoolEdit(School entity)
+        {
             SchoolService.RestoreModel(Context, ref entity);
+            entity.InEditMode = false;
             EditingSchool = null;
         }
 
+        /// <summary>
+        /// Cancels the adding a enw school process
+        /// </summary>
+        /// <param name="entity"></param>
         protected void CancelNewSchoolAdd(School entity)
         {
             IsAddingSchool = false;
@@ -191,7 +278,7 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// ????
+        /// Toggles the active status of a school entity
         /// </summary>
         /// <param name="school"></param>
         /// <param name="value"></param>

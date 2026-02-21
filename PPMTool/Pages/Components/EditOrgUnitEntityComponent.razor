@@ -39,11 +39,11 @@
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%;">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
                     <RadzenButton Icon="edit"
-                    Size="ButtonSize.Small"
-                    ButtonStyle=ButtonStyle.Primary
-                    Click="@(() => OnEdit.InvokeAsync(OrgUnit))"
-                    Disabled="@(!OrgUnit.IsActive)"
-                    @onclick:stopPropagation="true" />
+                                  Size="ButtonSize.Small"
+                                  ButtonStyle=ButtonStyle.Primary
+                                  Click="@(() => OnEdit.InvokeAsync(OrgUnit))"
+                                  Disabled="@(!OrgUnit.IsActive)"
+                                  @onclick:stopPropagation="true" />
 
                     <RadzenText Text="@OrgUnit.GetSensibleObjectName()" TextStyle="TextStyle.DisplayH2" />
                 </RadzenStack>
@@ -51,9 +51,9 @@
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal">
                     <RadzenText Text="ACTIVE" />
                     <RadzenSwitch @bind-Value="OrgUnit.IsActive"
-                    Name="IsActive"
-                    Change="OnSwitchChanged"
-                    @onclick:stopPropagation="true" />
+                                  Name="IsActive"
+                                  Change="OnSwitchChanged"
+                                  @onclick:stopPropagation="true" />
                 </RadzenStack>
             </RadzenStack>
         </RadzenRow>
@@ -69,7 +69,8 @@
     [Parameter] public EventCallback<TOrgUnit> OnEdit { get; set; }
     [Parameter] public EventCallback<TOrgUnit> OnSave { get; set; }
     [Parameter] public EventCallback<TOrgUnit> OnCancel { get; set; }
-    [Parameter] public EventCallback<(TOrgUnit OrgUnit, bool NewValue)> OnToggleActive { get; set; }
+
+    [Parameter] public EventCallback<(BaseOrgUnit OrgUnit, bool NewValue)> OnToggleActive { get; set; }
 
     protected override void OnInitialized()
     {
@@ -78,7 +79,6 @@
 
     private async Task OnSwitchChanged(bool newValue)
     {
-        // Keep the local model in sync (since we're using @bind-Value)
         OrgUnit.IsActive = newValue;
 
         if (OnToggleActive.HasDelegate)
