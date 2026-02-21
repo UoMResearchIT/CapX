@@ -64,20 +64,12 @@ namespace PPMTool.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            //
-            // 1. Drop foreign keys
-            //
-            migrationBuilder.DropForeignKey(
-                name: "FK_Projects_Faculties_FacultyId",
-                table: "Projects");
+            // 1. Disable foreign keys OUTSIDE transaction
+            migrationBuilder.Sql(
+                "PRAGMA foreign_keys = OFF;",
+                suppressTransaction: true);
 
-            migrationBuilder.DropForeignKey(
-                name: "FK_Projects_Schools_SchoolId",
-                table: "Projects");
-
-            //
             // 2. Drop indexes
-            //
             migrationBuilder.DropIndex(
                 name: "IX_Projects_FacultyId",
                 table: "Projects");
@@ -90,18 +82,7 @@ namespace PPMTool.Migrations
                 name: "IX_Schools_FacultyId",
                 table: "Schools");
 
-            //
-            // 3. Drop Schools and Faculties tables
-            //
-            migrationBuilder.DropTable(
-                name: "Schools");
-
-            migrationBuilder.DropTable(
-                name: "Faculties");
-
-            //
-            // 4. Rename FK columns back to original string columns
-            //
+            // 3. Rename columns
             migrationBuilder.RenameColumn(
                 name: "SchoolId",
                 table: "Projects",
@@ -111,6 +92,11 @@ namespace PPMTool.Migrations
                 name: "FacultyId",
                 table: "Projects",
                 newName: "Faculty");
+
+            // 4. Re-enable foreign keys OUTSIDE transaction
+            migrationBuilder.Sql(
+                "PRAGMA foreign_keys = ON;",
+                suppressTransaction: true);
         }
     }
 }
