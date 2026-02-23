@@ -1,4 +1,5 @@
-﻿using System.Linq.Dynamic.Core;
+﻿using System.Diagnostics;
+using System.Linq.Dynamic.Core;
 using DocumentFormat.OpenXml.Vml.Office;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -70,7 +71,121 @@ namespace PPMTool.Pages
             }
         }
 
-        // ---------------- FACULTY CRUD ----------------
+        /// <summary>
+        /// Shared method for cancelling adding new OrgUnit
+        /// </summary>
+        /// <param name="unit"></param>
+        private void CancelOrgUnitAdd(BaseOrgUnit unit)
+        {
+            switch (unit)
+            {
+                case Faculty faculty:
+                    EditingFaculty = null;
+                    IsAddingFaculty = false;
+                    break;
+
+                case School school:
+                    EditingSchool = null;
+                    IsAddingSchool = false;
+                    break;
+            }
+
+            StateHasChanged();
+        }
+
+        /// <summary>
+        /// Shared method for saving a newly added OrgUnit
+        /// </summary>
+        /// <param name="unit"></param>
+        protected void SaveOrgUnit(BaseOrgUnit unit)
+        {
+            switch (unit)
+            {
+                case Faculty faculty:
+                    if (faculty.FacultyId == 0)
+                    {
+                        FacultyService.Add(Context, faculty);
+                        Faculties.Add(faculty);
+                        Faculties = Faculties.OrderBy(x => x.Name).ToList();
+                    }
+                    else
+                    {
+                        FacultyService.Update(Context, faculty);
+                    }
+
+                    EditingFaculty = null;
+                    IsAddingFaculty = false;
+                    faculty.InEditMode = false;
+                    break;
+
+                case School school:
+                    if (school.SchoolId == 0)
+                    {
+                        SchoolService.Add(Context, school);
+                        Faculty faculty = school.Faculty;
+                        faculty.Schools.OrderBy(x => x.Name);
+                    }
+                    else
+                    {
+                        SchoolService.Update(Context, school);
+                    }
+
+                    EditingSchool = null;
+                    IsAddingSchool = false;
+                    school.InEditMode = false;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Allows cancellation of OrgUnit.editing.
+        /// Restores the previous values and exits Edit Mode.
+        /// </summary>
+        /// <param name="unit"></param>
+        protected void CancelOrgUnitEdit(BaseOrgUnit unit)
+        {
+            switch (unit)
+            {
+                case Faculty faculty:
+                    FacultyService.RestoreModel(Context,ref unit);
+                    unit.InEditMode = false;
+                    EditingFaculty = null;
+                    break;
+
+                case School school:
+                    SchoolService.RestoreModel(Context, ref unit);
+                    unit.InEditMode = false;
+                    EditingSchool = null;
+                    break;
+            }
+
+        }
+
+        /// <summary>
+        /// Allows editing of an OrgUnit.
+        /// Sets the view into Edit Mode.
+        /// in the same Faculty
+        /// </summary>
+        /// <param name="school"></param>
+        protected void EditOrgUnit(BaseOrgUnit unit)
+        {
+            switch(unit)
+            {
+                case Faculty faculty:
+                    EditingFaculty = faculty;
+                    faculty.InEditMode = true;
+                    break;
+
+                case School school:
+                    EditingSchool = school;
+                    foreach (School s in school.Faculty.Schools)
+                    {
+                        s.InEditMode = (s.SchoolId == EditingSchool.SchoolId ? true : false);
+                    }
+                    break;
+            }
+
+        }
 
         /// <summary>
         /// Creates a new Faculty entity to populate in the view, and sets
@@ -87,62 +202,23 @@ namespace PPMTool.Pages
             IsAddingFaculty = true;
         }
 
+
+
         /// <summary>
-        /// Sets the flag on the relevant entity so that the view
-        /// shows the fields for editing it. Resets the flag on all other entities.
+        /// Sets up a new School object ready to be altered and
+        /// sets the view into Edit Mode
         /// </summary>
         /// <param name="faculty"></param>
-        protected void EditFaculty(Faculty faculty)
+        protected void StartAddingSchool(Faculty faculty)
         {
-            EditingFaculty = faculty;
-            foreach (Faculty f in Faculties)
+            NewSchool = new School
             {
-                f.InEditMode = (f.FacultyId == EditingFaculty.FacultyId ? true : false);
-            }
-        }
+                Faculty = faculty,
+                IsActive = true,
+                Description = string.Empty
+            };
 
-        /// <summary>
-        /// Saves adjustments made to the Faculty entity being edited
-        /// </summary>
-        /// <param name="entity"></param>
-        protected void SaveFaculty(Faculty entity)
-        {
-            if (entity.FacultyId == 0)
-            {
-                FacultyService.Add(Context, entity);
-                Faculties.Add(entity);
-                Faculties = Faculties.OrderBy(x => x.Name).ToList();
-            }
-            else
-            {
-                FacultyService.Update(Context, entity);
-            }
-
-            EditingFaculty = null;
-            IsAddingFaculty = false;
-            entity.InEditMode = false;
-        }
-
-        /// <summary>
-        /// Cancels the editing in progress. 
-        /// Restores the previous values and exits Edit Mode.
-        /// </summary>
-        /// <param name="entity"></param>
-        protected void CancelFacultyEdit(Faculty entity)
-        {
-            FacultyService.RestoreModel(Context, ref entity);
-            entity.InEditMode = false;
-            EditingFaculty = null;
-        }
-
-        /// <summary>
-        /// Cancels the adding a new faculty process. 
-        /// </summary>
-        /// <param name="entity"></param>
-        protected void CancelNewFacultyAdd(Faculty entity)
-        {
-            IsAddingFaculty = false;
-            NewFaculty = null;
+            IsAddingSchool = true;
         }
 
         /// <summary>
@@ -200,82 +276,6 @@ namespace PPMTool.Pages
             FacultyService.Update(Context, faculty);
         }
 
-
-        // ---------------- SCHOOL CRUD ----------------
-
-        /// <summary>
-        /// Sets up a new School object ready to be altered and
-        /// sets the view into Edit Mode
-        /// </summary>
-        /// <param name="faculty"></param>
-        protected void StartAddingSchool(Faculty faculty)
-        {
-            NewSchool = new School
-            {
-                Faculty = faculty,
-                IsActive = true,
-                Description = string.Empty
-            };
-
-            IsAddingSchool = true;
-        }
-
-        /// <summary>
-        /// Sets the view into Edit Mode and unsets others schools 
-        /// in the same Faculty
-        /// </summary>
-        /// <param name="school"></param>
-        protected void EditSchool(School school)
-        {
-            EditingSchool = school;
-            foreach (School s in school.Faculty.Schools)
-            {
-                s.InEditMode = (s.SchoolId == EditingSchool.SchoolId ? true : false);
-            }
-        }
-
-        /// <summary>
-        /// Saves/Updates a School in the db
-        /// </summary>
-        /// <param name="school"></param>
-        protected void SaveSchool(School entity)
-        {
-            if (entity.SchoolId == 0)
-            {
-                SchoolService.Add(Context, entity);
-                Faculty faculty = entity.Faculty;
-                faculty.Schools.OrderBy(x => x.Name);
-            }
-            else
-            {
-                SchoolService.Update(Context, entity);
-            }
-
-            EditingSchool = null;
-            IsAddingSchool = false;
-            entity.InEditMode = false;
-        }
-
-        /// <summary>
-        /// Cancels Edit Mode for the school and restores the previous data
-        /// </summary>
-        /// <param name="entity"></param>
-        protected void CancelSchoolEdit(School entity)
-        {
-            SchoolService.RestoreModel(Context, ref entity);
-            entity.InEditMode = false;
-            EditingSchool = null;
-        }
-
-        /// <summary>
-        /// Cancels the adding a enw school process
-        /// </summary>
-        /// <param name="entity"></param>
-        protected void CancelNewSchoolAdd(School entity)
-        {
-            IsAddingSchool = false;
-            NewSchool = null;
-        }
 
         /// <summary>
         /// Toggles the active status of a school entity

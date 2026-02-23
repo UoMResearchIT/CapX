@@ -1,5 +1,4 @@
 ﻿@using PPMTool.Data.Entities
-@typeparam TOrgUnit where TOrgUnit : BaseOrgUnit
 
     @if (InEditMode)
     {
@@ -61,14 +60,14 @@
 
 @code {
     [Parameter]
-    public TOrgUnit OrgUnit { get; set; } = default!;
+    public BaseOrgUnit OrgUnit { get; set; } = default!;
 
     [Parameter]
     public bool InEditMode { get; set; }
 
-    [Parameter] public EventCallback<TOrgUnit> OnEdit { get; set; }
-    [Parameter] public EventCallback<TOrgUnit> OnSave { get; set; }
-    [Parameter] public EventCallback<TOrgUnit> OnCancel { get; set; }
+    [Parameter] public EventCallback<BaseOrgUnit> OnEdit { get; set; }
+    [Parameter] public EventCallback<BaseOrgUnit> OnSave { get; set; }
+    [Parameter] public EventCallback<BaseOrgUnit> OnCancel { get; set; }
 
     [Parameter] public EventCallback<(BaseOrgUnit OrgUnit, bool NewValue)> OnToggleActive { get; set; }
 

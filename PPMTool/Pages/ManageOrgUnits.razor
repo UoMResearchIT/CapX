@@ -25,11 +25,10 @@
                         <Template>
                             <div style="margin: 0px; padding: 0px; width: 100%;">
 
-                                <EditOrgUnitEntityComponent TOrgUnit="Faculty"
-                                                            OrgUnit="NewFaculty"
+                                <EditOrgUnitEntityComponent OrgUnit="NewFaculty"
                                                             InEditMode=true
-                                                            OnSave="SaveFaculty"
-                                                            OnCancel="CancelNewFacultyAdd" />
+                                                            OnSave="SaveOrgUnit"
+                                                            OnCancel="CancelOrgUnitAdd" />
                             </div>
                         </Template>
                     </RadzenAccordionItem>
@@ -44,12 +43,11 @@
                     <RadzenAccordionItem Style="margin-top: .5rem;">
                         <Template>
                             <div style="margin: 0px; padding: 0px; width: 100%;">
-                                <EditOrgUnitEntityComponent TOrgUnit="Faculty"
-                                                            OrgUnit="faculty"
-                                                            OnEdit="EditFaculty"
+                                <EditOrgUnitEntityComponent OrgUnit="faculty"
+                                                            OnEdit="EditOrgUnit"
                                                             InEditMode=@faculty.InEditMode
-                                                            OnSave="SaveFaculty"
-                                                            OnCancel="CancelFacultyEdit"
+                                                            OnSave="SaveOrgUnit"
+                                                            OnCancel="CancelOrgUnitEdit"
                                                             OnToggleActive="ToggleActive" />
                             </div>
                         </Template>
@@ -60,12 +58,11 @@
                                 @foreach (var school in faculty.Schools.OrderBy(x =>x.Name))
                                 {
                                         <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="padding-left: 10px;">
-                                            <EditOrgUnitEntityComponent TOrgUnit="School"
-                                                                        OrgUnit="school"
-                                                                        OnEdit="EditSchool"
+                                            <EditOrgUnitEntityComponent OrgUnit="school"
+                                                                        OnEdit="EditOrgUnit"
                                                                         InEditMode=@school.InEditMode
-                                                                        OnSave="SaveSchool"
-                                                                        OnCancel="CancelSchoolEdit"
+                                                                        OnSave="SaveOrgUnit"
+                                                                        OnCancel="CancelOrgUnitEdit"
                                                                         OnToggleActive="ToggleActive" />
                                         </RadzenRow>
                                 }
@@ -74,11 +71,10 @@
                             @if (IsAddingSchool)
                             {
                                 <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="padding-left: 10px;">
-                                    <EditOrgUnitEntityComponent TOrgUnit="School"
-                                                                OrgUnit="NewSchool"
+                                    <EditOrgUnitEntityComponent OrgUnit="NewSchool"
                                                                 InEditMode=true
-                                                                OnSave="SaveSchool"
-                                                                OnCancel="CancelNewSchoolAdd" />
+                                                                OnSave="SaveOrgUnit"
+                                                                OnCancel="CancelOrgUnitAdd" />
                                 </RadzenRow>
                             }
 
