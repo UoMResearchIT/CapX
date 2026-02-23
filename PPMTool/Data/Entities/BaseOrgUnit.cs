@@ -15,22 +15,9 @@ namespace PPMTool.Data.Entities
         public string Name { get; set; }
 
         /// <summary>
-        /// Description to help identify it to admins
-        /// </summary>
-        [Required]
-        public string Description { get; set; }
-
-        /// <summary>
         /// Abbreviated name or code of the organisational unit.
         /// </summary>
         public string Code { get; set; }
-
-        /// <summary>
-        /// A value to be used to control the ordering in dropdowns.
-        /// Defaults to zero and in that case the Id will be used instead.
-        /// </summary>
-        [Required]
-        public int Order { get; set; } = 0;
 
         /// <summary>
         /// For soft deletion/visibility toggling

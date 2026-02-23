@@ -196,7 +196,6 @@ namespace PPMTool.Pages
             NewFaculty = new Faculty
             {
                 IsActive = true,
-                Description = string.Empty
             };
 
             IsAddingFaculty = true;
@@ -215,7 +214,6 @@ namespace PPMTool.Pages
             {
                 Faculty = faculty,
                 IsActive = true,
-                Description = string.Empty
             };
 
             IsAddingSchool = true;
