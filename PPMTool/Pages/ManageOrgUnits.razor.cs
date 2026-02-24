@@ -89,8 +89,6 @@ namespace PPMTool.Pages
                     IsAddingSchool = false;
                     break;
             }
-
-            StateHasChanged();
         }
 
         /// <summary>
@@ -158,7 +156,6 @@ namespace PPMTool.Pages
                     EditingSchool = null;
                     break;
             }
-
         }
 
         /// <summary>
@@ -184,7 +181,6 @@ namespace PPMTool.Pages
                     }
                     break;
             }
-
         }
 
         /// <summary>
@@ -200,8 +196,6 @@ namespace PPMTool.Pages
 
             IsAddingFaculty = true;
         }
-
-
 
         /// <summary>
         /// Sets up a new School object ready to be altered and
