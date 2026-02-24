@@ -145,7 +145,7 @@ namespace PPMTool.Pages
             switch (unit)
             {
                 case Faculty faculty:
-                    FacultyService.RestoreModel(Context,ref unit);
+                    FacultyService.RestoreModel(Context, ref unit);
                     unit.InEditMode = false;
                     EditingFaculty = null;
                     break;
@@ -166,7 +166,7 @@ namespace PPMTool.Pages
         /// <param name="school"></param>
         protected void EditOrgUnit(BaseOrgUnit unit)
         {
-            switch(unit)
+            switch (unit)
             {
                 case Faculty faculty:
                     EditingFaculty = faculty;
