@@ -207,7 +207,6 @@ if (shouldSeed)
     }
 
     // Seed tables with suitable values -- Note that competencies are already seeded
-    /*
     SeedHelper.SeedPeople(scope.ServiceProvider);
     SeedHelper.SeedAbsences(scope.ServiceProvider);
     SeedHelper.SeedUsers(scope.ServiceProvider);
@@ -217,6 +216,7 @@ if (shouldSeed)
     SeedHelper.SeedCompetencyAssessments(scope.ServiceProvider);
     SeedHelper.SeedInnateCodesAndTasks(scope.ServiceProvider);
     SeedHelper.SeedFinancialReferences(scope.ServiceProvider);
+    SeedHelper.SeedOrganisationalUnits(scope.ServiceProvider);
     SeedHelper.SeedProjects(scope.ServiceProvider);
     SeedHelper.SeedFundingSources(scope.ServiceProvider);
     SeedHelper.SeedSubTasks(scope.ServiceProvider);
@@ -224,7 +224,6 @@ if (shouldSeed)
     SeedHelper.SeedNotes(scope.ServiceProvider);
     SeedHelper.SeedInvoicesAndPayments(scope.ServiceProvider);
     SeedHelper.SeedTimesheets(scope.ServiceProvider);
-    */
 }
 
 // Set default culture
