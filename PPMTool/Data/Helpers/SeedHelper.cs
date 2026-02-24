@@ -1120,6 +1120,103 @@ namespace PPMTool.Data.Helpers
             }
         }
 
+        internal static void SeedOrganisationalUnits(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding organisaional units...");
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Clear existing entries
+                context.Faculties.ExecuteDelete();
+                context.Schools.ExecuteDelete();
+
+                // Add the Faculties and Schools
+                var faculties = new List<Faculty>
+                {
+                    new Faculty
+                    {
+                        FacultyId = 1,
+                        Name = "None",
+                        Code = "None",
+                        Schools =
+                        {
+                            new School { Name = "None", Code = "None" }
+                        }
+                    },
+                    new Faculty
+                    {
+                        FacultyId = 2,
+                        Name = "Research IT / Internal",
+                        Code = "Int"
+                    },
+                    new Faculty
+                    {
+                        FacultyId = 3,
+                        Name = "Professional Services and Cultural Institutions",
+                        Code = "PSCI"
+                    },
+                    new Faculty
+                    {
+                        FacultyId = 4,
+                        Name = "Biology, Medical and Health Studies",
+                        Code = "FBMH",
+                        Schools =
+                        {
+                            new School { Name = "School of Biological Sciences", Code = "SBS" },
+                            new School { Name = "School of Medical Sciences", Code = "SMS" },
+                            new School { Name = "School of Health Sciences", Code = "SHS" }
+                        }
+                    },
+                    new Faculty
+                    {
+                        FacultyId = 5,
+                        Name = "Humanities",
+                        Code = "FHUM",
+                        Schools =
+                        {
+                            new School { Name = "Alliance Manchester Bus School", Code = "AMBS" },
+                            new School { Name = "School of Arts, Languages and Cultures", Code = "SALC" },
+                            new School { Name = "School of Environment, Education and Development", Code = "SEED" },
+                            new School { Name = "School of Social Sciences", Code = "SSS" }
+                        }
+                    },
+                    new Faculty
+                    {
+                        FacultyId = 6,
+                        Name = "Science and Engineering",
+                        Code = "FSE",
+                        Schools =
+                        {
+                            new School { Name = "School of Engineering", Code = "SE" },
+                            new School { Name = "School of Natural Sciences", Code = "SNS" }
+                        }
+                    },
+                    new Faculty
+                    {
+                        FacultyId = 7,
+                        Name = "Research Lifecycle Programme",
+                        Code = "RLP"
+                    },
+                    new Faculty
+                    {
+                        FacultyId = 8,
+                        Name = "Commercial / External",
+                        Code = "External"
+                    },
+                    new Faculty
+                    {
+                        FacultyId = 9,
+                        Name = "Cross-Faculty Research Institutes",
+                        Code = "ResInst",
+                    }
+                };
+
+                context.Faculties.AddRange(faculties);
+                context.SaveChanges();
+            }
+        }
+
         /// <summary>
         /// Seed projects -- repurposes some projects from the live DB and changes details.
         /// RTP number is important as it is used to construct the dependent entities so beware of changing it!
@@ -1132,6 +1229,23 @@ namespace PPMTool.Data.Helpers
             logger.LogInformation("Seeding projects...");
             using (var context = dbContextFactory.CreateDbContext())
             {
+                // Populate the Faculty and School details for use in Projects
+                Dictionary<string, Faculty> faculties = new Dictionary<string, Faculty>();
+                Dictionary<string, School> schools = new Dictionary<string, School>();
+                var allFaculties = context.Faculties.Include(f => f.Schools).ToList();
+
+                foreach (Faculty f in allFaculties)
+                {
+                    faculties[f.Code.ToLower().Trim()] = f;
+                    if (f.Schools.Count > 0)
+                    {
+                        foreach (School s in f.Schools)
+                        {
+                            schools[s.Code.ToLower().Trim()] = s;
+                        }
+                    }
+                }
+                
                 // Create the projects
                 var projects = new List<Project>
                 {
@@ -1145,7 +1259,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 250,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2025, 07, 31),
-                        //Faculty = Faculty.Internal,
+                        Faculty = faculties["none"],
                         LeadershipFTE = 0.05f,
                         Name = "Create CoP for Research Software",
                         PI = "Dr. Waffle McSnort",
@@ -1156,7 +1270,7 @@ namespace PPMTool.Data.Helpers
                         ProjectStatus = ProjectStatus.CancelledBidFailed,
                         RTP = 169,
                         RequestDocLink = "https://www.google.com",
-                        School = School.None,
+                        School = schools["none"],
                         StartDate = ApplyDateOffset(2023, 07, 03),
                     },
                     new Project
@@ -1170,7 +1284,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 262,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2025, 07, 31),
-                        Faculty = Faculty.FBMH,
+                        Faculty = faculties["fbmh"],
                         InnateActivity = GetInnateActivityForRTP(context, 180),
                         LeadershipFTE = 0.05f,
                         Name = "Polypharmacy KSS",
@@ -1182,7 +1296,7 @@ namespace PPMTool.Data.Helpers
                         ProjectStatus = ProjectStatus.Active,
                         RTP = 180,
                         RequestDocLink = "https://www.google.com",
-                        School = School.SHS,
+                        School = schools["sms"],
                         ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/69",
                         StartDate = ApplyDateOffset(2023, 10, 02),
                     },
@@ -1196,7 +1310,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 250,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2028, 06, 30),
-                        Faculty = Faculty.FSE,
+                        Faculty = faculties["fse"],
                         InnateActivity = GetInnateActivityForRTP(context, 255),
                         LeadershipFTE = 0.05f,
                         Name = "Local Climate Zone Modelling",
@@ -1208,7 +1322,7 @@ namespace PPMTool.Data.Helpers
                         ProjectStatus = ProjectStatus.Funded,
                         RTP = 255,
                         RequestDocLink = "https://",
-                        School = School.SBS,
+                        School = schools["sbs"],
                         ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/193",
                         StartDate = ApplyDateOffset(2025, 07, 01),
                     },
@@ -1222,7 +1336,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2025, 10, 12),
-                        Faculty = Faculty.FHUMS,
+                        Faculty = faculties["fhum"],
                         LeadershipFTE = 0.05f,
                         Name = "Political Research Transparency Web App",
                         PI = "Ms. Bubbles McGee",
@@ -1233,7 +1347,7 @@ namespace PPMTool.Data.Helpers
                         ProjectStatus = ProjectStatus.AwaitingOutcome,
                         RTP = 265,
                         RequestDocLink = "https://www.google.com",
-                        School = School.SSS,
+                        School = schools["sss"],
                         StartDate = ApplyDateOffset(2025, 07, 01),
                     },
                     new Project
@@ -1247,7 +1361,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 262,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2025, 03, 20),
-                        Faculty = Faculty.FBMH,
+                        Faculty = faculties["fbmh"],
                         InnateActivity = GetInnateActivityForRTP(context, 311),
                         LeadershipFTE = 0.025f,
                         Name = "BMBaseDB Update",
@@ -1259,7 +1373,7 @@ namespace PPMTool.Data.Helpers
                         ProjectStatus = ProjectStatus.Finished,
                         RTP = 311,
                         RequestDocLink = "https://www.google.com",
-                        School = School.SBS,
+                        School = schools["sbs"],
                         ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/146",
                         StartDate = ApplyDateOffset(2025, 01, 13),
                     },
@@ -1274,7 +1388,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2028, 04, 08),
-                        Faculty = Faculty.FHUMS,
+                        Faculty = faculties["fhum"],
                         InnateActivity = GetInnateActivityForRTP(context, 323),
                         LeadershipFTE = 0.025f,
                         Name = "Sustainability Trade-off Game Website",
@@ -1286,7 +1400,7 @@ namespace PPMTool.Data.Helpers
                         ProjectStatus =ProjectStatus.Paused,
                         RTP = 323,
                         RequestDocLink = "https://www.google.com",
-                        School = School.AMBS,
+                        School = schools["ambs"],
                         ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/154/views/1?custom_template=33",
                         StartDate = ApplyDateOffset(2025, 02, 27),
                     },
@@ -1301,7 +1415,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2026, 01, 29),
-                        Faculty = Faculty.FBMH,
+                        Faculty = faculties["fbmh"],
                         InnateActivity = GetInnateActivityForRTP(context, 324),
                         LeadershipFTE = 0.05f,
                         Name = "PAPrKA",
@@ -1313,7 +1427,7 @@ namespace PPMTool.Data.Helpers
                         ProjectStatus = ProjectStatus.Maintenance,
                         RTP = 324,
                         RequestDocLink = "https://www.google.com",
-                        School = School.SMS,
+                        School = schools["sms"],
                         ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/158",
                         StartDate = ApplyDateOffset(2025, 03, 05),
                     }
