@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-using System.Linq.Dynamic.Core;
-using DocumentFormat.OpenXml.Vml.Office;
+﻿using System.Linq.Dynamic.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
@@ -19,17 +17,15 @@ namespace PPMTool.Pages
         private SchoolService SchoolService { get; set; }
 
         [Inject]
-        protected DialogService DialogService { get; set; }
+        private DialogService DialogService { get; set; }
 
-        protected List<Faculty> Faculties = new();
-
-        protected Faculty EditingFaculty = new Faculty();
-        protected School EditingSchool = new School();
-
-        protected bool IsAddingFaculty = false;
-        protected bool IsAddingSchool = false;
-        protected Faculty NewFaculty;
-        protected School NewSchool;
+        private List<Faculty> faculties = new();
+        private Faculty editingFaculty = new Faculty();
+        private School editingSchool = new School();
+        private bool isAddingFaculty = false;
+        private bool isAddingSchool = false;
+        private Faculty newFaculty;
+        private School newSchool;
 
 
         protected override void OnInitialized()
@@ -43,7 +39,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void LoadData()
         {
-            Faculties = FacultyService.GetAll(Context).OrderBy(f => f.Name).ToList();
+            faculties = FacultyService.GetAll(Context).OrderBy(f => f.Name).ToList();
         }
 
         /// <summary>
@@ -80,13 +76,13 @@ namespace PPMTool.Pages
             switch (unit)
             {
                 case Faculty faculty:
-                    EditingFaculty = null;
-                    IsAddingFaculty = false;
+                    editingFaculty = null;
+                    isAddingFaculty = false;
                     break;
 
                 case School school:
-                    EditingSchool = null;
-                    IsAddingSchool = false;
+                    editingSchool = null;
+                    isAddingSchool = false;
                     break;
             }
         }
@@ -103,16 +99,16 @@ namespace PPMTool.Pages
                     if (faculty.FacultyId == 0)
                     {
                         FacultyService.Add(Context, faculty);
-                        Faculties.Add(faculty);
-                        Faculties = Faculties.OrderBy(x => x.Name).ToList();
+                        faculties.Add(faculty);
+                        faculties = faculties.OrderBy(x => x.Name).ToList();
                     }
                     else
                     {
                         FacultyService.Update(Context, faculty);
                     }
 
-                    EditingFaculty = null;
-                    IsAddingFaculty = false;
+                    editingFaculty = null;
+                    isAddingFaculty = false;
                     faculty.InEditMode = false;
                     break;
 
@@ -128,8 +124,8 @@ namespace PPMTool.Pages
                         SchoolService.Update(Context, school);
                     }
 
-                    EditingSchool = null;
-                    IsAddingSchool = false;
+                    editingSchool = null;
+                    isAddingSchool = false;
                     school.InEditMode = false;
                     break;
             }
@@ -147,13 +143,13 @@ namespace PPMTool.Pages
                 case Faculty faculty:
                     FacultyService.RestoreModel(Context, ref unit);
                     unit.InEditMode = false;
-                    EditingFaculty = null;
+                    editingFaculty = null;
                     break;
 
                 case School school:
                     SchoolService.RestoreModel(Context, ref unit);
                     unit.InEditMode = false;
-                    EditingSchool = null;
+                    editingSchool = null;
                     break;
             }
         }
@@ -169,15 +165,15 @@ namespace PPMTool.Pages
             switch (unit)
             {
                 case Faculty faculty:
-                    EditingFaculty = faculty;
+                    editingFaculty = faculty;
                     faculty.InEditMode = true;
                     break;
 
                 case School school:
-                    EditingSchool = school;
+                    editingSchool = school;
                     foreach (School s in school.Faculty.Schools)
                     {
-                        s.InEditMode = (s.SchoolId == EditingSchool.SchoolId ? true : false);
+                        s.InEditMode = (s.SchoolId == editingSchool.SchoolId ? true : false);
                     }
                     break;
             }
@@ -189,12 +185,12 @@ namespace PPMTool.Pages
         /// </summary>
         protected void StartAddingFaculty()
         {
-            NewFaculty = new Faculty
+            newFaculty = new Faculty
             {
                 IsActive = true,
             };
 
-            IsAddingFaculty = true;
+            isAddingFaculty = true;
         }
 
         /// <summary>
@@ -204,13 +200,13 @@ namespace PPMTool.Pages
         /// <param name="faculty"></param>
         protected void StartAddingSchool(Faculty faculty)
         {
-            NewSchool = new School
+            newSchool = new School
             {
                 Faculty = faculty,
                 IsActive = true,
             };
 
-            IsAddingSchool = true;
+            isAddingSchool = true;
         }
 
         /// <summary>

@@ -17,7 +17,7 @@
     </div>
 
     <div class="orgunits-accordion">
-        @if (IsAddingFaculty)
+        @if (isAddingFaculty)
         {
             <RadzenAccordion Multiple="false" Style="border: 0px; box-shadow: none;" >
                 <Items>
@@ -25,7 +25,7 @@
                         <Template>
                             <div style="margin: 0px; padding: 0px; width: 100%;">
 
-                                <EditOrgUnitEntityComponent OrgUnit="NewFaculty"
+                                <EditOrgUnitEntityComponent OrgUnit="newFaculty"
                                                             InEditMode=true
                                                             OnSave="SaveOrgUnit"
                                                             OnCancel="CancelOrgUnitAdd" />
@@ -38,7 +38,7 @@
 
         <RadzenAccordion Multiple="false" Style="border: 0px; box-shadow: none;" >
             <Items>
-                @foreach (var faculty in Faculties)
+                @foreach (var faculty in faculties)
                 {
                     <RadzenAccordionItem Style="margin-top: .5rem;">
                         <Template>
@@ -68,10 +68,10 @@
                                 }
                             }
 
-                            @if (IsAddingSchool)
+                            @if (isAddingSchool)
                             {
                                 <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="padding-left: 10px;">
-                                    <EditOrgUnitEntityComponent OrgUnit="NewSchool"
+                                    <EditOrgUnitEntityComponent OrgUnit="newSchool"
                                                                 InEditMode=true
                                                                 OnSave="SaveOrgUnit"
                                                                 OnCancel="CancelOrgUnitAdd" />
