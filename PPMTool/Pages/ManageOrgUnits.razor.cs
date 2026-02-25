@@ -22,8 +22,6 @@ namespace PPMTool.Pages
         private DialogService DialogService { get; set; }
 
         private List<Faculty> faculties = new();
-        private Faculty editingFaculty = new Faculty();
-        private School editingSchool = new School();
         private bool isAddingFaculty = false;
         private bool isAddingSchool = false;
         private Faculty newFaculty;
@@ -78,12 +76,10 @@ namespace PPMTool.Pages
             switch (unit)
             {
                 case Faculty faculty:
-                    editingFaculty = null;
                     isAddingFaculty = false;
                     break;
 
                 case School school:
-                    editingSchool = null;
                     isAddingSchool = false;
                     break;
             }
@@ -112,25 +108,23 @@ namespace PPMTool.Pages
                         res = FacultyService.Add(Context, faculty);
                         if (res < 0)
                         {
-                            SetErrorMessage(new StatusMessage("The faculty name and code must be unique!", MessageType.Error));
+                            SetUniqueErrorMessage(faculty);
                             return;
                         }
 
-                        // TODO: Reload from the DB?
-                        faculties.Add(faculty);
-                        faculties = faculties.OrderBy(x => x.Name).ToList();
+                        // Reload the data from the DB
+                        LoadData();
                     }
                     else
                     {
                         res = FacultyService.Update(Context, faculty);
                         if (res < 0)
                         {
-                            SetErrorMessage(new StatusMessage("The faculty name and code must be unique!", MessageType.Error));
+                            SetUniqueErrorMessage(faculty);
                             return;
                         }
                     }
 
-                    editingFaculty = null;
                     isAddingFaculty = false;
                     faculty.InEditMode = false;
                     break;
@@ -141,27 +135,35 @@ namespace PPMTool.Pages
                         res = SchoolService.Add(Context, school);
                         if (res < 0)
                         {
-                            SetErrorMessage(new StatusMessage("The school name and code must be unique!", MessageType.Error));
+                            SetUniqueErrorMessage(school);
                             return;
                         }
-                        Faculty faculty = school.Faculty;
-                        faculty.Schools.OrderBy(x => x.Name);
+
+                        LoadData();
                     }
                     else
                     {
                         res = SchoolService.Update(Context, school);
                         if (res < 0)
                         {
-                            SetErrorMessage(new StatusMessage("The school name and code must be unique!", MessageType.Error));
+                            SetUniqueErrorMessage(school);
                             return;
                         }
                     }
 
-                    editingSchool = null;
                     isAddingSchool = false;
                     school.InEditMode = false;
                     break;
             }
+        }
+
+        /// <summary>
+        /// Wrapper to present an uniqueness error message
+        /// </summary>
+        /// <param name="unit"></param>
+        private void SetUniqueErrorMessage(BaseOrgUnit unit)
+        {
+            SetErrorMessage(new StatusMessage($"The {(unit is School ? "school" : "faculty")} name and code must be unique!", MessageType.Error));
         }
 
         /// <summary>
@@ -176,13 +178,11 @@ namespace PPMTool.Pages
                 case Faculty faculty:
                     FacultyService.RestoreModel(Context, ref unit);
                     unit.InEditMode = false;
-                    editingFaculty = null;
                     break;
 
                 case School school:
                     SchoolService.RestoreModel(Context, ref unit);
                     unit.InEditMode = false;
-                    editingSchool = null;
                     break;
             }
         }
@@ -198,15 +198,13 @@ namespace PPMTool.Pages
             switch (unit)
             {
                 case Faculty faculty:
-                    editingFaculty = faculty;
                     faculty.InEditMode = true;
                     break;
 
                 case School school:
-                    editingSchool = school;
                     foreach (School s in school.Faculty.Schools)
                     {
-                        s.InEditMode = (s.SchoolId == editingSchool.SchoolId ? true : false);
+                        s.InEditMode = (s.SchoolId == school.SchoolId ? true : false);
                     }
                     break;
             }
