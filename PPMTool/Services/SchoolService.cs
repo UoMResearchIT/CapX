@@ -81,14 +81,19 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Detect a duplicate school
+        /// Detect a duplicate school if the name or code is the same as another in the same faculty. 
         /// </summary>
         /// <param name="context"></param>
         /// <param name="entity"></param>
         /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, School entity)
         {
-            return GetAll(context).Any(x => (x.Name.Trim().ToLower() == entity.Name.Trim().ToLower() || x.Code.Trim().ToLower() == entity.Code.Trim().ToLower()) && x.SchoolId != entity.SchoolId);
+            return GetAll(context)
+                .Any(x =>
+                    x.SchoolId != entity.SchoolId &&
+                    ((x.Name.Trim().ToLower() == entity.Name.Trim().ToLower() || x.Code.Trim().ToLower() == entity.Code.Trim().ToLower())
+                        && x.Faculty.FacultyId == entity.Faculty.FacultyId)
+                );
         }
 
         /// <summary>

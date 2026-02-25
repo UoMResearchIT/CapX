@@ -83,14 +83,18 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Detect a duplicate faculty
+        /// Detect a duplicate faculty when the name or code matches another one in the DB.
         /// </summary>
         /// <param name="context"></param>
         /// <param name="entity"></param>
         /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, Faculty entity)
         {
-            return GetAll(context).Any(x => (x.Name.Trim().ToLower() == entity.Name.Trim().ToLower() || x.Code.Trim().ToLower() == entity.Code.Trim().ToLower()) && x.FacultyId != entity.FacultyId);
+            return GetAll(context)
+                .Any(x =>
+                    x.FacultyId != entity.FacultyId &&
+                    (x.Name.Trim().ToLower() == entity.Name.Trim().ToLower() || x.Code.Trim().ToLower() == entity.Code.Trim().ToLower())
+                );
         }
     }
 }
