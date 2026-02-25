@@ -33,7 +33,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public string GetSensibleObjectName()
         {
-            return (Code != null && Code.Length > 0 ? $"{Name} ({Code})" : $"{Name}");
+            return $"{Name} ({Code})";
         }
 
         /// <summary>
