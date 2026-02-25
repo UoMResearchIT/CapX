@@ -36,6 +36,15 @@ namespace PPMTool.Data.Entities
             return (Code != null && Code.Length > 0 ? $"{Name} ({Code})" : $"{Name}");
         }
 
+        /// <summary>
+        /// Method to check that the name and code have a value
+        /// </summary>
+        /// <returns></returns>
+        internal bool Validate()
+        {
+            return !string.IsNullOrWhiteSpace(Name) && !string.IsNullOrWhiteSpace(Code);
+        }
+
         [NotMapped]
         public bool InEditMode { get; set; } = false;
     }

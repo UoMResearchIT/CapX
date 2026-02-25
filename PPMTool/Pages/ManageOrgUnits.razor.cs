@@ -1,9 +1,11 @@
 ﻿using System.Linq.Dynamic.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 using Radzen;
+using static PPMTool.Data.StatusMessage;
 
 namespace PPMTool.Pages
 {
@@ -93,18 +95,39 @@ namespace PPMTool.Pages
         /// <param name="unit"></param>
         protected void SaveOrgUnit(BaseOrgUnit unit)
         {
+            // Validate the model
+            SetErrorMessage(null);
+            if (!unit.Validate())
+            {
+                SetErrorMessage(new StatusMessage("Name and Code must have a value!", MessageType.Error));
+            }
+
+            // Now try to add to DB
+            int res = 0;
             switch (unit)
             {
                 case Faculty faculty:
                     if (faculty.FacultyId == 0)
                     {
-                        FacultyService.Add(Context, faculty);
+                        res = FacultyService.Add(Context, faculty);
+                        if (res < 0)
+                        {
+                            SetErrorMessage(new StatusMessage("The faculty name and code must be unique!", MessageType.Error));
+                            return;
+                        }
+
+                        // TODO: Reload from the DB?
                         faculties.Add(faculty);
                         faculties = faculties.OrderBy(x => x.Name).ToList();
                     }
                     else
                     {
-                        FacultyService.Update(Context, faculty);
+                        res = FacultyService.Update(Context, faculty);
+                        if (res < 0)
+                        {
+                            SetErrorMessage(new StatusMessage("The faculty name and code must be unique!", MessageType.Error));
+                            return;
+                        }
                     }
 
                     editingFaculty = null;
@@ -115,13 +138,23 @@ namespace PPMTool.Pages
                 case School school:
                     if (school.SchoolId == 0)
                     {
-                        SchoolService.Add(Context, school);
+                        res = SchoolService.Add(Context, school);
+                        if (res < 0)
+                        {
+                            SetErrorMessage(new StatusMessage("The school name and code must be unique!", MessageType.Error));
+                            return;
+                        }
                         Faculty faculty = school.Faculty;
                         faculty.Schools.OrderBy(x => x.Name);
                     }
                     else
                     {
-                        SchoolService.Update(Context, school);
+                        res = SchoolService.Update(Context, school);
+                        if (res < 0)
+                        {
+                            SetErrorMessage(new StatusMessage("The school name and code must be unique!", MessageType.Error));
+                            return;
+                        }
                     }
 
                     editingSchool = null;
