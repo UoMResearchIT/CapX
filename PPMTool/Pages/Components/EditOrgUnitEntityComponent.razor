@@ -65,17 +65,28 @@
     [Parameter]
     public bool InEditMode { get; set; }
 
-    [Parameter] public EventCallback<BaseOrgUnit> OnEdit { get; set; }
-    [Parameter] public EventCallback<BaseOrgUnit> OnSave { get; set; }
-    [Parameter] public EventCallback<BaseOrgUnit> OnCancel { get; set; }
+    [Parameter]
+    public EventCallback<BaseOrgUnit> OnEdit { get; set; }
 
-    [Parameter] public EventCallback<(BaseOrgUnit OrgUnit, bool NewValue)> OnToggleActive { get; set; }
+    [Parameter]
+    public EventCallback<BaseOrgUnit> OnSave { get; set; }
+
+    [Parameter]
+    public EventCallback<BaseOrgUnit> OnCancel { get; set; }
+
+    [Parameter]
+    public EventCallback<(BaseOrgUnit OrgUnit, bool NewValue)> OnToggleActive { get; set; }
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
     }
 
+    /// <summary>
+    /// Method fired when the switch is toggled
+    /// </summary>
+    /// <param name="newValue"></param>
+    /// <returns></returns>
     private async Task OnSwitchChanged(bool newValue)
     {
         OrgUnit.IsActive = newValue;
