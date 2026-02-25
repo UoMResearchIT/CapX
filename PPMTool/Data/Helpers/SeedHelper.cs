@@ -1245,7 +1245,7 @@ namespace PPMTool.Data.Helpers
                         }
                     }
                 }
-                
+
                 // Create the projects
                 var projects = new List<Project>
                 {
