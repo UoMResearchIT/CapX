@@ -17,6 +17,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Abbreviated name or code of the organisational unit.
         /// </summary>
+        [Required]
         public string Code { get; set; }
 
         /// <summary>
