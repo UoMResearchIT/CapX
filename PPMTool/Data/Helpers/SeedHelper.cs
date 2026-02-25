@@ -1234,15 +1234,14 @@ namespace PPMTool.Data.Helpers
             using (var context = dbContextFactory.CreateDbContext())
             {
                 // Populate the Faculty and School details for use in Projects
-                Dictionary<string, Faculty> faculties = new Dictionary<string, Faculty>();
                 Dictionary<string, School> schools = new Dictionary<string, School>();
                 var allFaculties = context.Faculties.Include(f => f.Schools).ToList();
 
                 foreach (Faculty f in allFaculties)
                 {
-                    faculties[f.Code.ToLower().Trim()] = f;
                     if (f.Schools.Count > 0)
                     {
+                        // Add schools to dictionary
                         foreach (School s in f.Schools)
                         {
                             schools[s.Code.ToLower().Trim()] = s;
