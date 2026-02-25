@@ -1120,6 +1120,10 @@ namespace PPMTool.Data.Helpers
             }
         }
 
+        /// <summary>
+        /// Seeds the faculty and school org units. Must be done before seeding projects.
+        /// </summary>
+        /// <param name="serviceProvider"></param>
         internal static void SeedOrganisationalUnits(IServiceProvider serviceProvider)
         {
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
