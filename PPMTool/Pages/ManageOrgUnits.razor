@@ -24,11 +24,12 @@
                     <RadzenAccordionItem >
                         <Template>
                             <div style="margin: 0px; padding: 0px; width: 100%;">
-
                                 <EditOrgUnitEntityComponent OrgUnit="newFaculty"
-                                                            InEditMode=true
-                                                            OnSave="SaveOrgUnit"
-                                                            OnCancel="CancelOrgUnitAdd" />
+                                                            OnSaveSucceeded="OrgUnitSuccessfulAdd"
+                                                            OnCancel="OrgUnitAddCancelled"
+                                                            OnEditFailed="OrgUnitEditFailed"
+                                                            Context="Context"
+                                                            OrgUnitService="FacultyService" />
                             </div>
                         </Template>
                     </RadzenAccordionItem>
@@ -44,11 +45,12 @@
                         <Template>
                             <div style="margin: 0px; padding: 0px; width: 100%;">
                                 <EditOrgUnitEntityComponent OrgUnit="faculty"
-                                                            OnEdit="EditOrgUnit"
-                                                            InEditMode=@faculty.InEditMode
-                                                            OnSave="SaveOrgUnit"
-                                                            OnCancel="CancelOrgUnitEdit"
-                                                            OnToggleActive="ToggleActive" />
+                                                            OnSaveSucceeded="OrgUnitSuccessfulAdd"
+                                                            OnCancel="OrgUnitAddCancelled"
+                                                            OnEditFailed="OrgUnitEditFailed"
+                                                            OnToggleActive="ToggleActiveAsync"
+                                                            Context="Context"
+                                                            OrgUnitService="FacultyService" />
                             </div>
                         </Template>
 
@@ -59,11 +61,12 @@
                                 {
                                         <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="padding-left: 10px;">
                                             <EditOrgUnitEntityComponent OrgUnit="school"
-                                                                        OnEdit="EditOrgUnit"
-                                                                        InEditMode=@school.InEditMode
-                                                                        OnSave="SaveOrgUnit"
-                                                                        OnCancel="CancelOrgUnitEdit"
-                                                                        OnToggleActive="ToggleActive" />
+                                                                        OnSaveSucceeded="OrgUnitSuccessfulAdd"
+                                                                        OnCancel="OrgUnitAddCancelled"
+                                                                        OnEditFailed="OrgUnitEditFailed"
+                                                                        OnToggleActive="ToggleActiveAsync"
+                                                                        Context="Context"
+                                                                        OrgUnitService="SchoolService" />
                                         </RadzenRow>
                                 }
                             }
@@ -72,9 +75,11 @@
                             {
                                 <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="padding-left: 10px;">
                                     <EditOrgUnitEntityComponent OrgUnit="newSchool"
-                                                                InEditMode=true
-                                                                OnSave="SaveOrgUnit"
-                                                                OnCancel="CancelOrgUnitAdd" />
+                                                                OnSaveSucceeded="OrgUnitSuccessfulAdd"
+                                                                OnCancel="OrgUnitAddCancelled"
+                                                                OnEditFailed="OrgUnitEditFailed"
+                                                                Context="Context"
+                                                                OrgUnitService="SchoolService" />
                                 </RadzenRow>
                             }
 

@@ -41,35 +41,10 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Shared "Toggle Active" method
-        /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        private async Task ToggleActive((BaseOrgUnit unit, bool newValue) args)
-        {
-            var (unit, newValue) = args;
-
-            switch (unit)
-            {
-                case Faculty faculty:
-                    await ToggleFacultyActive(faculty, newValue);
-                    break;
-
-                case School school:
-                    ToggleSchoolActive(school, newValue);
-                    break;
-
-                default:
-                    throw new InvalidOperationException(
-                        $"Unsupported org unit type: {unit.GetType().Name}");
-            }
-        }
-
-        /// <summary>
         /// Shared method for cancelling adding new OrgUnit
         /// </summary>
         /// <param name="unit"></param>
-        private void CancelOrgUnitAdd(BaseOrgUnit unit)
+        private void OrgUnitAddCancelled(BaseOrgUnit unit)
         {
             switch (unit)
             {
@@ -87,121 +62,28 @@ namespace PPMTool.Pages
         /// Shared method for saving a newly added OrgUnit
         /// </summary>
         /// <param name="unit"></param>
-        protected void SaveOrgUnit(BaseOrgUnit unit)
+        protected void OrgUnitSuccessfulAdd(BaseOrgUnit unit)
         {
-            // Now try to add to DB
-            int res = 0;
+            // Update the state of the page
             switch (unit)
             {
                 case Faculty faculty:
-                    if (faculty.FacultyId == 0)
-                    {
-                        res = FacultyService.Add(Context, faculty);
-                        if (res < 0)
-                        {
-                            NotifyOfUniquenessError(faculty);
-                            return;
-                        }
-
-                        // Reload the data from the DB
-                        LoadData();
-                    }
-                    else
-                    {
-                        res = FacultyService.Update(Context, faculty);
-                        if (res < 0)
-                        {
-                            NotifyOfUniquenessError(faculty);
-                            return;
-                        }
-                    }
-
                     isAddingFaculty = false;
-                    faculty.InEditMode = false;
                     break;
 
                 case School school:
-                    if (school.SchoolId == 0)
-                    {
-                        res = SchoolService.Add(Context, school);
-                        if (res < 0)
-                        {
-                            NotifyOfUniquenessError(school);
-                            return;
-                        }
-
-                        LoadData();
-                    }
-                    else
-                    {
-                        res = SchoolService.Update(Context, school);
-                        if (res < 0)
-                        {
-                            NotifyOfUniquenessError(school);
-                            return;
-                        }
-                    }
-
                     isAddingSchool = false;
-                    school.InEditMode = false;
                     break;
             }
         }
 
         /// <summary>
-        /// Wrapper to present an uniqueness error message
+        /// Handler for when a save fails
         /// </summary>
         /// <param name="unit"></param>
-        private void NotifyOfUniquenessError(BaseOrgUnit unit)
+        private void OrgUnitEditFailed(BaseOrgUnit unit)
         {
-            NotificationService.Notify(NotificationSeverity.Error,
-                "Duplicate Detected!",
-                $"The {(unit is School ? "school" : "faculty")} name and code must be unique!"
-            );
-        }
-
-        /// <summary>
-        /// Allows cancellation of OrgUnit.editing.
-        /// Restores the previous values and exits Edit Mode.
-        /// </summary>
-        /// <param name="unit"></param>
-        protected void CancelOrgUnitEdit(BaseOrgUnit unit)
-        {
-            switch (unit)
-            {
-                case Faculty faculty:
-                    FacultyService.RestoreModel(Context, ref unit);
-                    unit.InEditMode = false;
-                    break;
-
-                case School school:
-                    SchoolService.RestoreModel(Context, ref unit);
-                    unit.InEditMode = false;
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Allows editing of an OrgUnit.
-        /// Sets the view into Edit Mode.
-        /// in the same Faculty
-        /// </summary>
-        /// <param name="school"></param>
-        protected void EditOrgUnit(BaseOrgUnit unit)
-        {
-            switch (unit)
-            {
-                case Faculty faculty:
-                    faculty.InEditMode = true;
-                    break;
-
-                case School school:
-                    foreach (School s in school.Faculty.Schools)
-                    {
-                        s.InEditMode = (s.SchoolId == school.SchoolId ? true : false);
-                    }
-                    break;
-            }
+            NotifyOfUniquenessError(unit);
         }
 
         /// <summary>
@@ -235,6 +117,31 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Shared "Toggle Active" method
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        private async Task ToggleActiveAsync((BaseOrgUnit unit, bool newValue) args)
+        {
+            var (unit, newValue) = args;
+
+            switch (unit)
+            {
+                case Faculty faculty:
+                    await ToggleFacultyActiveAsync(faculty, newValue);
+                    break;
+
+                case School school:
+                    ToggleSchoolActive(school, newValue);
+                    break;
+
+                default:
+                    throw new InvalidOperationException(
+                        $"Unsupported org unit type: {unit.GetType().Name}");
+            }
+        }
+
+        /// <summary>
         /// Toggles the active status of a Faculty. 
         /// Checks if there are schools and performs different
         /// actions based on this (prompts user to confirm marking
@@ -243,7 +150,7 @@ namespace PPMTool.Pages
         /// <param name="faculty"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        protected async Task ToggleFacultyActive(Faculty faculty, bool value)
+        protected async Task ToggleFacultyActiveAsync(Faculty faculty, bool value)
         {
             if (!value)
             {
@@ -299,6 +206,18 @@ namespace PPMTool.Pages
         {
             school.IsActive = value;
             FacultyService.Update(Context, school.Faculty);
+        }
+
+        /// <summary>
+        /// Wrapper to present an uniqueness error message
+        /// </summary>
+        /// <param name="unit"></param>
+        private void NotifyOfUniquenessError(BaseOrgUnit unit)
+        {
+            NotificationService.Notify(NotificationSeverity.Error,
+                "Duplicate Detected!",
+                $"The {(unit is School ? "school" : "faculty")} name and code must be unique!"
+            );
         }
     }
 }
