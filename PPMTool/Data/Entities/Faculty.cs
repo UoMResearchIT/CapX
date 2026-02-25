@@ -14,5 +14,14 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         public virtual ICollection<School> Schools { get; set; } = new List<School>();
+
+        /// <summary>
+        /// Return primary key
+        /// </summary>
+        /// <returns></returns>
+        public override int GetId()
+        {
+            return FacultyId;
+        }
     }
 }

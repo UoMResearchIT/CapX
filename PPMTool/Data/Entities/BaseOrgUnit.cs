@@ -1,12 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PPMTool.Data.Entities
 {
     /// <summary>
     /// Represents an organisational unit (faculty, school, department, etc)
     /// </summary>
-    public class BaseOrgUnit : ILoggableClass
+    public abstract class BaseOrgUnit : ILoggableClass
     {
         /// <summary>
         /// Name of the school or department
@@ -45,7 +44,12 @@ namespace PPMTool.Data.Entities
             return !string.IsNullOrWhiteSpace(Name) && !string.IsNullOrWhiteSpace(Code);
         }
 
-        [NotMapped]
-        public bool InEditMode { get; set; } = false;
+
+
+        /// <summary>
+        /// Return the ID of the entity
+        /// </summary>
+        /// <returns></returns>
+        public abstract int GetId();
     }
 }

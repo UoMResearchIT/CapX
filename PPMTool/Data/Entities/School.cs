@@ -14,5 +14,14 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         public Faculty Faculty { get; set; }
+
+        /// <summary>
+        /// Return primary key
+        /// </summary>
+        /// <returns></returns>
+        public override int GetId()
+        {
+            return SchoolId;
+        }
     }
 }
