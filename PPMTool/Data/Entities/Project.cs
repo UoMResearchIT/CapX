@@ -27,12 +27,6 @@ namespace PPMTool.Data.Entities
         public string PI { get; set; }
 
         /// <summary>
-        /// Faculty in which the projet sits
-        /// </summary>
-        [Required]
-        public Faculty Faculty { get; set; } = new Faculty();
-
-        /// <summary>
         /// School within the faculty in which the project sits
         /// </summary>
         [Required]
@@ -254,7 +248,7 @@ namespace PPMTool.Data.Entities
         private bool HasNoFacultyOrFacultyButNoSchool()
         {
             // The Faculty and School properties will be newly instantiated objects if not storing proper entities
-            return Faculty.FacultyId == 0 || ((Faculty.FacultyId > 0) && School.SchoolId == 0);
+            return School.Faculty.FacultyId == 0 || ((School.Faculty.FacultyId > 0) && School.SchoolId == 0);
         }
 
         /// <summary>

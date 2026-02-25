@@ -81,7 +81,7 @@ namespace PPMTool.Pages
                 EditAuthorised = ActiveUserRoleType == RoleType.Superuser || projectModel.ProjectManager.PersonId == ActiveUser?.Person?.PersonId;
 
                 // Populate school list
-                schools = SchoolService.GetSchoolsForFaculty(Context, projectModel.Faculty.FacultyId);
+                schools = SchoolService.GetSchoolsForFaculty(Context, projectModel.School.Faculty.FacultyId);
 
                 // Populate funding source list
                 availableFundingSources = FundingSourceService.GetFundingSources(Context, ProjectId);

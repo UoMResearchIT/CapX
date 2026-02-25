@@ -92,8 +92,8 @@ namespace PPMTool.Services
         public override IEnumerable<Project> GetAll(PPMToolContext context)
         {
             return context.Projects
-                .Include(p => p.Faculty)
                 .Include(p => p.School)
+                    .ThenInclude(s => s.Faculty)
                 .Include(p => p.SubTasks)
                     .ThenInclude(s => s.AssignedResources)
                         .ThenInclude(r => r.Person)

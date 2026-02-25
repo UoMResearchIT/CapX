@@ -145,7 +145,7 @@ namespace PPMTool.Data.Helpers
                     BilledFTE = resource.BilledFTE,
                     ProjectName = project.GetFullName(),
                     LeadRSE = project.ProjectManager?.Name ?? "Unknown",
-                    Faculty = project.Faculty.Name,
+                    Faculty = project.School.Faculty.Name,
                     School = project.School.Name,
                     PI = project.PI,
                     TaskName = task.Name,
