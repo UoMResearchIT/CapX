@@ -1,11 +1,9 @@
 ﻿using System.Linq.Dynamic.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
 using Radzen;
-using static PPMTool.Data.StatusMessage;
 
 namespace PPMTool.Pages
 {
@@ -91,13 +89,6 @@ namespace PPMTool.Pages
         /// <param name="unit"></param>
         protected void SaveOrgUnit(BaseOrgUnit unit)
         {
-            // Validate the model
-            SetErrorMessage(null);
-            if (!unit.Validate())
-            {
-                SetErrorMessage(new StatusMessage("Name and Code must have a value!", MessageType.Error));
-            }
-
             // Now try to add to DB
             int res = 0;
             switch (unit)
@@ -108,7 +99,7 @@ namespace PPMTool.Pages
                         res = FacultyService.Add(Context, faculty);
                         if (res < 0)
                         {
-                            SetUniqueErrorMessage(faculty);
+                            NotifyOfUniquenessError(faculty);
                             return;
                         }
 
@@ -120,7 +111,7 @@ namespace PPMTool.Pages
                         res = FacultyService.Update(Context, faculty);
                         if (res < 0)
                         {
-                            SetUniqueErrorMessage(faculty);
+                            NotifyOfUniquenessError(faculty);
                             return;
                         }
                     }
@@ -135,7 +126,7 @@ namespace PPMTool.Pages
                         res = SchoolService.Add(Context, school);
                         if (res < 0)
                         {
-                            SetUniqueErrorMessage(school);
+                            NotifyOfUniquenessError(school);
                             return;
                         }
 
@@ -146,7 +137,7 @@ namespace PPMTool.Pages
                         res = SchoolService.Update(Context, school);
                         if (res < 0)
                         {
-                            SetUniqueErrorMessage(school);
+                            NotifyOfUniquenessError(school);
                             return;
                         }
                     }
@@ -161,9 +152,12 @@ namespace PPMTool.Pages
         /// Wrapper to present an uniqueness error message
         /// </summary>
         /// <param name="unit"></param>
-        private void SetUniqueErrorMessage(BaseOrgUnit unit)
+        private void NotifyOfUniquenessError(BaseOrgUnit unit)
         {
-            SetErrorMessage(new StatusMessage($"The {(unit is School ? "school" : "faculty")} name and code must be unique!", MessageType.Error));
+            NotificationService.Notify(NotificationSeverity.Error,
+                "Duplicate Detected!",
+                $"The {(unit is School ? "school" : "faculty")} name and code must be unique!"
+            );
         }
 
         /// <summary>

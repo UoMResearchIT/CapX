@@ -23,7 +23,7 @@
                 <RadzenButton Icon="save"
                               ButtonStyle=ButtonStyle.Success
                               Click="@(() => OnSave.InvokeAsync(OrgUnit))"
-                              Disabled="(String.IsNullOrEmpty(OrgUnit.Name) || String.IsNullOrEmpty(OrgUnit.Code))" />
+                              Disabled="@(!OrgUnit.Validate())" />
 
                 <RadzenButton Icon="cancel"
                               ButtonStyle=ButtonStyle.Danger
