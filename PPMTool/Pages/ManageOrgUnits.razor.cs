@@ -44,7 +44,7 @@ namespace PPMTool.Pages
         /// Shared method for cancelling adding new OrgUnit
         /// </summary>
         /// <param name="unit"></param>
-        private void OrgUnitAddCancelled(BaseOrgUnit unit)
+        private void OrgUnitAddCancelled<T>(T unit) where T : BaseOrgUnit
         {
             switch (unit)
             {
@@ -75,6 +75,9 @@ namespace PPMTool.Pages
                     isAddingSchool = false;
                     break;
             }
+
+            // Refresh the list
+            LoadData();
         }
 
         /// <summary>

@@ -1,6 +1,7 @@
 ﻿@using PPMTool.Data.Context
 @using PPMTool.Data.Entities
 @using PPMTool.Services
+@typeparam TOrg where TOrg : BaseOrgUnit
 
     @if (InEditMode)
     {
@@ -62,7 +63,7 @@
 
 @code {
     [Parameter]
-    public BaseOrgUnit OrgUnit { get; set; } = default!;
+    public TOrg OrgUnit { get; set; } = default!;
 
     [Parameter]
     public EventCallback<BaseOrgUnit> OnSaveSucceeded { get; set; }
@@ -80,12 +81,13 @@
     public PPMToolContext Context { get; set; }
 
     [Parameter]
-    public BaseEntityService<BaseOrgUnit> OrgUnitService { get; set; }
+    public BaseEntityService<TOrg> OrgUnitService { get; set; }
 
     /// <summary>
     /// Whether or not the component should be rendered in edit mode
     /// </summary>
-    public bool InEditMode { get; private set; }
+    [Parameter]
+    public bool InEditMode { get; set; }
 
     /// <summary>
     /// Method fired when the switch is toggled
@@ -153,6 +155,7 @@
         }
 
         // Successful save
+        InEditMode = false;
         if (OnSaveSucceeded.HasDelegate)
         {
             await OnSaveSucceeded.InvokeAsync(OrgUnit);
