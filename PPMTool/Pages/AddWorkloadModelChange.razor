@@ -85,7 +85,7 @@
                             </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="Notes" Title="Notes" Width="350px" MinWidth="10px">
                             <EditTemplate Context="c">
-                                <RadzenTextBox class="no-margin" TValue="string" @bind-Value="c.Notes" />
+                                <RadzenTextBox class="no-margin" @bind-Value="c.Notes" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Filterable="false" Sortable="false" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
