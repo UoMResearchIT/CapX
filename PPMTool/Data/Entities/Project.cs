@@ -227,7 +227,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         private bool HasNoFundingSourcesButRan()
         {
-            return ProjectStatus.DidRun() && !(FundingSources?.Any() ?? true);
+            return ProjectStatus.DidRun() && !(FundingSources?.Any() ?? false);
         }
 
         /// <summary>
