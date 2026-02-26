@@ -44,8 +44,6 @@ namespace PPMTool.Data.Entities
             return !string.IsNullOrWhiteSpace(Name) && !string.IsNullOrWhiteSpace(Code);
         }
 
-
-
         /// <summary>
         /// Return the ID of the entity
         /// </summary>
