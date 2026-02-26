@@ -86,7 +86,10 @@
                             }
 
                             <div class="accordion-orgsubunit" style="text-align: right; background-color: unset;">
-                                <RadzenButton Icon="add" Text="Add School" Click="@(() => StartAddingSchool(faculty))" />
+                                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                    <RadzenText Text="@(faculty.Schools.Count == 0 ? "This faculty has no schools." : "")" TextStyle="TextStyle.Body2" Style="margin-bottom: 0; font-style: italic" />
+                                    <RadzenButton Icon="add" Text="Add School" Click="@(() => StartAddingSchool(faculty))" />
+                                </RadzenStack>
                             </div> 
                         </ChildContent>
                 </RadzenAccordionItem>
