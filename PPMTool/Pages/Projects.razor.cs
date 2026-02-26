@@ -121,6 +121,31 @@ namespace PPMTool.Pages
                 query = query.Where(args.Filter);
             }
 
+            // Filter on Faculty and School
+            if (args.Filters is { } filters && filters.Any())
+            {
+                var facFilter = filters.FirstOrDefault(f => f.Property == "Faculty");
+                var facValue = (facFilter?.FilterValue as string)?.Trim();
+                if (!string.IsNullOrEmpty(facValue))
+                {
+                    var facValueNorm = facValue.ToLower();
+                    query = query.Where(x =>
+                        x.School != null &&
+                        x.School.Faculty != null &&
+                        ((x.School.Faculty.Code ?? "").Trim().ToLower()).Contains(facValueNorm));
+                }
+
+                var schFilter = filters.FirstOrDefault(f => f.Property == "School");
+                var schValue = (schFilter?.FilterValue as string)?.Trim();
+                if (!string.IsNullOrEmpty(schValue))
+                {
+                    var schValueNorm = schValue.ToLower();
+                    query = query.Where(x =>
+                        x.School != null &&
+                        ((x.School.Code ?? "").Trim().ToLower()).Contains(schValueNorm));
+                }
+            }
+
             // Sorting
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
@@ -130,7 +155,7 @@ namespace PPMTool.Pages
 
             // Assign to grid source
             var data = query.ToList();
-            count = query.Count();
+            count = data.Count;
             if (args.Skip == null)
             {
                 projects = data.Take(pageCount).ToList();
