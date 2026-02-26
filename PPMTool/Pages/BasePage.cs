@@ -32,10 +32,10 @@ namespace PPMTool.Pages
         protected NavigationManager Navigation { get; set; }
 
         [Inject]
-        protected TooltipService TooltipService { get; set; }
+        private TooltipService TooltipService { get; set; }
 
         [Inject]
-        protected NotificationService NotificationService { get; set; }
+        private NotificationService NotificationService { get; set; }
 
         private bool loading = true;
         [CascadingParameter]
