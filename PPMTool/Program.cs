@@ -2,10 +2,11 @@ using System.Globalization;
 using Blazored.LocalStorage;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using PPMTool;
+using Microsoft.Identity.Web;
 using PPMTool.Data.Context;
 using PPMTool.Data.Helpers;
 using PPMTool.Services;
@@ -18,10 +19,9 @@ using System.Web;
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http.Extensions;
-using Microsoft.Identity.Web;
 using Serilog;
+using PPMTool;
 #endif
 
 // Add environment variables to the configuration
@@ -99,7 +99,12 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
 // Choose the authentication type based on configuration
 var authenticationType = builder.Configuration.GetValue("Authentication:Type", "CAS");
 
-#if RELEASE
+#if !RELEASE
+// Override choice in local deployment mode
+authenticationType = "CAS";
+#endif
+
+// This is always true in local mode
 if (authenticationType == "CAS")
 {
     // Set up cookie details
@@ -117,6 +122,7 @@ if (authenticationType == "CAS")
         options.LoginPath = new PathString("/Account/Login");
         options.LogoutPath = new PathString("/Account/Logout");
 
+#if RELEASE
         // Set expiration to match CAS session timeout
         int time = builder.Configuration.GetValue("Authentication:CAS:CookieExpiryTimeInHours", 24);
         options.ExpireTimeSpan = TimeSpan.FromHours(time);
@@ -126,7 +132,10 @@ if (authenticationType == "CAS")
         {
             OnSigningOut = args => OnCookieSigningOut(args, builder.Configuration),
         };
+#endif
     })
+
+#if RELEASE
     .AddCAS(options =>
     {
         options.CasServerUrlBase = builder.Configuration["Authentication:CAS:ServerUrlBase"];
@@ -146,7 +155,9 @@ if (authenticationType == "CAS")
             OnCreatingTicket = OnCreatingTicket,
             OnRemoteFailure = OnRemoteFailure
         };
-    });
+    })
+#endif
+    ;
 }
 else if (authenticationType == "AzureAd")
 {
@@ -179,7 +190,6 @@ else
 {
     throw new Exception($"Unsupported authentication type: {authenticationType}");
 }
-#endif
 
 builder.Services.AddAuthorization();
 
@@ -278,6 +288,8 @@ FileHelper.CleanLocalApplicationFilePath(logger);
 // Run the app
 app.Run();
 
+
+// --------------------- METHODS ------------------------- //
 #if RELEASE
 /// <summary>
 /// What to do when a ticket is to be created from a CAS callback
