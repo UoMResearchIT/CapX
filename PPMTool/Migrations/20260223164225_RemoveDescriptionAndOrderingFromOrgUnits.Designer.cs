@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,11 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20260223164225_RemoveDescriptionAndOrderingFromOrgUnits")]
+    partial class RemoveDescriptionAndOrderingFromOrgUnits
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.15");
@@ -163,7 +166,6 @@ namespace PPMTool.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Code")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
@@ -451,7 +453,7 @@ namespace PPMTool.Migrations
                     b.Property<double>("FTE")
                         .HasColumnType("REAL");
 
-                    b.Property<int?>("LineManagerPersonId")
+                    b.Property<int>("LineManagerPersonId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
@@ -514,6 +516,9 @@ namespace PPMTool.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("FacultyId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("FundingSourceId")
                         .HasColumnType("INTEGER");
 
@@ -566,6 +571,8 @@ namespace PPMTool.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("ProjectId");
+
+                    b.HasIndex("FacultyId");
 
                     b.HasIndex("FundingSourceId")
                         .IsUnique();
@@ -645,7 +652,6 @@ namespace PPMTool.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Code")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("FacultyId")
@@ -1103,13 +1109,21 @@ namespace PPMTool.Migrations
                 {
                     b.HasOne("PPMTool.Data.Entities.Person", "LineManager")
                         .WithMany("PeopleManaged")
-                        .HasForeignKey("LineManagerPersonId");
+                        .HasForeignKey("LineManagerPersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("LineManager");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Project", b =>
                 {
+                    b.HasOne("PPMTool.Data.Entities.Faculty", "Faculty")
+                        .WithMany()
+                        .HasForeignKey("FacultyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("PPMTool.Data.Entities.FundingSource", "LeadershipFundingSource")
                         .WithOne("ProjectLeadershipSource")
                         .HasForeignKey("PPMTool.Data.Entities.Project", "FundingSourceId")
@@ -1128,6 +1142,8 @@ namespace PPMTool.Migrations
                         .HasForeignKey("SchoolId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Faculty");
 
                     b.Navigation("InnateActivity");
 

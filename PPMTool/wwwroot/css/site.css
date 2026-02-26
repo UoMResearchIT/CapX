@@ -359,3 +359,45 @@ span.mention {
     border-radius: 4px;
     padding: 0 .2rem;
 }
+
+.orgunits-accordion .rz-accordion .rz-accordion-header {
+    padding: 0px;
+    border: var(--rz-card-border);
+}
+
+.orgunits-accordion .rz-accordion .rz-accordion-header .rzi {
+    margin-inline: 0px;
+    }
+
+.orgunits-accordion .rz-accordion-header a[role="tab"] {
+    padding: 0px;
+    background-color: var(--rz-card-background-color);
+}
+
+.orgunits-accordion .rz-accordion-content {
+    border: var(--rz-card-border);
+    padding: 0px;
+    background-color: var(--rz-card-background-color);
+    margin-bottom: 15px;
+}
+
+.orgunits-accordion .accordion-orgsubunit {
+    border: var(--rz-card-border);
+    padding: 10px;
+    padding-left: 30px;
+    margin: 0px;
+}
+
+.orgunits-accordion .rz-accordion-toggle-icon {
+    display: none !important;
+}
+
+.orgunits-accordion .rz-text-display-h2 {
+    font-weight: normal;
+    font-size: 1rem;
+    margin: 0px;
+}
+
+.inactive {
+    background-color: var(--rz-switch-checked);
+}

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using PPMTool;
 using PPMTool.Data.Context;
 using PPMTool.Data.Helpers;
 using PPMTool.Services;
@@ -80,6 +81,8 @@ builder.Services.AddScoped<InvoiceService>();
 builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<FundingSourceService>();
+builder.Services.AddScoped<FacultyService>();
+builder.Services.AddScoped<SchoolService>();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -254,6 +257,7 @@ if (shouldSeed)
     SeedHelper.SeedCompetencyAssessments(scope.ServiceProvider);
     SeedHelper.SeedInnateCodesAndTasks(scope.ServiceProvider);
     SeedHelper.SeedFinancialReferences(scope.ServiceProvider);
+    SeedHelper.SeedOrganisationalUnits(scope.ServiceProvider);
     SeedHelper.SeedProjects(scope.ServiceProvider);
     SeedHelper.SeedFundingSources(scope.ServiceProvider);
     SeedHelper.SeedSubTasks(scope.ServiceProvider);
@@ -301,7 +305,7 @@ async Task OnCreatingTicket(CasCreatingTicketContext context)
         using (var dbContext = dbContextFactory.CreateDbContext())
         {
             // Log the attempt
-            var claimName = assertion.PrincipalName?.Trim().ToLower();
+            var claimName = assertion.PrincipalName?.Clean();
             logger?.LogInformation($"Signing in {claimName}");
 
             // Find the matching user in the DB
