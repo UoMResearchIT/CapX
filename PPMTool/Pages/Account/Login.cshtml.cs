@@ -76,7 +76,7 @@ namespace PPMTool.Pages.Account
             using (var context = contextFactory.CreateDbContext())
             {
                 var username = identity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value ?? "";
-                var user = userService.GetByUsername(context, username.Trim().ToLower());
+                var user = userService.GetByUsername(context, username.Clean());
                 var role = string.IsNullOrWhiteSpace(username) || user == null ? RoleType.None : user.RoleType;
                 identity.AddClaim(new Claim(ClaimTypes.Role, role.ToString()));
 

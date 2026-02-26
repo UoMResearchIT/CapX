@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,11 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20260225093310_RemovedFacultyColumnFromProject")]
+    partial class RemovedFacultyColumnFromProject
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.15");
@@ -451,7 +454,7 @@ namespace PPMTool.Migrations
                     b.Property<double>("FTE")
                         .HasColumnType("REAL");
 
-                    b.Property<int?>("LineManagerPersonId")
+                    b.Property<int>("LineManagerPersonId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
@@ -1103,7 +1106,9 @@ namespace PPMTool.Migrations
                 {
                     b.HasOne("PPMTool.Data.Entities.Person", "LineManager")
                         .WithMany("PeopleManaged")
-                        .HasForeignKey("LineManagerPersonId");
+                        .HasForeignKey("LineManagerPersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("LineManager");
                 });

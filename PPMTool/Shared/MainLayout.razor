@@ -126,6 +126,7 @@
                     <RadzenPanelMenuItem Text="Admin" Icon="admin_panel_settings" Expanded="@adminMenuItemExpanded">
                         <AuthorizeView Roles="Superuser">
                             <Authorized Context="sub_context">
+                                <RadzenPanelMenuItem Path="manageorgunits" Text="Org Units" Icon="widgets" />
                                 <RadzenPanelMenuItem Path="manageaccess" Text="Access Control" Icon="lock" />
                                 <RadzenPanelMenuItem Path="managecodes" Icon="punch_clock">
                                     <Template>
