@@ -124,34 +124,82 @@ namespace PPMTool.Pages
             // Filter on Faculty and School
             if (args.Filters is { } filters && filters.Any())
             {
-                var facFilter = filters.FirstOrDefault(f => f.Property == "Faculty");
-                var facValue = (facFilter?.FilterValue as string)?.Trim();
-                if (!string.IsNullOrEmpty(facValue))
+                var filter = filters.FirstOrDefault(f => f.Property == "Faculty");
+                var filterValue = (filter?.FilterValue as string)?.Trim();
+                if (!string.IsNullOrEmpty(filterValue))
                 {
-                    var facValueNorm = facValue.ToLower();
+                    var filterValueLower = filterValue.ToLower();
                     query = query.Where(x =>
                         x.School != null &&
                         x.School.Faculty != null &&
-                        ((x.School.Faculty.Code ?? "").Trim().ToLower()).Contains(facValueNorm));
+                        ((x.School.Faculty.Code ?? "").Trim().ToLower()).Contains(filterValueLower));
                 }
 
-                var schFilter = filters.FirstOrDefault(f => f.Property == "School");
-                var schValue = (schFilter?.FilterValue as string)?.Trim();
-                if (!string.IsNullOrEmpty(schValue))
+                filter = filters.FirstOrDefault(f => f.Property == "School");
+                filterValue = (filter?.FilterValue as string)?.Trim();
+                if (!string.IsNullOrEmpty(filterValue))
                 {
-                    var schValueNorm = schValue.ToLower();
+                    var filterValueLower = filterValue.ToLower();
                     query = query.Where(x =>
                         x.School != null &&
-                        ((x.School.Code ?? "").Trim().ToLower()).Contains(schValueNorm));
+                        ((x.School.Code ?? "").Trim().ToLower()).Contains(filterValueLower));
                 }
             }
 
             // Sorting
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                // Apply standard sorting
-                query = query.OrderBy(args.OrderBy);
+                if (args.OrderBy.StartsWith("Faculty") || args.OrderBy.StartsWith("School"))
+                {
+                    // Sorting for Faculty and School
+                    if (args.Sorts is { } sorts && sorts.Any())
+                    {
+                        var sort = args.Sorts?.FirstOrDefault();
+                        if (sort != null)
+                        {
+
+                            if (sort.Property == "Faculty")
+                            {
+                                query = sort.SortOrder == SortOrder.Ascending
+                                    ? query.OrderBy(x =>
+                                        x.School != null && x.School.Faculty != null
+                                            ? x.School.Faculty.Code
+                                            : "")
+                                    : query.OrderByDescending(x =>
+                                        x.School != null && x.School.Faculty != null
+                                            ? x.School.Faculty.Code
+                                            : "");
+                            }
+                            else if (sort.Property == "School")
+                            {
+                                query = sort.SortOrder == SortOrder.Ascending
+                                    ? query.OrderBy(x =>
+                                        x.School != null
+                                            ? x.School.Code
+                                            : "")
+                                    : query.OrderByDescending(x =>
+                                        x.School != null
+                                            ? x.School.Code
+                                            : "");
+                            }
+                        }
+                        else
+                        {
+                            // Should never happen but default to this if it ever did
+                            query = query.OrderBy(args.OrderBy);
+                        }
+                    }
+                    else
+                    {
+                        // Apply standard sorting
+                        if (args.OrderBy != null)
+                        {
+                            query = query.OrderBy(args.OrderBy);
+                        }
+                    }
+                }
             }
+
 
             // Assign to grid source
             var data = query.ToList();
