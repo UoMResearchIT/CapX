@@ -48,9 +48,13 @@
                                   @onclick:stopPropagation="true" />
 
                     <RadzenText Text="@OrgUnit.GetSensibleObjectName()" TextStyle="TextStyle.DisplayH2" />
+                    
                 </RadzenStack>
-
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                    @if (OrgUnit is Faculty && (OrgUnit as Faculty).Schools.Where(x => x.IsActive).Count() == 0 && OrgUnit.IsActive)
+                    {
+                        <StatusMessageComponent Message="@(new Data.StatusMessage("This faculty has no active schools! It must have at least one active school!", Data.StatusMessage.MessageType.Error))" />
+                    }
                     <RadzenText Text="ACTIVE" />
                     <RadzenSwitch @bind-Value="OrgUnit.IsActive"
                                   Name="IsActive"

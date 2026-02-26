@@ -62,6 +62,7 @@ namespace PPMTool.Pages
         private ValidationMessageStore messageStore;
         private EditContext editContext;
         private double fundsReceived;
+        private Faculty chosenFaculty;
         private IEnumerable<FundingSource> availableFundingSources = new List<FundingSource>();
 
         protected override void OnAfterRender(bool firstRender)
@@ -73,6 +74,9 @@ namespace PPMTool.Pages
             if (ProjectId > 0)
             {
                 projectModel = ProjectService.GetById(Context, ProjectId);
+
+                // Populate faculty
+                chosenFaculty = projectModel.School?.Faculty;
 
                 // Get funds received
                 fundsReceived = PaymentService.GetFundsReceived(Context, projectModel?.ProjectId ?? 0);
@@ -164,6 +168,9 @@ namespace PPMTool.Pages
             if (faculty != null)
             {
                 schools = SchoolService.GetSchoolsForFaculty(Context, faculty.FacultyId);
+
+                // Reset the school
+                projectModel.School = new School();
             }
         }
 
@@ -182,16 +189,29 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Fired when the save button is clicked
+        /// </summary>
         private void HandleSubmit()
         {
-            // Form valid?
+            // Clear the action bar messages
             ClearErrorMessage();
+
+            // Clear any manual messages
+            messageStore.Clear();
+            editContext.NotifyValidationStateChanged();
+
+            // Validate the form again
             if (editContext.Validate())
             {
                 if (!discardChanges)
                 {
-                    // Further validation
-                    if (!CheckProjectManagerSet()) return;
+                    // Further validation not picked up by model annotations
+                    if (!CheckProjectManagerSet() || !CheckSchoolAndFacultySet())
+                    {
+                        UpdateErrorOnActionBarFromContextMessageStore();
+                        return;
+                    }
 
                     // Update the project summary values
                     var finrefs = FinancialReferenceService.GetAll(Context);
@@ -258,11 +278,24 @@ namespace PPMTool.Pages
                 }
             }
 
+            // Update with errors
+            UpdateErrorOnActionBarFromContextMessageStore();
+        }
+
+        /// <summary>
+        /// Method to set the error message on the action bar from the edit context
+        /// </summary>
+        private void UpdateErrorOnActionBarFromContextMessageStore()
+        {
             // Set error messages based on the message store
             var messages = editContext.GetValidationMessages();
             if (messages.Any())
             {
                 SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
+            }
+            else
+            {
+                ClearErrorMessage();
             }
         }
 
@@ -299,6 +332,21 @@ namespace PPMTool.Pages
             if (projectModel.ProjectManager == null)
             {
                 messageStore.Add(() => projectModel.ProjectManager, "Project must have a project manager set!");
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Check the faculty and school are set
+        /// </summary>
+        /// <returns></returns>
+        private bool CheckSchoolAndFacultySet()
+        {
+            // Not faculty or school objects or placeholder objects
+            if (projectModel.School == null || projectModel.School?.Faculty == null || projectModel.School?.SchoolId == 0 || projectModel.School?.Faculty?.FacultyId == 0)
+            {
+                messageStore.Add(() => projectModel.School, "Project must have a faculty and school set!");
                 return false;
             }
             return true;

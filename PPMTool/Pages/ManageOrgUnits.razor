@@ -21,7 +21,7 @@
         {
             <RadzenAccordion Multiple="false" Style="border: 0px; box-shadow: none;" >
                 <Items>
-                    <RadzenAccordionItem >
+                    <RadzenAccordionItem>
                         <Template>
                             <div style="margin: 0px; padding: 0px; width: 100%;">
                                 <EditOrgUnitEntityComponent OrgUnit="@newFaculty"
@@ -86,10 +86,7 @@
                             }
 
                             <div class="accordion-orgsubunit" style="text-align: right; background-color: unset;">
-                                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                                    <RadzenText Text="@(faculty.Schools.Count == 0 ? "This faculty has no schools." : "")" TextStyle="TextStyle.Body2" Style="margin-bottom: 0; font-style: italic" />
-                                    <RadzenButton Icon="add" Text="Add School" Click="@(() => StartAddingSchool(faculty))" />
-                                </RadzenStack>
+                                <RadzenButton Icon="add" Text="Add School" Click="@(() => StartAddingSchool(faculty))" />
                             </div> 
                         </ChildContent>
                 </RadzenAccordionItem>

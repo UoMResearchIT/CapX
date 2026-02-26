@@ -172,7 +172,6 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project has no RTP number specified!", StatusMessage.MessageType.Error, () => RTP == 0),
                 new StatusMessage("This project has no link to a request document!", StatusMessage.MessageType.Error, () => HasNoRequestDocLink()),
                 new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, () => HasNoDescription()),
-                new StatusMessage("This project is missing faculty and/or school information!", StatusMessage.MessageType.Error, () => HasNoFacultyOrFacultyButNoSchool()),
                 new StatusMessage("This project has no tasks!", StatusMessage.MessageType.Error, () => SubTasks == null || SubTasks.Count == 0),
                 new StatusMessage("This project is active but hasn't had its actuals updated for more than a month!", StatusMessage.MessageType.Error, () => ActiveButNotHadActualsUpdatedForAMonth()),
                 new StatusMessage("This project has no funding sources but is either finished or is active!", StatusMessage.MessageType.Error, () => HasNoFundingSourcesButRan()),
@@ -239,16 +238,6 @@ namespace PPMTool.Data.Entities
             if (ProjectStatus != ProjectStatus.Active) return false;
             DateTime lastUpdated = string.IsNullOrEmpty(ActualsLastUpdated) ? default : DateTime.ParseExact(ActualsLastUpdated, "R", CultureInfo.InvariantCulture);
             return lastUpdated.AddMonths(1) < DateTime.Now;
-        }
-
-        /// <summary>
-        /// Whether a project has no faculty or has faculty but no school
-        /// </summary>
-        /// <returns></returns>
-        private bool HasNoFacultyOrFacultyButNoSchool()
-        {
-            // The Faculty and School properties will be newly instantiated objects if not storing proper entities
-            return School.Faculty.FacultyId == 0 || ((School.Faculty.FacultyId > 0) && School.SchoolId == 0);
         }
 
         /// <summary>
