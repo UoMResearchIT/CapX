@@ -217,10 +217,11 @@ namespace PPMTool.Pages
         /// <param name="unit"></param>
         private void NotifyOfUniquenessError(BaseOrgUnit unit)
         {
-            NotificationService.Notify(NotificationSeverity.Error,
-                "Duplicate Detected!",
-                $"The {(unit is School ? "school" : "faculty")} name and code must be unique!"
-            );
+            ShowNotification(new CapXNotificationMessage
+            {
+                Summary = "Duplicate Detected!",
+                Detail = $"The {(unit is School ? "school" : "faculty")} name and code must be unique!"
+            });
         }
     }
 }

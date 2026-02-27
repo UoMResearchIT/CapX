@@ -172,10 +172,10 @@
                     @foreach (var btn in Buttons)
                     {
                         <RadzenButton Text="@btn.Text"
-                                        Icon="@btn.Icon"
-                                        ButtonStyle="@btn.ButtonStyle"
-                                        Click="@(() => btn.OnClick?.Invoke())"
-                                        Disabled="@btn.Disabled" />
+                                      Icon="@btn.Icon"
+                                      ButtonStyle="@btn.ButtonStyle"
+                                      Click="@(() => btn.OnClick?.Invoke())"
+                                      Disabled="@btn.Disabled" />
                     }
                 </RadzenStack>
             </footer>

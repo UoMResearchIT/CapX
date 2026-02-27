@@ -92,7 +92,7 @@ select {
 
 .radzen-numeric {
     margin: 4pt;
-    width: 100%
+    width: 100%;
 }
 
 .radzen-form-label {
@@ -109,6 +109,12 @@ select {
 }
 
 .radzen-datepicker {
+    margin: 4pt;
+    width: 100%;
+}
+
+.radzen-text-box {
+    text-indent: 0 !important;
     margin: 4pt;
     width: 100%;
 }
@@ -183,11 +189,6 @@ mark {
     display: inline-block;
 }
 
-.rz-textbox {
-    text-indent: 0 !important;
-    margin: 4pt;
-}
-
 .rz-text-subtitle1 {
     font-weight: 500
 }
@@ -195,6 +196,7 @@ mark {
 .center-text {
     margin-bottom: 0rem !important;
 }
+
 .rz-switch {
     margin: 0.3rem
 }
