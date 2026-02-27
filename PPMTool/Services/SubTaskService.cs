@@ -114,6 +114,10 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal bool IsUniqueTaskNameInProject(Project projectModel, SubTask taskModel)
         {
+            // Leadership tasks have a fixed name
+            if (taskModel.IsLeadershipTask) return true;
+
+            // Check other tasks
             var subSet = projectModel.SubTasks.Where(x => x.SubTaskId != taskModel.SubTaskId);
             return !subSet.Any(x => x.Name == taskModel.Name);
         }
