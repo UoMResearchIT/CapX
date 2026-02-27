@@ -1218,7 +1218,7 @@ namespace PPMTool.Pages
         /// <param name="dataPoint"></param>
         private void TaskSelected(SelectedData<GanttBlock> dataPoint)
         {
-            if (!EditAuthorised || (dataPoint.DataPoint.Items.FirstOrDefault()?.IsLeadershipTask ?? true)) return;
+            if (!EditAuthorised) return;
 
             // Only so the navigation when in project view mode
             if (dataPoint.IsSelected)
