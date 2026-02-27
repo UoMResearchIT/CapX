@@ -164,6 +164,11 @@ namespace PPMTool.Data.Entities
         public virtual IList<SkillTag> SkillsRequired { get; set; } = new List<SkillTag>();
 
         /// <summary>
+        /// Whether this task is a leadership task which would mean it comes out of PSMT allowance instead of ProjectWork allowance
+        /// </summary>
+        public bool IsLeadershipTask { get; set; }
+
+        /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task
         /// Work = Duration * Units
         /// Units = Sum of Resource Assigned FTE
