@@ -117,7 +117,7 @@ else
                         <RadzenLabel class="radzen-form-label" Component="LeadershipTask" Text="Is Leadership Task" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Turn this on if the task is a leadership task (affects PM demand and leadership costs if support by the cost model)" /><br />
                         <div class="align-items-center p-1">
                             <div style="display: flex">
-                                <RadzenSwitch @bind-value="TaskModel.IsLeadershipTask" Name="LeadershipTask" />
+                                <RadzenSwitch @bind-value="TaskModel.IsLeadershipTask" Name="LeadershipTask" Change="@(_ => UpdatePeopleDropdownSource(new LoadDataArgs()))" />
                             </div>
                         </div>
                     </div>
