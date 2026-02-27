@@ -4,6 +4,7 @@
 
 using System.ComponentModel.DataAnnotations;
 using PPMTool.Enums;
+using PPMTool.Enums.Attributes;
 
 namespace PPMTool.Data.Entities
 {

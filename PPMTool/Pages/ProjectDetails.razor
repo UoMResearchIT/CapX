@@ -472,7 +472,7 @@ SPDX-License-Identifier: apache-2.0
                             <RadzenTextBox @bind-Value=@noteSearchTerms
                                            Placeholder="Search Notes"
                                            Change=@(args => InvokeAsync(async () => await FilterHighlightScrollNotesAsync()))
-                                           Style="width:100%" />
+                                           class="radzen-text-box" />
                             <RadzenButton Icon="clear" ButtonStyle="ButtonStyle.Light" Click="@ClearSearch" MouseEnter="@(args => ShowTooltip(args, "Clear"))" />
                         </RadzenStack>
                         <RadzenText TextStyle="TextStyle.Subtitle2">

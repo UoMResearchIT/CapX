@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+using PPMTool.Enums.Attributes;
+
 namespace PPMTool.Enums
 {
     public enum SkillRareness

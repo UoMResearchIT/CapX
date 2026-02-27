@@ -84,7 +84,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         internal string GetStandardisedUserName()
         {
-            return CASUserName?.Trim().ToLower();
+            return CASUserName?.Clean();
         }
 
         /// <summary>
@@ -103,7 +103,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         internal bool MatchesClaim(string claimName)
         {
-            return GetStandardisedUserName() == claimName || EmailAddress?.Trim().ToLower() == claimName;
+            return GetStandardisedUserName() == claimName || EmailAddress?.Clean() == claimName;
         }
     }
 }

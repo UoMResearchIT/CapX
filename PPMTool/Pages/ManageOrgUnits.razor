@@ -1,0 +1,97 @@
+﻿@page "/manageorgunits"
+@inherits BasePage
+@using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+@using Radzen
+
+<PageTitle>Manage Org Units - CapX</PageTitle>
+
+<div class="container">
+    <div class="row">
+        <div class="col py-2">
+            <h2>Manage Organisational Units</h2>
+        </div>
+        <div class="col py-2">
+            <RadzenButton Icon="add" Text="Add Faculty" Click="@(() => StartAddingFaculty())" Style="float: right;"/>
+        </div>
+    </div>
+
+    <div class="orgunits-accordion">
+        @if (isAddingFaculty)
+        {
+            <RadzenAccordion Multiple="false" Style="border: 0px; box-shadow: none;" >
+                <Items>
+                    <RadzenAccordionItem>
+                        <Template>
+                            <div style="margin: 0px; padding: 0px; width: 100%;">
+                                <EditOrgUnitEntityComponent OrgUnit="@newFaculty"
+                                                            OnSaveSucceeded="OrgUnitSuccessfulAdd"
+                                                            OnCancel="OrgUnitAddCancelled"
+                                                            OnEditFailed="OrgUnitEditFailed"
+                                                            Context="@Context"
+                                                            InEditMode="true"
+                                                            OrgUnitService="@FacultyService" />
+                            </div>
+                        </Template>
+                    </RadzenAccordionItem>
+                </Items>
+            </RadzenAccordion>
+        }
+
+        <RadzenAccordion Multiple="false" Style="border: 0px; box-shadow: none;" >
+            <Items>
+                @foreach (var faculty in faculties)
+                {
+                    <RadzenAccordionItem Style="margin-top: .5rem;">
+                        <Template>
+                            <div style="margin: 0px; padding: 0px; width: 100%;">
+                                <EditOrgUnitEntityComponent OrgUnit="@faculty"
+                                                            OnSaveSucceeded="OrgUnitSuccessfulAdd"
+                                                            OnCancel="OrgUnitAddCancelled"
+                                                            OnEditFailed="OrgUnitEditFailed"
+                                                            OnToggleActive="ToggleActiveAsync"
+                                                            Context="@Context"
+                                                            OrgUnitService="@FacultyService" />
+                            </div>
+                        </Template>
+
+                        <ChildContent>
+                            @if(faculty.Schools.Count > 0)
+                            {
+                                @foreach (var school in faculty.Schools.OrderBy(x =>x.Name))
+                                {
+                                        <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="padding-left: 10px;">
+                                            <EditOrgUnitEntityComponent OrgUnit="@school"
+                                                                        OnSaveSucceeded="OrgUnitSuccessfulAdd"
+                                                                        OnCancel="OrgUnitAddCancelled"
+                                                                        OnEditFailed="OrgUnitEditFailed"
+                                                                        OnToggleActive="ToggleActiveAsync"
+                                                                        Context="@Context"
+                                                                        OrgUnitService="@SchoolService" />
+                                        </RadzenRow>
+                                }
+                            }
+
+                            @if (isAddingSchool)
+                            {
+                                <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="padding-left: 10px;">
+                                    <EditOrgUnitEntityComponent OrgUnit="@newSchool"
+                                                                OnSaveSucceeded="OrgUnitSuccessfulAdd"
+                                                                OnCancel="OrgUnitAddCancelled"
+                                                                OnEditFailed="OrgUnitEditFailed"
+                                                                Context="@Context"
+                                                                InEditMode="true"
+                                                                OrgUnitService="@SchoolService" />
+                                </RadzenRow>
+                            }
+
+                            <div class="accordion-orgsubunit" style="text-align: right; background-color: unset;">
+                                <RadzenButton Icon="add" Text="Add School" Click="@(() => StartAddingSchool(faculty))" />
+                            </div> 
+                        </ChildContent>
+                </RadzenAccordionItem>
+            }
+        </Items>
+    </RadzenAccordion>
+    </div>
+</div>

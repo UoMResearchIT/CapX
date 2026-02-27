@@ -111,7 +111,7 @@ namespace PPMTool.Services
             {
                 return false;
             }
-            var legacyId = entity?.LegacyId.Trim().ToLower();
+            var legacyId = entity?.LegacyId.Clean();
             return context.Competencies.Any(x => x.CompetencyId != entity.CompetencyId && x.LegacyId.Trim().ToLower() == legacyId);
         }
 

@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Data.Helpers;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
@@ -46,6 +45,12 @@ namespace PPMTool.Pages
         [Inject]
         private FundingSourceService FundingSourceService { get; set; } = null!;
 
+        [Inject]
+        private FacultyService FacultyService { get; set; }
+
+        [Inject]
+        private SchoolService SchoolService { get; set; }
+
         [Parameter]
         public int ProjectId { get; set; }
 
@@ -61,6 +66,7 @@ namespace PPMTool.Pages
         private ValidationMessageStore messageStore;
         private EditContext editContext;
         private double fundsReceived;
+        private Faculty chosenFaculty;
         private IEnumerable<FundingSource> availableFundingSources = new List<FundingSource>();
 
         protected override void OnAfterRender(bool firstRender)
@@ -73,6 +79,9 @@ namespace PPMTool.Pages
             {
                 projectModel = ProjectService.GetById(Context, ProjectId);
 
+                // Populate faculty
+                chosenFaculty = projectModel.School?.Faculty;
+
                 // Get funds received
                 fundsReceived = PaymentService.GetFundsReceived(Context, projectModel?.ProjectId ?? 0);
 
@@ -80,7 +89,7 @@ namespace PPMTool.Pages
                 EditAuthorised = ActiveUserRoleType == RoleType.Superuser || projectModel.ProjectManager.PersonId == ActiveUser?.Person?.PersonId;
 
                 // Populate school list
-                schools = DropdownHelper.GetSchoolsForFaculty(projectModel.Faculty);
+                schools = SchoolService.GetSchoolsForFaculty(Context, projectModel.School.Faculty.FacultyId);
 
                 // Populate funding source list
                 availableFundingSources = FundingSourceService.GetFundingSources(Context, ProjectId);
@@ -105,7 +114,7 @@ namespace PPMTool.Pages
             // Initially load data
             innateActivityQuery = InnateCodeService.GetAll(Context).AsQueryable();
             innateActivities = innateActivityQuery.ToList();
-            faculties = Enum.GetValues<Faculty>().ToList();
+            faculties = FacultyService.GetAllActive(Context).ToList();
             statuses = Enum.GetValues<ProjectStatus>().ToList();
             var people = PersonService.GetAll(Context).OrderBy(x => x.Name).ToList();
             var users = UserService.GetAll(Context)
@@ -159,10 +168,13 @@ namespace PPMTool.Pages
         /// <param name="value"></param>
         private void OnFacultyChosen(object value)
         {
-            Faculty? faculty = value as Faculty?;
+            Faculty faculty = value as Faculty;
             if (faculty != null)
             {
-                schools = DropdownHelper.GetSchoolsForFaculty(faculty ?? Faculty.Internal);
+                schools = SchoolService.GetSchoolsForFaculty(Context, faculty.FacultyId);
+
+                // Reset the school
+                projectModel.School = new School();
             }
         }
 
@@ -181,16 +193,29 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Fired when the save button is clicked
+        /// </summary>
         private void HandleSubmit()
         {
-            // Form valid?
+            // Clear the action bar messages
             ClearErrorMessage();
+
+            // Clear any manual messages
+            messageStore.Clear();
+            editContext.NotifyValidationStateChanged();
+
+            // Validate the form again
             if (editContext.Validate())
             {
                 if (!discardChanges)
                 {
-                    // Further validation
-                    if (!CheckProjectManagerSet()) return;
+                    // Further validation not picked up by model annotations
+                    if (!CheckProjectManagerSet() || !CheckSchoolAndFacultySet())
+                    {
+                        UpdateErrorOnActionBarFromContextMessageStore();
+                        return;
+                    }
 
                     // Update the project summary values
                     var finrefs = FinancialReferenceService.GetAll(Context);
@@ -257,11 +282,24 @@ namespace PPMTool.Pages
                 }
             }
 
+            // Update with errors
+            UpdateErrorOnActionBarFromContextMessageStore();
+        }
+
+        /// <summary>
+        /// Method to set the error message on the action bar from the edit context
+        /// </summary>
+        private void UpdateErrorOnActionBarFromContextMessageStore()
+        {
             // Set error messages based on the message store
             var messages = editContext.GetValidationMessages();
             if (messages.Any())
             {
                 SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
+            }
+            else
+            {
+                ClearErrorMessage();
             }
         }
 
@@ -298,6 +336,21 @@ namespace PPMTool.Pages
             if (projectModel.ProjectManager == null)
             {
                 messageStore.Add(() => projectModel.ProjectManager, "Project must have a project manager set!");
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Check the faculty and school are set
+        /// </summary>
+        /// <returns></returns>
+        private bool CheckSchoolAndFacultySet()
+        {
+            // Not faculty or school objects or placeholder objects
+            if (projectModel.School == null || projectModel.School?.Faculty == null || projectModel.School?.SchoolId == 0 || projectModel.School?.Faculty?.FacultyId == 0)
+            {
+                messageStore.Add(() => projectModel.School, "Project must have a faculty and school set!");
                 return false;
             }
             return true;

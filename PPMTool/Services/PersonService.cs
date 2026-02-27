@@ -41,7 +41,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, Person entity)
         {
-            return context.People.Any(p => p.Name.ToLower().Trim() == entity.Name.ToLower().Trim() && p.PersonId != entity.PersonId);
+            return context.People.Any(p => p.Name.Trim().ToLower() == entity.Name.Trim().ToLower() && p.PersonId != entity.PersonId);
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public bool DuplicateInitialsDetected(PPMToolContext context, Person entity)
         {
-            return context.People.Any(p => p.ShortName.ToLower().Trim() == entity.ShortName.ToLower().Trim() && p.PersonId != entity.PersonId);
+            return context.People.Any(p => p.ShortName.Trim().ToLower() == entity.ShortName.Trim().ToLower() && p.PersonId != entity.PersonId);
         }
 
         /// <summary>

@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
-using System;
-
 namespace PPMTool.Data
 {
     public class StatusMessage
@@ -27,7 +25,6 @@ namespace PPMTool.Data
             Message = message;
             Type = type;
             Condition = condition;
-            Update();
         }
 
         public void Update()

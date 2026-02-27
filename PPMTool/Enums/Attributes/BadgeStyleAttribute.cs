@@ -2,10 +2,9 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
-using System;
 using Radzen;
 
-namespace PPMTool.Enums
+namespace PPMTool.Enums.Attributes
 {
     /// <summary>
     /// Custom attribute to assign a badge style to an enum

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: apache-2.0
 
 using System.Reflection;
+using PPMTool.Enums.Attributes;
 using Radzen;
 
 namespace PPMTool.Enums
@@ -40,7 +41,7 @@ namespace PPMTool.Enums
         }
 
         /// <summary>
-        ///     A generic extension method that aids in reflecting 
+        ///     A generic extension method that aids in reflecting
         ///     and retrieving any attribute that is applied to an `Enum`.
         ///     https://stackoverflow.com/questions/13099834/how-to-get-the-display-name-attribute-of-an-enum-member-via-mvc-razor-code
         /// </summary>

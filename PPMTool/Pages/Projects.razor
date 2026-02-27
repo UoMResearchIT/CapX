@@ -70,14 +70,14 @@ SPDX-License-Identifier: apache-2.0
                             @p.ProjectStatus.ToNiceString()
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="Faculty" Title="Faculty" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="Project" Property="Faculty" Title="Faculty" MinWidth="10px" FilterMode="FilterMode.Simple">
                         <Template Context="p">
-                            @p.Faculty.ToNiceString()
+                            <span title="@p.School.Faculty.Name">@p.School.Faculty.Code</span>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="School" Title="School" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="Project" Property="School" Title="School" MinWidth="10px" FilterMode="FilterMode.Simple">
                         <Template Context="p">
-                            @p.School.ToNiceString()
+                             <span title="@p.School.Name">@p.School.Code</span>
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Project" Property="LeadershipFTE" Title="Mgmt FTE" MinWidth="10px" />

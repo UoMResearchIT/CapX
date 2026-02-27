@@ -18,20 +18,22 @@ SPDX-License-Identifier: apache-2.0
     <div class="row">
         <div class="col">
             @if (currentAbsences == null)
-        {
-            <LoadingComponent />            
-        }
-        else if (currentAbsences.Count() == 0)
-        {
-            <RadzenText Text="There is no-one currently absent." />
-        }
-        else
-        {
-            foreach (var absence in currentAbsences.OrderBy(x => x.EndDate))
             {
-                <AbsenceSummaryComponent Absence="absence" EditPerson="@((person) => EditAbsence(person))" />
+                <LoadingComponent />            
             }
-        }
-            </div>
+            else if (currentAbsences.Count() == 0)
+            {
+                <RadzenText Text="There is no-one currently absent." />
+            }
+            else
+            {
+                <RadzenStack Orientation="Radzen.Orientation.Vertical">
+                    @foreach (var absence in currentAbsences.OrderBy(x => x.EndDate))
+                    {
+                        <AbsenceSummaryComponent Absence="absence" EditPerson="@((person) => EditAbsence(person))" />
+                    }
+                </RadzenStack>
+            }
         </div>
+    </div>
     <br/>

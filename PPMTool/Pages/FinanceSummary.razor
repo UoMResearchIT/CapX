@@ -51,12 +51,12 @@ SPDX-License-Identifier: apache-2.0
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="Faculty" Title="Faculty" MinWidth="10px">
                     <Template Context="item">
-                        @item.Faculty.ToNiceString()
+                        @item.Faculty.Name
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="School" Title="School" MinWidth="10px">
                     <Template Context="item">
-                        @item.School.ToNiceString()
+                        @item.School.Name
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="CostModel" Title="Cost Model" Width="8rem" MinWidth="10px">

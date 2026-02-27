@@ -100,7 +100,7 @@ namespace PPMTool.Data
             ProjectName = project.Name;
             ProjectPI = project.PI;
             School = project.School;
-            Faculty = project.Faculty;
+            Faculty = project.School.Faculty;
             ProjectPM = projectManager?.Name ?? "Not Set";
             ProjectStatus = project.ProjectStatus;
             CostModel = project.CostModel;

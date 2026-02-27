@@ -17,7 +17,7 @@ SPDX-License-Identifier: apache-2.0
     {
         <LoadingComponent />
     }
-    else if (!ViewAuthorised)
+    else if (!viewAuthorised)
     {
         <StatusMessageComponent Message="@(new StatusMessage("You are not permitted to view this page!", StatusMessage.MessageType.Error))" />
     }
@@ -64,11 +64,11 @@ SPDX-License-Identifier: apache-2.0
                 <div class="row">
                     <div class="col">
                         <RadzenLabel class="radzen-form-label" Text="Name" Component="Name" /><br>
-                        <RadzenTextBox Name="Name" TValue="string" @bind-Value="personModel.Name" Disabled="!EditAuthorised" />
+                        <RadzenTextBox class="radzen-text-box" Name="Name" @bind-Value="personModel.Name" Disabled="!EditAuthorised" />
                     </div>
                     <div class="col">
                         <RadzenLabel class="radzen-form-label" Text="Initials" Component="Initials" /><br>
-                        <RadzenTextBox Name="Initials" TValue="string" @bind-Value="personModel.ShortName" Disabled=!EditAuthorised />
+                        <RadzenTextBox class="radzen-text-box" Name="Initials" @bind-Value="personModel.ShortName" Disabled=!EditAuthorised />
                     </div>
                     <div class="col">
                         <RadzenLabel class="radzen-form-label" Text="Line Manager" Component="LM" /><br>

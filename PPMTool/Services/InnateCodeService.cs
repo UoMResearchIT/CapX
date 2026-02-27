@@ -92,8 +92,8 @@ namespace PPMTool.Services
         /// <returns>Duty as int or -1 if not match found</returns>
         internal int FindDutyForTask(PPMToolContext context, string activity, string task)
         {
-            var activityToMatch = activity.Trim().ToLower();
-            var taskToMatch = task.Trim().ToLower();
+            var activityToMatch = activity.Clean();
+            var taskToMatch = task.Clean();
             var splitActivityParams = activityToMatch.Split(" - ", 2);
             if (splitActivityParams.Length < 2) return -1;
             var matchAct = context.InnateCodes.FirstOrDefault(x => x.ActivityCode.Trim().ToLower() == splitActivityParams[0].Trim().ToLower() && x.ActivityName.Trim().ToLower() == splitActivityParams[1].Trim().ToLower());

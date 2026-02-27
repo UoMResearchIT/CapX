@@ -25,8 +25,7 @@ namespace PPMTool.Pages
         [Parameter]
         public int PersonId { get; set; }
 
-        public bool ViewAuthorised { get; set; }
-
+        private bool viewAuthorised;
         private Person personModel = new();
         private IList<Person> managers = new List<Person>();
         private EditContext editContext;
@@ -42,16 +41,17 @@ namespace PPMTool.Pages
             {
                 personModel = PersonService.GetAll(Context).FirstOrDefault(x => x.PersonId == PersonId);
 
+                // Update permissions if viewing / editing an existing person
                 if (personModel != null)
                 {
                     // Edit should only be authorised for the line manager or superusers
                     EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
 
-                    // Setup the default action bar
-                    SetDefaultActionBar(HandleSubmit, DiscardChanges);
+                    // Developers can view their own page; managers can view all people pages; superuser can view everything
+                    viewAuthorised = IsSuperuserOrLineManagerOrPerson(personModel) || ActiveUserRoleType == Enums.RoleType.Manager;
 
-                    // Developers can view their own page; managers can view all people pages
-                    ViewAuthorised = IsSuperuserOrLineManagerOrPerson(personModel) || ActiveUserRoleType == Enums.RoleType.Manager;
+                    // Reset the action bar
+                    SetDefaultActionBar(HandleSubmit, DiscardChanges);
                 }
             }
 
@@ -59,15 +59,21 @@ namespace PPMTool.Pages
             editContext = new EditContext(personModel);
             messageStore = new ValidationMessageStore(editContext);
 
-            LogInformation((personModel?.PersonId > 0 ? $"Editing person {personModel?.Name}" : $"Adding new person") + $" - ViewAuthorised = {ViewAuthorised}; EditAuthorised = {EditAuthorised}");
+            LogInformation((personModel?.PersonId > 0 ? $"Editing person {personModel?.Name}" : $"Adding new person") + $" - ViewAuthorised = {viewAuthorised}; EditAuthorised = {EditAuthorised}");
         }
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
+            // Setup the default action bar
+            SetDefaultActionBar(HandleSubmit, DiscardChanges);
+
             // Find out if superuser for delete button
             isSuperUser = ActiveUserRoleType == Enums.RoleType.Superuser;
+
+            // Superusers and managers can add new users so must have at least view permissions by default
+            viewAuthorised = isSuperUser || ActiveUserRoleType == Enums.RoleType.Manager;
 
             // Map the list of managers for drop down
             managers = UserService.GetAll(Context)
@@ -168,8 +174,17 @@ namespace PPMTool.Pages
         private void HandleSubmit()
         {
             ClearErrorMessage();
+            messageStore.Clear();
+            editContext.NotifyValidationStateChanged();
             if (editContext.Validate())
             {
+                // Extra validation
+                if (!CheckLineManagerSet())
+                {
+                    UpdateErrorOnActionBarFromContextMessageStore();
+                    return;
+                }
+
                 if (PersonId > 0)
                 {
                     LogInformation($"Saving person {personModel?.Name}...");
@@ -214,11 +229,40 @@ namespace PPMTool.Pages
                     Navigation.NavigateTo("people");
                 }
             }
+
+            // Transfer message store to action bar
+            UpdateErrorOnActionBarFromContextMessageStore();
+        }
+
+        /// <summary>
+        /// Method to set the error message on the action bar from the edit context
+        /// </summary>
+        private void UpdateErrorOnActionBarFromContextMessageStore()
+        {
+            // Set error messages based on the message store
             var messages = editContext.GetValidationMessages();
             if (messages.Any())
             {
                 SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
             }
+            else
+            {
+                ClearErrorMessage();
+            }
+        }
+
+        /// <summary>
+        /// Add custom message to the message store about the line manager
+        /// </summary>
+        /// <returns></returns>
+        private bool CheckLineManagerSet()
+        {
+            if (personModel.LineManager == null)
+            {
+                messageStore.Add(() => personModel.LineManager, "Person must have a line manager set!");
+                return false;
+            }
+            return true;
         }
 
         /// <summary>

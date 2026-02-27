@@ -132,6 +132,7 @@ SPDX-License-Identifier: apache-2.0
                     <RadzenPanelMenuItem Text="Admin" Icon="admin_panel_settings" Expanded="@adminMenuItemExpanded">
                         <AuthorizeView Roles="Superuser">
                             <Authorized Context="sub_context">
+                                <RadzenPanelMenuItem Path="manageorgunits" Text="Org Units" Icon="widgets" />
                                 <RadzenPanelMenuItem Path="manageaccess" Text="Access Control" Icon="lock" />
                                 <RadzenPanelMenuItem Path="managecodes" Icon="punch_clock">
                                     <Template>
@@ -177,10 +178,10 @@ SPDX-License-Identifier: apache-2.0
                     @foreach (var btn in Buttons)
                     {
                         <RadzenButton Text="@btn.Text"
-                                        Icon="@btn.Icon"
-                                        ButtonStyle="@btn.ButtonStyle"
-                                        Click="@(() => btn.OnClick?.Invoke())"
-                                        Disabled="@btn.Disabled" />
+                                      Icon="@btn.Icon"
+                                      ButtonStyle="@btn.ButtonStyle"
+                                      Click="@(() => btn.OnClick?.Invoke())"
+                                      Disabled="@btn.Disabled" />
                     }
                 </RadzenStack>
             </footer>

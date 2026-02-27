@@ -31,16 +31,10 @@ namespace PPMTool.Data.Entities
         public string PI { get; set; }
 
         /// <summary>
-        /// Faculty in which the projet sits
-        /// </summary>
-        [Required]
-        public Faculty Faculty { get; set; }
-
-        /// <summary>
         /// School within the faculty in which the project sits
         /// </summary>
         [Required]
-        public School School { get; set; }
+        public School School { get; set; } = new School();
 
         /// <summary>
         /// The project manager of this project
@@ -182,7 +176,6 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project has no RTP number specified!", StatusMessage.MessageType.Error, () => RTP == 0),
                 new StatusMessage("This project has no link to a request document!", StatusMessage.MessageType.Error, () => HasNoRequestDocLink()),
                 new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, () => HasNoDescription()),
-                new StatusMessage("This project is missing faculty and/or school information!", StatusMessage.MessageType.Error, () => HasNoFacultyOrFacultyButNoSchool()),
                 new StatusMessage("This project has no tasks!", StatusMessage.MessageType.Error, () => SubTasks == null || SubTasks.Count == 0),
                 new StatusMessage("This project is active but hasn't had its actuals updated for more than a month!", StatusMessage.MessageType.Error, () => ActiveButNotHadActualsUpdatedForAMonth()),
                 new StatusMessage("This project has no funding sources but is either finished or is active!", StatusMessage.MessageType.Error, () => HasNoFundingSourcesButRan()),
@@ -237,7 +230,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         private bool HasNoFundingSourcesButRan()
         {
-            return ProjectStatus.DidRun() && !FundingSources.Any();
+            return ProjectStatus.DidRun() && !(FundingSources?.Any() ?? false);
         }
 
         /// <summary>
@@ -249,15 +242,6 @@ namespace PPMTool.Data.Entities
             if (ProjectStatus != ProjectStatus.Active) return false;
             DateTime lastUpdated = string.IsNullOrEmpty(ActualsLastUpdated) ? default : DateTime.ParseExact(ActualsLastUpdated, "R", CultureInfo.InvariantCulture);
             return lastUpdated.AddMonths(1) < DateTime.Now;
-        }
-
-        /// <summary>
-        /// Whether a project has no faculty or has faculty but no school
-        /// </summary>
-        /// <returns></returns>
-        private bool HasNoFacultyOrFacultyButNoSchool()
-        {
-            return Faculty == Faculty.None || ((Faculty == Faculty.FBMH || Faculty == Faculty.FHUMS || Faculty == Faculty.FSE) && School == School.None);
         }
 
         /// <summary>

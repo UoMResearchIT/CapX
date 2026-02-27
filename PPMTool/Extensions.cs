@@ -112,5 +112,16 @@ namespace PPMTool
             }
             return genericEnum.ToString();
         }
+
+        /// <summary>
+        /// Cleans a string with some basic formatting, generally
+        /// used to compare items to check for duplicates
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        public static string Clean(this string item)
+        {
+            return item.Trim().ToLower();
+        }
     }
 }

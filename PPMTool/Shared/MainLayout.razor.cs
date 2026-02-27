@@ -238,13 +238,13 @@ namespace PPMTool.Shared
                 // Pull the sources from the DB
                 var matchingPeople = (await PersonService.GetAllShallowAsync(context))
                 .Where(x =>
-                    x.Name.ToLower().Contains(searchTerm.Trim().ToLower()) ||
-                    x.ShortName.ToLower().Contains(searchTerm.Trim().ToLower())
+                    x.Name.ToLower().Contains(searchTerm.Clean()) ||
+                    x.ShortName.ToLower().Contains(searchTerm.Clean())
                 );
                 var matchingProjects = ProjectService.GetAllShallow(context)
                 .Where(x =>
-                    x.GetFullName().ToLower().Contains(searchTerm.Trim().ToLower()) ||
-                    x.PI.ToLower().Contains(searchTerm.Trim().ToLower())
+                    x.GetFullName().ToLower().Contains(searchTerm.Clean()) ||
+                    x.PI.ToLower().Contains(searchTerm.Clean())
                 );
 
                 // Add to source

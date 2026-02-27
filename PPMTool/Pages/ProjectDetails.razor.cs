@@ -415,7 +415,7 @@ namespace PPMTool.Pages
                     filteredNotes = allNotes.Where(x =>
                     {
                         var plainText = HtmlHelper.ConvertToPlainText(x.HtmlContent);
-                        return plainText.ToLower().Contains(noteSearchTerms.Trim().ToLower());
+                        return plainText.ToLower().Contains(noteSearchTerms.Clean());
                     }).ToList();
 
                     Debug.WriteLine($"** Filtered based on \"{noteSearchTerms}\" giving {filteredNotes.Count} notes.");
