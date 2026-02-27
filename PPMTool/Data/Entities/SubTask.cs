@@ -148,12 +148,6 @@ namespace PPMTool.Data.Entities
         public int Lag { get; set; }
 
         /// <summary>
-        /// If using a cost model that charges leadership, should it be charged on this task.
-        /// Typically disabled for maintenance tasks.
-        /// </summary>
-        public bool RequiresLeadership { get; set; } = true;
-
-        /// <summary>
         /// Project which owns the subtask
         /// </summary>
         public virtual Project OwningProject { get; set; }

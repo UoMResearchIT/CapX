@@ -200,7 +200,8 @@ namespace PPMTool.Pages
         /// <param name="projects"></param>
         /// <param name="people"></param>
         /// <param name="isPersonMode"></param>
-        protected virtual void PopulateGroupedAssignmentsForPeople(IEnumerable<Project> projects, IEnumerable<Person> people, bool isPersonMode)
+        /// <param name="leadershipTasksOnly"></param>
+        protected virtual void PopulateGroupedAssignmentsForPeople(IEnumerable<Project> projects, IEnumerable<Person> people, bool isPersonMode, bool leadershipTasksOnly = false)
         {
             // Reset existing dictionary
             groupedAssignments = new Dictionary<object, IEnumerable<BaseAssignment>>();
@@ -220,12 +221,17 @@ namespace PPMTool.Pages
                     var assignments = new List<Assignment>();
                     foreach (var project in projects)
                     {
+                        // Filter list
+                        var subTasks = project.SubTasks.Where(x => x.AssignedResources.Any(z => z.Person.PersonId == person.PersonId));
+                        if (leadershipTasksOnly)
+                        {
+                            subTasks = subTasks.Where(x => x.IsLeadershipTask);
+                        }
+
+                        // Build assignments
                         foreach (var subTask in project.SubTasks)
                         {
-                            if (subTask.AssignedResources.Any(z => z.Person.PersonId == person.PersonId))
-                            {
-                                assignments.Add(new Assignment(subTask, project.ProjectStatus));
-                            }
+                            assignments.Add(new Assignment(subTask, project.ProjectStatus));
                         }
                     }
 
@@ -242,13 +248,17 @@ namespace PPMTool.Pages
                 foreach (var project in projects)
                 {
                     var assignments = new List<Assignment>();
+
+                    // Filter list
+                    var subTasks = project.SubTasks.Where(x => x.AssignedResources.Any(z => z.Person.PersonId == person.PersonId));
+                    if (leadershipTasksOnly)
+                    {
+                        subTasks = subTasks.Where(x => x.IsLeadershipTask);
+                    }
+
                     foreach (var subTask in project.SubTasks)
                     {
-                        // Only include subtasks with this person assigned as a resource
-                        if (subTask.AssignedResources.Any(x => person.PersonId == x.Person.PersonId))
-                        {
-                            assignments.Add(new Assignment(subTask, project.ProjectStatus));
-                        }
+                        assignments.Add(new Assignment(subTask, project.ProjectStatus));
                     }
 
                     // Add dictionary entry with project name as key

@@ -65,11 +65,11 @@ namespace PPMTool.Data.Helpers
 
             foreach (var project in projects)
             {
-                // Get all subtasks and add the leadership tasks if necessary
+                // Get all subtasks and remove the leadership tasks if necessary
                 var subtasks = project.SubTasks.ToList();
-                if (project.CostModel.HasLeadership())
+                if (!project.CostModel.HasLeadership())
                 {
-                    subtasks.AddRange(project.GenerateLeadershipTasks());
+                    subtasks = subtasks.Where(x => !x.IsLeadershipTask).ToList();
                 }
 
                 // Get all the resource assignments with funding sources

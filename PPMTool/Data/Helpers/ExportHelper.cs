@@ -20,7 +20,7 @@ namespace PPMTool.Data.Helpers
         /// <param name="tasksInWindow">The tasks in the window for assginments to be extract. If not provided, extracts subtasks from the projects in the window.</param>
         /// <param name="shouldCalculateCosts">If false the chunks will use the cost values already attached to the resources. If true, the mid-grade cost calculator will be used.</param>
         /// <param name="budgetDetails">An optional dictionary of information about the budget status of each resource assignment that can be added to the data if supplied and matched.</param>
-        /// <param name="generateLeadershipTasks">Should the process generate leadership tasks for projects</param>
+        /// <param name="includeLeadershipTasks">Should the process include leadership tasks for projects</param>
         /// <returns></returns>
         internal static IEnumerable<AssignmentChunk> GetAssignmentChunks(
             Person person,
@@ -31,7 +31,7 @@ namespace PPMTool.Data.Helpers
             IEnumerable<SubTask> tasksInWindow = null,
             bool shouldCalculateCosts = false,
             IDictionary<string, AssignmentBudgetDetail> budgetDetails = null,
-            GenerateLeadershipTaskLogic generateLeadershipTasks = GenerateLeadershipTaskLogic.CostModel)
+            IncludeLeadershipTaskLogic includeLeadershipTasks = IncludeLeadershipTaskLogic.CostModel)
         {
             // New list
             var data = new List<AssignmentChunk>();
@@ -63,18 +63,14 @@ namespace PPMTool.Data.Helpers
                 tempTasksInWindow = tasksInWindow.ToList();
             }
 
-            // Insert leadership assignments as subtasks with a special subtaskId so we can identify them later if required
-            if (generateLeadershipTasks != GenerateLeadershipTaskLogic.None)
+            // Exclude leadership tasks if required
+            if (includeLeadershipTasks == IncludeLeadershipTaskLogic.None)
             {
-                foreach (var project in projectsInWindow.Where(x => x.ProjectManager?.PersonId == person.PersonId))
-                {
-                    if (generateLeadershipTasks == GenerateLeadershipTaskLogic.Always ||
-                        project.CostModel.HasLeadership())
-                    {
-                        tempTasksInWindow.AddRange(project.GenerateLeadershipTasks()
-                            .Where(x => x.IsWithin(startDate ?? default, endDate ?? default)));
-                    }
-                }
+                tempTasksInWindow = tempTasksInWindow.Where(x => !x.IsLeadershipTask).ToList();
+            }
+            else if (includeLeadershipTasks == IncludeLeadershipTaskLogic.CostModel)
+            {
+                tempTasksInWindow = tempTasksInWindow.Where(x => x.IsLeadershipTask && x.OwningProject.CostModel.HasLeadership()).ToList();
             }
 
             // Get WLM changes for this person that take place during the window
@@ -158,7 +154,7 @@ namespace PPMTool.Data.Helpers
                     FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.Description) ? "None" : fundingSource?.Description,
                     AmountCovered = amountCovered,
                     BudgetStatus = budgetStatus,
-                    IsLeadershipAssignment = task.SubTaskId < 0
+                    IsLeadershipAssignment = task.IsLeadershipTask
                 };
                 IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>()
                 {

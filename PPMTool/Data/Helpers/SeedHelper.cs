@@ -1592,7 +1592,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = true,
                         Demand = 0.1,
                         DurationBillableDays = 458,
                         DurationDays = 760,
@@ -1612,7 +1611,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 39120.05,
                         ActualWorkHours = 1048.5,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 404,
                         DurationDays = 669,
@@ -1632,7 +1630,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = true,
                         Demand = 0.3,
                         DurationBillableDays = 38,
                         DurationDays = 63,
@@ -1652,7 +1649,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = true,
                         Demand = 0.3,
                         DurationBillableDays = 623,
                         DurationDays = 1033,
@@ -1672,7 +1668,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = true,
                         Demand = 0.38,
                         DurationBillableDays = 63,
                         DurationDays = 104,
@@ -1692,7 +1687,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 1899.49,
                         ActualWorkHours = 73.5,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 40,
                         DurationDays = 67,
@@ -1712,7 +1706,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 1960.25,
                         ActualWorkHours = 51.5,
-                        RequiresLeadership = true,
                         Demand = 0.3,
                         DurationBillableDays = 25,
                         DurationDays = 41,
@@ -1732,7 +1725,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = false,
                         Demand = 0.005,
                         DurationBillableDays = 441,
                         DurationDays = 731,
@@ -1752,7 +1744,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 1634.60,
                         ActualWorkHours = 63.25,
-                        RequiresLeadership = true,
                         Demand = 0.8,
                         DurationBillableDays = 13,
                         DurationDays = 21,
@@ -1772,7 +1763,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = false,
                         Demand = 0.1,
                         DurationBillableDays = 150,
                         DurationDays = 249,
@@ -1792,7 +1782,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 142.73,
                         ActualWorkHours = 3.75,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 5,
                         DurationDays = 7,
@@ -1812,7 +1801,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 3596.97,
                         ActualWorkHours = 94.5,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 33,
                         DurationDays = 54,
@@ -1832,7 +1820,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 1808.00,
                         ActualWorkHours = 47.5,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 32,
                         DurationDays = 53,
@@ -1852,7 +1839,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 551.91,
                         ActualWorkHours = 14.5,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 11,
                         DurationDays = 17,
@@ -1872,7 +1858,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 647.07,
                         ActualWorkHours = 17,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 5,
                         DurationDays = 7,
@@ -1892,7 +1877,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = true,
                         Demand = 0.2,
                         DurationBillableDays = 5,
                         DurationDays = 9,

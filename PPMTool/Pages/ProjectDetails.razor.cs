@@ -465,16 +465,14 @@ namespace PPMTool.Pages
                 }
 
                 // Add to the list of blocks
-                allBlocks.Add(new GanttBlock(t, groupName));
+                allBlocks.Add(new GanttBlock(t, groupName, isLeadershipTask: t.IsLeadershipTask));
             }
 
-            // Add a gantt block representing the management task
-            var managementTasks = project.GenerateLeadershipTasks();
-            foreach (var task in managementTasks)
-            {
-                var leadershipName = "(Leadership)";
-                allBlocks.Insert(0, new GanttBlock(task, leadershipName, isLeadershipTask: true));
-            }
+            // leadership first (true before false), each group by StartDate ascending
+            allBlocks = allBlocks
+                .OrderByDescending(x => x.IsLeadershipTask)
+                .ThenBy(x => x.Task.StartDate)
+                .ToList();
 
             // Fill in the data
             ChartHelper.CompleteChartSeries(

@@ -29,55 +29,6 @@ namespace PPMTool.Pages
         protected override string GetSessionStorageTag() => "management-capacity";
 
         /// <summary>
-        /// Method to construct leadership assignment objects for the given projects and people
-        /// </summary>
-        /// <param name="projects"></param>
-        /// <param name="people"></param>
-        /// <param name="isPersonMode"></param>
-        protected override void PopulateGroupedAssignmentsForPeople(IEnumerable<Project> projects, IEnumerable<Person> people, bool isPersonMode)
-        {
-            groupedAssignments = new Dictionary<object, IEnumerable<BaseAssignment>>();
-
-            if (isPersonMode)
-            {
-                // Person -> Leadership assignments (for all projects)
-                foreach (var person in people)
-                {
-                    var ownedProjects = projects.Where(x => x.ProjectManager.PersonId == person.PersonId);
-                    var assignments = new List<LeadershipAssignment>();
-                    foreach (var project in ownedProjects)
-                    {
-                        // Find leadership tasks and convert to leadership assignment
-                        var dateRanges = project.GetLeadershipTaskRanges();
-                        foreach (var dateRange in dateRanges)
-                        {
-                            assignments.Add(new LeadershipAssignment(dateRange, project.LeadershipFTE, project.ProjectStatus));
-                        }
-                    }
-
-                    groupedAssignments.Add(person, assignments);
-                }
-            }
-            else
-            {
-                // Project -> Leadership assignments (for a given person)
-                var person = people.First();
-                var ownedProjects = projects.Where(x => x.ProjectManager.PersonId == person.PersonId);
-                foreach (var project in ownedProjects)
-                {
-                    // Find leadership tasks and convert to leadership assignment
-                    var assignments = new List<LeadershipAssignment>();
-                    var dateRanges = project.GetLeadershipTaskRanges();
-                    foreach (var dateRange in dateRanges)
-                    {
-                        assignments.Add(new LeadershipAssignment(dateRange, project.LeadershipFTE, project.ProjectStatus));
-                    }
-                    if (assignments.Count > 0) groupedAssignments.Add(project, assignments);
-                }
-            }
-        }
-
-        /// <summary>
         /// Only called in person mode per person to generate chart items. Assumed assignments only contain projects that are owned by this person.
         /// </summary>
         /// <param name="person"></param>

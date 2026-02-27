@@ -764,7 +764,7 @@ namespace PPMTool.Pages
                                 .Where(x => x.IsWithin(startDate, endDate));
                             Debug.WriteLine($"** {tasksInWindow.Count()} tasks within window for {person.Name}");
 
-                            // Represent the assignments (including leadership assignment if necessary) in the window as chunks
+                            // Represent the assignments (including leadership assignments if necessary) in the window as chunks
                             var data = ExportHelper.GetAssignmentChunks(
                                 person,
                                 projectsInWindow,

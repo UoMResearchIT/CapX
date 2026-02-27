@@ -121,7 +121,7 @@ namespace PPMTool.Data.Entities
             // If using the grade-based models or day rate but DI funding source
             else
             {
-                // Convert to assignment chunks (do not generate extra leadership chunks)
+                // Convert to assignment chunks excluding leadership assignments
                 chunks = ExportHelper.GetAssignmentChunks(
                     Person,
                     new List<Project> { project },
@@ -130,7 +130,7 @@ namespace PPMTool.Data.Entities
                     subTask.EndDate,
                     new List<SubTask> { subTask },
                     true,
-                    generateLeadershipTasks: GenerateLeadershipTaskLogic.None
+                    includeLeadershipTasks: IncludeLeadershipTaskLogic.None
                 );
 
                 // Planned costs (technical assignments only)
