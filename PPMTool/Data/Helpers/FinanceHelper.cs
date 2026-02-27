@@ -14,18 +14,16 @@ namespace PPMTool.Data.Helpers
         /// Calculate the funds requested for a project
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="resources"></param>
-        /// <param name="leadershipSourceId"></param>
-        /// <param name="leadershipCosts"></param>
+        /// <param name="costModel"></param>
+        /// <param name="subTasks"></param>
         /// <param name="fundingSources"></param>
         /// <param name="requestedFromInvoices"></param>
         /// <param name="receivedFromPayments"></param>
         /// <returns></returns>
         internal static TransactionBreakdown ComputeTransactionBreakdown(
             PPMToolContext context,
-            int leadershipSourceId,
-            double leadershipCosts,
-            IEnumerable<Resource> resources,
+            CostModel costModel,
+            IEnumerable<SubTask> subTasks,
             IEnumerable<FundingSource> fundingSources,
             double requestedFromInvoices,
             double receivedFromPayments)
@@ -36,15 +34,20 @@ namespace PPMTool.Data.Helpers
                 .RoundedSum(x => x.AmountAvailable, 2);
 
             // DI is based on the salary costs and assignments of the resources
-            var di = resources
+            var di = subTasks
+                .Where(x => !x.IsLeadershipTask)
+                .SelectMany(x => x.AssignedResources)
                 .Where(x => x.FundedFrom?.FundingSourceType == FundingSourceType.DI)
                 .RoundedSum(x => x.PlannedCost, 2);
 
-            // Add to these totals the leadership costs if DI
-            var leadershipSource = fundingSources.FirstOrDefault(x => x.FundingSourceId == leadershipSourceId);
-            if (leadershipSource != null && leadershipSource.FundingSourceType == FundingSourceType.DI)
+            // Add to these totals the leadership costs that are funded through DI
+            var leadershipCostsThatAreDI = subTasks
+                .Where(x => x.IsLeadershipTask && x.AssignedResources
+                    .Any(x => x.FundedFrom?.FundingSourceType == FundingSourceType.DI))
+                .RoundedSum(x => x.PlannedCost, 2);
+            if (costModel.HasLeadership())
             {
-                di += leadershipCosts;
+                di += leadershipCostsThatAreDI;
             }
 
             // Create the item adding in the invoiced amounts and the direct payments

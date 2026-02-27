@@ -118,11 +118,6 @@ namespace PPMTool.Data.Entities
         public string ActualsLastUpdated { get; set; } = DateTime.Now.ToString("R");
 
         /// <summary>
-        /// The amount of time the management of this project is expected to take in FTE
-        /// </summary>
-        public float LeadershipFTE { get; set; } = GlobalDefaults.ProjectManagementDefaultFTE;
-
-        /// <summary>
         /// List of Invoices associated with this project
         /// </summary>
         public virtual ICollection<Invoice> Invoices { get; set; }
@@ -136,12 +131,6 @@ namespace PPMTool.Data.Entities
         /// List of funding sources for this project
         /// </summary>
         public virtual ICollection<FundingSource> FundingSources { get; set; }
-
-        /// <summary>
-        /// A specific funding source that is used to fund the leadership costs of this project
-        /// </summary>
-        public int? FundingSourceId { get; set; }
-        public virtual FundingSource LeadershipFundingSource { get; set; }
 
         /// <summary>
         /// Constructor also adds default status messages
@@ -163,7 +152,6 @@ namespace PPMTool.Data.Entities
 
                 // Error
                 new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Error, () => ProjectStatus.IsActive() && IsOverBudget()),
-                new StatusMessage("This project has no funding source for its leadership charges!", StatusMessage.MessageType.Error, () => HasNoLeadershipFundingSourcesButRan()),
                 new StatusMessage("This project has no agreed budget!", StatusMessage.MessageType.Error, () => HasNoBudget()),
                 new StatusMessage("A task in this project is running but the project is not active!", StatusMessage.MessageType.Error, () => RunningTaskButInactive()),
                 new StatusMessage("This project is active but has no currently running tasks!", StatusMessage.MessageType.Error, () => ActiveButNoRunningTask()),
@@ -209,15 +197,6 @@ namespace PPMTool.Data.Entities
         private bool HasNoBudget()
         {
             return Budget == 0 && ProjectStatus != ProjectStatus.NewRequest && !ProjectStatus.IsCancelled();
-        }
-
-        /// <summary>
-        /// Determines whether the project has no leadership funding sources but has run or is running and is in an active, paused, maintenance or finished state with cost model that includes leadership costs
-        /// </summary>
-        /// <returns></returns>
-        private bool HasNoLeadershipFundingSourcesButRan()
-        {
-            return CostModel.HasLeadership() && ProjectStatus.DidRun() && LeadershipFundingSource == null;
         }
 
         /// <summary>

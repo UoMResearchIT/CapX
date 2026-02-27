@@ -1300,7 +1300,6 @@ namespace PPMTool.Data.Helpers
                         DayRate = 250,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2025, 07, 31),
-                        LeadershipFTE = 0.05f,
                         Name = "Create CoP for Research Software",
                         PI = "Dr. Waffle McSnort",
                         PlannedCost = 0.0,
@@ -1325,7 +1324,6 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2025, 07, 31),
                         InnateActivity = GetInnateActivityForRTP(context, 180),
-                        LeadershipFTE = 0.05f,
                         Name = "Polypharmacy KSS",
                         PI = "Prof. Pickle Pants",
                         PlannedCost = 42123.55,
@@ -1350,7 +1348,6 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2028, 06, 30),
                         InnateActivity = GetInnateActivityForRTP(context, 255),
-                        LeadershipFTE = 0.05f,
                         Name = "Local Climate Zone Modelling",
                         PI = "Sir Gigglesworth",
                         PlannedCost = 64074.39,
@@ -1374,7 +1371,6 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2025, 10, 12),
-                        LeadershipFTE = 0.05f,
                         Name = "Political Research Transparency Web App",
                         PI = "Ms. Bubbles McGee",
                         PlannedCost = 7425.0,
@@ -1399,7 +1395,6 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2025, 03, 20),
                         InnateActivity = GetInnateActivityForRTP(context, 311),
-                        LeadershipFTE = 0.025f,
                         Name = "BMBaseDB Update",
                         PI = "Captain Quirk",
                         PlannedCost = 3197.15,
@@ -1425,7 +1420,6 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2028, 04, 08),
                         InnateActivity = GetInnateActivityForRTP(context, 323),
-                        LeadershipFTE = 0.025f,
                         Name = "Sustainability Trade-off Game Website",
                         PI = "Major Chuckles",
                         PlannedCost = 4633.86,
@@ -1451,7 +1445,6 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2026, 01, 29),
                         InnateActivity = GetInnateActivityForRTP(context, 324),
-                        LeadershipFTE = 0.05f,
                         Name = "PAPrKA",
                         PI = "Lady Lollipop",
                         PlannedCost = 12852.1,
@@ -1558,16 +1551,6 @@ namespace PPMTool.Data.Helpers
                         Project = GetProjectByRTP(context, 324)
                     }
                 };
-
-                // Set as leadership funding source where cost model requires it
-                foreach (var fs in fundingSources)
-                {
-                    // If requires leadership funding source and there isn't one already then assign
-                    if (fs.Project.CostModel == CostModel.TechAndLeadership && fs.ProjectLeadershipSource == null)
-                    {
-                        fs.ProjectLeadershipSource = fs.Project;
-                    }
-                }
 
                 context.FundingSources.AddRange(fundingSources);
                 context.SaveChanges();
