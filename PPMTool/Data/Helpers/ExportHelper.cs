@@ -20,7 +20,7 @@ namespace PPMTool.Data.Helpers
         /// <param name="tasksInWindow">The tasks in the window for assginments to be extract. If not provided, extracts subtasks from the projects in the window.</param>
         /// <param name="shouldCalculateCosts">If false the chunks will use the cost values already attached to the resources. If true, the mid-grade cost calculator will be used.</param>
         /// <param name="budgetDetails">An optional dictionary of information about the budget status of each resource assignment that can be added to the data if supplied and matched.</param>
-        /// <param name="includeLeadershipTasks">Should the process include leadership tasks for projects</param>
+        /// <param name="includeLeadershipTasks">Should the chunking process include leadership tasks for projects</param>
         /// <returns></returns>
         internal static IEnumerable<AssignmentChunk> GetAssignmentChunks(
             Person person,
@@ -70,7 +70,7 @@ namespace PPMTool.Data.Helpers
             }
             else if (includeLeadershipTasks == IncludeLeadershipTaskLogic.CostModel)
             {
-                tempTasksInWindow = tempTasksInWindow.Where(x => x.IsLeadershipTask && x.OwningProject.CostModel.HasLeadership()).ToList();
+                tempTasksInWindow = tempTasksInWindow.Where(x => !x.IsLeadershipTask || (x.IsLeadershipTask && x.OwningProject.CostModel.HasLeadership())).ToList();
             }
 
             // Get WLM changes for this person that take place during the window
