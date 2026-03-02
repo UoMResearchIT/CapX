@@ -381,6 +381,13 @@ namespace PPMTool.Data.Entities
             }
             BudgetedIndirects = Math.Round(100 * budgetIndirects) / 100;
 
+            // If we are using indirects then they will be included for tech so remove
+            if (CostModel.HasIndirects())
+            {
+                plannedTech /= (1d + GlobalDefaults.BAUTopSliceFractionDefault);
+                actualTech /= (1d + GlobalDefaults.BAUTopSliceFractionDefault);
+            }
+
             // Update project dates
             StartDate = startDate;
             EndDate = endDate;
