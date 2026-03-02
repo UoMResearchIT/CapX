@@ -98,7 +98,7 @@ namespace PPMTool.Data.Entities
         public virtual ICollection<Person> Followers { get; set; } = new List<Person>();
 
         /// <summary>
-        /// If using a cost model that has leadership costs calculated, then the planned cost based on the expected duration of the project is available here
+        /// If using a cost model that has leadership costs calculated, then the planned cost of this based on the expected duration of the project is available here
         /// </summary>
         public double PlannedLeadershipCosts { get; set; }
 
