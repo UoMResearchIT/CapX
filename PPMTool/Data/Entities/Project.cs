@@ -307,9 +307,9 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Updates the project meta data based on the current state of subtasks, resources and actuals
         /// </summary>
-        /// <param name="updateSubTaskCosts">Whether to update the subtask costs and save to database</param>
+        /// <param name="recomputeSubTaskCosts">Whether to update the subtask costs and save to database</param>
         /// <param name="financialReferences">If necessary a set of financial references</param>
-        public void UpdateProjectMetaData(bool updateSubTaskCosts, IEnumerable<FinancialReference> financialReferences)
+        public void UpdateProjectMetaData(bool recomputeSubTaskCosts, IEnumerable<FinancialReference> financialReferences)
         {
             // Check conditions for cost update
             if (CostModel != CostModel.DayRate && (financialReferences == null || financialReferences.Count() == 0))
@@ -320,14 +320,16 @@ namespace PPMTool.Data.Entities
             // Set initial values
             DateTime startDate = DateTime.MaxValue;
             DateTime endDate = DateTime.MinValue;
-            double actualCost = 0d;
             double actualHours = 0d;
-            double plannedCost = 0d;
+            double actualTech = 0d;
+            double plannedTech = 0d;
             double budgetIndirects = 0d;
-            double plannedIndirects = 0d;
             double actualIndirects = 0d;
+            double plannedIndirects = 0d;
+            double actualLeadership = 0d;
+            double plannedLeadership = 0d;
 
-            // Loop over all the subtasks (technical assignments)
+            // Loop over all the subtasks
             if (SubTasks != null)
             {
                 foreach (var task in SubTasks)
@@ -336,16 +338,25 @@ namespace PPMTool.Data.Entities
                     if (task.StartDate < startDate) startDate = task.StartDate;
                     if (task.EndDate > endDate) endDate = task.EndDate;
 
-                    // Sum technical costs and hours
-                    if (updateSubTaskCosts)
+                    // If required, update the sub task costs and save to the DB
+                    // Used if the cost model for the project has been changed
+                    if (recomputeSubTaskCosts)
                     {
                         // Update the cost of the tasks (and resources)
                         task.UpdateSubTaskCosts(this, financialReferences);
                     }
 
-                    // Read subtask costs and hours and accumulate
-                    actualCost += task.ActualCost;
-                    plannedCost += task.PlannedCost;
+                    // Read subtask costs and hours and accumulate inot the relevant categories
+                    if (task.IsLeadershipTask)
+                    {
+                        actualLeadership += task.ActualCost;
+                        plannedLeadership += task.PlannedCost;
+                    }
+                    else
+                    {
+                        actualTech += task.ActualCost;
+                        plannedTech += task.PlannedCost;
+                    }
                     actualHours += task.ActualWorkHours;
                     plannedIndirects += task.PlannedIndirectCost;
                     actualIndirects += task.ActualIndirectCost;
@@ -363,17 +374,7 @@ namespace PPMTool.Data.Entities
             StartDate = startDate;
             EndDate = endDate;
 
-            // Add the leadership costs if the cost model includes them.
-            var leadershipChunks = ExportHelper.GetAssignmentChunks(
-                ProjectManager,
-                new List<Project> { this },
-                financialReferences,
-                shouldCalculateCosts: true)
-                .Where(c => c.IsLeadershipAssignment);
-            ActualLeadershipCosts = Math.Round(100 * CalculateActualLeadershipCosts(leadershipChunks)) / 100;
-            PlannedLeadershipCosts = Math.Round(100 * leadershipChunks.Sum(x => x.PlannedCost)) / 100;
-
-            // Truncate to 1 DP
+            // Truncate actuals to 1 DP and update
             var newValue = Math.Round(10 * actualHours) / 10;
             if (newValue != ActualWorkHours)
             {
@@ -382,11 +383,13 @@ namespace PPMTool.Data.Entities
             }
             ActualWorkHours = newValue;
 
-            // Truncate the cost to 2 DP as it is currency and add on leadership costs (indirects already included in planned cost total)
+            // Truncate the cost to 2 DP as it is currency
             ActualIndirectCost = Math.Round(100 * actualIndirects) / 100;
             PlannedIndirectCost = Math.Round(100 * plannedIndirects) / 100;
-            ActualCost = Math.Round(100 * actualCost) / 100 + ActualLeadershipCosts;
-            PlannedCost = Math.Round(100 * plannedCost) / 100 + PlannedLeadershipCosts;
+            ActualCost = Math.Round(100 * actualTech) / 100;
+            PlannedCost = Math.Round(100 * plannedTech) / 100;
+            ActualLeadershipCosts = Math.Round(100 * actualLeadership) / 100;
+            PlannedLeadershipCosts = Math.Round(100 * plannedLeadership) / 100;
         }
 
         /// <summary>
@@ -411,51 +414,21 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method to run the calculation of leadership costs planned or actual
-        /// </summary>
-        /// <param name="leadershipChunks"></param>
-        /// <returns></returns>
-        private double CalculateActualLeadershipCosts(IEnumerable<AssignmentChunk> leadershipChunks)
-        {
-            // If not using the leadership cost model then this is zero
-            if (!CostModel.HasLeadership())
-            {
-                return 0;
-            }
-
-            // Zero for actuals if project hasn't started yet
-            if (DateTime.Today < StartDate)
-            {
-                return 0d;
-            }
-
-            // Find leadership task running today
-            var currentChunk = leadershipChunks.FirstOrDefault(x => x.IsWithin(DateTime.Today));
-
-            // All tasks before today count toward the actuals and are the same as the planned
-            var costs = leadershipChunks
-                .Where(x => x.EndDate < DateTime.Today)
-                .Sum(x => x.PlannedCost);
-
-            // If we have a current chunk work out the proportion through the chunk
-            if (currentChunk != null)
-            {
-                var daysInChunk = DateTime.Today.Subtract(currentChunk.StartDate).TotalDays + 1;
-                var chunkLength = currentChunk.EndDate.Subtract(currentChunk.StartDate).TotalDays + 1;
-                var proportion = daysInChunk / chunkLength;
-                costs += proportion * currentChunk.PlannedCost;
-            }
-
-            return costs;
-        }
-
-        /// <summary>
         /// To identify the project in the logs and on exports
         /// </summary>
         /// <returns></returns>
         public string GetSensibleObjectName()
         {
             return GetFullName();
+        }
+
+        /// <summary>
+        /// Returns the total planned cost of the project (tech + leaderhsip + indirects)
+        /// </summary>
+        /// <returns></returns>
+        public double GetTotalPlannedCosts()
+        {
+            return PlannedCost + PlannedLeadershipCosts + PlannedIndirectCost;
         }
     }
 }

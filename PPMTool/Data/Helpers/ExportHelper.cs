@@ -18,7 +18,7 @@ namespace PPMTool.Data.Helpers
         /// <param name="startDate">Window start date. If not provided, uses earliest project start.</param>
         /// <param name="endDate">Window end date. If not provided, uses latest project end.</param>
         /// <param name="tasksInWindow">The tasks in the window for assginments to be extract. If not provided, extracts subtasks from the projects in the window.</param>
-        /// <param name="shouldCalculateCosts">If false the chunks will use the cost values already attached to the resources. If true, the mid-grade cost calculator will be used.</param>
+        /// <param name="shouldCalculateCosts">If false the chunks will use the cost values already attached to the resources. If true, the mid-grade cost calculator will be used to estimate the cost of the chunk and overwrite anything stored.</param>
         /// <param name="budgetDetails">An optional dictionary of information about the budget status of each resource assignment that can be added to the data if supplied and matched.</param>
         /// <param name="includeLeadershipTasks">Should the chunking process include leadership tasks for projects</param>
         /// <returns></returns>
@@ -313,7 +313,7 @@ namespace PPMTool.Data.Helpers
             foreach (var chunk in data)
             {
                 // Cost estimate based on mid-grade salaries
-                chunk.UpdateEstimatedSalaryCost(finrefs, shouldCalculateCosts);
+                chunk.RecomputeChunkCosts(finrefs, shouldCalculateCosts);
             }
 
             return data;

@@ -108,8 +108,8 @@ namespace PPMTool.Data.Entities
             // Update the billed FTE value for the resource based on the cost model
             UpdateBilledFTE(project.CostModel);
 
-            // If using the day rate model the planned cost is only day rate if we aren't recharging to DI funding sources which have to be salary costs
-            if (project.CostModel == CostModel.DayRate && fundingSourceType != FundingSourceType.DI)
+            // If using the day rate model the planned cost is only day rate
+            if (project.CostModel == CostModel.DayRate)
             {
                 // Actual cost is hours converted to days multiplied by the day rate
                 ActualCost = durationDaysActual * (UseProjectDayRate ? project.DayRate : DayRate ?? 0);
@@ -118,10 +118,10 @@ namespace PPMTool.Data.Entities
                 PlannedCost = durationDaysPlanned * (UseProjectDayRate ? project.DayRate : DayRate ?? 0);
             }
 
-            // If using the grade-based models or day rate but DI funding source
+            // If using the grade-based models
             else
             {
-                // Convert to assignment chunks
+                // Convert to assignment chunks and recompute the costs of the chunks
                 chunks = ExportHelper.GetAssignmentChunks(
                     Person,
                     new List<Project> { project },
@@ -132,8 +132,10 @@ namespace PPMTool.Data.Entities
                     true
                 );
 
-                // Planned costs
-                PlannedCost = chunks.Sum(x => x.PlannedCost);
+                // Planned costs of the resource (leadership tasks are zero if not a leadership cost model)
+                PlannedCost = (!project.CostModel.HasLeadership() && subTask.IsLeadershipTask) ?
+                    0 :
+                    chunks.Sum(x => x.PlannedCost);
 
                 // Actual costs are a proportion of the planned based on actuals recorded
                 ActualCost = 0d;
