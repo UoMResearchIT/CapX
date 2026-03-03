@@ -586,5 +586,25 @@ namespace PPMTool.Data.Entities
             }
             return chunks;
         }
+
+        /// <summary>
+        /// Returns the assignment value of the resource assignment matching the person given. Zero if not found.
+        /// </summary>
+        /// <param name="personAssigned"></param>
+        /// <returns></returns>
+        internal double GetAssignmentValueForPerson(Person personAssigned)
+        {
+            return AssignedResources.FirstOrDefault(x => x.Person?.PersonId == personAssigned.PersonId)?.AssignmentFTE ?? 0;
+        }
+
+        /// <summary>
+        /// Returns whether the resource assignment matching the person given is provisional or not. False if not found.
+        /// </summary>
+        /// <param name="personAssigned"></param>
+        /// <returns></returns>
+        internal bool IsProvisionalResource(Person personAssigned)
+        {
+            return AssignedResources.FirstOrDefault(x => x.Person?.PersonId == personAssigned.PersonId)?.IsProvisional ?? false;
+        }
     }
 }

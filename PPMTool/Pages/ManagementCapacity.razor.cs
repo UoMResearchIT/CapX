@@ -38,16 +38,15 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override IEnumerable<ChartItem> GetPersonModeChartItemsFromAssignments(
             Person person,
-            IEnumerable<BaseAssignment> assignments,
+            IEnumerable<Assignment> assignments,
             DateTime startDate,
             DateTime endDate)
         {
             return ChartHelper.ConvertAssignmentsToChartItems(
                 assignments,
-                (assignments, currentDay) =>
-                {
-                    return assignments.RoundedSum(assignment => (assignment as LeadershipAssignment)?.LeadershipFTE ?? 0);
-                },
+                // Value 1 function
+                (assignments, currentDay) => assignments.RoundedSum(assignment => assignment.SubTask.GetAssignmentValueForPerson(person)),
+                // Colour function
                 (value1, value2, isHatched) =>
                 {
                     return ChartItem.GetColourStringFTE(value1, value2);
@@ -56,14 +55,14 @@ namespace PPMTool.Pages
                 startDate,
                 endDate,
                 person,
-                assignments =>
-                {
-                    return assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed());
-                },
+                // Hatched function
+                assignments => assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed()),
+                // Value 2 function
                 (assignments, value1, currentDay) =>
                 {
                     return person.GetProjectManagementCapacityOnDate(currentDay);
                 },
+                // Gap filling function
                 (assignments, gapStart, gapEnd) =>
                 {
                     return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(
@@ -92,7 +91,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
             string seriesName,
-            KeyValuePair<object, IEnumerable<BaseAssignment>> groupedAssignments,
+            KeyValuePair<object, IEnumerable<Assignment>> groupedAssignments,
             DateTime startDate,
             DateTime endDate,
             Person person,
@@ -101,11 +100,8 @@ namespace PPMTool.Pages
         {
             return ChartHelper.ConvertAssignmentsToChartItems(
                 groupedAssignments.Value,
-                // Value 1 for each block
-                (assignments, currentDay) =>
-                {
-                    return assignments.RoundedSum(assignment => (assignment as LeadershipAssignment)?.LeadershipFTE ?? 0);
-                },
+                // Value 1 for each block -- Value is the effort of the chosen person
+                (assignments, currentDay) => assignments.RoundedSum(assignment => assignment.SubTask.GetAssignmentValueForPerson(person)),
                 // Colour function
                 (value1, value2, isHatched) =>
                 {
@@ -122,10 +118,7 @@ namespace PPMTool.Pages
                 startDate,
                 endDate,
                 // Hatched function
-                hatchedFunction: assignments =>
-                {
-                    return assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed());
-                },
+                hatchedFunction: assignments => assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed()),
                 // Value 2 for each block
                 value2Function: (assignments, value1, currentDay) =>
                 {
@@ -143,7 +136,7 @@ namespace PPMTool.Pages
         /// <param name="personOfInterest"></param>
         /// <param name="messages"></param>
         /// <returns></returns>
-        protected override string GenerateTooltipMessages(IEnumerable<BaseAssignment> assignmentsWithinBlock, Person personOfInterest, string messages)
+        protected override string GenerateTooltipMessages(IEnumerable<Assignment> assignmentsWithinBlock, Person personOfInterest, string messages)
         {
             // Add project badges
             foreach (var status in assignmentsWithinBlock.Select(x => x.ProjectStatus).Distinct())
@@ -155,10 +148,12 @@ namespace PPMTool.Pages
             messages = base.GenerateTooltipMessages(assignmentsWithinBlock, personOfInterest, messages);
 
             // Check for leadership load greater than the standard
-            var assignments = assignmentsWithinBlock.Select(x => x as LeadershipAssignment);
-            if (assignments?.Any(x => x?.LeadershipFTE > GlobalDefaults.ProjectManagementDefaultFTE) ?? false)
+            if (assignmentsWithinBlock.Any(x => x.SubTask.GetAssignmentValueForPerson(personOfInterest) > GlobalDefaults.ProjectManagementDefaultFTE))
             {
-                var amount = assignments.RoundedSum(x => x.LeadershipFTE > GlobalDefaults.ProjectManagementDefaultFTE ? x.LeadershipFTE : 0);
+                var amount = assignmentsWithinBlock.RoundedSum(x => x.SubTask.GetAssignmentValueForPerson(personOfInterest) > GlobalDefaults.ProjectManagementDefaultFTE ?
+                    x.SubTask.GetAssignmentValueForPerson(personOfInterest) :
+                    0
+                );
                 messages += $"<h3 class=\"me-1 text-warning\"> &#x26A0; [INCREASED LEADERSHIP ({amount} FTE)]</h3>";
             }
             return messages;

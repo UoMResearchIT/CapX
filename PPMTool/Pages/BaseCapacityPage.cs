@@ -46,7 +46,7 @@ namespace PPMTool.Pages
         protected IList<ChartModel> chartModels = new List<ChartModel>();
         protected IEnumerable<Project> cachedProjects;
         protected IEnumerable<Person> cachedPeople;
-        protected IDictionary<object, IEnumerable<BaseAssignment>> groupedAssignments;
+        protected IDictionary<object, IEnumerable<Assignment>> groupedAssignments;
         protected List<Person> people;
         protected List<Person> filteredPeople;
         protected IEnumerable<string> chosenPeople = new List<string>();
@@ -116,7 +116,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected abstract IEnumerable<ChartItem> GetPersonModeChartItemsFromAssignments(
             Person person,
-            IEnumerable<BaseAssignment> assignments,
+            IEnumerable<Assignment> assignments,
             DateTime startDate,
             DateTime endDate
         );
@@ -133,7 +133,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected abstract IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
             string seriesName,
-            KeyValuePair<object, IEnumerable<BaseAssignment>> groupedAssignments,
+            KeyValuePair<object, IEnumerable<Assignment>> groupedAssignments,
             DateTime startDate,
             DateTime endDate,
             Person person,
@@ -183,7 +183,7 @@ namespace PPMTool.Pages
         /// <param name="personOfInterest">Person used to decide whether condition relevancy</param>
         /// <param name="messages">Messages to add to</param>
         /// <returns></returns>
-        protected virtual string GenerateTooltipMessages(IEnumerable<BaseAssignment> assignmentsWithinBlock, Person personOfInterest, string messages)
+        protected virtual string GenerateTooltipMessages(IEnumerable<Assignment> assignmentsWithinBlock, Person personOfInterest, string messages)
         {
             // Add the project unconfirmed warning to the tooltip if project is unconfirmed
             if (assignmentsWithinBlock.Any(x => x.ProjectStatus.IsUnconfirmed()))
@@ -208,7 +208,7 @@ namespace PPMTool.Pages
             TaskSubset taskSet = TaskSubset.TechOnly)
         {
             // Reset existing dictionary
-            groupedAssignments = new Dictionary<object, IEnumerable<BaseAssignment>>();
+            groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
 
             // Return early if no data
             if (people.Count() == 0 || projects.Count() == 0)
@@ -295,7 +295,12 @@ namespace PPMTool.Pages
         /// <param name="manualEndDate">Overrides the end window for things like axis limits</param>
         /// <param name="customChartTitleGenerator">Generates the title for the charts - takes the name of the person if in project mode</param>
         /// <param name="projectModeCondition">Optional OR condition for deciding whether in project mode</param>
-        protected async Task ConfigureChartSource(Action afterConfigureTask = null, DateTime? manualStartDate = null, DateTime? manualEndDate = null, Func<string, string> customChartTitleGenerator = null, Func<bool> projectModeCondition = null)
+        protected async Task ConfigureChartSource(
+            Action afterConfigureTask = null,
+            DateTime? manualStartDate = null,
+            DateTime? manualEndDate = null,
+            Func<string, string> customChartTitleGenerator = null,
+            Func<bool> projectModeCondition = null)
         {
             Debug.WriteLine("** Configuring Chart Source...");
             Loading = true;
@@ -412,11 +417,11 @@ namespace PPMTool.Pages
                             // Total row needs to repeat the above logic but on the flattened set of subtasks
                             var allProjectAssignments = groupedAssignments.SelectMany(x => x.Value);
                             var rowName = "Total";
-                            groupedAssignments = new Dictionary<object, IEnumerable<BaseAssignment>>();
+                            groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
                             chartSourceTemp.AddRange(
                                 GetProjectModeChartItemsFromAssignments(
                                     rowName,
-                                    new KeyValuePair<object, IEnumerable<BaseAssignment>>(rowName, allProjectAssignments),
+                                    new KeyValuePair<object, IEnumerable<Assignment>>(rowName, allProjectAssignments),
                                     startDate,
                                     endDate,
                                     person,
