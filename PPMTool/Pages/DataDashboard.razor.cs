@@ -781,16 +781,20 @@ namespace PPMTool.Pages
                         var peopleActive = await PersonService.GetEmployedPeopleShallowAsync(Context, startDate, endDate);
                         foreach (var person in peopleActive)
                         {
-                            // Filter list of tasks for those projects that just run during the window and are assigned to this person
+                            // Filter list of tasks for those projects that just run during the window and are assigned to this person.
+                            // Filter out leadership tasks for projects that don't allow them to be recharged.
                             var tasksInWindow = projectsInWindow
                                 .SelectMany(x => x.SubTasks)
                                 .Where(x => x.AssignedResources
-                                    .Any(x => x.Person.PersonId == person.PersonId)
-                                )
-                                .Where(x => x.IsWithin(startDate, endDate));
+                                    .Any(x => x.Person.PersonId == person.PersonId) &&
+                                    x.IsWithin(startDate, endDate) &&
+                                    (!x.IsLeadershipTask ||
+                                        (x.OwningProject.CostModel.HasLeadership() && x.IsLeadershipTask)
+                                    )
+                                );
                             Debug.WriteLine($"** {tasksInWindow.Count()} tasks within window for {person.Name}");
 
-                            // Represent the assignments (including leadership assignments if necessary) in the window as chunks.
+                            // Represent the assignments (including leadership assignments if cost model allows recharge) in the window as chunks.
                             // Do not recompute the costs here as it is a waste of effort.
                             var data = ExportHelper.GetAssignmentChunks(
                                 person,
