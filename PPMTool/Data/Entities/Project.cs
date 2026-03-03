@@ -166,6 +166,7 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project has no funding sources but is either finished or is active!", StatusMessage.MessageType.Error, () => HasNoFundingSourcesButRan()),
                 new StatusMessage("This project has a task with a resource without a funding source and is currently running or has run in the past!", StatusMessage.MessageType.Error, () => HasResourcesWithNoFundingSourceOnRunningTask()),
                 new StatusMessage("This project uses the Day Rate model but has a DI funding source which is not allowed! DI funding sources must use salary costs for recharge.", StatusMessage.MessageType.Error, () => DayRateWithDIFunding()),
+                new StatusMessage("This project does not have a leadership task!", StatusMessage.MessageType.Error, () => !SubTasks?.Any(x => x.IsLeadershipTask) ?? true),
                 
                 
                 // Success
