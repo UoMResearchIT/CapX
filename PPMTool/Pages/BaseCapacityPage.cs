@@ -285,157 +285,164 @@ namespace PPMTool.Pages
             // Run the data loading
             await Task.Run(() =>
             {
-                Debug.WriteLine("** Running new configure task...");
-
-                // Initialise the dictionaries
-                chartModels.Clear();
-                IEnumerable<Project> validProjects = cachedProjects;
-
-                // Need some people for this to work
-                if (people.Count() == 0)
+                try
                 {
-                    LogError("People database is empty!");
-                    Debug.WriteLine("** No people registered in the database!");
-                    return Task.CompletedTask;
-                }
+                    Debug.WriteLine("** Running new configure task...");
 
-                // Update the valid projects
-                validProjects = GetValidProjects();
+                    // Initialise the dictionaries
+                    chartModels.Clear();
+                    IEnumerable<Project> validProjects = cachedProjects;
 
-                // Get the window from the start and end dates of the projects included in the source
-                // Avoids including malformed projects without a proper start date
-                validProjects = validProjects.Where(x => x.StartDate.Year > 2000);
-                if (validProjects.Count() == 0)
-                {
-                    Debug.WriteLine("** No projects found that match the chosen options!");
-                    return Task.CompletedTask;
-                }
-                var startDate = validProjects.Min(x => x.StartDate);
-                var endDate = validProjects.Max(x => x.EndDate);
-
-                // -------------- PERSON MODE -------------- //
-
-                // Flatten subtasks and group by person if "All" chosen
-                if (!PeopleChosen())
-                {
-                    Debug.WriteLine("** Chart in PERSON MODE.");
-
-                    // Create temporary list of chart items
-                    var chartSourceTemp = new List<ChartItem>();
-
-                    // Build assignments dictionary for each person
-                    PopulateGroupedAssignmentsForPeople(validProjects, people, true);
-
-                    // Build chart source from the grouped data
-                    foreach (var group in groupedAssignments)
+                    // Need some people for this to work
+                    if (people.Count() == 0)
                     {
-                        // Add the range for this person
-                        chartSourceTemp.AddRange(
-                            GetPersonModeChartItemsFromAssignments(
-                                group.Key as Person,
-                                group.Value,
-                                manualStartDate ?? startDate,
-                                manualEndDate ?? endDate
-                            )
-                        );
+                        LogError("People database is empty!");
+                        Debug.WriteLine("** No people registered in the database!");
+                        return Task.CompletedTask;
                     }
 
-                    // Add data
-                    var numberRows = chartSourceTemp.DistinctBy(x => x.Label).Count();
-                    chartModels.Add(new ChartModel
+                    // Update the valid projects
+                    validProjects = GetValidProjects();
+
+                    // Get the window from the start and end dates of the projects included in the source
+                    // Avoids including malformed projects without a proper start date
+                    validProjects = validProjects.Where(x => x.StartDate.Year > 2000);
+                    if (validProjects.Count() == 0)
                     {
-                        ChartTitle = customChartTitleGenerator?.Invoke(null) ?? "Load for All",
-                        ChartOptions = BuildNewChartOptionsObject(numberRows),
-                        ConfirmedChartItems = chartSourceTemp.Where(x => !x.IsHatched()).ToList(),
-                        ProvisionalChartItems = chartSourceTemp.Where(x => x.IsHatched()).ToList()
-                    });
-                }
+                        Debug.WriteLine("** No projects found that match the chosen options!");
+                        return Task.CompletedTask;
+                    }
+                    var startDate = validProjects.Min(x => x.StartDate);
+                    var endDate = validProjects.Max(x => x.EndDate);
 
-                // -------------- PROJECT MODE -------------- //
+                    // -------------- PERSON MODE -------------- //
 
-                // Filter by people chosen, flatten and group by project if in project mode
-                else if (PeopleChosen() || (projectModeCondition?.Invoke() ?? false))
-                {
-                    Debug.WriteLine("** Chart in PROJECT MODE.");
-
-                    // For each person selected
-                    foreach (var name in chosenPeople)
+                    // Flatten subtasks and group by person if "All" chosen
+                    if (!PeopleChosen())
                     {
+                        Debug.WriteLine("** Chart in PERSON MODE.");
+
                         // Create temporary list of chart items
                         var chartSourceTemp = new List<ChartItem>();
 
-                        // Get person object
-                        var person = people.First(x => x.Name == name);
-
-                        // Build assignments dictionary for each project
-                        PopulateGroupedAssignmentsForPeople(validProjects, new List<Person> { person }, false);
+                        // Build assignments dictionary for each person
+                        PopulateGroupedAssignmentsForPeople(validProjects, people, true);
 
                         // Build chart source from the grouped data
-                        Debug.WriteLine($"** {person.Name} has {groupedAssignments.Count} projects");
                         foreach (var group in groupedAssignments)
                         {
-                            // Compute chart items from the grouped assignments
-                            var seriesName = (group.Key as Project).GetFullName();
+                            // Add the range for this person
                             chartSourceTemp.AddRange(
-                                GetProjectModeChartItemsFromAssignments(
-                                    seriesName,
-                                    group,
-                                    startDate,
-                                    endDate,
-                                    person
+                                GetPersonModeChartItemsFromAssignments(
+                                    group.Key as Person,
+                                    group.Value,
+                                    manualStartDate ?? startDate,
+                                    manualEndDate ?? endDate
                                 )
                             );
                         }
 
-                        // Total row needs to repeat the above logic but on the flattened set of subtasks
-                        var allProjectAssignments = groupedAssignments.SelectMany(x => x.Value);
-                        var rowName = "Total";
-                        groupedAssignments = new Dictionary<object, IEnumerable<BaseAssignment>>();
-                        chartSourceTemp.AddRange(
-                            GetProjectModeChartItemsFromAssignments(
-                                rowName,
-                                new KeyValuePair<object, IEnumerable<BaseAssignment>>(rowName, allProjectAssignments),
-                                startDate,
-                                endDate,
-                                person,
-                                isTotalRow: true
-                            )
-                        );
-
-                        // Hack to complete the entries
-                        ChartHelper.CompleteChartSeries(
-                            chartSourceTemp,
-                            c => new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched(), isFake: true),
-                            out var confirmedChartItemsComplete,
-                            out var provisionalChartItemsComplete
-                        );
-
                         // Add data
-                        var numberRows = confirmedChartItemsComplete.Concat(provisionalChartItemsComplete).DistinctBy(x => x.Label).Count();
+                        var numberRows = chartSourceTemp.DistinctBy(x => x.Label).Count();
                         chartModels.Add(new ChartModel
                         {
-                            ChartTitle = customChartTitleGenerator?.Invoke(name) ?? $"Load for {name}",
+                            ChartTitle = customChartTitleGenerator?.Invoke(null) ?? "Load for All",
                             ChartOptions = BuildNewChartOptionsObject(numberRows),
-                            ConfirmedChartItems = confirmedChartItemsComplete,
-                            ProvisionalChartItems = provisionalChartItemsComplete
+                            ConfirmedChartItems = chartSourceTemp.Where(x => !x.IsHatched()).ToList(),
+                            ProvisionalChartItems = chartSourceTemp.Where(x => x.IsHatched()).ToList()
                         });
                     }
+
+                    // -------------- PROJECT MODE -------------- //
+
+                    // Filter by people chosen, flatten and group by project if in project mode
+                    else if (PeopleChosen() || (projectModeCondition?.Invoke() ?? false))
+                    {
+                        Debug.WriteLine("** Chart in PROJECT MODE.");
+
+                        // For each person selected
+                        foreach (var name in chosenPeople)
+                        {
+                            // Create temporary list of chart items
+                            var chartSourceTemp = new List<ChartItem>();
+
+                            // Get person object
+                            var person = people.First(x => x.Name == name);
+
+                            // Build assignments dictionary for each project
+                            PopulateGroupedAssignmentsForPeople(validProjects, new List<Person> { person }, false);
+
+                            // Build chart source from the grouped data
+                            Debug.WriteLine($"** {person.Name} has {groupedAssignments.Count} projects");
+                            foreach (var group in groupedAssignments)
+                            {
+                                // Compute chart items from the grouped assignments
+                                var seriesName = (group.Key as Project).GetFullName();
+                                chartSourceTemp.AddRange(
+                                    GetProjectModeChartItemsFromAssignments(
+                                        seriesName,
+                                        group,
+                                        startDate,
+                                        endDate,
+                                        person
+                                    )
+                                );
+                            }
+
+                            // Total row needs to repeat the above logic but on the flattened set of subtasks
+                            var allProjectAssignments = groupedAssignments.SelectMany(x => x.Value);
+                            var rowName = "Total";
+                            groupedAssignments = new Dictionary<object, IEnumerable<BaseAssignment>>();
+                            chartSourceTemp.AddRange(
+                                GetProjectModeChartItemsFromAssignments(
+                                    rowName,
+                                    new KeyValuePair<object, IEnumerable<BaseAssignment>>(rowName, allProjectAssignments),
+                                    startDate,
+                                    endDate,
+                                    person,
+                                    isTotalRow: true
+                                )
+                            );
+
+                            // Hack to complete the entries
+                            ChartHelper.CompleteChartSeries(
+                                chartSourceTemp,
+                                c => new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched(), isFake: true),
+                                out var confirmedChartItemsComplete,
+                                out var provisionalChartItemsComplete
+                            );
+
+                            // Add data
+                            var numberRows = confirmedChartItemsComplete.Concat(provisionalChartItemsComplete).DistinctBy(x => x.Label).Count();
+                            chartModels.Add(new ChartModel
+                            {
+                                ChartTitle = customChartTitleGenerator?.Invoke(name) ?? $"Load for {name}",
+                                ChartOptions = BuildNewChartOptionsObject(numberRows),
+                                ConfirmedChartItems = confirmedChartItemsComplete,
+                                ProvisionalChartItems = provisionalChartItemsComplete
+                            });
+                        }
+                    }
+
+                    Debug.WriteLine($"** Done. Unfunded = {includeUnFunded} | Leavers = {includeLeavers} | Finished = {includeFinished}.");
+
+                    // Format X Axis range based on last end date of real assignments (i.e. not padding assignments)
+                    var allItems = chartModels.SelectMany(x => x.ConfirmedChartItems.Concat(x.ProvisionalChartItems)).Where(x => x.Value1 != 0);
+                    long? endDateForAxisRange = allItems.Count() > 0 ? DateTime.Today.AddYears(1).ToUnixTimeMilliseconds() : null;
+                    foreach (var opt in chartModels.Select(x => x.ChartOptions))
+                    {
+                        opt.Xaxis.Min = manualStartDate == null ? DateTime.Today.AddDays(-14).ToUnixTimeMilliseconds() : manualStartDate.Value.ToUnixTimeMilliseconds();
+                        opt.Xaxis.Max = manualEndDate == null ? endDateForAxisRange : manualEndDate.Value.ToUnixTimeMilliseconds();
+                    }
+                    Debug.WriteLine($"** Reconfguring the chart on XAxis range {chartModels.FirstOrDefault()?.ChartOptions.Xaxis?.Min} to {chartModels.FirstOrDefault()?.ChartOptions.Xaxis?.Max}");
+
+                    return Task.CompletedTask;
                 }
-
-                Debug.WriteLine($"** Done. Unfunded = {includeUnFunded} | Leavers = {includeLeavers} | Finished = {includeFinished}.");
-
-                // Format X Axis range based on last end date of real assignments (i.e. not padding assignments)
-                var allItems = chartModels.SelectMany(x => x.ConfirmedChartItems.Concat(x.ProvisionalChartItems)).Where(x => x.Value1 != 0);
-                long? endDateForAxisRange = allItems.Count() > 0 ? DateTime.Today.AddYears(1).ToUnixTimeMilliseconds() : null;
-                foreach (var opt in chartModels.Select(x => x.ChartOptions))
+                catch (Exception e)
                 {
-                    opt.Xaxis.Min = manualStartDate == null ? DateTime.Today.AddDays(-14).ToUnixTimeMilliseconds() : manualStartDate.Value.ToUnixTimeMilliseconds();
-                    opt.Xaxis.Max = manualEndDate == null ? endDateForAxisRange : manualEndDate.Value.ToUnixTimeMilliseconds();
+                    LogError(e.Message);
+                    throw new Exception("Task Faulted: See inner exception.", e);
                 }
-                Debug.WriteLine($"** Reconfguring the chart on XAxis range {chartModels.FirstOrDefault()?.ChartOptions.Xaxis?.Min} to {chartModels.FirstOrDefault()?.ChartOptions.Xaxis?.Max}");
-
-                return Task.CompletedTask;
-
             })
             .ContinueWith(task =>
             {
@@ -445,6 +452,16 @@ namespace PPMTool.Pages
 
                 InvokeAsync(() =>
                 {
+                    if (task.IsFaulted)
+                    {
+                        ShowNotification(new CapXNotificationMessage
+                        {
+                            Severity = NotificationSeverity.Error,
+                            Summary = "Chart Generation Failed",
+                            Detail = "Chart generation has unexpectedly failed. Please report this as a bug!"
+                        });
+                    }
+
                     // Reset the state
                     Debug.WriteLine($"** Continue with task complete!");
                     Loading = false;
