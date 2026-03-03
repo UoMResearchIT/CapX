@@ -53,7 +53,7 @@ namespace PPMTool.Migrations
                 WHERE
                     st.IsLeadershipTask = 1
                     AND p.ProjectManagerPersonId IS NOT NULL
-                    AND p.ProjectStatus > 7
+                    AND p.ProjectStatus < 8
                     AND NOT EXISTS (
                         SELECT 1
                         FROM Resources r
