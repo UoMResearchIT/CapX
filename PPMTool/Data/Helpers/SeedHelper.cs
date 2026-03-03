@@ -1883,6 +1883,7 @@ namespace PPMTool.Data.Helpers
                 {
                     subTasks[0]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 180);
@@ -1890,6 +1891,7 @@ namespace PPMTool.Data.Helpers
                 {
                     subTasks[1]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 255);
@@ -1899,6 +1901,7 @@ namespace PPMTool.Data.Helpers
                     subTasks[2],
                     subTasks[3]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 265);
@@ -1906,6 +1909,7 @@ namespace PPMTool.Data.Helpers
                 {
                     subTasks[4]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 311);
@@ -1913,6 +1917,7 @@ namespace PPMTool.Data.Helpers
                 {
                     subTasks[5]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 323);
@@ -1923,6 +1928,7 @@ namespace PPMTool.Data.Helpers
                     subTasks[7],
                     subTasks[8]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 324);
@@ -1938,8 +1944,35 @@ namespace PPMTool.Data.Helpers
                     subTasks[14],
                     subTasks[15]
                 };
+                project.CreateLeadershipSubTask(0.1);
                 context.SaveChanges();
             }
+        }
+
+        /// <summary>
+        /// Private extension method to add a subtask to an exist project based on the date ranges of its current non-leadership tasks
+        /// </summary>
+        /// <param name="project"></param>
+        private static void CreateLeadershipSubTask(this Project project, double leadershipFTE = 0.05)
+        {
+            if (!project.SubTasks.Any(x => !x.IsLeadershipTask)) return;
+
+            var startDate = project.SubTasks.Min(x => x.StartDate);
+            var endDate = project.SubTasks.Max(x => x.EndDate);
+            var subTask = new SubTask
+            {
+                Demand = leadershipFTE,
+                EndDate = ApplyDateOffset(endDate.Year, endDate.Month, endDate.Day),
+                HasFixedEndDate = true,
+                HasFixedStart = true,
+                Name = "Leadership",
+                OriginalDemand = leadershipFTE,
+                StartDate = ApplyDateOffset(startDate.Year, startDate.Month, startDate.Day),
+                TaskType = TaskType.FixedDuration,
+                UnmetDemand = 0
+            };
+            subTask.Schedule();
+            project.SubTasks.Add(subTask);
         }
 
         /// <summary>
@@ -1969,6 +2002,7 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
 
                 project = GetProjectWithSubTaskAndFundingByRTP(context, 255);
@@ -2003,6 +2037,7 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
 
                 project = GetProjectWithSubTaskAndFundingByRTP(context, 265);
@@ -2022,6 +2057,7 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
 
                 project = GetProjectWithSubTaskAndFundingByRTP(context, 311);
@@ -2041,6 +2077,7 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
 
                 project = GetProjectWithSubTaskAndFundingByRTP(context, 323);
@@ -2092,6 +2129,7 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
 
                 project = GetProjectWithSubTaskAndFundingByRTP(context, 324);
@@ -2207,7 +2245,30 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Add a resource provided to the leadership tasks in the project
+        /// </summary>
+        /// <param name="project"></param>
+        private static void AddProjectManagerToLeadershipTasks(this Project project)
+        {
+            if (!project.SubTasks.Any(x => x.IsLeadershipTask)) return;
+            foreach (var task in project.SubTasks.Where(x => x.IsLeadershipTask))
+            {
+                var resource = new Resource
+                {
+                    Person = project.ProjectManager,
+                    AssignmentFTE = task.Demand,
+                    DayRate = 300,
+                    FundedFrom = project.FundingSources.FirstOrDefault(),
+                    IsProvisional = false,
+                    UseProjectDayRate = project.CostModel == CostModel.DayRate
+                };
+                task.AssignedResources.Add(resource);
             }
         }
 
