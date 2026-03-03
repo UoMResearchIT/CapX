@@ -176,5 +176,15 @@ namespace PPMTool.Pages
             }
             return "rz-badge-light";
         }
+
+        /// <inheritdoc />
+        protected override void PopulateGroupedAssignmentsForPeople(
+            IEnumerable<Project> projects,
+            IEnumerable<Person> people,
+            bool isPersonMode,
+            TaskSubset taskSet = TaskSubset.TechOnly)
+        {
+            base.PopulateGroupedAssignmentsForPeople(projects, people, isPersonMode, TaskSubset.LeadershipOnly);
+        }
     }
 }
