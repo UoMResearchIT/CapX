@@ -13,62 +13,81 @@ namespace PPMTool.Migrations
             // This finds the require ranges for leadership and adds tasks to the DB
             migrationBuilder.Sql(@"
                 WITH leadership_candidates AS (
-                    -- 1. SubTasks that require leadership and have demand
-                    SELECT
+                    -- 1) SubTasks that require leadership and have demand (deduplicated)
+                    SELECT DISTINCT
                         OwningProjectProjectId AS ProjectId,
                         DATE(StartDate) AS StartDate,
                         DATE(EndDate)   AS EndDate
                     FROM SubTasks
-                    WHERE
-                        RequiresLeadership = 1
-                        AND Demand > 0
-                        AND OwningProjectProjectId IS NOT NULL
+                    WHERE RequiresLeadership = 1
+                      AND Demand > 0
+                      AND OwningProjectProjectId IS NOT NULL
                 ),
 
-                ordered_ranges AS (
-                    -- 2. Order ranges and inspect previous EndDate per project
+                ordered AS (
+                    -- 2) Keep explicit shape for ordering
+                    SELECT ProjectId, StartDate, EndDate
+                    FROM leadership_candidates
+                ),
+
+                with_running AS (
+                    -- 3) Running maximum EndDate up to and including the current row
                     SELECT
                         ProjectId,
                         StartDate,
                         EndDate,
-                        LAG(EndDate) OVER (
+                        MAX(EndDate) OVER (
                             PARTITION BY ProjectId
-                            ORDER BY StartDate
-                        ) AS PrevEndDate
-                    FROM leadership_candidates
+                            ORDER BY StartDate, EndDate
+                            ROWS UNBOUNDED PRECEDING
+                        ) AS RunningEnd
+                    FROM ordered
                 ),
 
-                range_breaks AS (
-                    -- 3. Detect where a new merged range begins
+                breaks AS (
+                    -- 4) Previous running max *before* this row
+                    SELECT
+                        ProjectId,
+                        StartDate,
+                        EndDate,
+                        LAG(RunningEnd) OVER (
+                            PARTITION BY ProjectId
+                            ORDER BY StartDate, EndDate
+                        ) AS PrevRunningEnd
+                    FROM with_running
+                ),
+
+                range_flags AS (
+                    -- 5) Start a new group if current StartDate is after the previous running max end (+1 day stitches abutting ranges)
                     SELECT
                         ProjectId,
                         StartDate,
                         EndDate,
                         CASE
-                            WHEN PrevEndDate IS NULL
-                                 OR StartDate > DATE(PrevEndDate, '+1 day')
+                            WHEN PrevRunningEnd IS NULL
+                              OR StartDate > DATE(PrevRunningEnd, '+1 day')
                             THEN 1
                             ELSE 0
                         END AS IsNewRange
-                    FROM ordered_ranges
+                    FROM breaks
                 ),
 
                 grouped_ranges AS (
-                    -- 4. Assign a group number to each merged range
+                    -- 6) Assign a group number to each merged range
                     SELECT
                         ProjectId,
                         StartDate,
                         EndDate,
                         SUM(IsNewRange) OVER (
                             PARTITION BY ProjectId
-                            ORDER BY StartDate
+                            ORDER BY StartDate, EndDate
                             ROWS UNBOUNDED PRECEDING
                         ) AS RangeGroup
-                    FROM range_breaks
+                    FROM range_flags
                 ),
 
                 merged_ranges AS (
-                    -- 5. Merge overlapping ranges
+                    -- 7) Merge per group
                     SELECT
                         ProjectId,
                         MIN(StartDate) AS StartDate,
@@ -77,7 +96,7 @@ namespace PPMTool.Migrations
                     GROUP BY ProjectId, RangeGroup
                 )
 
-                -- 6. Insert leadership SubTasks
+                -- 8) Insert leadership SubTasks
                 INSERT INTO SubTasks (
                     Name,
                     StartDate,
