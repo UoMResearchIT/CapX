@@ -200,8 +200,12 @@ namespace PPMTool.Pages
         /// <param name="projects"></param>
         /// <param name="people"></param>
         /// <param name="isPersonMode"></param>
-        /// <param name="leadershipTasksOnly"></param>
-        protected virtual void PopulateGroupedAssignmentsForPeople(IEnumerable<Project> projects, IEnumerable<Person> people, bool isPersonMode, bool leadershipTasksOnly = false)
+        /// <param name="taskSet">What subset of the tasks should be used to populate the dictionary</param>
+        protected virtual void PopulateGroupedAssignmentsForPeople(
+            IEnumerable<Project> projects,
+            IEnumerable<Person> people,
+            bool isPersonMode,
+            TaskSubset taskSet = TaskSubset.TechOnly)
         {
             // Reset existing dictionary
             groupedAssignments = new Dictionary<object, IEnumerable<BaseAssignment>>();
@@ -221,15 +225,10 @@ namespace PPMTool.Pages
                     var assignments = new List<Assignment>();
                     foreach (var project in projects)
                     {
-                        // Filter list
-                        var subTasks = project.SubTasks.Where(x => x.AssignedResources.Any(z => z.Person.PersonId == person.PersonId));
-                        if (leadershipTasksOnly)
-                        {
-                            subTasks = subTasks.Where(x => x.IsLeadershipTask);
-                        }
+                        var subTasks = GetFilteredSubTasks(project, person, taskSet);
 
                         // Build assignments
-                        foreach (var subTask in project.SubTasks)
+                        foreach (var subTask in subTasks)
                         {
                             assignments.Add(new Assignment(subTask, project.ProjectStatus));
                         }
@@ -248,15 +247,9 @@ namespace PPMTool.Pages
                 foreach (var project in projects)
                 {
                     var assignments = new List<Assignment>();
+                    var subTasks = GetFilteredSubTasks(project, person, taskSet);
 
-                    // Filter list
-                    var subTasks = project.SubTasks.Where(x => x.AssignedResources.Any(z => z.Person.PersonId == person.PersonId));
-                    if (leadershipTasksOnly)
-                    {
-                        subTasks = subTasks.Where(x => x.IsLeadershipTask);
-                    }
-
-                    foreach (var subTask in project.SubTasks)
+                    foreach (var subTask in subTasks)
                     {
                         assignments.Add(new Assignment(subTask, project.ProjectStatus));
                     }
@@ -265,6 +258,33 @@ namespace PPMTool.Pages
                     if (assignments.Count > 0) groupedAssignments.Add(project, assignments);
                 }
             }
+        }
+
+        /// <summary>
+        /// Local helper to return a list of subtasks based on appropriate filtering
+        /// </summary>
+        /// <param name="project"></param>
+        /// <param name="person"></param>
+        /// <param name="taskSet"></param>
+        /// <returns></returns>
+        private IEnumerable<SubTask> GetFilteredSubTasks(Project project, Person person, TaskSubset taskSet)
+        {
+            // Filter list
+            var subTasks = project.SubTasks
+                .Where(x => x.AssignedResources
+                    .Any(z => z.Person.PersonId == person.PersonId)
+                );
+
+            // Filter again
+            if (taskSet == TaskSubset.TechOnly)
+            {
+                subTasks = subTasks.Where(x => !x.IsLeadershipTask);
+            }
+            else if (taskSet == TaskSubset.LeadershipOnly)
+            {
+                subTasks = subTasks.Where(x => x.IsLeadershipTask);
+            }
+            return subTasks;
         }
 
         /// <summary>
