@@ -47,4 +47,8 @@
     <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\PPMTool.Shared\PPMTool.Shared.csproj" />
+  </ItemGroup>
+
 </Project>

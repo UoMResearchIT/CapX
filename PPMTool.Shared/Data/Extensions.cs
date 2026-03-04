@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
-using Radzen;
 
 namespace PPMTool.Data
 {
