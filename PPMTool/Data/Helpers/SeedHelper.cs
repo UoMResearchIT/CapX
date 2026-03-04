@@ -1962,14 +1962,15 @@ namespace PPMTool.Data.Helpers
             var subTask = new SubTask
             {
                 Demand = leadershipFTE,
-                EndDate = ApplyDateOffset(endDate.Year, endDate.Month, endDate.Day),
+                EndDate = endDate,
                 HasFixedEndDate = true,
                 HasFixedStart = true,
                 Name = "Leadership",
                 OriginalDemand = leadershipFTE,
-                StartDate = ApplyDateOffset(startDate.Year, startDate.Month, startDate.Day),
+                StartDate = startDate,
                 TaskType = TaskType.FixedDuration,
-                UnmetDemand = 0
+                UnmetDemand = 0,
+                IsLeadershipTask = true
             };
             subTask.Schedule();
             project.SubTasks.Add(subTask);
@@ -2704,7 +2705,9 @@ namespace PPMTool.Data.Helpers
             // Get a project
             var project = context.Projects
                 .Include(x => x.SubTasks)
+                    .ThenInclude(x => x.AssignedResources)
                 .Include(x => x.FundingSources)
+                .Include(x => x.ProjectManager)
                 .FirstOrDefault(x => x.RTP == rtp);
 
             // If no projects
