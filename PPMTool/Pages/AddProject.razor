@@ -151,23 +151,6 @@ else
                         <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.Budget" Disabled="true" />
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-6">
-                        <RadzenLabel class="radzen-form-label" Text="Leadership FTE" />
-                        <RadzenIcon class="centre-align" IconStyle=IconStyle.Warning Icon="warning" title="This project has a custom leadership demand. Make sure this is what you want to do as it affects cost and demand reporting." Visible="@(projectModel.LeadershipFTE != GlobalDefaults.ProjectManagementDefaultFTE)" /><br />
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.LeadershipFTE" />
-                    </div>
-                    <div class="col-6">
-                        <RadzenLabel class="radzen-form-label" Text="Leadership Funding Source" />
-                        <RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Current cost model chosen does not require a leadership funding source" Visible="@(!projectModel.CostModel.HasLeadership())" /><br />
-                        <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.FundingSourceId" ValueProperty="FundingSourceId" Data="@availableFundingSources" Disabled="@(!projectModel.CostModel.HasLeadership())" AllowClear="true">
-                            <Template Context="source">
-                                @(source?.GetSensibleObjectName())
-                            </Template>
-                        </RadzenDropDown>
-                    </div>
-                
-                </div>
                 <hr />
                 <DataAnnotationsValidator />
             </EditForm>

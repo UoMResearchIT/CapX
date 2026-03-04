@@ -1300,7 +1300,6 @@ namespace PPMTool.Data.Helpers
                         DayRate = 250,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2025, 07, 31),
-                        LeadershipFTE = 0.05f,
                         Name = "Create CoP for Research Software",
                         PI = "Dr. Waffle McSnort",
                         PlannedCost = 0.0,
@@ -1325,7 +1324,6 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2025, 07, 31),
                         InnateActivity = GetInnateActivityForRTP(context, 180),
-                        LeadershipFTE = 0.05f,
                         Name = "Polypharmacy KSS",
                         PI = "Prof. Pickle Pants",
                         PlannedCost = 42123.55,
@@ -1350,7 +1348,6 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2028, 06, 30),
                         InnateActivity = GetInnateActivityForRTP(context, 255),
-                        LeadershipFTE = 0.05f,
                         Name = "Local Climate Zone Modelling",
                         PI = "Sir Gigglesworth",
                         PlannedCost = 64074.39,
@@ -1374,7 +1371,6 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2025, 10, 12),
-                        LeadershipFTE = 0.05f,
                         Name = "Political Research Transparency Web App",
                         PI = "Ms. Bubbles McGee",
                         PlannedCost = 7425.0,
@@ -1399,7 +1395,6 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2025, 03, 20),
                         InnateActivity = GetInnateActivityForRTP(context, 311),
-                        LeadershipFTE = 0.025f,
                         Name = "BMBaseDB Update",
                         PI = "Captain Quirk",
                         PlannedCost = 3197.15,
@@ -1425,7 +1420,6 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2028, 04, 08),
                         InnateActivity = GetInnateActivityForRTP(context, 323),
-                        LeadershipFTE = 0.025f,
                         Name = "Sustainability Trade-off Game Website",
                         PI = "Major Chuckles",
                         PlannedCost = 4633.86,
@@ -1451,7 +1445,6 @@ namespace PPMTool.Data.Helpers
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2026, 01, 29),
                         InnateActivity = GetInnateActivityForRTP(context, 324),
-                        LeadershipFTE = 0.05f,
                         Name = "PAPrKA",
                         PI = "Lady Lollipop",
                         PlannedCost = 12852.1,
@@ -1559,16 +1552,6 @@ namespace PPMTool.Data.Helpers
                     }
                 };
 
-                // Set as leadership funding source where cost model requires it
-                foreach (var fs in fundingSources)
-                {
-                    // If requires leadership funding source and there isn't one already then assign
-                    if (fs.Project.CostModel == CostModel.TechAndLeadership && fs.ProjectLeadershipSource == null)
-                    {
-                        fs.ProjectLeadershipSource = fs.Project;
-                    }
-                }
-
                 context.FundingSources.AddRange(fundingSources);
                 context.SaveChanges();
             }
@@ -1592,7 +1575,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = true,
                         Demand = 0.1,
                         DurationBillableDays = 458,
                         DurationDays = 760,
@@ -1612,7 +1594,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 39120.05,
                         ActualWorkHours = 1048.5,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 404,
                         DurationDays = 669,
@@ -1632,7 +1613,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = true,
                         Demand = 0.3,
                         DurationBillableDays = 38,
                         DurationDays = 63,
@@ -1652,7 +1632,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = true,
                         Demand = 0.3,
                         DurationBillableDays = 623,
                         DurationDays = 1033,
@@ -1672,7 +1651,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = true,
                         Demand = 0.38,
                         DurationBillableDays = 63,
                         DurationDays = 104,
@@ -1692,7 +1670,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 1899.49,
                         ActualWorkHours = 73.5,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 40,
                         DurationDays = 67,
@@ -1712,7 +1689,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 1960.25,
                         ActualWorkHours = 51.5,
-                        RequiresLeadership = true,
                         Demand = 0.3,
                         DurationBillableDays = 25,
                         DurationDays = 41,
@@ -1732,7 +1708,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = false,
                         Demand = 0.005,
                         DurationBillableDays = 441,
                         DurationDays = 731,
@@ -1752,7 +1727,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 1634.60,
                         ActualWorkHours = 63.25,
-                        RequiresLeadership = true,
                         Demand = 0.8,
                         DurationBillableDays = 13,
                         DurationDays = 21,
@@ -1772,7 +1746,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = false,
                         Demand = 0.1,
                         DurationBillableDays = 150,
                         DurationDays = 249,
@@ -1792,7 +1765,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 142.73,
                         ActualWorkHours = 3.75,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 5,
                         DurationDays = 7,
@@ -1812,7 +1784,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 3596.97,
                         ActualWorkHours = 94.5,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 33,
                         DurationDays = 54,
@@ -1832,7 +1803,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 1808.00,
                         ActualWorkHours = 47.5,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 32,
                         DurationDays = 53,
@@ -1852,7 +1822,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 551.91,
                         ActualWorkHours = 14.5,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 11,
                         DurationDays = 17,
@@ -1872,7 +1841,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 647.07,
                         ActualWorkHours = 17,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 5,
                         DurationDays = 7,
@@ -1892,7 +1860,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = true,
                         Demand = 0.2,
                         DurationBillableDays = 5,
                         DurationDays = 9,
@@ -1916,6 +1883,7 @@ namespace PPMTool.Data.Helpers
                 {
                     subTasks[0]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 180);
@@ -1923,6 +1891,7 @@ namespace PPMTool.Data.Helpers
                 {
                     subTasks[1]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 255);
@@ -1932,6 +1901,7 @@ namespace PPMTool.Data.Helpers
                     subTasks[2],
                     subTasks[3]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 265);
@@ -1939,6 +1909,7 @@ namespace PPMTool.Data.Helpers
                 {
                     subTasks[4]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 311);
@@ -1946,6 +1917,7 @@ namespace PPMTool.Data.Helpers
                 {
                     subTasks[5]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 323);
@@ -1956,6 +1928,7 @@ namespace PPMTool.Data.Helpers
                     subTasks[7],
                     subTasks[8]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 324);
@@ -1971,8 +1944,36 @@ namespace PPMTool.Data.Helpers
                     subTasks[14],
                     subTasks[15]
                 };
+                project.CreateLeadershipSubTask(0.1);
                 context.SaveChanges();
             }
+        }
+
+        /// <summary>
+        /// Private extension method to add a subtask to an exist project based on the date ranges of its current non-leadership tasks
+        /// </summary>
+        /// <param name="project"></param>
+        private static void CreateLeadershipSubTask(this Project project, double leadershipFTE = 0.05)
+        {
+            if (!project.SubTasks.Any(x => !x.IsLeadershipTask)) return;
+
+            var startDate = project.SubTasks.Min(x => x.StartDate);
+            var endDate = project.SubTasks.Max(x => x.EndDate);
+            var subTask = new SubTask
+            {
+                Demand = leadershipFTE,
+                EndDate = endDate,
+                HasFixedEndDate = true,
+                HasFixedStart = true,
+                Name = "Leadership",
+                OriginalDemand = leadershipFTE,
+                StartDate = startDate,
+                TaskType = TaskType.FixedDuration,
+                UnmetDemand = 0,
+                IsLeadershipTask = true
+            };
+            subTask.Schedule();
+            project.SubTasks.Add(subTask);
         }
 
         /// <summary>
@@ -2002,6 +2003,7 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
 
                 project = GetProjectWithSubTaskAndFundingByRTP(context, 255);
@@ -2036,6 +2038,7 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
 
                 project = GetProjectWithSubTaskAndFundingByRTP(context, 265);
@@ -2055,6 +2058,7 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
 
                 project = GetProjectWithSubTaskAndFundingByRTP(context, 311);
@@ -2074,6 +2078,7 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
 
                 project = GetProjectWithSubTaskAndFundingByRTP(context, 323);
@@ -2125,6 +2130,7 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
 
                 project = GetProjectWithSubTaskAndFundingByRTP(context, 324);
@@ -2240,7 +2246,30 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Add a resource provided to the leadership tasks in the project
+        /// </summary>
+        /// <param name="project"></param>
+        private static void AddProjectManagerToLeadershipTasks(this Project project)
+        {
+            if (!project.SubTasks.Any(x => x.IsLeadershipTask)) return;
+            foreach (var task in project.SubTasks.Where(x => x.IsLeadershipTask))
+            {
+                var resource = new Resource
+                {
+                    Person = project.ProjectManager,
+                    AssignmentFTE = task.Demand,
+                    DayRate = 300,
+                    FundedFrom = project.FundingSources.FirstOrDefault(),
+                    IsProvisional = false,
+                    UseProjectDayRate = project.CostModel == CostModel.DayRate
+                };
+                task.AssignedResources.Add(resource);
             }
         }
 
@@ -2676,7 +2705,9 @@ namespace PPMTool.Data.Helpers
             // Get a project
             var project = context.Projects
                 .Include(x => x.SubTasks)
+                    .ThenInclude(x => x.AssignedResources)
                 .Include(x => x.FundingSources)
+                .Include(x => x.ProjectManager)
                 .FirstOrDefault(x => x.RTP == rtp);
 
             // If no projects

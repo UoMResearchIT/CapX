@@ -34,14 +34,5 @@
         /// If applicable, the actual indirects compute as a proportion of the actual cost
         /// </summary>
         public double ActualIndirectCost { get; set; }
-
-        /// <summary>
-        /// Gets the technical part of the total planned costs of the task (difference between total and indirects)
-        /// </summary>
-        /// <returns></returns>
-        public double GetPlannedTechnicalCost()
-        {
-            return PlannedCost - PlannedIndirectCost;
-        }
     }
 }

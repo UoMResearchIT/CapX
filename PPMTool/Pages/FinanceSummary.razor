@@ -66,12 +66,12 @@
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="Budget" Title="Budget" FormatString="{0:C}" MinWidth="10px" />
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="PlannedCost" Title="Planned" MinWidth="10px">
                     <Template Context="item">
-                        <span class="@item.PlannedCostColour">@item.PlannedCost.ToString("C")</span>
+                        <span class="@item.PlannedCostColour">@item.PlannedTotalCost.ToString("C")</span>
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ActualCost" Title="Actual" MinWidth="10px">
                     <Template Context="item">
-                        <span class="@item.ActualCostColour">@item.ActualCost.ToString("C")</span>
+                        <span class="@item.ActualCostColour">@item.ActualTotalCost.ToString("C")</span>
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsDA" Title="DA Expected" FormatString="{0:C}" MinWidth="10px" />

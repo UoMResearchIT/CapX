@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPMTool.Data.Context;
 
@@ -10,9 +11,11 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    partial class PPMToolContextModelSnapshot : ModelSnapshot
+    [Migration("20260227100422_AddLeadershipTaskFlag")]
+    partial class AddLeadershipTaskFlag
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.15");
@@ -514,8 +517,14 @@ namespace PPMTool.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("FundingSourceId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("InnateActivityInnateCodeId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<float>("LeadershipFTE")
+                        .HasColumnType("REAL");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -560,6 +569,9 @@ namespace PPMTool.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("ProjectId");
+
+                    b.HasIndex("FundingSourceId")
+                        .IsUnique();
 
                     b.HasIndex("InnateActivityInnateCodeId");
 
@@ -743,6 +755,9 @@ namespace PPMTool.Migrations
                         .HasColumnType("REAL");
 
                     b.Property<int?>("PredecessorSubTaskId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("RequiresLeadership")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("StartDate")
@@ -1101,6 +1116,11 @@ namespace PPMTool.Migrations
 
             modelBuilder.Entity("PPMTool.Data.Entities.Project", b =>
                 {
+                    b.HasOne("PPMTool.Data.Entities.FundingSource", "LeadershipFundingSource")
+                        .WithOne("ProjectLeadershipSource")
+                        .HasForeignKey("PPMTool.Data.Entities.Project", "FundingSourceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("PPMTool.Data.Entities.InnateCode", "InnateActivity")
                         .WithMany()
                         .HasForeignKey("InnateActivityInnateCodeId");
@@ -1116,6 +1136,8 @@ namespace PPMTool.Migrations
                         .IsRequired();
 
                     b.Navigation("InnateActivity");
+
+                    b.Navigation("LeadershipFundingSource");
 
                     b.Navigation("ProjectManager");
 
@@ -1270,6 +1292,8 @@ namespace PPMTool.Migrations
             modelBuilder.Entity("PPMTool.Data.Entities.FundingSource", b =>
                 {
                     b.Navigation("PaymentsFromSource");
+
+                    b.Navigation("ProjectLeadershipSource");
 
                     b.Navigation("ResourcesFunded");
                 });
