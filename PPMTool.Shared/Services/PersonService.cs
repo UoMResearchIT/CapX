@@ -83,7 +83,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="personId"></param>
         /// <returns></returns>
-        internal Person GetById(PPMToolContext context, int personId)
+        public Person GetById(PPMToolContext context, int personId)
         {
             return GetAll(context).FirstOrDefault(x => x.PersonId == personId);
         }
@@ -158,7 +158,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="people"></param>
         /// <returns></returns>
-        internal IEnumerable<Absence> GetAbsencesForPeople(PPMToolContext context, IEnumerable<Person> people)
+        public IEnumerable<Absence> GetAbsencesForPeople(PPMToolContext context, IEnumerable<Person> people)
         {
             return context.Absence.Where(x => people.Select(x => x.PersonId).Contains(x.Person.PersonId));
         }
@@ -169,7 +169,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        internal Person GetByName(PPMToolContext context, string name)
+        public Person GetByName(PPMToolContext context, string name)
         {
             return context.People.Where(x => x.Name == name).Include(x => x.WorkloadModelChanges).FirstOrDefault();
         }
@@ -180,7 +180,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="activeUser"></param>
         /// <returns></returns>
-        internal IEnumerable<Person> GetManagedStaff(PPMToolContext context, Person activeUser)
+        public IEnumerable<Person> GetManagedStaff(PPMToolContext context, Person activeUser)
         {
             return context.People.Where(x => activeUser != null && x.LineManager != null && x.LineManager.PersonId == activeUser.PersonId);
         }
@@ -191,7 +191,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="personId"></param>
         /// <returns></returns>
-        internal IEnumerable<WorkloadModelChange> GetWorkloadModelChanges(PPMToolContext context, int personId)
+        public IEnumerable<WorkloadModelChange> GetWorkloadModelChanges(PPMToolContext context, int personId)
         {
             return context.WorkloadModelChanges
                 .Include(x => x.Person)
@@ -205,7 +205,7 @@ namespace PPMTool.Services
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <returns></returns>
-        internal async Task<IList<Person>> GetEmployedPeopleShallowAsync(PPMToolContext context, DateTime startDate, DateTime endDate)
+        public async Task<IList<Person>> GetEmployedPeopleShallowAsync(PPMToolContext context, DateTime startDate, DateTime endDate)
         {
             var people = await GetAllShallowAsync(context);
             return people
