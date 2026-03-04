@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using PPMTool.API.Authentication;
 using PPMTool.API.Endpoints;
 using PPMTool.API.Filters;
@@ -13,6 +13,8 @@ using PPMTool.Services;
 using Serilog;
 #endif
 using ILogger = Microsoft.Extensions.Logging.ILogger;
+
+const string ApiKeySchemeName = "API Key";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,11 +71,11 @@ builder.Services.AddSwaggerGen(
             name: "v1",
             info: new() { Title = "CapX API", Version = "v1" }
         );
-        opt.UseInlineDefinitionsForEnums();
 
         // Operation filters for schema simplifications
         opt.OperationFilter<SkillTagShallowOperationFilter>();
 
+        // Include XMl comments for better documentation in Swagger UI
         string? docFilePath = Directory.GetFiles(
             path: AppContext.BaseDirectory,
             searchPattern: $"{Assembly.GetExecutingAssembly().GetName().Name}.xml",
@@ -89,7 +91,7 @@ builder.Services.AddSwaggerGen(
             Debug.Assert(false, "XML documentation file not found");
         }
 
-        opt.AddSecurityDefinition("API Key", new OpenApiSecurityScheme
+        opt.AddSecurityDefinition(ApiKeySchemeName, new OpenApiSecurityScheme
         {
             Description = "The API key to access the endpoints",
             Type = SecuritySchemeType.ApiKey,
@@ -98,21 +100,11 @@ builder.Services.AddSwaggerGen(
             Scheme = "ApiKeyScheme"
         });
 
-        var scheme = new OpenApiSecurityScheme
+        // Add a requirement using the new delegate overload and a scheme reference
+        opt.AddSecurityRequirement(document => new OpenApiSecurityRequirement
         {
-            Reference = new OpenApiReference
-            {
-                Type = ReferenceType.SecurityScheme,
-                Id = "API Key"
-            },
-            In = ParameterLocation.Header
-        };
-
-        var requirement = new OpenApiSecurityRequirement
-        {
-            { scheme, new string[] { } }
-        };
-        opt.AddSecurityRequirement(requirement);
+            [new OpenApiSecuritySchemeReference(ApiKeySchemeName, document)] = new List<string>()
+        });
 
 #if !LOCAL
         // Add the custom DocumentFilter for production

@@ -1,5 +1,5 @@
 ﻿using System.Reflection;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using PPMTool.API.Attributes;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -18,7 +18,7 @@ namespace PPMTool.API.Filters
                 var schema = context.SchemaRepository.Schemas["SkillTag"];
 
                 // Remove the tasks needing this skill as this won't be returned by methods with this attribute
-                schema.Properties.Remove("tasksNeedingThisSkill");
+                schema?.Properties?.Remove("tasksNeedingThisSkill");
             }
         }
     }
