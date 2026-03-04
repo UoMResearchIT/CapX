@@ -673,7 +673,7 @@ namespace PPMTool.Pages
                     }
                     else
                     {
-                        string theDay = args.Column.Title.ToLower().Trim();
+                        string theDay = args.Column.Title.Clean();
                         if (dayColours.ContainsKey(theDay))
                         {
                             args.Attributes.Add("style", $"background-color : {dayColours[theDay]}");

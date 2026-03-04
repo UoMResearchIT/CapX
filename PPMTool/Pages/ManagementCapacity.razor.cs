@@ -29,55 +29,6 @@ namespace PPMTool.Pages
         protected override string GetSessionStorageTag() => "management-capacity";
 
         /// <summary>
-        /// Method to construct leadership assignment objects for the given projects and people
-        /// </summary>
-        /// <param name="projects"></param>
-        /// <param name="people"></param>
-        /// <param name="isPersonMode"></param>
-        protected override void PopulateGroupedAssignmentsForPeople(IEnumerable<Project> projects, IEnumerable<Person> people, bool isPersonMode)
-        {
-            groupedAssignments = new Dictionary<object, IEnumerable<BaseAssignment>>();
-
-            if (isPersonMode)
-            {
-                // Person -> Leadership assignments (for all projects)
-                foreach (var person in people)
-                {
-                    var ownedProjects = projects.Where(x => x.ProjectManager.PersonId == person.PersonId);
-                    var assignments = new List<LeadershipAssignment>();
-                    foreach (var project in ownedProjects)
-                    {
-                        // Find leadership tasks and convert to leadership assignment
-                        var dateRanges = project.GetLeadershipTaskRanges();
-                        foreach (var dateRange in dateRanges)
-                        {
-                            assignments.Add(new LeadershipAssignment(dateRange, project.LeadershipFTE, project.ProjectStatus));
-                        }
-                    }
-
-                    groupedAssignments.Add(person, assignments);
-                }
-            }
-            else
-            {
-                // Project -> Leadership assignments (for a given person)
-                var person = people.First();
-                var ownedProjects = projects.Where(x => x.ProjectManager.PersonId == person.PersonId);
-                foreach (var project in ownedProjects)
-                {
-                    // Find leadership tasks and convert to leadership assignment
-                    var assignments = new List<LeadershipAssignment>();
-                    var dateRanges = project.GetLeadershipTaskRanges();
-                    foreach (var dateRange in dateRanges)
-                    {
-                        assignments.Add(new LeadershipAssignment(dateRange, project.LeadershipFTE, project.ProjectStatus));
-                    }
-                    if (assignments.Count > 0) groupedAssignments.Add(project, assignments);
-                }
-            }
-        }
-
-        /// <summary>
         /// Only called in person mode per person to generate chart items. Assumed assignments only contain projects that are owned by this person.
         /// </summary>
         /// <param name="person"></param>
@@ -87,16 +38,15 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override IEnumerable<ChartItem> GetPersonModeChartItemsFromAssignments(
             Person person,
-            IEnumerable<BaseAssignment> assignments,
+            IEnumerable<Assignment> assignments,
             DateTime startDate,
             DateTime endDate)
         {
             return ChartHelper.ConvertAssignmentsToChartItems(
                 assignments,
-                (assignments, currentDay) =>
-                {
-                    return assignments.RoundedSum(assignment => (assignment as LeadershipAssignment)?.LeadershipFTE ?? 0);
-                },
+                // Value 1 function
+                (assignments, currentDay) => assignments.RoundedSum(assignment => assignment.SubTask.GetAssignmentValueForPerson(person)),
+                // Colour function
                 (value1, value2, isHatched) =>
                 {
                     return ChartItem.GetColourStringFTE(value1, value2);
@@ -105,14 +55,14 @@ namespace PPMTool.Pages
                 startDate,
                 endDate,
                 person,
-                assignments =>
-                {
-                    return assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed());
-                },
+                // Hatched function
+                assignments => assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed()),
+                // Value 2 function
                 (assignments, value1, currentDay) =>
                 {
                     return person.GetProjectManagementCapacityOnDate(currentDay);
                 },
+                // Gap filling function
                 (assignments, gapStart, gapEnd) =>
                 {
                     return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(
@@ -141,7 +91,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
             string seriesName,
-            KeyValuePair<object, IEnumerable<BaseAssignment>> groupedAssignments,
+            KeyValuePair<object, IEnumerable<Assignment>> groupedAssignments,
             DateTime startDate,
             DateTime endDate,
             Person person,
@@ -150,11 +100,8 @@ namespace PPMTool.Pages
         {
             return ChartHelper.ConvertAssignmentsToChartItems(
                 groupedAssignments.Value,
-                // Value 1 for each block
-                (assignments, currentDay) =>
-                {
-                    return assignments.RoundedSum(assignment => (assignment as LeadershipAssignment)?.LeadershipFTE ?? 0);
-                },
+                // Value 1 for each block -- Value is the effort of the chosen person
+                (assignments, currentDay) => assignments.RoundedSum(assignment => assignment.SubTask.GetAssignmentValueForPerson(person)),
                 // Colour function
                 (value1, value2, isHatched) =>
                 {
@@ -171,10 +118,7 @@ namespace PPMTool.Pages
                 startDate,
                 endDate,
                 // Hatched function
-                hatchedFunction: assignments =>
-                {
-                    return assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed());
-                },
+                hatchedFunction: assignments => assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed()),
                 // Value 2 for each block
                 value2Function: (assignments, value1, currentDay) =>
                 {
@@ -192,7 +136,7 @@ namespace PPMTool.Pages
         /// <param name="personOfInterest"></param>
         /// <param name="messages"></param>
         /// <returns></returns>
-        protected override string GenerateTooltipMessages(IEnumerable<BaseAssignment> assignmentsWithinBlock, Person personOfInterest, string messages)
+        protected override string GenerateTooltipMessages(IEnumerable<Assignment> assignmentsWithinBlock, Person personOfInterest, string messages)
         {
             // Add project badges
             foreach (var status in assignmentsWithinBlock.Select(x => x.ProjectStatus).Distinct())
@@ -204,10 +148,12 @@ namespace PPMTool.Pages
             messages = base.GenerateTooltipMessages(assignmentsWithinBlock, personOfInterest, messages);
 
             // Check for leadership load greater than the standard
-            var assignments = assignmentsWithinBlock.Select(x => x as LeadershipAssignment);
-            if (assignments?.Any(x => x?.LeadershipFTE > GlobalDefaults.ProjectManagementDefaultFTE) ?? false)
+            if (assignmentsWithinBlock.Any(x => x.SubTask.GetAssignmentValueForPerson(personOfInterest) > GlobalDefaults.ProjectManagementDefaultFTE))
             {
-                var amount = assignments.RoundedSum(x => x.LeadershipFTE > GlobalDefaults.ProjectManagementDefaultFTE ? x.LeadershipFTE : 0);
+                var amount = assignmentsWithinBlock.RoundedSum(x => x.SubTask.GetAssignmentValueForPerson(personOfInterest) > GlobalDefaults.ProjectManagementDefaultFTE ?
+                    x.SubTask.GetAssignmentValueForPerson(personOfInterest) :
+                    0
+                );
                 messages += $"<h3 class=\"me-1 text-warning\"> &#x26A0; [INCREASED LEADERSHIP ({amount} FTE)]</h3>";
             }
             return messages;
@@ -229,6 +175,16 @@ namespace PPMTool.Pages
                     return "rz-badge-info";
             }
             return "rz-badge-light";
+        }
+
+        /// <inheritdoc />
+        protected override void PopulateGroupedAssignmentsForPeople(
+            IEnumerable<Project> projects,
+            IEnumerable<Person> people,
+            bool isPersonMode,
+            TaskSubset taskSet = TaskSubset.TechOnly)
+        {
+            base.PopulateGroupedAssignmentsForPeople(projects, people, isPersonMode, TaskSubset.LeadershipOnly);
         }
     }
 }

@@ -779,7 +779,7 @@ namespace PPMTool.Pages
                     }
 
                     // Find competencies with matching string
-                    var term = competencySearchTerms.Trim().ToLower();
+                    var term = competencySearchTerms.Clean();
                     var matching = competencies.Where(x => x.GetHierarchyId().Contains(term) || x.Description.ToLower().Contains(term) || x.Objective.ToLower().Contains(term));
 
                     // Expand the accordions for those matching

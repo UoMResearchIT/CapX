@@ -27,6 +27,8 @@ namespace PPMTool.Data.Context
         public DbSet<Payment> Payments { get; set; }
         public DbSet<ApiKey> ApiKeys { get; set; }
         public DbSet<FundingSource> FundingSources { get; set; }
+        public DbSet<School> Schools { get; set; }
+        public DbSet<Faculty> Faculties { get; set; }
 
         /// <summary>
         /// Inject options.
@@ -64,13 +66,6 @@ namespace PPMTool.Data.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            // Configure the relationship between Project and FundingSource (for leadership) manually
-            modelBuilder.Entity<Project>()
-                .HasOne(p => p.LeadershipFundingSource)
-                .WithOne(fs => fs.ProjectLeadershipSource)
-                .HasForeignKey<Project>(p => p.FundingSourceId)
-                .OnDelete(DeleteBehavior.Restrict);
         }
 
         /// <summary>

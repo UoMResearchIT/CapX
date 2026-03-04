@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PPMTool.Enums
+namespace PPMTool.Enums.Attributes
 {
     /// <summary>
     /// Converts an expiration DateTime to a value in days

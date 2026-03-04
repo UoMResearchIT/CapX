@@ -811,9 +811,20 @@ namespace PPMTool.Pages
                 IsValid = false;
             }
 
+            // Check that assigned resources are managers
+            if (TaskModel.IsLeadershipTask)
+            {
+                var managerIds = UserService.GetAllManagerPersonId(Context);
+                if (TaskModel.AssignedResources.Any(x => !managerIds.Contains(x.Person.PersonId)))
+                {
+                    error = "Only managers can be assigned to leadership tasks";
+                    IsValid = false;
+                }
+            }
+
             if (!SubTaskService.IsUniqueTaskNameInProject(ProjectModel, TaskModel))
             {
-                error = "Task name must be unique within the project";
+                error = "Non-leadership task names must be unique within the project";
                 IsValid = false;
             }
 
@@ -967,6 +978,12 @@ namespace PPMTool.Pages
         private void UpdatePeopleDropdownSource(LoadDataArgs args)
         {
             var temp = people.AsQueryable();
+            if (taskModel.IsLeadershipTask)
+            {
+                var managerId = UserService.GetAllManagerPersonId(Context);
+                temp = temp.Where(x => managerId.Contains(x.PersonId));
+            }
+
             if (!string.IsNullOrEmpty(args.Filter))
             {
                 temp = temp.Where(p => p.Name.ToLower().Contains(args.Filter.ToLower()));

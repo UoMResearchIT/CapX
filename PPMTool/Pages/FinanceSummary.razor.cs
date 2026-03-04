@@ -61,13 +61,14 @@ namespace PPMTool.Pages
                 var sources = FundingSourceService.GetAll(Context);
                 foreach (var project in projects)
                 {
-                    var resources = SubTaskService.GetResourcesForProject(Context, project.ProjectId);
+                    // Get the subtask / resource info for the project
+                    var subTasks = SubTaskService.GetAll(Context).Where(x => x.OwningProject.ProjectId == project.ProjectId);
 
+                    // Compute transaction breakdown for the project
                     var transactions = FinanceHelper.ComputeTransactionBreakdown(
                         Context,
-                        project.LeadershipFundingSource?.FundingSourceId ?? 0,
-                        project.PlannedLeadershipCosts,
-                        resources,
+                        project.CostModel,
+                        subTasks,
                         sources.Where(x => x.Project.ProjectId == project.ProjectId),
                         InvoiceService.GetFundsRequested(Context, project.ProjectId),
                         PaymentService.GetFundsReceived(Context, project.ProjectId)

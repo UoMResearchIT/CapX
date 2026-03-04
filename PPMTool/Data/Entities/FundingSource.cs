@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using PPMTool.Enums;
+using PPMTool.Enums.Attributes;
 
 namespace PPMTool.Data.Entities
 {
@@ -45,11 +46,6 @@ namespace PPMTool.Data.Entities
         /// Set of resources funded from this source
         /// </summary>
         public virtual ICollection<Resource> ResourcesFunded { get; set; }
-
-        /// <summary>
-        /// Project for which this funding source is being used as a leadership funding source
-        /// </summary>
-        public virtual Project ProjectLeadershipSource { get; set; }
 
         /// <summary>
         /// Details about the funding source to be posted to a note
