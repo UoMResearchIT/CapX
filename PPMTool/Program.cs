@@ -7,21 +7,16 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
+using PPMTool;
 using PPMTool.Data.Context;
 using PPMTool.Data.Helpers;
 using PPMTool.Services;
 using Radzen;
 
 #if RELEASE
-using System.Linq.Dynamic.Core;
-using System.Security.Claims;
-using System.Web;
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http.Extensions;
 using Serilog;
-using PPMTool;
 #endif
 
 // Add environment variables to the configuration
@@ -130,7 +125,7 @@ if (authenticationType == "CAS")
 
         options.Events = new CookieAuthenticationEvents
         {
-            OnSigningOut = args => OnCookieSigningOut(args, builder.Configuration),
+            OnSigningOut = args => AuthenticationCallbackHelper.OnCookieSigningOut(args, builder.Configuration),
         };
 #endif
     })
@@ -150,10 +145,12 @@ if (authenticationType == "CAS")
                 _ => null
             };
         }
+
+        // Register callbacks
         options.Events = new CasEvents
         {
-            OnCreatingTicket = OnCreatingTicket,
-            OnRemoteFailure = OnRemoteFailure
+            OnCreatingTicket = AuthenticationCallbackHelper.OnCreatingTicket,
+            OnRemoteFailure = AuthenticationCallbackHelper.OnRemoteFailure
         };
     })
 #endif
@@ -170,6 +167,18 @@ else if (authenticationType == "AzureAd")
     .AddMicrosoftIdentityWebApp(options =>
     {
         builder.Configuration.Bind("Authentication:AzureAd", options);
+
+        // Register callbacks
+        options.Events = new OpenIdConnectEvents
+        {
+            OnTokenValidated = context =>
+            {
+                AuthenticationCallbackHelper.OnAzureAdTokenValidated(context);
+                return Task.CompletedTask;
+            },
+            OnRemoteFailure = AuthenticationCallbackHelper.OnRemoteFailure
+        };
+
     })
     .EnableTokenAcquisitionToCallDownstreamApi()
     .AddInMemoryTokenCaches();
@@ -287,119 +296,3 @@ FileHelper.CleanLocalApplicationFilePath(logger);
 
 // Run the app
 app.Run();
-
-
-// --------------------- METHODS ------------------------- //
-#if RELEASE
-/// <summary>
-/// What to do when a ticket is to be created from a CAS callback
-/// </summary>
-async Task OnCreatingTicket(CasCreatingTicketContext context)
-{
-    if (context.Identity == null)
-    {
-        return;
-    }
-
-    if (context.Principal?.Identity is ClaimsIdentity identity)
-    {
-        // Map claims from assertion and sign in
-        var assertion = context.Assertion;
-
-        // Map UoM user name to claim (could also be email depending on what they signed in with)
-        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, assertion.PrincipalName));
-        identity.AddClaim(new Claim(ClaimTypes.Name, assertion.PrincipalName));
-
-        // Lookup the username / email in the DB and add role claim
-        // Has to be done manually since service provider not built yet?
-        var dbContextFactory = context.HttpContext.RequestServices.GetRequiredService<IDbContextFactory<PPMToolContext>>();
-        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
-        using (var dbContext = dbContextFactory.CreateDbContext())
-        {
-            // Log the attempt
-            var claimName = assertion.PrincipalName?.Clean();
-            logger?.LogInformation($"Signing in {claimName}");
-
-            // Find the matching user in the DB
-            var user = dbContext.Users
-                .Include(x => x.Person)
-                .ToList()
-                .FirstOrDefault(x => x.MatchesClaim(claimName));
-
-            // If found a user in the DB that matches, add their role claim
-            if (user != null)
-            {
-                identity.AddClaim(new Claim(ClaimTypes.Role, user.RoleType.ToString()));
-            }
-            else
-            {
-                logger?.LogError($"Cannot find a user in the access DB with UID: {claimName}");
-            }
-
-            // Sign in the user
-            await context.HttpContext.SignInAsync(context.Principal);
-
-            // Update last logged in and log
-            var userService = context.HttpContext.RequestServices.GetRequiredService<UserService>();
-            if (userService != null)
-            {
-                if (user != null)
-                {
-                    userService.UpdateLastLoggedIn(dbContext, user);
-                }
-            }
-            else
-            {
-                logger?.LogError("User Service not found! Cannot update last logged in!");
-            }
-        }
-
-        logger?.LogInformation($"{context.Principal.Identity.Name}: Logged In");
-    }
-}
-
-/// <summary>
-/// What to do when the user signs out from a CAS session
-/// </summary>
-async Task OnCookieSigningOut(CookieSigningOutContext context, IConfiguration configuration)
-{
-    // Single Sign-Out
-    var casUrl = new Uri(configuration["Authentication:CAS:ServerUrlBase"]);
-    var redirectUri = UriHelper.BuildAbsolute(
-        casUrl.Scheme,
-        new HostString(casUrl.Host, casUrl.Port),
-        casUrl.LocalPath,
-        "/logout",
-        QueryString.Create("service", configuration["HostUrl"])
-    );
-
-    var logoutRedirectContext = new RedirectContext<CookieAuthenticationOptions>(
-        context.HttpContext,
-        context.Scheme,
-        context.Options,
-        context.Properties,
-        redirectUri
-    );
-    context.Response.StatusCode = 204; // Prevent RedirectToReturnUrl
-    await context.Options.Events.RedirectToLogout(logoutRedirectContext);
-}
-
-/// <summary>
-/// What to do when there is a failure during login
-/// </summary>
-async Task OnRemoteFailure(RemoteFailureContext context)
-{
-    var failure = context.Failure;
-    var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<CasEvents>>();
-    if (!string.IsNullOrWhiteSpace(failure?.Message))
-    {
-        logger.LogError(failure, "CAS authentication failed: {Exception}", failure?.Message);
-    }
-
-    // Clear local cookie
-    await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
-    context.Response.Redirect($"/Account/ExternalLoginFailure?message={HttpUtility.UrlEncode(failure?.Message)}");
-    context.HandleResponse();
-}
-#endif
