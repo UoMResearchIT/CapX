@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PPMTool.Shared\PPMTool.Shared.csproj" />
+    <ProjectReference Include="..\PPMTool\PPMTool.csproj" />
   </ItemGroup>
 
 
