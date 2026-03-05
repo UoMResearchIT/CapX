@@ -43,6 +43,7 @@
             ReadValue("ENTRA_DOMAIN", "Authentication:AzureAd:Domain", ref overridingValues);
             ReadValue("ENTRA_TENANT_ID", "Authentication:AzureAd:TenantId", ref overridingValues);
             ReadValue("ENTRA_CLIENT_ID", "Authentication:AzureAd:ClientId", ref overridingValues);
+            ReadValue("ENTRA_CLIENT_SECRET", "Authentication:AzureAd:ClientSecret", ref overridingValues);
             ReadValue("ENTRA_CALLBACK_PATH", "Authentication:AzureAd:CallbackPath", ref overridingValues);
 
             // Generic auth settings
