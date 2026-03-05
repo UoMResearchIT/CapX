@@ -1,12 +1,12 @@
-namespace PPMTool.API.Tests.Skills
+namespace PPMTool.Tests.API.Skills
 {
     [TestFixture]
-    public class EndpointOKTests
+    public class EndpointOKTests : BaseApiTest
     {
         [Test]
         public async Task GetAllSkillsShouldReturnOK()
         {
-            using (var client = Setup.GetClientAsManager())
+            using (var client = GetClientAsManager())
             {
                 var response = await client.GetAsync("/skills/getAll");
                 Assert.That(response.IsSuccessStatusCode);
