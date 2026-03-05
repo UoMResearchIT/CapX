@@ -5,7 +5,7 @@ namespace PPMTool.Data
     /// <summary>
     /// Represents a block on the schedule chart
     /// </summary>
-    public class GanttBlock : IChartItem
+    internal class GanttBlock : IChartItem
     {
         public GanttBlock(SubTask t, string groupName, bool isFake = false, bool isLeadershipTask = false)
         {
