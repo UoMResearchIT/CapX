@@ -41,7 +41,7 @@ namespace PPMTool.Pages.Account
             this.configuration = configuration;
         }
 
-#if !LOCAL
+#if RELEASE
         public async Task OnGet()
         {
 

@@ -1,5 +1,5 @@
 [Unit]
-Description=CapX app kestrel server
+Description=CapX web app and API kestrel server
 
 [Service]
 EnvironmentFile=/var/www/capx/variables.env

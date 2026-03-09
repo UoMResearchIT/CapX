@@ -256,10 +256,8 @@ builder.Services.AddSwaggerGen(
             [new OpenApiSecuritySchemeReference(ApiKeySchemeName, document)] = new List<string>()
         });
 
-#if !LOCAL
         // Add the custom DocumentFilter for production
         opt.DocumentFilter<BasePathDocumentFilter>("/api");
-#endif
     }
 );
 

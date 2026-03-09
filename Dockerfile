@@ -10,11 +10,9 @@ ARG BUILD_CONFIG=Local
 WORKDIR /src
 COPY nuget.config nuget.config
 
-COPY PPMTool.API/PPMTool.API.csproj PPMTool.API/PPMTool.API.csproj
 COPY PPMTool/PPMTool.csproj PPMTool/PPMTool.csproj
 COPY PPMTool/PPMTool.sln PPMTool/PPMTool.sln
 COPY PPMTool.Tests/PPMTool.Tests.csproj PPMTool.Tests/PPMTool.Tests.csproj
-COPY PPMTool.API.Tests/PPMTool.API.Tests.csproj PPMTool.API.Tests/PPMTool.API.Tests.csproj
 
 RUN dotnet restore "PPMTool/PPMTool.sln"
 
@@ -22,7 +20,6 @@ COPY .config .config
 RUN dotnet tool restore
 
 COPY PPMTool PPMTool
-COPY PPMTool.API PPMTool.API
 COPY .git .git
 
 # Create the database by running migrations
@@ -34,7 +31,6 @@ FROM build AS publish
 ARG BUILD_CONFIG=Local
 # Publish only the main projects (not the test projects) to avoid assembly conflicts
 RUN dotnet publish -c ${BUILD_CONFIG} -o /app/publish -f net10.0 "PPMTool/PPMTool.csproj"
-RUN dotnet publish -c ${BUILD_CONFIG} -o /app/publish -f net10.0 "PPMTool.API/PPMTool.API.csproj"
 RUN mkdir /app/publish/state
 RUN cp PPMTool/PPMTool.db /app/publish/state
 VOLUME /app/publish/state

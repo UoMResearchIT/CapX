@@ -62,7 +62,7 @@ namespace PPMTool.Services
 
             Logger.LogInformation($"Sending email to {string.Join(',', mailMessage.To)}, subject {mailMessage.Subject}");
 
-#if !LOCAL
+#if RELEASE
             // Launch a background task to do the sending
             Task.Run(() =>
             {

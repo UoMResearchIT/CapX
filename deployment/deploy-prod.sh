@@ -12,10 +12,6 @@ git pull
 cd PPMTool
 dotnet publish -c Release -f net10.0
 
-# Publish the API to folder
-cd ../PPMTool.API
-dotnet publish -c Release -f net10.0
-
 # Sync DB from production and flush WAL journal
 cd ~/
 sudo scp -i ~/.ssh/id_rsa mbgm6ah3@balex.itservices.manchester.ac.uk:/var/www/capx/PPMTool.db* ~/CapX-Prod/PPMTool/
