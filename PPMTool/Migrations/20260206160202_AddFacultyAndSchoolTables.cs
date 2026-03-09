@@ -121,9 +121,9 @@ namespace PPMTool.Migrations
                         WHEN 6 THEN 4
                         WHEN 7 THEN 5
                         WHEN 8 THEN 6
-                        WHEN 3 THEN School + 1
-                        WHEN 4 THEN School + 1
-                        WHEN 5 THEN School + 1
+                        WHEN 3 THEN School + 6
+                        WHEN 4 THEN School + 6
+                        WHEN 5 THEN School + 6
                         ELSE School
                     END
             ");
@@ -168,9 +168,9 @@ namespace PPMTool.Migrations
                         WHEN 6 THEN 6
                         WHEN 7 THEN 7
                         WHEN 8 THEN 8
-                        WHEN 3 THEN School - 1
-                        WHEN 4 THEN School - 1
-                        WHEN 5 THEN School - 1
+                        WHEN 3 THEN School - 6
+                        WHEN 4 THEN School - 6
+                        WHEN 5 THEN School - 6
                         ELSE School
                     END
             ");
