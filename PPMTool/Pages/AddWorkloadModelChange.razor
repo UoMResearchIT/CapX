@@ -73,7 +73,7 @@
                             </EditTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectAndServiceManagementFTE" Title="PSM" Width="80px" MinWidth="10px" />
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ArchitectureFTE" Title="RSA" Width="80px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ArchitectureFTE" Title="Tech Lead" Width="80px" MinWidth="10px">
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ArchitectureFTE" />
                             </EditTemplate>
