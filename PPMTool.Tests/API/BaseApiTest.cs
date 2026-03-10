@@ -3,17 +3,27 @@ using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Enums;
 
-namespace PPMTool.API.Tests
+namespace PPMTool.Tests.API
 {
-    [SetUpFixture]
-    public class Setup
+    public abstract class BaseApiTest
     {
         public static string? ManagerApiKey { get; private set; }
         public static string? ManagerName { get; private set; }
         public static string? ManagerReport { get; private set; }
 
-        [OneTimeSetUp]
-        public void SetupForAll()
+        /// <summary>
+        /// Provides a configured HttpClient for making requests to the API with an API key for a manager.
+        /// </summary>
+        /// <returns></returns>
+        public static HttpClient GetClientAsManager()
+        {
+            var client = new HttpClient();
+            client.BaseAddress = new Uri(Setup.BaseUrl);
+            client.DefaultRequestHeaders.Add("x-api-key", new List<string> { ManagerApiKey! });
+            return client;
+        }
+
+        public void SetupForAPI()
         {
             // Get the API key to use from the database
             var dbPath = Path.Combine(AppContext.BaseDirectory, "../../../../PPMTool/PPMTool.db");
@@ -64,23 +74,6 @@ namespace PPMTool.API.Tests
                 // If no report found then error
                 throw new Exception("No valid API keys found for a manager with a report in the database. Please create one for testing.");
             }
-        }
-
-        [OneTimeTearDown]
-        public void TearDown()
-        {
-        }
-
-        /// <summary>
-        /// Provides a configured HttpClient for making requests to the API with an API key for a manager.
-        /// </summary>
-        /// <returns></returns>
-        public static HttpClient GetClientAsManager()
-        {
-            var client = new HttpClient();
-            client.BaseAddress = new Uri("https://localhost:6001");
-            client.DefaultRequestHeaders.Add("x-api-key", new List<string> { ManagerApiKey! });
-            return client;
         }
     }
 }

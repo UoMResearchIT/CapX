@@ -16,7 +16,7 @@ namespace PPMTool.API.Services
         /// <param name="context"></param>
         /// <param name="keyValue"></param>
         /// <returns></returns>
-        public User? GetUserIfApiKeyActive(PPMToolContext context, string? keyValue)
+        public User GetUserIfApiKeyActive(PPMToolContext context, string keyValue)
         {
             if (string.IsNullOrWhiteSpace(keyValue))
             {

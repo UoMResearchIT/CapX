@@ -80,7 +80,7 @@ namespace PPMTool.API.Helpers
         internal static IEnumerable<Timesheet> GetAllMatchingCodeAndTask(
             IQueryable<Timesheet> query,
             string code,
-            string? taskName,
+            string taskName,
             InnateCode innateCode,
             User user)
         {
@@ -201,7 +201,7 @@ namespace PPMTool.API.Helpers
         /// <param name="context"></param>
         /// <param name="activityCode"></param>
         /// <returns>The matching InnateCode entity, or null if not found.</returns>
-        internal static InnateCode? GetInnateCode(PPMToolContext context, string activityCode)
+        internal static InnateCode GetInnateCode(PPMToolContext context, string activityCode)
         {
             var normalisedCode = activityCode.Trim().ToLowerInvariant();
             return context.InnateCodes
@@ -221,7 +221,7 @@ namespace PPMTool.API.Helpers
             List<Timesheet> timesheets,
             string projectCode,
             string code,
-            string? taskName)
+            string taskName)
         {
             // Normalize filter values for comparison
             var normalisedCode = code.Trim().ToLowerInvariant();

@@ -29,6 +29,7 @@
 
             // Connection string for EF Core tools at design time and runtime
             ReadValue("CONNECTION_STRING", "ConnectionStrings:PPMToolContextConnection", ref overridingValues);
+            ReadValue("LEAVEBOOKINGS_CONNECTION_STRING", "ConnectionStrings:LeaveBookingsDatabase", ref overridingValues);
 
             // Get email settings
             ReadValue("MAIL_SMTP_SERVER", "Email:SmtpServer", ref overridingValues);
@@ -69,9 +70,7 @@
         {
             // Validation of values that are used at runtime only
             ValidateValue("API_KEY_SECRET", "Jwt:SecretKey", ref builder);
-            ValidateValue("SUPERUSER_NAME", "DeveloperSettings:DefaultSuperUserName", ref builder, true);
-            ValidateValue("SUPERUSER_USERNAME", "DeveloperSettings:DefaultSuperUserUserName", ref builder, true);
-            ValidateValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref builder, true);
+            ValidateValue("LEAVEBOOKINGS_CONNECTION_STRING", "ConnectionStrings:LeaveBookingsDatabase", ref builder);
 
 #if RELEASE
             ValidateValue("SENTRY_DSN", "Sentry:Dsn", ref builder, justLog: true, logger: logger);
@@ -95,8 +94,11 @@
             ValidateValue("AUTH_HOST_URL", "Authentication:HostUrl", ref builder);
 #endif
 
-            // Connection string used by EF Core tools at design time, so we need to validate it even at design time
+            // Used by EF Core tools at design time with migrations, so we need to validate even at design time
             ValidateValue("CONNECTION_STRING", "ConnectionStrings:PPMToolContextConnection", ref builder, true);
+            ValidateValue("SUPERUSER_NAME", "DeveloperSettings:DefaultSuperUserName", ref builder, true);
+            ValidateValue("SUPERUSER_USERNAME", "DeveloperSettings:DefaultSuperUserUserName", ref builder, true);
+            ValidateValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref builder, true);
         }
 
         /// <summary>

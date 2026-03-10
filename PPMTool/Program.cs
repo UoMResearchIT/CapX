@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
 using Blazored.LocalStorage;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -7,7 +9,12 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
+using Microsoft.OpenApi;
 using PPMTool;
+using PPMTool.API.Authentication;
+using PPMTool.API.Endpoints;
+using PPMTool.API.Filters;
+using PPMTool.API.Services;
 using PPMTool.Data.Context;
 using PPMTool.Data.Helpers;
 using PPMTool.Services;
@@ -78,6 +85,7 @@ builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<FundingSourceService>();
 builder.Services.AddScoped<FacultyService>();
 builder.Services.AddScoped<SchoolService>();
+builder.Services.AddSingleton<APIAuthService>();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -202,6 +210,54 @@ else
 
 builder.Services.AddAuthorization();
 
+// Add API
+const string ApiKeySchemeName = "API Key";
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(
+    opt =>
+    {
+        opt.SwaggerDoc(
+            name: "v1",
+            info: new() { Title = "CapX API", Version = "v1" }
+        );
+
+        // Operation filters for schema simplifications
+        opt.OperationFilter<SkillTagShallowOperationFilter>();
+
+        // Include XMl comments for better documentation in Swagger UI
+        string docFilePath = Directory.GetFiles(
+            path: AppContext.BaseDirectory,
+            searchPattern: $"{Assembly.GetExecutingAssembly().GetName().Name}.xml",
+            searchOption: SearchOption.AllDirectories)
+        .FirstOrDefault();
+
+        if (docFilePath != null)
+        {
+            opt.IncludeXmlComments(docFilePath);
+        }
+        else
+        {
+            Debug.Assert(false, "XML documentation file not found");
+        }
+
+        opt.AddSecurityDefinition(ApiKeySchemeName, new OpenApiSecurityScheme
+        {
+            Description = "The API key to access the endpoints",
+            Type = SecuritySchemeType.ApiKey,
+            Name = "x-api-key",
+            In = ParameterLocation.Header,
+            Scheme = "ApiKeyScheme"
+        });
+
+        // Add a requirement using the new delegate overload and a scheme reference
+        opt.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+        {
+            [new OpenApiSecuritySchemeReference(ApiKeySchemeName, document)] = new List<string>()
+        });
+    }
+);
+
 // Build the application from the configuration
 var app = builder.Build();
 
@@ -225,6 +281,13 @@ else
     app.UseHsts();
 }
 
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "CapX API v1");
+    c.RoutePrefix = "swagger";
+});
+
 app.UseCookiePolicy();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
@@ -232,6 +295,27 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapBlazorHub();
+
+// Map API endpoints
+var api = app.MapGroup("/api");
+api.MapGet($"/skills/getAll", Skills.GetAllSkillTagsAsync);
+api.MapGet($"/skills/getAllForPerson", Skills.GetAllSkillsTagsForPersonAsync);
+api.MapGet($"/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
+api.MapGet($"/timesheets/getEntries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
+api.MapGet($"/timesheets/getByCodeTask", Timesheets.GetTimesheetBookingsByCodeAndTask);
+api.MapGet($"/wlm/getAnalysis", WorkloadModelAnalysis.GetWorkloadAnalysisData);
+api.MapGet($"/leavebookings/getForSelfAndStaff", LeaveBookings.GetStaffBookingsForYearAsync);
+
+// API middleware -- conditional on /api routes only
+app.UseWhen(
+    context => context.Request.Path.StartsWithSegments("/api"),
+    apiApp =>
+    {
+        apiApp.UseMiddleware<APIKeyAuthMiddleware>();
+    }
+);
+
+// This always goes last!!!
 app.MapFallbackToPage("/_Host");
 
 // Set the journal mode on the DB
