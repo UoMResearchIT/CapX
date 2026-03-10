@@ -23,8 +23,11 @@ COPY PPMTool PPMTool
 COPY .git .git
 
 # Create the database by running migrations
-# The CONNECTION_STRING env var is required by the DesignTimeDbContextFactory
+# The following are required at design time
 ENV CONNECTION_STRING="Data Source=/src/PPMTool/PPMTool.db;Cache=Shared;Mode=ReadWriteCreate;"
+SUPERUSER_NAME="Captain Marvel"
+SUPERUSER_USERNAME=c123456m
+SUPERUSER_EMAIL=captain.marvel@manchester.ac.uk
 RUN dotnet ef database update -p "PPMTool/PPMTool.csproj"
 
 FROM build AS publish
