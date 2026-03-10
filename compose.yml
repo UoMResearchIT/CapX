@@ -27,14 +27,12 @@ services:
     command: ["dotnet", "PPMTool.dll"]
 
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080"]
-      interval: 5s
-      timeout: 5s
-      start_period: 1s
-      retries: 5
-      
-  healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/swagger.index.html"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -f http://localhost:8080/ &&
+           curl -f http://localhost:8080/api/swagger.index.html"
+        ]
       interval: 5s
       timeout: 5s
       start_period: 1s
