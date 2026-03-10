@@ -42,10 +42,9 @@ The default database produced when first running EF Core's `dotnet ef database u
 > This feature overwrites all data in the tables as soon as the app starts!
 
 ### Solution/Build and Launch Configurations
-The Visual Studio solution no-longer has _launch_ configurations since the web app and the API are now integrated into one application. However, there are three _solution_ configurations: `Local`, `Debug` and `Release` that combine project-level _build_ configurations of the same name.
+The Visual Studio solution no-longer has _launch_ configurations since the web app and the API are now integrated into one application. However, there are two _solution_ configurations: `Local` and `Release` that combine project-level _build_ configurations.
 - `Local` is to be used for development on your own machine as it bypasses third-party CAS authentication integrations and instead allows the developer to "sign-in" with any user in the database for testing purposes.    
 - `Release` is designed to be used on test and production servers and integrates with third party CAS authentication providers. They also include additional logging and crash reporting integration with Sentry that are not included in the `Local` configuration.    
-- `Debug` solution configuration is basically the same as `Local` but with a slightly different logging level making it less verbose.
 
 ### Running with Docker Compose
 Docker Compose runs a single container with a single volume containing the database.

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <Configurations>Debug;Release;Local</Configurations>
+    <Configurations>Release;Local</Configurations>
     <UserSecretsId>c161d700-8410-4644-b7e6-a176f057c7f7</UserSecretsId>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
