@@ -5,7 +5,7 @@ The production version of CapX is currently deployed to [balex.itservices.manche
 
 There is a development version of CapX deployed to [balextest.itservices.manchester.ac.uk](https://balextest.itservices.manchester.ac.uk) which is a build of the `dev` branch and showcases new features but might not be entirely stable. This is also on the private network.
 
-CapX also offers an API integrated into the web application accessed via [https://balex.itservices.manchester.ac.uk/api](https://balex.itservices.manchester.ac.uk/api) and [https://balextest.itservices.manchester.ac.uk/api](https://balextest.itservices.manchester.ac.uk/api) in production and pre-production respectively. Endpoints require an API key to be supplied in the request header which can be generated in the developer settings part of the main web application.
+CapX also offers an API integrated into the web application accessed via [https://balex.itservices.manchester.ac.uk/api](https://balex.itservices.manchester.ac.uk/api) and [https://balextest.itservices.manchester.ac.uk/api](https://balextest.itservices.manchester.ac.uk/api) in production and pre-production respectively. Endpoints require an API key to be supplied in the request header which can be generated in the developer settings part of the main web application. Swagger is also enabled for exploring the API at `...manchester.ac.uk/swagger`.
 
 ## User Accounts and Access
 The app is integrated with UoM CAS/Shibboleth as well as Azure AD / Entra with access to restricted parts of the app managed within the app using a Role-Based Access Control (RBAC) database table. Super-users are able to manage user roles and access via the "Manage Access" page.
@@ -96,6 +96,7 @@ docker compose up --build
 You can then access:
 - The web application at `http://localhost:3000` (or your configured `CAPX_HTTP_PORT`)
 - The API at `http://localhost:3000/api` (or your configured `CAPX_HTTP_PORT`)
+- The swagger interface at http://localhost:3000/swagger` (or your configured `CAPX_HTTP_PORT`)
 
 Use Ctrl-C to bring the container down. The database state is maintained in a Docker volume. To wipe the volume and start from the initial state, use:
 
