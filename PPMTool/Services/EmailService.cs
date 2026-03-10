@@ -100,8 +100,15 @@ namespace PPMTool.Services
                     if (lineManager != staff) // No point in AH emailing himself about his timesheet. :)
                     {
                         User lineManagerUser = UserService.GetAll(context).First(p => p.Person.PersonId == lineManager.PersonId);
-                        string lineManagerEmailAddress = (string.IsNullOrWhiteSpace(lineManagerUser.EmailAddress) ? $"{lineManagerUser.CASUserName}@manchester.ac.uk" : lineManagerUser.EmailAddress);
-                        recipients.Add(lineManagerEmailAddress);
+                        var lineManagerEmailAddresses = lineManagerUser.GetNormalisedEmailAddresses();
+                        if (!lineManagerEmailAddresses.Any())
+                        {
+                            lineManagerEmailAddresses.Add($"{lineManagerUser.CASUserName}@manchester.ac.uk");
+                        }
+                        foreach (var lineManagerEmailAddress in lineManagerEmailAddresses)
+                        {
+                            recipients.Add(lineManagerEmailAddress);
+                        }
 
                         // Create email
                         var subject = $"{Configuration["Email:TimesheetSubmissionEmailSubject"]}. {staff.ShortName} [{timesheet.StartDate.ToString("dd/MM/yy")}]";
@@ -114,7 +121,7 @@ namespace PPMTool.Services
                         body.Append("<p><em>Sent from CapX</em></p>");
 
                         // Send email
-                        Debug.WriteLine($"** Sending Timesheet Submission email to {lineManagerEmailAddress}");
+                        Debug.WriteLine($"** Sending Timesheet Submission email to {string.Join("|", recipients)}");
                         SendEmail(recipients, subject, body.ToString());
                     }
                 }
@@ -267,9 +274,16 @@ namespace PPMTool.Services
                         // Send email
                         var subject = Configuration["Email:AbsenceEmailSubject"];
                         var users = UserService.GetAll(context).Where(x => x.Person == pm);
-                        IEnumerable<string> recipients = users
-                            .Select(x => string.IsNullOrWhiteSpace(x.EmailAddress) ?
-                                $"{x.CASUserName}@manchester.ac.uk" : x.EmailAddress);
+                        var recipients = new List<string>();
+                        foreach (var user in users)
+                        {
+                            var lineManagerEmailAddresses = user.GetNormalisedEmailAddresses();
+                            if (!lineManagerEmailAddresses.Any())
+                            {
+                                lineManagerEmailAddresses.Add($"{user.CASUserName}@manchester.ac.uk");
+                            }
+                            recipients.AddRange(lineManagerEmailAddresses);
+                        }
                         Debug.WriteLine($"** Sending email to {string.Join(',', recipients)}");
                         SendEmail(recipients, subject, body.ToString());
                         await Task.Delay(1000);
@@ -411,10 +425,18 @@ namespace PPMTool.Services
 
                         // Send email
                         var subject = $"{Configuration["Email:MentionEmailSubject"]} - {note.Project.GetFullName()}";
-                        var user = users.Where(x => x.Person.PersonId == m.PersonId);
-                        IEnumerable<string> recipients = user
-                            .Select(x => string.IsNullOrWhiteSpace(x.EmailAddress) ?
-                                $"{x.CASUserName}@manchester.ac.uk" : x.EmailAddress);
+                        var pmUsers = users.Where(x => x.Person.PersonId == m.PersonId);
+                        var recipients = new List<string>();
+                        foreach (var u in pmUsers)
+                        {
+                            var lineManagerEmailAddresses = u.GetNormalisedEmailAddresses();
+                            if (!lineManagerEmailAddresses.Any())
+                            {
+                                lineManagerEmailAddresses.Add($"{u.CASUserName}@manchester.ac.uk");
+                            }
+                            recipients.AddRange(lineManagerEmailAddresses);
+                        }
+                        Debug.WriteLine($"** Sending email to {string.Join(',', recipients)}");
                         SendEmail(recipients, subject, body.ToString());
                         await Task.Delay(1000);
                     }
