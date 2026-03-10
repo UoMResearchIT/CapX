@@ -31,11 +31,11 @@ services:
         [
           "CMD-SHELL",
           "curl -f http://localhost:8080/ &&
-           curl -f http://localhost:8080/api/swagger.index.html"
+           curl -f http://localhost:8080/swagger.index.html"
         ]
       interval: 5s
       timeout: 5s
-      start_period: 30s
+      start_period: 5s
       retries: 5
 
 volumes:
