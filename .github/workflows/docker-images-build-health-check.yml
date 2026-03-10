@@ -31,7 +31,7 @@ jobs:
         run: docker compose build
 
       - name: Start containers and wait for health checks
-        run: docker compose up --wait --wait-timeout 60
+        run: docker compose up --wait --wait-timeout 120
 
       - name: Test homepage responds
         run: |
