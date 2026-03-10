@@ -771,9 +771,14 @@ namespace PPMTool.Pages
 
             Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Scheduling task...");
 
-            // Before we schedule, we need to ensure the duration and end date are consistent with the input method
+            // Before we schedule, ensure the duration uses the predecessor-driven start date if needed.
             if (defineByEndDate)
             {
+                if (TaskModel.Predecessor != null && !TaskModel.HasFixedStart)
+                {
+                    TaskModel.StartDate = TaskModel.Predecessor.EndDate.Date.AddDays(TaskModel.Lag + 1);
+                }
+
                 TaskModel.RecalculateDurationFromDates();
             }
             else
