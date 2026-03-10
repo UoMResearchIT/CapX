@@ -24,7 +24,7 @@ COPY .git .git
 
 # Create the database by running migrations
 # The CONNECTION_STRING env var is required by the DesignTimeDbContextFactory
-ENV CONNECTION_STRING="Data Source=/src/PPMTool/PPMTool.db"
+ENV CONNECTION_STRING="Data Source=/src/PPMTool/PPMTool.db;Cache=Shared;Mode=ReadWriteCreate;"
 RUN dotnet ef database update -p "PPMTool/PPMTool.csproj"
 
 FROM build AS publish
