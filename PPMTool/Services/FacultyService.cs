@@ -28,11 +28,7 @@ namespace PPMTool.Services
             return GetAll(context).Where(x => x.IsActive);
         }
 
-        /// <summary>
-        /// Updates the faculty in the DB
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="faculty"></param>
+        /// <inheritdoc />
         public override int Update(PPMToolContext context, Faculty faculty, bool commitChanges = true)
         {
             if (DuplicateDetected(context, faculty))
@@ -55,22 +51,14 @@ namespace PPMTool.Services
             return context.Entry(faculty);
         }
 
-        /// <summary>
-        /// Deletes a faculty from the DB
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="faculty"></param>
+        /// <inheritdoc />
         public override void Delete(PPMToolContext context, Faculty faculty, bool commitChanges = true)
         {
             context.Remove(faculty);
             if (commitChanges) CommitChanges(context);
         }
 
-        /// <summary>
-        /// Adds a new faculty to the DB
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="faculty"></param>
+        /// <inheritdoc />
         public override int Add(PPMToolContext context, Faculty faculty, bool commitChanges = true)
         {
             if (DuplicateDetected(context, faculty))

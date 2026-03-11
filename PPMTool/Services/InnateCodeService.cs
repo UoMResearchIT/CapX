@@ -8,12 +8,7 @@ namespace PPMTool.Services
 {
     public class InnateCodeService : BaseEntityService<InnateCode>
     {
-        /// <summary>
-        /// Will not add a duplicate but return -1 instead. If successfully added, will return new ID of saved entity.
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="entity"></param>
-        /// <returns></returns>
+        /// <inheritdoc />
         public override int Add(PPMToolContext context, InnateCode entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
@@ -46,6 +41,7 @@ namespace PPMTool.Services
             return duplicatesNameOfAnother || duplicatesTasks;
         }
 
+        /// <inheritdoc />
         public override void Delete(PPMToolContext context, InnateCode entity, bool commitChanges = true)
         {
             // Remove tasks so they are not orphaned
@@ -55,6 +51,7 @@ namespace PPMTool.Services
             if (commitChanges) CommitChanges(context);
         }
 
+        /// <inheritdoc />
         public override IEnumerable<InnateCode> GetAll(PPMToolContext context)
         {
             return context.InnateCodes
@@ -62,6 +59,7 @@ namespace PPMTool.Services
                 .Include(x => x.Tasks);
         }
 
+        /// <inheritdoc />
         public override int Update(PPMToolContext context, InnateCode entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))

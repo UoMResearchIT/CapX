@@ -26,11 +26,7 @@ namespace PPMTool.Services
             return context.Schools.Where(x => x.IsActive);
         }
 
-        /// <summary>
-        /// Updates the school in the DB
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="school"></param>
+        /// <inheritdoc />
         public override int Update(PPMToolContext context, School school, bool commitChanges = true)
         {
             if (DuplicateDetected(context, school))
@@ -53,22 +49,14 @@ namespace PPMTool.Services
             return context.Entry(school);
         }
 
-        /// <summary>
-        /// Deletes a school from the DB
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="school"></param>
+        /// <inheritdoc />
         public override void Delete(PPMToolContext context, School school, bool commitChanges = true)
         {
             context.Remove(school);
             if (commitChanges) CommitChanges(context);
         }
 
-        /// <summary>
-        /// Adds a new school to the DB
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="school"></param>
+        /// <inheritdoc />
         public override int Add(PPMToolContext context, School school, bool commitChanges = true)
         {
             if (DuplicateDetected(context, school))
@@ -101,6 +89,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="facultyId"></param>
+        /// <param name="activeOnly"></param>
         /// <returns></returns>
         internal IEnumerable<School> GetSchoolsForFaculty(PPMToolContext context, int facultyId, bool activeOnly = true)
         {

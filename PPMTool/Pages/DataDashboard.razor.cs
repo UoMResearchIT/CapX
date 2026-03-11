@@ -345,7 +345,7 @@ namespace PPMTool.Pages
                     var projectsInDatabaseThisWeek = projects.Where(x => x.StartDate != default && x.IsWithin(currentWeekStart));
 
 
-                    /// Cancelled ///
+                    // Cancelled //
 
                     // Get tasks for cancelled projects running at the start of the week
                     var tasksOnCancelledProjectsThisWeek = projectsInDatabaseThisWeek
@@ -357,7 +357,7 @@ namespace PPMTool.Pages
                     var cancelledDemand = (float)tasksOnCancelledProjectsThisWeek.RoundedSum(x => x.Demand);
 
 
-                    /// All Projects (not cancelled) ///
+                    // All Projects (not cancelled) //
 
                     // Get projects not cancelled
                     var projectsThisWeekNotCancelled = projectsInDatabaseThisWeek.Where(x => !x.ProjectStatus.IsCancelled());
@@ -386,7 +386,7 @@ namespace PPMTool.Pages
                     // Get demand for leadership
                     var leadershipDemand = (float)leadershipTasksOnActiveProjectsThisWeek.RoundedSum(x => x.Demand);
 
-                    /// Finished ///
+                    // Finished //
 
                     // Get just total FTE of finished projects
                     var projectsThisWeekThatAreFinished = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus == ProjectStatus.Finished);
@@ -396,7 +396,7 @@ namespace PPMTool.Pages
                     var metDemandFinished = (float)Math.Round(totalDemandFinished - unmetDemandFinished);
 
 
-                    /// Confirmed ///
+                    // Confirmed //
 
                     // Get just confirmed projects
                     var projectsThisWeekConfirmed = projectsThisWeekNotCancelled.Where(x => !x.ProjectStatus.IsUnconfirmed());
@@ -419,7 +419,7 @@ namespace PPMTool.Pages
                     var metDemandConfirmed = (float)Math.Round(totalDemandConfirmed - unmetDemandConfirmed);
 
 
-                    /// Unconfirmed ///
+                    // Unconfirmed //
 
                     // Get just unconfirmed projects
                     var projectsThisWeekUnconfirmed = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus.IsUnconfirmed());
@@ -442,7 +442,7 @@ namespace PPMTool.Pages
                     var metDemandUnconfirmed = (float)Math.Round(totalDemandUnconfirmed - unmetDemandUnconfirmed);
 
 
-                    /// Costs ///
+                    // Costs //
 
                     // Get the budget for all confirmed projects this week
                     var budgetYTD = (float)projectsThisWeekConfirmed.Sum(x =>
@@ -474,7 +474,7 @@ namespace PPMTool.Pages
                         return InvoiceService.GetFundsRequested(context, x.ProjectId) / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
                     });
 
-                    /// People ///
+                    // People //
 
                     // Get the people who are employed at the beginning of the week
                     var peopleEmployedThisWeek = people.Where(x => x.StartDate <= currentWeekStart && (x.EndDate == null || x.EndDate >= currentWeekStart));

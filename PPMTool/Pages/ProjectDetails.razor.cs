@@ -1198,6 +1198,7 @@ namespace PPMTool.Pages
         /// Method to trim the matches to remove their preceding characters if necessary
         /// </summary>
         /// <param name="match"></param>
+        /// <param name="delimiter"></param>
         /// <returns></returns>
         private string TrimMatch(string match, char delimiter)
         {
