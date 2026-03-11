@@ -109,6 +109,15 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Method to set the start date to so many months before the end date
+        /// </summary>
+        /// <param name="numberOfMonths"></param>
+        private void SetStartDate(int numberOfMonths)
+        {
+            startDate = endDate.Value.AddMonths(-numberOfMonths);
+        }
+
+        /// <summary>
         /// Method to generate chart objects
         /// </summary>
         private void GenerateCharts()
