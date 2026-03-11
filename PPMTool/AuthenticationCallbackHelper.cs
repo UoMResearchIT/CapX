@@ -1,4 +1,8 @@
-﻿using System.Security.Claims;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Security.Claims;
 using System.Web;
 using GSS.Authentication.CAS.AspNetCore;
 using Microsoft.AspNetCore.Authentication;

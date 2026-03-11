@@ -1,4 +1,8 @@
-﻿namespace PPMTool.Enums
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+namespace PPMTool.Enums
 {
     /// <summary>
     /// When considering a set of tasks this is used to indicate a subset
