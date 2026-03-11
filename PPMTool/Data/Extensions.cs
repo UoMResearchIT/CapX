@@ -97,7 +97,7 @@ namespace PPMTool.Data
         /// Method to extract a suitable financial reference from a list of references given a financial year
         /// </summary>
         /// <param name="list"></param>
-        /// <param name="date"></param>
+        /// <param name="year"></param>
         /// <returns></returns>
         /// <exception cref="Exception">If no suitable references can be found</exception>
         public static FinancialReference GetSuitableFinancialReference(this IEnumerable<FinancialReference> list, int year)

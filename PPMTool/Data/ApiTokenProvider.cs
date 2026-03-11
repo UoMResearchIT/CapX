@@ -1,8 +1,6 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using PPMTool.Data.Entities;
@@ -22,6 +20,7 @@ namespace PPMTool.Data
         /// Method to create a JWT by encoding claims
         /// </summary>
         /// <param name="user"></param>
+        /// <param name="expirationInDays"></param>
         /// <returns></returns>
         public string CreateToken(User user, double expirationInDays)
         {

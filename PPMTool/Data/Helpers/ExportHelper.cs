@@ -396,7 +396,6 @@ namespace PPMTool.Data.Helpers
             /// <summary>
             /// Returns the average costs of the target FTE for the whole window
             /// </summary>
-            /// <param name="daysInWindow"></param>
             /// <returns></returns>
             public float GetAverageTargetCosts()
             {
@@ -416,7 +415,6 @@ namespace PPMTool.Data.Helpers
             /// <summary>
             /// Returns the average costs of the recovered FTE for the whole window
             /// </summary>
-            /// <param name="daysInWindow"></param>
             /// <returns></returns>
             public float GetAverageRecoveredCosts()
             {
@@ -436,7 +434,6 @@ namespace PPMTool.Data.Helpers
             /// <summary>
             /// Returns the average costs of the recovered including leadership FTE for the whole window
             /// </summary>
-            /// <param name="daysInWindow"></param>
             /// <returns></returns>
             public float GetAverageRecoveredIncLeadershipCosts()
             {
@@ -456,7 +453,6 @@ namespace PPMTool.Data.Helpers
             /// <summary>
             /// Returns the average costs of the capped net FTE for the whole window
             /// </summary>
-            /// <param name="daysInWindow"></param>
             /// <returns></returns>
             public float GetAverageNetCappedCosts()
             {
@@ -476,7 +472,6 @@ namespace PPMTool.Data.Helpers
             /// <summary>
             /// Returns the average costs of the capped net including leadership FTE for the whole window
             /// </summary>
-            /// <param name="daysInWindow"></param>
             /// <returns></returns>
             public float GetAverageNetCappedIncLeadershipCosts()
             {
@@ -486,7 +481,6 @@ namespace PPMTool.Data.Helpers
             /// <summary>
             /// Gets the costs over the window
             /// </summary>
-            /// <param name="daysInWindow"></param>
             /// <returns></returns>
             public float GetEstimatedCosts()
             {

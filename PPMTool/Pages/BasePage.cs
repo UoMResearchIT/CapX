@@ -173,6 +173,7 @@ namespace PPMTool.Pages
         /// </summary>
         /// <param name="message"></param>
         /// <param name="sentryLevel"></param>
+        /// <param name="exception"></param>
         private void LogToSentry(string message, SentryLevel sentryLevel = SentryLevel.Info, Exception exception = null)
         {
             if (exception != null)

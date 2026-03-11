@@ -33,9 +33,7 @@ namespace PPMTool.Data.Context
         /// <summary>
         /// Inject options.
         /// </summary>
-        /// <param name="options"></>
-        /// for the context
-        /// </param>
+        /// <param name="options"></param>
         public PPMToolContext(DbContextOptions<PPMToolContext> options)
             : base(options)
         {

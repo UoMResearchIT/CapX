@@ -1953,6 +1953,7 @@ namespace PPMTool.Data.Helpers
         /// Private extension method to add a subtask to an exist project based on the date ranges of its current non-leadership tasks
         /// </summary>
         /// <param name="project"></param>
+        /// <param name="leadershipFTE"></param>
         private static void CreateLeadershipSubTask(this Project project, double leadershipFTE = 0.05)
         {
             if (!project.SubTasks.Any(x => !x.IsLeadershipTask)) return;
