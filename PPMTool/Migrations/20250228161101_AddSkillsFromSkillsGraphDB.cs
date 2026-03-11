@@ -50,7 +50,7 @@ namespace PPMTool.Migrations
         }
 
         /// <summary>
-        /// Read the skills from <see cref="LocalFilePath"/>
+        /// Read the skills from <see cref="localFilePath"/>
         /// </summary>
         /// <returns></returns>
         /// <exception cref="FileNotFoundException"></exception>
