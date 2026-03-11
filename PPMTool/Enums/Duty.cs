@@ -30,7 +30,7 @@ namespace PPMTool.Enums
         [Description("Project and Service Management")]
         [Colour("#775DD0")]
         ProjectAndServiceMgmt,
-        [Description("Research Software Architecture")]
+        [Description("Technical Leadership")]
         [Colour("#2E294E")]
         RSA
     }

@@ -128,11 +128,11 @@ namespace PPMTool.Data
         }
 
         /// <summary>
-        /// Based on available financial references, updates the estimated salary cost of the assignment based on the mid-grade costs of the assignee
+        /// Based on available financial references, recompute the estimated salary cost of the assignment based on the mid-grade costs of the assignee
         /// </summary>
         /// <param name="finrefs"></param>
         /// <param name="shouldUpdatePlanned"></param>
-        internal void UpdateEstimatedSalaryCost(IEnumerable<FinancialReference> finrefs, bool shouldUpdatePlanned)
+        internal void RecomputeChunkCosts(IEnumerable<FinancialReference> finrefs, bool shouldUpdatePlanned)
         {
             try
             {

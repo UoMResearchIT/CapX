@@ -15,6 +15,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?}
       - API_KEY_SECRET=${API_KEY_SECRET:?}
       - CONNECTION_STRING=${CONNECTION_STRING:?}
+      - LEAVEBOOKINGS_CONNECTION_STRING=${LEAVEBOOKINGS_CONNECTION_STRING:?}
       - SEED_DUMMY_DATA=${SEED_DUMMY_DATA:-FALSE}
       - SUPERUSER_NAME=${SUPERUSER_NAME:?}
       - SUPERUSER_USERNAME=${SUPERUSER_USERNAME:?}
@@ -30,35 +31,15 @@ services:
     command: ["dotnet", "PPMTool.dll"]
 
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -f http://localhost:8080/ &&
+           curl -f http://localhost:8080/swagger/index.html"
+        ]
       interval: 5s
       timeout: 5s
-      start_period: 1s
-      retries: 5
-
-  api:
-    depends_on:
-      - capx
-    build:
-      context: .
-      target: final
-      args:
-        BUILD_CONFIG: ${BUILD_CONFIGURATION:?}
-    volumes:
-      - state:/app/state
-    environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?}
-      - CONNECTION_STRING=${CONNECTION_STRING:?}
-      - LEAVEBOOKINGS_CONNECTION_STRING=${LEAVEBOOKINGS_CONNECTION_STRING:?}
-    ports:
-      - ${CAPX_API_PORT:?}:8080
-    command: ["dotnet", "PPMTool.API.dll"]
-
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/swagger/index.html"]
-      interval: 5s
-      timeout: 5s
-      start_period: 1s
+      start_period: 5s
       retries: 5
 
 volumes:

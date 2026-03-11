@@ -27,17 +27,17 @@ namespace PPMTool.Data.Helpers
         /// <param name="ignoreZeroValue1Entries">If true, does not create a block if it has a value of 0 for value 1, leaving a gap</param>
         /// <returns></returns>
         public static IEnumerable<ChartItem> ConvertAssignmentsToChartItems(
-            IEnumerable<BaseAssignment> assignments,
-            Func<IEnumerable<BaseAssignment>, DateTime, double> valueFunction,
+            IEnumerable<Assignment> assignments,
+            Func<IEnumerable<Assignment>, DateTime, double> valueFunction,
             Func<double, double, bool, string> colourFunction,
             string label,
             DateTime startDate,
             DateTime endDate,
             Person person = null,
-            Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
-            Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
+            Func<IEnumerable<Assignment>, bool> hatchedFunction = null,
+            Func<IEnumerable<Assignment>, double, DateTime, double> value2Function = null,
             Func<Person, DateTime, DateTime, IEnumerable<ChartItem>> gapFillingFunction = null,
-            Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null,
+            Func<IEnumerable<Assignment>, string> tooltipMessageFormatter = null,
             bool ignoreZeroValue1Entries = false
         )
         {
@@ -117,15 +117,15 @@ namespace PPMTool.Data.Helpers
         /// <param name="ignoreZeroValue1Entries">If true, does not create a block if it has a value of 0 for value 1, leaving a gap</param>
         /// <returns></returns>
         private static IEnumerable<ChartItem> AggregateAssignmentsIntoBlocks(
-            IEnumerable<BaseAssignment> assignments,
-            Func<IEnumerable<BaseAssignment>, DateTime, double> valueFunction,
+            IEnumerable<Assignment> assignments,
+            Func<IEnumerable<Assignment>, DateTime, double> valueFunction,
             Func<double, double, bool, string> colourFunction,
             string label,
             DateTime startDate,
             DateTime endDate,
-            Func<IEnumerable<BaseAssignment>, bool> hatchedFunction = null,
-            Func<IEnumerable<BaseAssignment>, double, DateTime, double> value2Function = null,
-            Func<IEnumerable<BaseAssignment>, string> tooltipMessageFormatter = null,
+            Func<IEnumerable<Assignment>, bool> hatchedFunction = null,
+            Func<IEnumerable<Assignment>, double, DateTime, double> value2Function = null,
+            Func<IEnumerable<Assignment>, string> tooltipMessageFormatter = null,
             bool ignoreZeroValue1Entries = false
         )
         {

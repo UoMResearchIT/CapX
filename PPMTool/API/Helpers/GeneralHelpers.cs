@@ -37,7 +37,7 @@ public static class GeneralHelpers
     /// </summary>
     /// <param name="user">The user to check.</param>
     /// <returns>True if user is a superuser</returns>
-    internal static bool IsSuperUser(User? user)
+    internal static bool IsSuperUser(User user)
     {
         if (user == null) return false;
         return user.RoleType == RoleType.Superuser;
@@ -48,7 +48,7 @@ public static class GeneralHelpers
     /// </summary>
     /// <param name="user"></param>
     /// <returns></returns>
-    internal static bool IsSuperUserOrManager(User? user)
+    internal static bool IsSuperUserOrManager(User user)
     {
         if (user == null) return false;
         return user.RoleType == RoleType.Superuser || user.RoleType == RoleType.Manager;
@@ -60,7 +60,7 @@ public static class GeneralHelpers
     /// <param name="context">The database context.</param>
     /// <param name="name">The name of the person to find.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the found Person object, or null if not found.</returns>
-    internal static async Task<Person?> FindPersonWithLineManagerByNameAsync(PPMToolContext context, string name)
+    internal static async Task<Person> FindPersonWithLineManagerByNameAsync(PPMToolContext context, string name)
     {
         return await context.People
                 .Include(x => x.LineManager)
@@ -99,7 +99,7 @@ public static class GeneralHelpers
     /// <param name="caller">The user making the request.</param>
     /// <param name="timesheetOwner">The person who owns the timesheet being checked.</param>
     /// <returns>True if the caller is authorized to view the sensitive data; otherwise, false.</returns>
-    internal static bool CanViewSensitiveData(User? caller, Person timesheetOwner)
+    internal static bool CanViewSensitiveData(User caller, Person timesheetOwner)
     {
         if (caller == null) return false;
 
@@ -138,7 +138,7 @@ public static class GeneralHelpers
     /// <param name="startDate">Optional start date string in format yyyy-MM-dd.</param>
     /// <param name="endDate">Optional end date string in format yyyy-MM-dd.</param>
     /// <returns>Tuple containing nullable start date, nullable end date (exclusive), and error message if parsing fails.</returns>
-    internal static (DateTime? start, DateTime? endExclusive, string? error) ParseOptionalDateRange(string? startDate, string? endDate)
+    internal static (DateTime? start, DateTime? endExclusive, string error) ParseOptionalDateRange(string startDate, string endDate)
     {
         DateTime? start = null;
         DateTime? endExclusive = null;
@@ -168,7 +168,7 @@ public static class GeneralHelpers
     /// Formats a single object value for inclusion in a CSV field.
     /// It handles nulls and wraps strings containing commas in double quotes.
     /// </summary>
-    private static string FormatCsvField(object? field)
+    private static string FormatCsvField(object field)
     {
         if (field == null)
         {

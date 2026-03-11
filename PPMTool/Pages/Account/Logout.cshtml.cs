@@ -5,7 +5,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-#if !LOCAL
+#if RELEASE
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 #endif
@@ -21,7 +21,7 @@ namespace PPMTool.Pages.Account
             this.configuration = configuration;
         }
 
-#if !LOCAL
+#if RELEASE
         public IActionResult OnGet()
         {
             var authType = configuration.GetValue<string>("Authentication:Type", "CAS");

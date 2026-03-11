@@ -56,9 +56,8 @@ namespace PPMTool.Data.Entities
         public string LastLoggedIn { get; set; }
 
         /// <summary>
-        /// User's email address
+        /// Comma separated list of email addresses for this user
         /// </summary>
-        [DataType(DataType.EmailAddress)]
         public string EmailAddress { get; set; }
 
         /// <summary>
@@ -103,7 +102,21 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         internal bool MatchesClaim(string claimName)
         {
-            return GetStandardisedUserName() == claimName || EmailAddress?.Clean() == claimName;
+            var emails = GetNormalisedEmailAddresses();
+            return GetStandardisedUserName() == claimName || emails.Contains(claimName);
+        }
+
+        /// <summary>
+        /// Returns the email addresses for this user as a list, splitting on semicolons and trimming whitespace, and removing any empty entries.
+        /// </summary>
+        /// <returns></returns>
+        public List<string> GetNormalisedEmailAddresses()
+        {
+            return EmailAddress?
+                .Split(';')
+                .Select(e => e.Clean())
+                .Where(e => !string.IsNullOrWhiteSpace(e))
+                .ToList() ?? new List<string>();
         }
     }
 }

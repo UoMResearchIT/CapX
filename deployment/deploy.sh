@@ -15,11 +15,7 @@ git pull
 
 # Publish the application to folder
 cd PPMTool
-dotnet publish -c Release -f net8.0
-
-# Publish the API to folder
-cd ../PPMTool.API
-dotnet publish -c Release -f net8.0
+dotnet publish -c Release -f net10.0
 
 # Sync DB from production by copying all files and flushing WAL journal
 cd ~/

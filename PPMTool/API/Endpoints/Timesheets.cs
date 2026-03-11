@@ -36,7 +36,7 @@ public static class Timesheets
         HttpContext http,
         [FromQuery] string startDate,
         [FromQuery] string endDate,
-        [FromQuery] string? name = null,
+        [FromQuery] string name = null,
         [FromQuery] bool? asCsv = null)
     {
         try
@@ -146,9 +146,9 @@ public static class Timesheets
         ILogger logger,
         HttpContext http,
         [FromQuery] string code,
-        [FromQuery] string? taskName = null,
-        [FromQuery] string? startDate = null,
-        [FromQuery] string? endDate = null,
+        [FromQuery] string taskName = null,
+        [FromQuery] string startDate = null,
+        [FromQuery] string endDate = null,
         [FromQuery] bool? asCsv = null)
     {
         try

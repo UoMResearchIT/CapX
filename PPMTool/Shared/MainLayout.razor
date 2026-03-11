@@ -21,6 +21,24 @@ SPDX-License-Identifier: apache-2.0
 @inject IConfiguration Configuration
 <PageTitle>CapX - Log In</PageTitle>
 
+@* Style the hamburger icon *@
+@if (Environment.IsDevelopment())
+{
+    <style>
+        .rz-sidebar-toggle {
+            color: var(--rz-on-danger);
+        }
+    </style>
+}
+else
+{
+    <style>
+        .rz-sidebar-toggle {
+            color: var(--rz-on-primary);
+        }
+    </style>
+}
+
 <RadzenComponents />
 <RadzenLayout>
     <RadzenHeader Style="@($"background-color: {(Environment.IsDevelopment() ? "var(--rz-danger)" : "var(--rz-primary)")}; padding-top: 0.2rem; padding-bottom: 0.2rem;")">

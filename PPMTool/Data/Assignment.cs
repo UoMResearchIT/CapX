@@ -2,30 +2,32 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
-using System;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 
 namespace PPMTool.Data
 {
     /// <summary>
-    /// Represents a sub task but with additional information about the project to which it belongs.
+    /// Assignment representing information used to plot some kind of capacity / Gantt chart.
     /// </summary>
-    public class Assignment : BaseAssignment
+    public class Assignment : IWithin
     {
+        public ProjectStatus ProjectStatus { get; private set; }
+
         public SubTask SubTask { get; private set; }
 
-        public Assignment(SubTask subTask, ProjectStatus projectStatus) : base(projectStatus)
+        public Assignment(SubTask subTask, ProjectStatus projectStatus)
         {
             SubTask = subTask;
+            ProjectStatus = projectStatus;
         }
 
-        public override bool IsWithin(DateTime testDate)
+        public bool IsWithin(DateTime testDate)
         {
             return SubTask.IsWithin(testDate);
         }
 
-        public override bool IsWithin(DateTime startDate, DateTime endDate)
+        public bool IsWithin(DateTime startDate, DateTime endDate)
         {
             return SubTask.IsWithin(startDate, endDate);
         }

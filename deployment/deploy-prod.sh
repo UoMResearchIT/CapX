@@ -15,11 +15,7 @@ git pull
 
 # Publish the application to folder
 cd PPMTool
-dotnet publish -c Release -f net8.0
-
-# Publish the API to folder
-cd ../PPMTool.API
-dotnet publish -c Release -f net8.0
+dotnet publish -c Release -f net10.0
 
 # Sync DB from production and flush WAL journal
 cd ~/
@@ -34,7 +30,7 @@ set -a
 source /var/www/capx/variables.env
 set +a
 dotnet ef database update
-cp PPMTool.db* ./bin/Release/net8.0/publish/
+cp PPMTool.db* ./bin/Release/net10.0/publish/
 
 # Copy publish directories over to the production system
 cd ~/

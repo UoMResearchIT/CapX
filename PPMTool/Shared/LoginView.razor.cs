@@ -78,7 +78,7 @@ namespace PPMTool.Shared
                 int count = Regex.Matches(loginLink, "returnUrl").Count;
                 if (notLoggedIn && count == 1)
                 {
-#if !LOCAL
+#if RELEASE
                     Logger.LogInformation($"User not logged in -- auto-redirecting to {loginLink}...");
                     Navigation.NavigateTo(loginLink, true);
 #endif

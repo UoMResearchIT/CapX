@@ -56,7 +56,7 @@ namespace PPMTool.API.DTOs
         DateTime StartDate,
         string Status,
         DateTime DateStatusChanged,
-        string? Info,
+        string Info,
         IReadOnlyList<TimesheetEntryDTO> Entries
     );
 

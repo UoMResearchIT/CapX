@@ -82,7 +82,7 @@ else
                         <RadzenNumeric class="radzen-numeric" TValue="double" Min="0" Step="0.001" Placeholder="0.00" @bind-Value="TaskModel.Demand" />
                     </div>
                     <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Planned Cost" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Cost computed from resource day rates and assignment FTE" /><br />
+                        <RadzenLabel class="radzen-form-label" Text="Planned Cost" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Cost computed from resource day rates and assignment FTE. Will be zero if a leadership task and the cost model does not recharge leadership." /><br />
                         <RadzenText Text="@TaskModel.PlannedCost.ToString("C2")" Style="margin-bottom: 0;" />
                     </div>
                 </div>
@@ -120,10 +120,10 @@ else
                     </div>
 
                     <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Component="RequiresLeadership" Text="Requires Leadership" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Switch this off if the task does not require leadership (affects PM demand and leadership costs if support by the cost model)" /><br />
+                        <RadzenLabel class="radzen-form-label" Component="LeadershipTask" Text="Is Leadership Task" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Turn this on if the task is a leadership task (affects PM demand and leadership costs if support by the cost model)" /><br />
                         <div class="align-items-center p-1">
                             <div style="display: flex">
-                                <RadzenSwitch @bind-value="TaskModel.RequiresLeadership" Name="RequiresLeadership" />
+                                <RadzenSwitch @bind-value="TaskModel.IsLeadershipTask" Name="LeadershipTask" Change="@(_ => UpdatePeopleDropdownSource(new LoadDataArgs()))" />
                             </div>
                         </div>
                     </div>

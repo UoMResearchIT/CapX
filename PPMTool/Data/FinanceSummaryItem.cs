@@ -37,17 +37,35 @@ namespace PPMTool.Data
 
         public double Budget { get; set; }
 
-        public double PlannedCost { get; set; }
+        /// <summary>
+        /// This represents the total of ALL costs (tech + leadership + indirects) for the project
+        /// </summary>
+        public double PlannedTotalCost { get; set; }
 
+        /// <summary>
+        /// This represents just the amount that is leadership costs
+        /// </summary>
         public double PlannedLeadershipCosts { get; set; }
 
-        public double ActualCost { get; set; }
+        /// <summary>
+        /// This represents just the amount that is indirects
+        /// </summary>
+        public double PlannedIndirectCosts { get; set; }
 
+        /// <summary>
+        /// This represents the total actual costs (tech + leadership + indirects) for the project
+        /// </summary>
+        public double ActualTotalCost { get; set; }
+
+        /// <summary>
+        /// This represents just the amount that is leadership
+        /// </summary>
         public double ActualLeadershipCosts { get; set; }
 
+        /// <summary>
+        /// This represents just the amount that is  indirects
+        /// </summary>
         public double ActualIndirectCosts { get; set; }
-
-        public double PlannedIndirectCosts { get; set; }
 
         public double BudgetIndirectCosts { get; set; }
 
@@ -107,10 +125,10 @@ namespace PPMTool.Data
             DayRate = project.DayRate;
             Budget = project.Budget;
             BudgetIndirectCosts = project.BudgetedIndirects;
-            PlannedCost = project.PlannedCost;
+            PlannedTotalCost = project.GetTotalPlannedCosts();
             PlannedLeadershipCosts = project.PlannedLeadershipCosts;
             PlannedIndirectCosts = project.PlannedIndirectCost;
-            ActualCost = project.ActualCost;
+            ActualTotalCost = project.ActualCost;
             ActualLeadershipCosts = project.ActualLeadershipCosts;
             ActualIndirectCosts = project.ActualIndirectCost;
             FundsDA = transactionBreakdown.DirectlyAllocated;
@@ -119,8 +137,8 @@ namespace PPMTool.Data
             FundsRequestedOther = transactionBreakdown.Invoices;
             FundsReceivedOther = transactionBreakdown.Payments;
             ActualHours = actuals;
-            PlannedCostColour = Math.Floor(PlannedCost - Budget) > 0 ? "var(--rz-danger)" : "var(--rz-success)";
-            ActualCostColour = Math.Floor(ActualCost - PlannedCost) > 0 ? "var(--rz-danger)" : "var(--rz-success)";
+            PlannedCostColour = Math.Floor(PlannedTotalCost - Budget) > 0 ? "var(--rz-danger)" : "var(--rz-success)";
+            ActualCostColour = Math.Floor(ActualTotalCost - PlannedTotalCost) > 0 ? "var(--rz-danger)" : "var(--rz-success)";
             FundsReceivedColour = Math.Floor(GetAllRequested() - GetAllReceived()) > 0 ? "var(--rz-danger)" : "var(--rz-success)";
             FundsRequestedColour = Math.Floor(Budget - GetAllRequested()) > 0 ? "var(--rz-danger)" : "var(--rz-success)";
             FundsOwed = GetAllRequested() - GetAllReceived();
@@ -159,6 +177,24 @@ namespace PPMTool.Data
         public double GetReceivedDI()
         {
             return Math.Min(FundsDI, AvailableFundsDI);
+        }
+
+        /// <summary>
+        /// Get the technical part of the planned project costs
+        /// </summary>
+        /// <returns></returns>
+        public double GetTechPlannedCosts()
+        {
+            return PlannedTotalCost - PlannedLeadershipCosts - PlannedIndirectCosts;
+        }
+
+        /// <summary>
+        /// Get the technical part of the actual project costs
+        /// </summary>
+        /// <returns></returns>
+        public double GetTechActualCosts()
+        {
+            return ActualTotalCost - ActualLeadershipCosts - ActualIndirectCosts;
         }
     }
 }

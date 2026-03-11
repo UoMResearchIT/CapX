@@ -143,6 +143,11 @@ namespace PPMTool.Data
         /// </summary>
         public float FinishedUnmetDemand { get; set; }
 
+        /// <summary>
+        /// Amount of demand for leadership tasks
+        /// </summary>
+        public float LeadershipDemand { get; set; }
+
 
         // Cost Data //
 

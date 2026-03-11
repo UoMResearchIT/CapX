@@ -169,9 +169,8 @@ namespace PPMTool.Pages
             {
                 var transactions = FinanceHelper.ComputeTransactionBreakdown(
                     Context,
-                    selectedProject.LeadershipFundingSource?.FundingSourceId ?? 0,
-                    selectedProject.PlannedLeadershipCosts,
-                    resources,
+                    selectedProject.CostModel,
+                    selectedProject.SubTasks,
                     FundingSourceService.GetFundingSources(Context, selectedProject.ProjectId),
                     InvoiceService.GetFundsRequested(Context, selectedProject.ProjectId),
                     PaymentService.GetFundsReceived(Context, selectedProject.ProjectId)

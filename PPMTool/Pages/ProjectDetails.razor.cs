@@ -256,9 +256,8 @@ namespace PPMTool.Pages
                     // Generate the funds requested and received
                     var transactions = FinanceHelper.ComputeTransactionBreakdown(
                         Context,
-                        project.LeadershipFundingSource?.FundingSourceId ?? 0,
-                        project.PlannedLeadershipCosts,
-                        project.SubTasks.SelectMany(x => x.AssignedResources),
+                        project.CostModel,
+                        project.SubTasks,
                         sources,
                         InvoiceService.GetFundsRequested(Context, project.ProjectId),
                         PaymentService.GetFundsReceived(Context, project.ProjectId)
@@ -469,16 +468,14 @@ namespace PPMTool.Pages
                 }
 
                 // Add to the list of blocks
-                allBlocks.Add(new GanttBlock(t, groupName));
+                allBlocks.Add(new GanttBlock(t, groupName, isLeadershipTask: t.IsLeadershipTask));
             }
 
-            // Add a gantt block representing the management task
-            var managementTasks = project.GenerateLeadershipTasks();
-            foreach (var task in managementTasks)
-            {
-                var leadershipName = "(Leadership)";
-                allBlocks.Insert(0, new GanttBlock(task, leadershipName, isLeadershipTask: true));
-            }
+            // leadership first (true before false), each group by StartDate ascending
+            allBlocks = allBlocks
+                .OrderByDescending(x => x.IsLeadershipTask)
+                .ThenBy(x => x.Task.StartDate)
+                .ToList();
 
             // Fill in the data
             ChartHelper.CompleteChartSeries(
@@ -1225,7 +1222,7 @@ namespace PPMTool.Pages
         /// <param name="dataPoint"></param>
         private void TaskSelected(SelectedData<GanttBlock> dataPoint)
         {
-            if (!EditAuthorised || (dataPoint.DataPoint.Items.FirstOrDefault()?.IsLeadershipTask ?? true)) return;
+            if (!EditAuthorised) return;
 
             // Only so the navigation when in project view mode
             if (dataPoint.IsSelected)
