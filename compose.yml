@@ -57,6 +57,6 @@ services:
     command: >
       bash -lc "
         dotnet tool restore &&
-        dotnet ef database update -c ${BUILD_CONFIGURATION:?}
+        dotnet ef database update --configuration ${BUILD_CONFIGURATION:?}
       "
     restart: "no"
