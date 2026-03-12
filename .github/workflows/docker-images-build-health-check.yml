@@ -26,11 +26,18 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        
+      - name: Create state directory for bind mount
+        run: |
+          mkdir -p capx-state
 
       - name: Build Docker images
         run: docker compose build
+        
+      - name: Run database migrations
+        run: docker compose run --rm migrate
 
-      - name: Start containers and wait for health checks
+      - name: Start container and wait for health checks
         run: docker compose up --wait --wait-timeout 120
 
       - name: Test homepage responds
