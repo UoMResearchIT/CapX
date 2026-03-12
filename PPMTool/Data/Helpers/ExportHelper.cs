@@ -604,7 +604,11 @@ namespace PPMTool.Data.Helpers
                         var netValueCappedIncLeadership = netValueIncLeadership > maxOverAllocation ? maxOverAllocation : netValueIncLeadership;
 
                         // Amount in budget for the day across all chunks
-                        var inBudget = chunks.Sum(x => x.AmountCovered / (x.EndDate.Subtract(x.StartDate).TotalDays + 1));
+                        var inBudget = chunks.Sum(x =>
+                        {
+                            var duration = x.EndDate.Subtract(x.StartDate).TotalDays + 1;
+                            return x.AmountCovered / duration;
+                        });
 
                         // Update the totals based on this day
                         windowRecoveryData

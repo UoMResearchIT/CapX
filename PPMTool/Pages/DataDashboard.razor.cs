@@ -812,7 +812,7 @@ namespace PPMTool.Pages
                         Debug.WriteLine($"** {assignmentChunks.Count()} assignment entries generated!");
 
                         // Get recovery data for assignment chunks
-                        int totalDaysInReportingWindow = (int)(endDate.Subtract(startDate).TotalDays) + 1;
+                        int totalDaysInReportingWindow = (int)(endDate.Subtract(startDate).TotalDays + 1);
                         var totalData = ExportHelper.GetRecoveryData(
                             peopleActive,
                             assignmentChunks,
