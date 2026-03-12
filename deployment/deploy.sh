@@ -21,8 +21,6 @@ MAIL_BODY="Deployment of CapX Test has just run!"
 
 echo "==> Pull latest source"
 cd "${REPO_DIR}"
-git fetch
-git checkout dev
 git submodule update --init --recursive
 git pull
 
