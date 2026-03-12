@@ -32,23 +32,20 @@ RUN dotnet restore "PPMTool/PPMTool.csproj" -p:Configuration=${BUILD_CONFIG}
 # Build here, EF will reuse it
 RUN dotnet build "PPMTool/PPMTool.csproj" -c ${BUILD_CONFIG} --no-restore
 
-# Create the database by running migrations
-# The following are required at design time
-ENV CONNECTION_STRING="Data Source=/src/PPMTool/PPMTool.db;Cache=Shared;Mode=ReadWriteCreate;" \
-    SUPERUSER_NAME="Captain Marvel" \
-    SUPERUSER_USERNAME=c123456m \
-    SUPERUSER_EMAIL=captain.marvel@manchester.ac.uk
-
-RUN dotnet ef database update -p "PPMTool/PPMTool.csproj" --configuration ${BUILD_CONFIG} --no-build
-
+# Pubilsh
 FROM build AS publish
 ARG BUILD_CONFIG=Local
+
 # Publish only the main projects (not the test projects) to avoid assembly conflicts
 RUN dotnet publish -c ${BUILD_CONFIG} -o /app/publish -f net10.0 "PPMTool/PPMTool.csproj"
-RUN mkdir /app/publish/state
-RUN cp PPMTool/PPMTool.db /app/publish/state
+
+# Runtime state directory volume mount
+RUN mkdir -p /app/publish/state
 VOLUME /app/publish/state
+
+# App expects DB at /app/PPMTool.db
 RUN ln -s state/PPMTool.db /app/publish/PPMTool.db
+
 # Copy migration data files needed for runtime seeding (SEED_DUMMY_DATA=TRUE)
 RUN mkdir -p /app/publish/Migrations && cp -r PPMTool/Migrations/Data /app/publish/Migrations/
 

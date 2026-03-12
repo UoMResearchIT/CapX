@@ -1,9 +1,9 @@
-#if LOCAL
+#if RELEASE
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+#else
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using PPMTool.Enums;
-#else
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 #endif
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
