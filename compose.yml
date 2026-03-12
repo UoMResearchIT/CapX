@@ -6,7 +6,7 @@ services:
       args:
         BUILD_CONFIG: ${BUILD_CONFIGURATION:-Local}
     volumes:
-      - /var/www/capx/capx-state:/app/state
+      - ${CAPX_STATE_DIR:?}:/app/state
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?}
       - API_KEY_SECRET=${API_KEY_SECRET:?}
@@ -54,7 +54,7 @@ services:
       args:
         BUILD_CONFIG: ${BUILD_CONFIGURATION:-Local}
     volumes:
-      - /var/www/capx/capx-state:/app/state
+      - ${CAPX_STATE_DIR:?}:/app/state
     environment:
       - CONNECTION_STRING=${CONNECTION_STRING:?}
       - SUPERUSER_NAME=${SUPERUSER_NAME:?}
