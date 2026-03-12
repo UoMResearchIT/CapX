@@ -51,7 +51,7 @@ sudo sqlite3 "${STAGING_DIR}/PPMTool.db" 'PRAGMA wal_checkpoint(TRUNCATE); VACUU
 # --- Place DB where the container will see it ---
 echo "==> Using bind mount: ${BIND_MOUNT_DIR}"
 if [ -f "${DB_FILE}" ]; then
-  sudo cp -a "${DB_FILE}" "${DB_FILE}.$(date +%Y%m%d%H%M%S).bak"
+  sudo cp -a "${DB_FILE}" "${DB_FILE}.bak"
 fi
 sudo cp -f "${STAGING_DIR}/PPMTool.db" "${DB_FILE}"
 sudo chown "$(id -u)":"$(id -g)" "${DB_FILE}"
