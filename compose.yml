@@ -6,7 +6,7 @@ services:
       args:
         BUILD_CONFIG: ${BUILD_CONFIGURATION:?}
     volumes:
-      - state:/app/state
+      - /var/www/capx/capx-state:/app/state
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?}
       - API_KEY_SECRET=${API_KEY_SECRET:?}
@@ -46,7 +46,7 @@ services:
       args:
         BUILD_CONFIG: ${BUILD_CONFIGURATION:?}
     volumes:
-      - state:/app/state
+      - /var/www/capx/capx-state:/app/state
     environment:
       - CONNECTION_STRING=${CONNECTION_STRING:?}
       - SUPERUSER_NAME=${SUPERUSER_NAME:?}
@@ -59,6 +59,3 @@ services:
         dotnet ef database update --no-build
       "
     restart: "no"
-
-volumes:
-  - /var/www/capx/capx-state:/app/state
