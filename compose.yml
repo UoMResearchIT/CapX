@@ -4,7 +4,7 @@ services:
       context: .
       target: final
       args:
-        BUILD_CONFIG: ${BUILD_CONFIGURATION:?}
+        BUILD_CONFIG: ${BUILD_CONFIGURATION:-Local}
     volumes:
       - /var/www/capx/capx-state:/app/state
     environment:
@@ -52,10 +52,11 @@ services:
       - SUPERUSER_NAME=${SUPERUSER_NAME:?}
       - SUPERUSER_USERNAME=${SUPERUSER_USERNAME:?}
       - SUPERUSER_EMAIL=${SUPERUSER_EMAIL:?}
+      - BUILD_CONFIGURATION=${BUILD_CONFIGURATION:?}
     working_dir: /src/PPMTool
     command: >
       bash -lc "
         dotnet tool restore &&
-        dotnet ef database update --no-build
+        dotnet ef database update -c ${BUILD_CONFIGURATION:?}
       "
     restart: "no"
