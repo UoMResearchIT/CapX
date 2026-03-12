@@ -31,7 +31,7 @@ if [ -n "${BIND_MOUNT_DIR}" ]; then
 fi
 
 echo "==> Stop running stack to avoid SQLite locks"
-docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" down || true
+sudo docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" down || true
 
 echo "==> Sync DB from production (copy *.db* and vacuum)"
 # Copy to a temp staging location first
@@ -58,14 +58,14 @@ sudo chown "$(id -u)":"$(id -g)" "${DB_FILE}"
 sudo chmod 664 "${DB_FILE}"
 
 echo "==> Run EF Core migrations inside the migrator container"
-docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" build migrate
-docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" run --rm migrate
+sudo docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" build migrate
+sudo docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" run --rm migrate
 
 echo "==> Build and start app (wait for healthy)"
-docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" up -d --build --remove-orphans --wait --wait-timeout 60
+sudo docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" up -d --build --remove-orphans --wait --wait-timeout 60
 
 echo "==> Compose status"
-docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" ps
+sudo docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" ps
 
 # Send email notification
 if command -v mail >/dev/null 2>&1; then
