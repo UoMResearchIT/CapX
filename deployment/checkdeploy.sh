@@ -1,17 +1,20 @@
 #! /bin/bash
-set -eu
+set -eu -o pipefail
 
-cd CapX
+# Location of the repo root
+REPO_DIR="${HOME}/CapX"
+
+cd "${REPO_DIR}"
 git fetch
 git checkout dev
-output=$(git rev-list --left-right --count HEAD...@{upstream} | cut -f2)
 
-if [ "$output" -gt 0 ]; then
-    # Pull and redeploy
-    echo "Pulling and deploying"
-	../deploy.sh
+# Compare with upstream dev
+output=$(git rev-list --left-right --count HEAD...@{upstream} | cut -f2 || echo 0)
+
+if [ "${output}" -gt 0 ]; then
+    echo "Pulling and deploying (changes detected on dev)"
+    "${REPO_DIR}/deployment/deploy.sh"
 else
-    # No need to redeploy
-    echo "Up-to-date on dev branch so no need to redeploy"
-    exit 1
+    echo "Up-to-date on dev branch; no redeploy"
+    exit 0
 fi
