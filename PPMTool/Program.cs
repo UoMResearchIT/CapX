@@ -336,39 +336,45 @@ using (var connection = new SqliteConnection(connectionString))
 using var scope = app.Services.CreateScope();
 SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
 
-// Seed dummy data if the flag is set to do so.
+// Set dummy data seed flag
 // This is intended for development and testing purposes only and should be used with caution as it will delete existing data.
 var shouldSeed = builder.Configuration.GetValue<bool>("DeveloperSettings:SeedDummyData");
-if (shouldSeed)
-{
-    var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
 
-    // Clear the existing DB and recreate a vanilla file
-    using (var context = dbContextFactory.CreateDbContext())
+// Create a context to run migrations and seed data if required.
+var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+using (var context = dbContextFactory.CreateDbContext())
+{
+    // If not seeding the run migrations to ensure the DB is up to date without deleting existing data
+    if (!shouldSeed)
     {
-        context.Database.EnsureDeleted();
         context.Database.Migrate();
     }
+    else
+    {
+        // Delete DB and re-migrate to ensure a clean slate with the latest schema (including any changes to seed data in migrations)
+        context.Database.EnsureDeleted();
+        context.Database.Migrate();
 
-    // Seed tables with suitable values -- Note that competencies are already seeded by migrations
-    SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
-    SeedHelper.SeedPeople(scope.ServiceProvider);
-    SeedHelper.SeedAbsences(scope.ServiceProvider);
-    SeedHelper.SeedUsers(scope.ServiceProvider);
-    SeedHelper.SeedWorkloadModelChanges(scope.ServiceProvider);
-    SeedHelper.SeedSkillTags(scope.ServiceProvider);
-    SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);
-    SeedHelper.SeedCompetencyAssessments(scope.ServiceProvider);
-    SeedHelper.SeedInnateCodesAndTasks(scope.ServiceProvider);
-    SeedHelper.SeedFinancialReferences(scope.ServiceProvider);
-    SeedHelper.SeedOrganisationalUnits(scope.ServiceProvider);
-    SeedHelper.SeedProjects(scope.ServiceProvider);
-    SeedHelper.SeedFundingSources(scope.ServiceProvider);
-    SeedHelper.SeedSubTasks(scope.ServiceProvider);
-    SeedHelper.SeedResources(scope.ServiceProvider);
-    SeedHelper.SeedNotes(scope.ServiceProvider);
-    SeedHelper.SeedInvoicesAndPayments(scope.ServiceProvider);
-    SeedHelper.SeedTimesheets(scope.ServiceProvider);
+        // Seed tables with suitable values -- Note that competencies are already seeded by migrations
+        SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
+        SeedHelper.SeedPeople(scope.ServiceProvider);
+        SeedHelper.SeedAbsences(scope.ServiceProvider);
+        SeedHelper.SeedUsers(scope.ServiceProvider);
+        SeedHelper.SeedWorkloadModelChanges(scope.ServiceProvider);
+        SeedHelper.SeedSkillTags(scope.ServiceProvider);
+        SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);
+        SeedHelper.SeedCompetencyAssessments(scope.ServiceProvider);
+        SeedHelper.SeedInnateCodesAndTasks(scope.ServiceProvider);
+        SeedHelper.SeedFinancialReferences(scope.ServiceProvider);
+        SeedHelper.SeedOrganisationalUnits(scope.ServiceProvider);
+        SeedHelper.SeedProjects(scope.ServiceProvider);
+        SeedHelper.SeedFundingSources(scope.ServiceProvider);
+        SeedHelper.SeedSubTasks(scope.ServiceProvider);
+        SeedHelper.SeedResources(scope.ServiceProvider);
+        SeedHelper.SeedNotes(scope.ServiceProvider);
+        SeedHelper.SeedInvoicesAndPayments(scope.ServiceProvider);
+        SeedHelper.SeedTimesheets(scope.ServiceProvider);
+    }
 }
 
 // Set default culture
