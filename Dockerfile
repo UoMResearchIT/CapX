@@ -24,6 +24,7 @@ COPY .git .git
 
 # Second restore needed for .NET 10 EF tools but don't know why
 RUN dotnet restore "PPMTool/PPMTool.csproj" -p:Configuration=${BUILD_CONFIG}
+
 # Build app
 RUN dotnet build "PPMTool/PPMTool.csproj" -c ${BUILD_CONFIG} --no-restore
 

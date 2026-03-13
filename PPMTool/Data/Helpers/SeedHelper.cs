@@ -254,30 +254,26 @@ namespace PPMTool.Data.Helpers
         /// <summary>
         /// Add a superuser with the default values from the configuration if there isn't one
         /// </summary>
-        /// <param name="serviceProvider"></param>
-        public static void SeedSuperUserIfNotExist(IServiceProvider serviceProvider)
+        /// <param name="context"></param>
+        /// <param name="configuration"></param>
+        /// <param name="logger"></param>
+        public static void SeedSuperUserIfNotExist(PPMToolContext context, IConfiguration configuration, ILogger logger)
         {
-            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
-            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-            var logger = serviceProvider.GetRequiredService<ILogger>();
-            using (var context = dbContextFactory.CreateDbContext())
+            // Create a new superuser if there isn't one
+            var superUser = context.Users.Include(x => x.Person).FirstOrDefault(x => x.RoleType == RoleType.Superuser);
+            if (superUser == null)
             {
-                // Create a new superuser if there isn't one
-                var superUser = context.Users.Include(x => x.Person).FirstOrDefault(x => x.RoleType == RoleType.Superuser);
-                if (superUser == null)
+                logger.LogWarning("No superuser found! Adding default...");
+                superUser = new User
                 {
-                    logger.LogWarning("No superuser found! Adding default...");
-                    superUser = new User
-                    {
-                        RoleType = RoleType.Superuser,
-                        Name = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserName"),
-                        CASUserName = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserUserName"),
-                        EmailAddress = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserEmail"),
-                        Person = null
-                    };
-                    context.Users.Add(superUser);
-                    context.SaveChanges();
-                }
+                    RoleType = RoleType.Superuser,
+                    Name = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserName"),
+                    CASUserName = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserUserName"),
+                    EmailAddress = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserEmail"),
+                    Person = null
+                };
+                context.Users.Add(superUser);
+                context.SaveChanges();
             }
         }
 

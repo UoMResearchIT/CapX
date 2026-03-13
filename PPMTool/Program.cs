@@ -332,31 +332,36 @@ using (var connection = new SqliteConnection(connectionString))
     connection.Close();
 }
 
-// Seed the default superuser from the settings if it doesn't already exist
-using var scope = app.Services.CreateScope();
-SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
-
-// Set dummy data seed flag
-// This is intended for development and testing purposes only and should be used with caution as it will delete existing data.
-var shouldSeed = builder.Configuration.GetValue<bool>("DeveloperSettings:SeedDummyData");
-
 // Create a context to run migrations and seed data if required.
+using var scope = app.Services.CreateScope();
 var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
 using (var context = dbContextFactory.CreateDbContext())
 {
-    // If not seeding the run migrations to ensure the DB is up to date without deleting existing data
-    if (!shouldSeed)
+    // Set dummy data seed flag
+    // This is intended for development and testing purposes only and should be used with caution as it will delete existing data.
+    var shouldSeed = builder.Configuration.GetValue<bool>("DeveloperSettings:SeedDummyData");
+
+    // Delete existing DB
+    if (shouldSeed)
     {
-        context.Database.Migrate();
-    }
-    else
-    {
-        // Delete DB and re-migrate to ensure a clean slate with the latest schema (including any changes to seed data in migrations)
         context.Database.EnsureDeleted();
-        context.Database.Migrate();
+    }
+
+    // Run migrations
+    context.Database.Migrate();
+
+    // Seed the default superuser from the settings if it doesn't already exist
+    SeedHelper.SeedSuperUserIfNotExist(
+        context,
+        scope.ServiceProvider.GetRequiredService<IConfiguration>(),
+        scope.ServiceProvider.GetRequiredService<ILogger>()
+    );
+
+    // If seeding run the dummy seeder
+    if (shouldSeed)
+    {
 
         // Seed tables with suitable values -- Note that competencies are already seeded by migrations
-        SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
         SeedHelper.SeedPeople(scope.ServiceProvider);
         SeedHelper.SeedAbsences(scope.ServiceProvider);
         SeedHelper.SeedUsers(scope.ServiceProvider);
