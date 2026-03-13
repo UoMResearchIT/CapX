@@ -19,7 +19,6 @@ using PPMTool.Data.Context;
 using PPMTool.Data.Helpers;
 using PPMTool.Services;
 using Radzen;
-using ILogger = Microsoft.Extensions.Logging.ILogger;
 #if RELEASE
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
@@ -332,15 +331,15 @@ using (var connection = new SqliteConnection(connectionString))
     connection.Close();
 }
 
+// Set dummy data seed flag
+// This is intended for development and testing purposes only and should be used with caution as it will delete existing data.
+var shouldSeed = builder.Configuration.GetValue<bool>("DeveloperSettings:SeedDummyData");
+
 // Create a context to run migrations and seed data if required.
 using var scope = app.Services.CreateScope();
 var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
 using (var context = dbContextFactory.CreateDbContext())
 {
-    // Set dummy data seed flag
-    // This is intended for development and testing purposes only and should be used with caution as it will delete existing data.
-    var shouldSeed = builder.Configuration.GetValue<bool>("DeveloperSettings:SeedDummyData");
-
     // Delete existing DB
     if (shouldSeed)
     {
@@ -349,37 +348,33 @@ using (var context = dbContextFactory.CreateDbContext())
 
     // Run migrations
     context.Database.Migrate();
+}
 
-    // Seed the default superuser from the settings if it doesn't already exist
-    SeedHelper.SeedSuperUserIfNotExist(
-        context,
-        scope.ServiceProvider.GetRequiredService<IConfiguration>(),
-        scope.ServiceProvider.GetRequiredService<ILogger>()
-    );
+// Seed the default superuser from the settings if it doesn't already exist
+SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
 
-    // If seeding run the dummy seeder
-    if (shouldSeed)
-    {
+// If seeding run the dummy data seeding methods
+if (shouldSeed)
+{
 
-        // Seed tables with suitable values -- Note that competencies are already seeded by migrations
-        SeedHelper.SeedPeople(scope.ServiceProvider);
-        SeedHelper.SeedAbsences(scope.ServiceProvider);
-        SeedHelper.SeedUsers(scope.ServiceProvider);
-        SeedHelper.SeedWorkloadModelChanges(scope.ServiceProvider);
-        SeedHelper.SeedSkillTags(scope.ServiceProvider);
-        SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);
-        SeedHelper.SeedCompetencyAssessments(scope.ServiceProvider);
-        SeedHelper.SeedInnateCodesAndTasks(scope.ServiceProvider);
-        SeedHelper.SeedFinancialReferences(scope.ServiceProvider);
-        SeedHelper.SeedOrganisationalUnits(scope.ServiceProvider);
-        SeedHelper.SeedProjects(scope.ServiceProvider);
-        SeedHelper.SeedFundingSources(scope.ServiceProvider);
-        SeedHelper.SeedSubTasks(scope.ServiceProvider);
-        SeedHelper.SeedResources(scope.ServiceProvider);
-        SeedHelper.SeedNotes(scope.ServiceProvider);
-        SeedHelper.SeedInvoicesAndPayments(scope.ServiceProvider);
-        SeedHelper.SeedTimesheets(scope.ServiceProvider);
-    }
+    // Seed tables with suitable values -- Note that competencies are already seeded by migrations
+    SeedHelper.SeedPeople(scope.ServiceProvider);
+    SeedHelper.SeedAbsences(scope.ServiceProvider);
+    SeedHelper.SeedUsers(scope.ServiceProvider);
+    SeedHelper.SeedWorkloadModelChanges(scope.ServiceProvider);
+    SeedHelper.SeedSkillTags(scope.ServiceProvider);
+    SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);
+    SeedHelper.SeedCompetencyAssessments(scope.ServiceProvider);
+    SeedHelper.SeedInnateCodesAndTasks(scope.ServiceProvider);
+    SeedHelper.SeedFinancialReferences(scope.ServiceProvider);
+    SeedHelper.SeedOrganisationalUnits(scope.ServiceProvider);
+    SeedHelper.SeedProjects(scope.ServiceProvider);
+    SeedHelper.SeedFundingSources(scope.ServiceProvider);
+    SeedHelper.SeedSubTasks(scope.ServiceProvider);
+    SeedHelper.SeedResources(scope.ServiceProvider);
+    SeedHelper.SeedNotes(scope.ServiceProvider);
+    SeedHelper.SeedInvoicesAndPayments(scope.ServiceProvider);
+    SeedHelper.SeedTimesheets(scope.ServiceProvider);
 }
 
 // Set default culture
