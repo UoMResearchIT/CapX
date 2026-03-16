@@ -34,9 +34,6 @@ jobs:
       - name: Build Docker images
         run: docker compose build
         
-      - name: Run database migrations
-        run: docker compose run --rm migrate
-
       - name: Start container and wait for health checks
         run: docker compose up --wait --wait-timeout 120
 

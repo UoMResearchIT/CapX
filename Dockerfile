@@ -14,25 +14,21 @@ COPY PPMTool/PPMTool.csproj PPMTool/PPMTool.csproj
 COPY PPMTool/PPMTool.sln PPMTool/PPMTool.sln
 COPY PPMTool.Tests/PPMTool.Tests.csproj PPMTool.Tests/PPMTool.Tests.csproj
 
-# Initial restore
+# Restore packages
 RUN dotnet nuget locals all --clear \
  && dotnet restore "PPMTool/PPMTool.sln" -p:Configuration=${BUILD_CONFIG}
 
-# Tool restore
-COPY .config .config
-RUN dotnet tool restore
-
-# Copy full sources
+# Copy full sources (inc. git for GitInfo library)
 COPY PPMTool PPMTool
 COPY .git .git
 
 # Second restore needed for .NET 10 EF tools but don't know why
 RUN dotnet restore "PPMTool/PPMTool.csproj" -p:Configuration=${BUILD_CONFIG}
 
-# Build here, EF will reuse it
+# Build app
 RUN dotnet build "PPMTool/PPMTool.csproj" -c ${BUILD_CONFIG} --no-restore
 
-# Pubilsh
+# Publish
 FROM build AS publish
 ARG BUILD_CONFIG=Local
 
@@ -41,9 +37,8 @@ RUN dotnet publish -c ${BUILD_CONFIG} -o /app/publish -f net10.0 "PPMTool/PPMToo
 
 # Runtime state directory volume mount
 RUN mkdir -p /app/publish/state
-VOLUME /app/publish/state
 
-# App expects DB at /app/PPMTool.db
+# App expects DB at /app/PPMTool.db so create symlink
 RUN ln -s state/PPMTool.db /app/publish/PPMTool.db
 
 # Copy migration data files needed for runtime seeding (SEED_DUMMY_DATA=TRUE)

@@ -46,25 +46,3 @@ services:
       timeout: 5s
       start_period: 5s
       retries: 5
-      
-  migrate:
-    build:
-      context: .
-      target: build
-      args:
-        BUILD_CONFIG: ${BUILD_CONFIGURATION:-Local}
-    volumes:
-      - ${CAPX_STATE_DIR:?}:/app/state
-    environment:
-      - CONNECTION_STRING=${CONNECTION_STRING:?}
-      - SUPERUSER_NAME=${SUPERUSER_NAME:?}
-      - SUPERUSER_USERNAME=${SUPERUSER_USERNAME:?}
-      - SUPERUSER_EMAIL=${SUPERUSER_EMAIL:?}
-      - BUILD_CONFIGURATION=${BUILD_CONFIGURATION:?}
-    working_dir: /src/PPMTool
-    command: >
-      bash -lc "
-        dotnet tool restore &&
-        dotnet ef database update --configuration ${BUILD_CONFIGURATION:?}
-      "
-    restart: "no"

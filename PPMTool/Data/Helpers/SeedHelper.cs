@@ -257,9 +257,10 @@ namespace PPMTool.Data.Helpers
         /// <param name="serviceProvider"></param>
         public static void SeedSuperUserIfNotExist(IServiceProvider serviceProvider)
         {
+            // Get services
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
-            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             var logger = serviceProvider.GetRequiredService<ILogger>();
+            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             using (var context = dbContextFactory.CreateDbContext())
             {
                 // Create a new superuser if there isn't one
