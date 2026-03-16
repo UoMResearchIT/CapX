@@ -57,10 +57,6 @@ sudo cp -f "${STAGING_DIR}/PPMTool.db" "${DB_FILE}"
 sudo chown "$(id -u)":"$(id -g)" "${DB_FILE}"
 sudo chmod 664 "${DB_FILE}"
 
-echo "==> Run EF Core migrations inside the migrator container"
-sudo docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" build migrate
-sudo docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" run --rm migrate
-
 echo "==> Build and start app (wait for healthy)"
 sudo docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" up -d --build --remove-orphans --wait --wait-timeout 60
 
