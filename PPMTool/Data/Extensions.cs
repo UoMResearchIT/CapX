@@ -212,8 +212,8 @@ namespace PPMTool.Data
 
             var durationTask = budgetDetail.Resource.SubTask.DurationDays;
             var lengthOfWindow = end.Subtract(start).TotalDays + 1;
-            var daysFunded = budgetDetail.InBudget / budgetDetail.DailyCost;
-            var proportionInBudget = lengthOfWindow / daysFunded;
+            var daysFunded = budgetDetail.DailyCost == 0 ? 0 : budgetDetail.InBudget / budgetDetail.DailyCost;
+            var proportionInBudget = daysFunded == 0 ? 0 : lengthOfWindow / daysFunded;
             if (proportionInBudget > 1)
             {
                 proportionInBudget = 1;
@@ -252,7 +252,7 @@ namespace PPMTool.Data
                         // Expires sometime during the window
                         else
                         {
-                            proportionInBudget = (expiryDate.Subtract(start).TotalDays + 1) / daysFunded;
+                            proportionInBudget = daysFunded == 0 ? 0 : (expiryDate.Subtract(start).TotalDays + 1) / daysFunded;
                             if (proportionInBudget > 1)
                             {
                                 proportionInBudget = 1;
