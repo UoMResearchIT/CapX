@@ -28,11 +28,7 @@
             ReadValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref overridingValues);
 
             // Connection string for EF Core tools at design time and runtime
-            ReadValue("CONNECTION_STRING", "ConnectionStrings:PPMToolContextConnection", ref overridingValues);
             ReadValue("LEAVEBOOKINGS_CONNECTION_STRING", "ConnectionStrings:LeaveBookingsDatabase", ref overridingValues);
-
-            // DB provider
-            ReadValue("DB_PROVIDER", "DbProvider", ref overridingValues);
 
             // Get email settings
             ReadValue("MAIL_SMTP_SERVER", "Email:SmtpServer", ref overridingValues);
@@ -61,8 +57,22 @@
                 overridingValues.Add("DeveloperSettings:SeedDummyData", true.ToString().ToLowerInvariant());
             }
 
+            // Read the design time variables
+            LoadDesignTimeVariables(overridingValues);
+
             // Add the overriding values to the configuration
             builder.Configuration.AddInMemoryCollection(overridingValues);
+        }
+
+        /// <summary>
+        /// Read in the environment variables that are used by the design context factory
+        /// </summary>
+        /// <param name="overridingValues"></param>
+        internal static void LoadDesignTimeVariables(Dictionary<string, string> overridingValues)
+        {
+            // Load design time variables into the environment so they can be read by the design time factory
+            ReadValue("CONNECTION_STRING", "ConnectionStrings:PPMToolContextConnection", ref overridingValues);
+            ReadValue("DB_PROVIDER", "DbProvider", ref overridingValues);
         }
 
         /// <summary>
@@ -76,6 +86,9 @@
             // Validation of values that are used at runtime only
             ValidateValue("API_KEY_SECRET", "Jwt:SecretKey", ref builder);
             ValidateValue("LEAVEBOOKINGS_CONNECTION_STRING", "ConnectionStrings:LeaveBookingsDatabase", ref builder);
+            ValidateValue("SUPERUSER_NAME", "DeveloperSettings:DefaultSuperUserName", ref builder);
+            ValidateValue("SUPERUSER_USERNAME", "DeveloperSettings:DefaultSuperUserUserName", ref builder);
+            ValidateValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref builder);
 
 #if RELEASE
             ValidateValue("SENTRY_DSN", "Sentry:Dsn", ref builder, justLog: true, logger: logger);
@@ -98,12 +111,18 @@
             }
             ValidateValue("AUTH_HOST_URL", "Authentication:HostUrl", ref builder);
 #endif
+            // Validate the desgin time values only
+            ValidateDesignTimeConfiguration(builder);
+        }
 
+        /// <summary>
+        /// Validate
+        /// </summary>
+        /// <param name="builder"></param>
+        internal static void ValidateDesignTimeConfiguration(WebApplicationBuilder builder)
+        {
             // Used by EF Core tools at design time with migrations, so we need to validate even at design time
             ValidateValue("CONNECTION_STRING", "ConnectionStrings:PPMToolContextConnection", ref builder, true);
-            ValidateValue("SUPERUSER_NAME", "DeveloperSettings:DefaultSuperUserName", ref builder, true);
-            ValidateValue("SUPERUSER_USERNAME", "DeveloperSettings:DefaultSuperUserUserName", ref builder, true);
-            ValidateValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref builder, true);
             ValidateValue("DB_PROVIDER", "DbProvider", ref builder, true);
         }
 

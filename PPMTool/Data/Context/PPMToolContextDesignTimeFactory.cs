@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using PPMTool.Data.Helpers;
 
 namespace PPMTool.Data.Context
 {
@@ -59,16 +60,14 @@ namespace PPMTool.Data.Context
         {
             // Create a new config builder
             var builder = new ConfigurationBuilder();
+
+            // Add environment variables and user secrets to the configuration
             builder.AddEnvironmentVariables();
             builder.AddUserSecrets<PPMToolContextDesignTimeFactory>();
 
-            // Configuration overrides from the environment variables
+            // Load in the variables
             var overridingValues = new Dictionary<string, string>();
-            var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
-            if (!string.IsNullOrWhiteSpace(connectionString))
-            {
-                overridingValues.Add("ConnectionStrings:PPMToolContextConnection", connectionString);
-            }
+            EnvironmentHelper.LoadDesignTimeVariables(overridingValues);
             builder.AddInMemoryCollection(overridingValues);
 
             return builder.Build();
