@@ -26,6 +26,7 @@ namespace PPMTool.Tests.API
         public void SetupForAPI()
         {
             // Get the API key to use from the database
+            // TODO: This needs to use the DbProvider options in the environment variables instead of hardcoding the path and provider
             var dbPath = Path.Combine(AppContext.BaseDirectory, "../../../../PPMTool/PPMTool.db");
             var options = new DbContextOptionsBuilder<PPMToolContext>()
                 .UseSqlite($"Data Source={dbPath};Cache=Shared;")

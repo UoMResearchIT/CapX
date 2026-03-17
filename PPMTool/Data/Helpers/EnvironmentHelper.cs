@@ -31,6 +31,9 @@
             ReadValue("CONNECTION_STRING", "ConnectionStrings:PPMToolContextConnection", ref overridingValues);
             ReadValue("LEAVEBOOKINGS_CONNECTION_STRING", "ConnectionStrings:LeaveBookingsDatabase", ref overridingValues);
 
+            // DB provider
+            ReadValue("DB_PROVIDER", "DbProvider", ref overridingValues);
+
             // Get email settings
             ReadValue("MAIL_SMTP_SERVER", "Email:SmtpServer", ref overridingValues);
             ReadValue("MAIL_FROM_ADDRESS", "Email:From", ref overridingValues);
@@ -101,6 +104,7 @@
             ValidateValue("SUPERUSER_NAME", "DeveloperSettings:DefaultSuperUserName", ref builder, true);
             ValidateValue("SUPERUSER_USERNAME", "DeveloperSettings:DefaultSuperUserUserName", ref builder, true);
             ValidateValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref builder, true);
+            ValidateValue("DB_PROVIDER", "DbProvider", ref builder, true);
         }
 
         /// <summary>

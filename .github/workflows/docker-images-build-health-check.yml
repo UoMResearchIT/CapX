@@ -20,7 +20,6 @@ jobs:
       SUPERUSER_NAME: "Captain Marvel"
       SUPERUSER_USERNAME: c123456m
       SUPERUSER_EMAIL: captain.marvel@manchester.ac.uk
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
