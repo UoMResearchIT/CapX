@@ -61,10 +61,4 @@
 	<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.5" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\PPMTool.Migrations.PostgresSql\PPMTool.Migrations.PostgresSql.csproj" />
-    <ProjectReference Include="..\PPMTool.Migrations.Sqlite\PPMTool.Migrations.Sqlite.csproj" />
-    <ProjectReference Include="..\PPMTool.Migrations.SqlServer\PPMTool.Migrations.SqlServer.csproj" />
-  </ItemGroup>
-
 </Project>
