@@ -34,6 +34,7 @@ namespace PPMTool.Data.Context
 
             var optionsBuilder = new DbContextOptionsBuilder<PPMToolContext>();
             var dbProvider = configuration.GetValue<string>("DbProvider");
+            Console.WriteLine($"** Using design-time DB provider {dbProvider}");
             switch (dbProvider)
             {
                 case "sqlite":
