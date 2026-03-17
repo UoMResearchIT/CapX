@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace PPMTool.Migrations
 {
@@ -48,14 +47,6 @@ namespace PPMTool.Migrations
                 name: "IX_SkillTag_PersonId",
                 table: "SkillTag",
                 column: "PersonId");
-
-            // Seeds a person
-            migrationBuilder.Sql(
-                @"
-                    INSERT INTO People (Name, ShortName, HourlyRate, AvailabilityFTE, NextAvailable)
-                    VALUES ('Adrian Harwood', 'AH', 100.0, 1.0, '2022-05-26 21:31:15');
-                "
-            );
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

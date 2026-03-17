@@ -108,8 +108,8 @@ namespace PPMTool.Data.Entities
             // Update the billed FTE value for the resource based on the cost model
             UpdateBilledFTE(project.CostModel);
 
-            // If using the day rate model the planned cost is only day rate if we aren't recharging to DI funding sources which have to be salary costs
-            if (project.CostModel == CostModel.DayRate && fundingSourceType != FundingSourceType.DI)
+            // If using the day rate model the planned cost is only day rate
+            if (project.CostModel == CostModel.DayRate)
             {
                 // Actual cost is hours converted to days multiplied by the day rate
                 ActualCost = durationDaysActual * (UseProjectDayRate ? project.DayRate : DayRate ?? 0);
@@ -118,10 +118,10 @@ namespace PPMTool.Data.Entities
                 PlannedCost = durationDaysPlanned * (UseProjectDayRate ? project.DayRate : DayRate ?? 0);
             }
 
-            // If using the grade-based models or day rate but DI funding source
+            // If using the grade-based models
             else
             {
-                // Convert to assignment chunks (do not generate extra leadership chunks)
+                // Convert to assignment chunks and recompute the costs of the chunks
                 chunks = ExportHelper.GetAssignmentChunks(
                     Person,
                     new List<Project> { project },
@@ -129,12 +129,13 @@ namespace PPMTool.Data.Entities
                     subTask.StartDate,
                     subTask.EndDate,
                     new List<SubTask> { subTask },
-                    true,
-                    generateLeadershipTasks: GenerateLeadershipTaskLogic.None
+                    true
                 );
 
-                // Planned costs (technical assignments only)
-                PlannedCost = chunks.Sum(x => x.PlannedCost);
+                // Planned costs of the resource (leadership tasks are zero if not a leadership cost model)
+                PlannedCost = (!project.CostModel.HasLeadership() && subTask.IsLeadershipTask) ?
+                    0 :
+                    chunks.Sum(x => x.PlannedCost);
 
                 // Actual costs are a proportion of the planned based on actuals recorded
                 ActualCost = 0d;
@@ -145,10 +146,10 @@ namespace PPMTool.Data.Entities
                 }
             }
 
-            // The indirects only apply if the appropriate cost model is in place
+            // The indirects only apply if the appropriate cost model is in place and it is not a leadership task
             ActualIndirectCost = 0d;
             PlannedIndirectCost = 0d;
-            if (project.CostModel.HasIndirects())
+            if (project.CostModel.HasIndirects() && !subTask.IsLeadershipTask)
             {
                 // Planned indirects are just proportion of the technical costs
                 PlannedIndirectCost = (PlannedCost * GlobalDefaults.BAUTopSliceFractionDefault) / (1 + GlobalDefaults.BAUTopSliceFractionDefault);
@@ -179,12 +180,14 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method to update the billed FTE based on the indirects rate if the project cost model requires it
+        /// Method to update the billed FTE based on the indirects rate if the project cost model requires it.
+        /// Does not apply to leadership assignments.
         /// </summary>
         /// <param name="model"></param>
         internal void UpdateBilledFTE(CostModel model)
         {
-            BilledFTE = model.HasIndirects() ? AssignmentFTE * (1 + GlobalDefaults.BAUTopSliceFractionDefault) : AssignmentFTE;
+            // Do not apply indirects to leadership assignments
+            BilledFTE = (model.HasIndirects() && !SubTask.IsLeadershipTask) ? AssignmentFTE * (1 + GlobalDefaults.BAUTopSliceFractionDefault) : AssignmentFTE;
         }
     }
 }

@@ -2,6 +2,7 @@
 @inherits BasePage
 @using PPMTool.Enums
 @using PPMTool.Data
+@using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
 @using System.ComponentModel.DataAnnotations
 <PageTitle>Add Project - CapX</PageTitle>
@@ -40,7 +41,7 @@ else
                 <div class="row">
                     <div class="col-8">
                         <RadzenLabel class="radzen-form-label" Text="Project Name" Component="Name" /><br />
-                        <RadzenTextBox Name="Name" TValue="string" @bind-Value="projectModel.Name" />
+                        <RadzenTextBox class="radzen-text-box" Name="Name" @bind-Value="projectModel.Name" />
                     </div>
                     <div class="col-4">
                         <RadzenLabel class="radzen-form-label" Text="Project Status" /><br />
@@ -58,17 +59,26 @@ else
                     </div>
                     <div class="col-4">
                         <RadzenLabel class="radzen-form-label" Text="Faculty" /><br />
-                        <RadzenDropDown class="radzen-dropdown" TValue="Faculty" @bind-Value="projectModel.Faculty" Data="@faculties" Change="OnFacultyChosen">
+                        <RadzenDropDown class="radzen-dropdown"
+                                        TValue="Faculty"
+                                        Data="@faculties"
+                                        Change="OnFacultyChosen"
+                                        Placeholder="Select a faculty"
+                                        Value="@chosenFaculty">
                             <Template Context="x">
-                                @GetNiceString(x)
+                                @x.GetSensibleObjectName()
                             </Template>
                         </RadzenDropDown>
                     </div>
                     <div class="col-4">
                         <RadzenLabel class="radzen-form-label" Text="School" /><br />
-                        <RadzenDropDown class="radzen-dropdown" TValue="School" @bind-Value="projectModel.School" Data="@schools">
+                        <RadzenDropDown class="radzen-dropdown"
+                                        TValue="School"
+                                        @bind-Value="projectModel.School"
+                                        Data="@schools"
+                                        Placeholder="Select a school">
                             <Template Context="x">
-                                @GetNiceString(x)
+                                @x.GetSensibleObjectName()
                             </Template>
                         </RadzenDropDown>
                     </div>
@@ -76,7 +86,7 @@ else
                 <div class="row">
                     <div class="col-4">
                         <RadzenLabel class="radzen-form-label" Text="Principal Investigator" /><br />
-                        <RadzenTextBox TValue="string" @bind-Value="projectModel.PI" />
+                        <RadzenTextBox class="radzen-text-box" @bind-Value="projectModel.PI" />
                     </div>
                     <div class="col-4">
                         <RadzenLabel class="radzen-form-label" Text="Project Manager" /><br />
@@ -107,11 +117,11 @@ else
                 <div class="row">
                     <div class="col-6">
                         <RadzenLabel class="radzen-form-label" Text="Link to Request Doc" /><br />
-                        <RadzenTextBox TValue="string" @bind-Value="projectModel.RequestDocLink" Placeholder="https://..."  />
+                        <RadzenTextBox class="radzen-text-box" @bind-Value="projectModel.RequestDocLink" Placeholder="https://..."  />
                     </div>
                     <div class="col-6">
                         <RadzenLabel class="radzen-form-label" Text="Link to Scrum Project" /><br />
-                        <RadzenTextBox TValue="string" @bind-Value="projectModel.ScrumProjectLink" Placeholder="https://..." />
+                        <RadzenTextBox class="radzen-text-box" @bind-Value="projectModel.ScrumProjectLink" Placeholder="https://..." />
                     </div>
                 </div>
                 <div class="row">
@@ -132,7 +142,7 @@ else
                         }
                         else
                         {
-                            <RadzenTextBox Value="N/A" Disabled="true" />
+                            <RadzenTextBox class="radzen-text-box" Value="N/A" Disabled="true" />
                         }
                     </div>
                     <div class="col-3">
@@ -140,23 +150,6 @@ else
                         <RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="The agreed budget is computed from the total amount in the funding sources associated with the project" /><br />
                         <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.Budget" Disabled="true" />
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col-6">
-                        <RadzenLabel class="radzen-form-label" Text="Leadership FTE" />
-                        <RadzenIcon class="centre-align" IconStyle=IconStyle.Warning Icon="warning" title="This project has a custom leadership demand. Make sure this is what you want to do as it affects cost and demand reporting." Visible="@(projectModel.LeadershipFTE != GlobalDefaults.ProjectManagementDefaultFTE)" /><br />
-                        <RadzenNumeric class="radzen-numeric" TValue="float" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.LeadershipFTE" />
-                    </div>
-                    <div class="col-6">
-                        <RadzenLabel class="radzen-form-label" Text="Leadership Funding Source" />
-                        <RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Current cost model chosen does not require a leadership funding source" Visible="@(!projectModel.CostModel.HasLeadership())" /><br />
-                        <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.FundingSourceId" ValueProperty="FundingSourceId" Data="@availableFundingSources" Disabled="@(!projectModel.CostModel.HasLeadership())" AllowClear="true">
-                            <Template Context="source">
-                                @(source?.GetSensibleObjectName())
-                            </Template>
-                        </RadzenDropDown>
-                    </div>
-                
                 </div>
                 <hr />
                 <DataAnnotationsValidator />

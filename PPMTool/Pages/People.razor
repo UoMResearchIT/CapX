@@ -57,8 +57,8 @@
                             </span>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" Width="80px" FilterOperator="FilterOperator.StartsWith" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Person" Property="LineManager" Title="Line Manager" Filterable="false" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" Width="80px" FilterOperator="FilterOperator.Contains" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Person" Property="LineManager" Title="Line Manager" MinWidth="10px">
                         <Template Context="p">
                             <span style="display: flex; align-items: center">
                                 @if (p.LineManager?.IsCurrentlyAbsent() ?? false)

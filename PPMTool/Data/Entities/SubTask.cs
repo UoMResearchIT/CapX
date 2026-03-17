@@ -148,12 +148,6 @@ namespace PPMTool.Data.Entities
         public int Lag { get; set; }
 
         /// <summary>
-        /// If using a cost model that charges leadership, should it be charged on this task.
-        /// Typically disabled for maintenance tasks.
-        /// </summary>
-        public bool RequiresLeadership { get; set; } = true;
-
-        /// <summary>
         /// Project which owns the subtask
         /// </summary>
         public virtual Project OwningProject { get; set; }
@@ -164,11 +158,15 @@ namespace PPMTool.Data.Entities
         public virtual IList<SkillTag> SkillsRequired { get; set; } = new List<SkillTag>();
 
         /// <summary>
+        /// Whether this task is a leadership task which would mean it comes out of PSMT allowance instead of ProjectWork allowance
+        /// </summary>
+        public bool IsLeadershipTask { get; set; }
+
+        /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task
         /// Work = Duration * Units
         /// Units = Sum of Resource Assigned FTE
         /// </summary>
-        /// the duration if the end date is fixed. Only applies to fixed duration tasks.</param>
         /// <returns>Returns null if successful otherwise error message</returns>
         public string Schedule()
         {
@@ -586,6 +584,26 @@ namespace PPMTool.Data.Entities
                 PlannedCost += res.PlannedCost;
             }
             return chunks;
+        }
+
+        /// <summary>
+        /// Returns the assignment value of the resource assignment matching the person given. Zero if not found.
+        /// </summary>
+        /// <param name="personAssigned"></param>
+        /// <returns></returns>
+        internal double GetAssignmentValueForPerson(Person personAssigned)
+        {
+            return AssignedResources.FirstOrDefault(x => x.Person?.PersonId == personAssigned.PersonId)?.AssignmentFTE ?? 0;
+        }
+
+        /// <summary>
+        /// Returns whether the resource assignment matching the person given is provisional or not. False if not found.
+        /// </summary>
+        /// <param name="personAssigned"></param>
+        /// <returns></returns>
+        internal bool IsProvisionalResource(Person personAssigned)
+        {
+            return AssignedResources.FirstOrDefault(x => x.Person?.PersonId == personAssigned.PersonId)?.IsProvisional ?? false;
         }
     }
 }

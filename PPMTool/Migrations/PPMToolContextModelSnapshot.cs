@@ -156,6 +156,28 @@ namespace PPMTool.Migrations
                     b.ToTable("CompetencyAssessments");
                 });
 
+            modelBuilder.Entity("PPMTool.Data.Entities.Faculty", b =>
+                {
+                    b.Property<int>("FacultyId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("FacultyId");
+
+                    b.ToTable("Faculties");
+                });
+
             modelBuilder.Entity("PPMTool.Data.Entities.Feature", b =>
                 {
                     b.Property<int>("FeatureId")
@@ -457,7 +479,7 @@ namespace PPMTool.Migrations
                     b.Property<double>("FTE")
                         .HasColumnType("REAL");
 
-                    b.Property<int>("LineManagerPersonId")
+                    b.Property<int?>("LineManagerPersonId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
@@ -520,17 +542,8 @@ namespace PPMTool.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Faculty")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("FundingSourceId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int?>("InnateActivityInnateCodeId")
                         .HasColumnType("INTEGER");
-
-                    b.Property<float>("LeadershipFTE")
-                        .HasColumnType("REAL");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -565,7 +578,7 @@ namespace PPMTool.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("School")
+                    b.Property<int>("SchoolId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("ScrumProjectLink")
@@ -576,12 +589,11 @@ namespace PPMTool.Migrations
 
                     b.HasKey("ProjectId");
 
-                    b.HasIndex("FundingSourceId")
-                        .IsUnique();
-
                     b.HasIndex("InnateActivityInnateCodeId");
 
                     b.HasIndex("ProjectManagerPersonId");
+
+                    b.HasIndex("SchoolId");
 
                     b.ToTable("Projects");
                 });
@@ -645,6 +657,33 @@ namespace PPMTool.Migrations
                     b.ToTable("Resources");
                 });
 
+            modelBuilder.Entity("PPMTool.Data.Entities.School", b =>
+                {
+                    b.Property<int>("SchoolId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FacultyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("SchoolId");
+
+                    b.HasIndex("FacultyId");
+
+                    b.ToTable("Schools");
+                });
+
             modelBuilder.Entity("PPMTool.Data.Entities.SkillTag", b =>
                 {
                     b.Property<int>("SkillTagId")
@@ -706,6 +745,9 @@ namespace PPMTool.Migrations
                     b.Property<bool>("HasFixedStart")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IsLeadershipTask")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Lag")
                         .HasColumnType("INTEGER");
 
@@ -729,9 +771,6 @@ namespace PPMTool.Migrations
                         .HasColumnType("REAL");
 
                     b.Property<int?>("PredecessorSubTaskId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("RequiresLeadership")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("StartDate")
@@ -1083,20 +1122,13 @@ namespace PPMTool.Migrations
                 {
                     b.HasOne("PPMTool.Data.Entities.Person", "LineManager")
                         .WithMany("PeopleManaged")
-                        .HasForeignKey("LineManagerPersonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("LineManagerPersonId");
 
                     b.Navigation("LineManager");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Project", b =>
                 {
-                    b.HasOne("PPMTool.Data.Entities.FundingSource", "LeadershipFundingSource")
-                        .WithOne("ProjectLeadershipSource")
-                        .HasForeignKey("PPMTool.Data.Entities.Project", "FundingSourceId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("PPMTool.Data.Entities.InnateCode", "InnateActivity")
                         .WithMany()
                         .HasForeignKey("InnateActivityInnateCodeId");
@@ -1105,11 +1137,17 @@ namespace PPMTool.Migrations
                         .WithMany("ManagedProjects")
                         .HasForeignKey("ProjectManagerPersonId");
 
+                    b.HasOne("PPMTool.Data.Entities.School", "School")
+                        .WithMany()
+                        .HasForeignKey("SchoolId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("InnateActivity");
 
-                    b.Navigation("LeadershipFundingSource");
-
                     b.Navigation("ProjectManager");
+
+                    b.Navigation("School");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.Resource", b =>
@@ -1135,6 +1173,17 @@ namespace PPMTool.Migrations
                     b.Navigation("Person");
 
                     b.Navigation("SubTask");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.School", b =>
+                {
+                    b.HasOne("PPMTool.Data.Entities.Faculty", "Faculty")
+                        .WithMany("Schools")
+                        .HasForeignKey("FacultyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Faculty");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.SubTask", b =>
@@ -1241,11 +1290,14 @@ namespace PPMTool.Migrations
                     b.Navigation("Assessments");
                 });
 
+            modelBuilder.Entity("PPMTool.Data.Entities.Faculty", b =>
+                {
+                    b.Navigation("Schools");
+                });
+
             modelBuilder.Entity("PPMTool.Data.Entities.FundingSource", b =>
                 {
                     b.Navigation("PaymentsFromSource");
-
-                    b.Navigation("ProjectLeadershipSource");
 
                     b.Navigation("ResourcesFunded");
                 });

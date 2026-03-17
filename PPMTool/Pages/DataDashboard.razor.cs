@@ -345,14 +345,19 @@ namespace PPMTool.Pages
                     var projectsInDatabaseThisWeek = projects.Where(x => x.StartDate != default && x.IsWithin(currentWeekStart));
 
 
-                    /// Cancelled ///
+                    // Cancelled //
 
                     // Get tasks for cancelled projects running at the start of the week
-                    var tasksOnCancelledProjectsThisWeek = projectsInDatabaseThisWeek.Where(x => x.ProjectStatus.IsCancelled()).SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart)));
+                    var tasksOnCancelledProjectsThisWeek = projectsInDatabaseThisWeek
+                        .Where(x => x.ProjectStatus.IsCancelled())
+                            .SelectMany(x => x.SubTasks
+                                .Where(x => !x.IsLeadershipTask && x.IsWithin(currentWeekStart)
+                            )
+                        );
                     var cancelledDemand = (float)tasksOnCancelledProjectsThisWeek.RoundedSum(x => x.Demand);
 
 
-                    /// All Projects (not cancelled) ///
+                    // All Projects (not cancelled) //
 
                     // Get projects not cancelled
                     var projectsThisWeekNotCancelled = projectsInDatabaseThisWeek.Where(x => !x.ProjectStatus.IsCancelled());
@@ -361,16 +366,27 @@ namespace PPMTool.Pages
                     var numberUnconfirmed = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus.IsUnconfirmed()).Count();
                     var numberConfirmed = projectsThisWeekNotCancelled.Count() - numberUnconfirmed;
 
-                    // Get all tasks that run at the start of the week
-                    var tasksOnActiveProjectsThisWeek = projectsThisWeekNotCancelled.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart)));
+                    // Get all (technical only) tasks that run at the start of the week
+                    var tasksOnActiveProjectsThisWeek = projectsThisWeekNotCancelled
+                        .SelectMany(x => x.SubTasks
+                            .Where(x => !x.IsLeadershipTask && x.IsWithin(currentWeekStart))
+                        );
 
                     // Get demand totals from tasks
                     var unmetDemand = (float)tasksOnActiveProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
                     var totalDemand = (float)tasksOnActiveProjectsThisWeek.RoundedSum(x => x.Demand);
                     var metDemand = (float)Math.Round(totalDemand - unmetDemand);
 
+                    // Get all (leadership only) tasks that run at the start of the week
+                    var leadershipTasksOnActiveProjectsThisWeek = projectsThisWeekNotCancelled
+                        .SelectMany(x => x.SubTasks
+                            .Where(x => x.IsLeadershipTask && x.IsWithin(currentWeekStart))
+                        );
 
-                    /// Finished ///
+                    // Get demand for leadership
+                    var leadershipDemand = (float)leadershipTasksOnActiveProjectsThisWeek.RoundedSum(x => x.Demand);
+
+                    // Finished //
 
                     // Get just total FTE of finished projects
                     var projectsThisWeekThatAreFinished = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus == ProjectStatus.Finished);
@@ -380,7 +396,7 @@ namespace PPMTool.Pages
                     var metDemandFinished = (float)Math.Round(totalDemandFinished - unmetDemandFinished);
 
 
-                    /// Confirmed ///
+                    // Confirmed //
 
                     // Get just confirmed projects
                     var projectsThisWeekConfirmed = projectsThisWeekNotCancelled.Where(x => !x.ProjectStatus.IsUnconfirmed());
@@ -391,8 +407,11 @@ namespace PPMTool.Pages
                         projectsThisWeekConfirmed = projectsThisWeekConfirmed.Where(x => x.ProjectStatus != ProjectStatus.Finished);
                     }
 
-                    // Get tasks
-                    var tasksOnConfirmedProjectsThisWeek = projectsThisWeekConfirmed.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart)));
+                    // Get tasks (excluding leadership tasks)
+                    var tasksOnConfirmedProjectsThisWeek = projectsThisWeekConfirmed
+                        .SelectMany(x => x.SubTasks
+                            .Where(x => !x.IsLeadershipTask && x.IsWithin(currentWeekStart))
+                        );
 
                     // Get met and unmet demand for this subset
                     var unmetDemandConfirmed = (float)tasksOnConfirmedProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
@@ -400,7 +419,7 @@ namespace PPMTool.Pages
                     var metDemandConfirmed = (float)Math.Round(totalDemandConfirmed - unmetDemandConfirmed);
 
 
-                    /// Unconfirmed ///
+                    // Unconfirmed //
 
                     // Get just unconfirmed projects
                     var projectsThisWeekUnconfirmed = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus.IsUnconfirmed());
@@ -411,8 +430,11 @@ namespace PPMTool.Pages
                         projectsThisWeekUnconfirmed = projectsThisWeekUnconfirmed.Where(x => x.ProjectStatus != ProjectStatus.Finished);
                     }
 
-                    // Get tasks
-                    var tasksOnUnconfirmedProjectsThisWeek = projectsThisWeekUnconfirmed.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart)));
+                    // Get tasks (excluding leadership tasks)
+                    var tasksOnUnconfirmedProjectsThisWeek = projectsThisWeekUnconfirmed
+                        .SelectMany(x => x.SubTasks
+                            .Where(x => !x.IsLeadershipTask && x.IsWithin(currentWeekStart))
+                        );
 
                     // Calculate the unconfirmed totals
                     var unmetDemandUnconfirmed = (float)tasksOnUnconfirmedProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
@@ -420,7 +442,7 @@ namespace PPMTool.Pages
                     var metDemandUnconfirmed = (float)Math.Round(totalDemandUnconfirmed - unmetDemandUnconfirmed);
 
 
-                    /// Costs ///
+                    // Costs //
 
                     // Get the budget for all confirmed projects this week
                     var budgetYTD = (float)projectsThisWeekConfirmed.Sum(x =>
@@ -452,7 +474,7 @@ namespace PPMTool.Pages
                         return InvoiceService.GetFundsRequested(context, x.ProjectId) / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
                     });
 
-                    /// People ///
+                    // People //
 
                     // Get the people who are employed at the beginning of the week
                     var peopleEmployedThisWeek = people.Where(x => x.StartDate <= currentWeekStart && (x.EndDate == null || x.EndDate >= currentWeekStart));
@@ -481,8 +503,11 @@ namespace PPMTool.Pages
                         }
                         numStaff++;
 
-                        // Get assignments for this person and sum for the week
-                        var assignmentsThisWeek = tasksOnActiveProjectsThisWeek.SelectMany(x => x.AssignedResources.Where(x => x.Person.PersonId == person.PersonId));
+                        // Get (technical only) assignments for this person and sum for the week
+                        var assignmentsThisWeek = tasksOnActiveProjectsThisWeek
+                            .SelectMany(x => x.AssignedResources
+                                .Where(x => x.Person.PersonId == person.PersonId)
+                            );
                         var totalAssignmentFTE = assignmentsThisWeek.RoundedSum(x => x.AssignmentFTE);
 
                         // Increment the totals of under and overallocation
@@ -540,6 +565,7 @@ namespace PPMTool.Pages
                         CancelledDemand = cancelledDemand,
                         FinishedMetDemand = metDemandFinished,
                         FinishedUnmetDemand = unmetDemandFinished,
+                        LeadershipDemand = leadershipDemand,
                         RecoveryTargetYTD = recoveryYTD,
                         BudgetYTD = budgetYTD,
                         ReceivedFundsYTD = receivedYTD,
@@ -554,7 +580,7 @@ namespace PPMTool.Pages
                     var item = dutyChartItems.Last();
                     item.ProjectShortfall = UpdateAverage(item.ProjectShortfall, wlmProject - totalDemand, numberOfWeeks);
                     item.StaffManagementShortfall = UpdateAverage(item.StaffManagementShortfall, wlmStaff - (numStaff - GlobalDefaults.NumberOfStaffManagedByHeadDefault) * GlobalDefaults.StaffManagementDefaultFTE, numberOfWeeks);
-                    item.PSManagementShortfall = UpdateAverage(item.PSManagementShortfall, wlmPM - GlobalDefaults.ProjectManagementDefaultFTE * (numberConfirmed + numberUnconfirmed), numberOfWeeks);
+                    item.PSManagementShortfall = UpdateAverage(item.PSManagementShortfall, wlmPM - leadershipDemand, numberOfWeeks);
                     item.RSAShortfall = UpdateAverage(item.RSAShortfall, wlmRSA - (numberConfirmed + numberUnconfirmed) * GlobalDefaults.TechnicalLeadershipDefaultFTE, numberOfWeeks);
 
                     // Move to next week
@@ -755,16 +781,21 @@ namespace PPMTool.Pages
                         var peopleActive = await PersonService.GetEmployedPeopleShallowAsync(Context, startDate, endDate);
                         foreach (var person in peopleActive)
                         {
-                            // Filter list of tasks for those projects that just run during the window and are assigned to this person
+                            // Filter list of tasks for those projects that just run during the window and are assigned to this person.
+                            // Filter out leadership tasks for projects that don't allow them to be recharged.
                             var tasksInWindow = projectsInWindow
                                 .SelectMany(x => x.SubTasks)
                                 .Where(x => x.AssignedResources
-                                    .Any(x => x.Person.PersonId == person.PersonId)
-                                )
-                                .Where(x => x.IsWithin(startDate, endDate));
+                                    .Any(x => x.Person.PersonId == person.PersonId) &&
+                                    x.IsWithin(startDate, endDate) &&
+                                    (!x.IsLeadershipTask ||
+                                        (x.OwningProject.CostModel.HasLeadership() && x.IsLeadershipTask)
+                                    )
+                                );
                             Debug.WriteLine($"** {tasksInWindow.Count()} tasks within window for {person.Name}");
 
-                            // Represent the assignments (including leadership assignment if necessary) in the window as chunks
+                            // Represent the assignments (including leadership assignments if cost model allows recharge) in the window as chunks.
+                            // Do not recompute the costs here as it is a waste of effort.
                             var data = ExportHelper.GetAssignmentChunks(
                                 person,
                                 projectsInWindow,
@@ -781,7 +812,7 @@ namespace PPMTool.Pages
                         Debug.WriteLine($"** {assignmentChunks.Count()} assignment entries generated!");
 
                         // Get recovery data for assignment chunks
-                        int totalDaysInReportingWindow = (int)(endDate.Subtract(startDate).TotalDays) + 1;
+                        int totalDaysInReportingWindow = (int)(endDate.Subtract(startDate).TotalDays + 1);
                         var totalData = ExportHelper.GetRecoveryData(
                             peopleActive,
                             assignmentChunks,
