@@ -273,5 +273,34 @@ namespace PPMTool.Data
                 }
             }
         }
+
+        /// <summary>
+        /// Extension method to add the appropriate DB options
+        /// </summary>
+        /// <param name="optionsBuilder"></param>
+        /// <param name="connectionString"></param>
+        /// <param name="configuration"></param>
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <returns></returns>
+        internal static DbContextOptionsBuilder AddDbProvider(this DbContextOptionsBuilder optionsBuilder, string connectionString, IConfiguration configuration)
+        {
+            var dbProvider = configuration.GetValue<string>("DbProvider");
+            Console.WriteLine($"** Using DB provider {dbProvider}");
+            switch (dbProvider)
+            {
+                case "sqlite":
+                    optionsBuilder.UseSqlite(connectionString, o => o.MigrationsAssembly("PPMTool.Migrations.Sqlite").UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+                    break;
+                case "sqlserver":
+                    optionsBuilder.UseSqlServer(connectionString, o => o.MigrationsAssembly("PPMTool.Migrations.SqlServer"));
+                    break;
+                case "postgresql":
+                    optionsBuilder.UseNpgsql(connectionString, o => o.MigrationsAssembly("PPMTool.Migrations.PostgresSql"));
+                    break;
+                default:
+                    throw new InvalidOperationException($"DesignTimeDbContextFactory: Unsupported DbProvider '{dbProvider}' specified in environment variable.");
+            }
+            return optionsBuilder;
+        }
     }
 }

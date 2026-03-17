@@ -62,9 +62,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Migrations\PostgresSQL\" />
-    <Folder Include="Migrations\SQLServer\" />
-    <Folder Include="Migrations\SQLite\" />
+    <ProjectReference Include="..\PPMTool.Migrations.PostgresSql\PPMTool.Migrations.PostgresSql.csproj" />
+    <ProjectReference Include="..\PPMTool.Migrations.Sqlite\PPMTool.Migrations.Sqlite.csproj" />
+    <ProjectReference Include="..\PPMTool.Migrations.SqlServer\PPMTool.Migrations.SqlServer.csproj" />
   </ItemGroup>
 
 </Project>

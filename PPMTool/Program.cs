@@ -15,6 +15,7 @@ using PPMTool.API.Authentication;
 using PPMTool.API.Endpoints;
 using PPMTool.API.Filters;
 using PPMTool.API.Services;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Helpers;
 using PPMTool.Services;
@@ -62,24 +63,7 @@ builder.Services.AddServerSideBlazor().AddHubOptions(o =>
 
 var connectionString = builder.Configuration.GetConnectionString("PPMToolContextConnection");
 var dbProvider = builder.Configuration.GetValue<string>("DbProvider");
-builder.Services.AddDbContextFactory<PPMToolContext>(options =>
-{
-    switch (dbProvider)
-    {
-        case "sqlite":
-            options.UseSqlite(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
-            break;
-        case "sqlserver":
-            options.UseSqlServer(connectionString);
-            break;
-        case "postgresql":
-            options.UseNpgsql(connectionString);
-            break;
-        default:
-            throw new InvalidOperationException($"Program.cs: Unsupported DbProvider '{dbProvider}' specified in environment variable.");
-    }
-});
-
+builder.Services.AddDbContextFactory<PPMToolContext>(options => options.AddDbProvider(connectionString, builder.Configuration));
 builder.Services.AddBlazoredSessionStorage();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddRadzenComponents();
