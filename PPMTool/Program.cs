@@ -19,6 +19,8 @@ using PPMTool.Data.Context;
 using PPMTool.Data.Helpers;
 using PPMTool.Services;
 using Radzen;
+
+
 #if RELEASE
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
@@ -59,9 +61,24 @@ builder.Services.AddServerSideBlazor().AddHubOptions(o =>
 });
 
 var connectionString = builder.Configuration.GetConnectionString("PPMToolContextConnection");
+var dbProvider = builder.Configuration.GetValue<string>("DbProvider");
 builder.Services.AddDbContextFactory<PPMToolContext>(options =>
-    options.UseSqlite(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
-);
+{
+    switch (dbProvider)
+    {
+        case "sqlite":
+            options.UseSqlite(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+            break;
+        case "sqlserver":
+            options.UseSqlServer(connectionString);
+            break;
+        case "postgresql":
+            options.UseNpgsql(connectionString);
+            break;
+        default:
+            throw new InvalidOperationException($"Program.cs: Unsupported DbProvider '{dbProvider}' specified in environment variable.");
+    }
+});
 
 builder.Services.AddBlazoredSessionStorage();
 builder.Services.AddBlazoredLocalStorage();
@@ -319,16 +336,19 @@ app.UseWhen(
 app.MapFallbackToPage("/_Host");
 
 // Set the journal mode on the DB
-using (var connection = new SqliteConnection(connectionString))
+if (dbProvider == "sqlite")
 {
-    // Setting this should persist across connections
-    // https://learn.microsoft.com/en-gb/dotnet/standard/data/sqlite/compare#connection-strings
-    connection.Open();
-    using (var command = new SqliteCommand("PRAGMA journal_mode=WAL;", connection))
+    using (var connection = new SqliteConnection(connectionString))
     {
-        command.ExecuteNonQuery();
+        // Setting this should persist across connections
+        // https://learn.microsoft.com/en-gb/dotnet/standard/data/sqlite/compare#connection-strings
+        connection.Open();
+        using (var command = new SqliteCommand("PRAGMA journal_mode=WAL;", connection))
+        {
+            command.ExecuteNonQuery();
+        }
+        connection.Close();
     }
-    connection.Close();
 }
 
 // Set dummy data seed flag

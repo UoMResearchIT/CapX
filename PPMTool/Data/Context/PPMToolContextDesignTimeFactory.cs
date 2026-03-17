@@ -32,7 +32,21 @@ namespace PPMTool.Data.Context
             }
 
             var optionsBuilder = new DbContextOptionsBuilder<PPMToolContext>();
-            optionsBuilder.UseSqlite(connectionString);
+            var dbProvider = configuration.GetValue<string>("DbProvider");
+            switch (dbProvider)
+            {
+                case "sqlite":
+                    optionsBuilder.UseSqlite(connectionString);
+                    break;
+                case "sqlserver":
+                    optionsBuilder.UseSqlServer(connectionString);
+                    break;
+                case "postgresql":
+                    optionsBuilder.UseNpgsql(connectionString);
+                    break;
+                default:
+                    throw new InvalidOperationException($"DesignTimeDbContextFactory: Unsupported DbProvider '{dbProvider}' specified in environment variable.");
+            }
 
             return new PPMToolContext(optionsBuilder.Options);
         }
