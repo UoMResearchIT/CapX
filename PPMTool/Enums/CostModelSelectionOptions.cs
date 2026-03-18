@@ -19,7 +19,7 @@ namespace PPMTool.Enums
         /// Lookup from <see cref="CostModel"/> to its sort position, derived from <see cref="DisplayOrder"/>.
         /// Values not in <see cref="DisplayOrder"/> sort last.
         /// </summary>
-        private static readonly IReadOnlyDictionary<CostModel, int> SortIndexMap =
+        private static readonly IReadOnlyDictionary<CostModel, int> sortIndexMap =
             DisplayOrder
                 .Select((model, index) => (model, index))
                 .ToDictionary(x => x.model, x => x.index);
@@ -30,7 +30,7 @@ namespace PPMTool.Enums
         /// </summary>
         internal static int GetSortIndex(CostModel model)
         {
-            return SortIndexMap.TryGetValue(model, out var index) ? index : DisplayOrder.Count;
+            return sortIndexMap.TryGetValue(model, out var index) ? index : DisplayOrder.Count;
         }
     }
 }
