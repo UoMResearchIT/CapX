@@ -7,7 +7,7 @@ using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 
-namespace PPMTool.Data.Helpers
+namespace PPMTool.Helpers
 {
     public static class SeedHelper
     {

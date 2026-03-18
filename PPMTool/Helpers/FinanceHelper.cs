@@ -3,7 +3,7 @@ using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Enums;
 
-namespace PPMTool.Data.Helpers
+namespace PPMTool.Helpers
 {
     /// <summary>
     /// Helper to process finance data.sources into a form usable by other components

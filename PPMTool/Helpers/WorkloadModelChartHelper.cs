@@ -1,7 +1,8 @@
-﻿using PPMTool.Data.Entities;
+﻿using PPMTool.Data;
+using PPMTool.Data.Entities;
 using PPMTool.Enums;
 
-namespace PPMTool.Data.Helpers
+namespace PPMTool.Helpers
 {
     /// <summary>
     /// Helper class for generating workload model chart data

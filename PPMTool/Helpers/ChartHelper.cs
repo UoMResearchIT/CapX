@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using PPMTool.Data.Entities;
 
-namespace PPMTool.Data.Helpers
+namespace PPMTool.Helpers
 {
     public abstract class ChartHelper
     {

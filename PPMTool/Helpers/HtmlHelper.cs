@@ -2,7 +2,7 @@
 using HtmlAgilityPack;
 using Xceed.Words.NET;
 
-namespace PPMTool.Data.Helpers
+namespace PPMTool.Helpers
 {
     /// <summary>
     /// Taken from https://stackoverflow.com/questions/286813/how-do-you-convert-html-to-plain-text

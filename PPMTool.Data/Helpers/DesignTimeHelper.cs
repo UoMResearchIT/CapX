@@ -1,4 +1,5 @@
-﻿using PPMTool.Data.Context;
+﻿using Microsoft.Extensions.Configuration;
+using PPMTool.Data.Context;
 
 namespace PPMTool.Data.Helpers
 {
@@ -20,7 +21,7 @@ namespace PPMTool.Data.Helpers
             // Load in the variables
             var overridingValues = new Dictionary<string, string>();
             EnvironmentHelper.LoadDesignTimeVariables(overridingValues);
-            builder.AddInMemoryCollection(overridingValues);
+            builder.AddInMemoryCollection(overridingValues!);
 
             return builder.Build();
         }

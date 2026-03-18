@@ -5,7 +5,7 @@ using PPMTool.Data.Entities;
 using PPMTool.Enums;
 using PPMTool.Services;
 
-namespace PPMTool.Data.Helpers
+namespace PPMTool.Helpers
 {
     public abstract class ExportHelper
     {
