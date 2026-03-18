@@ -33,7 +33,9 @@
                         <RadzenButton Icon="clear" Text="Discard" ButtonStyle="ButtonStyle.Danger" Click="@DiscardAssessment" />
                     </RadzenStack>
                 </RadzenStack>
-                <RadzenHtmlEditor @bind-Value="assessmentToEdit.Evidence" Style="min-height: 10rem" Placeholder="Add some evidence here to support your assessment" />
+                <RadzenText Text="Evidence (Required)" TextStyle="TextStyle.Subtitle1" />
+                <RadzenText Text="Assessment must include evidence before you can save it." TextStyle="TextStyle.Body2" />
+                <RadzenHtmlEditor @bind-Value="assessmentToEdit.Evidence" Style="min-height: 10rem" Placeholder="Add evidence here to support your assessment" />
             </RadzenStack>
         }
         @if (Competency?.Assessments != null && Competency.Assessments.Where(x => x.PersonId == SelectedPerson?.PersonId).Count() > 0)
@@ -84,10 +86,10 @@
     public Action<Competency> EditCompetencyAction { get; set; }
 
     [Parameter]
-    public Action<CompetencyAssessment> AddAssessmentAction { get; set; }
+    public Func<CompetencyAssessment, string> AddAssessmentAction { get; set; }
 
     [Parameter]
-    public Action<CompetencyAssessment> UpdateAssessmentAction { get; set; }
+    public Func<CompetencyAssessment, string> UpdateAssessmentAction { get; set; }
 
     [Parameter]
     public Action<ElementReference, string> ShowTooltip { get; set; }
@@ -108,23 +110,39 @@
 
     private void EditAssessment(CompetencyAssessment assessment)
     {
-        assessmentToEdit = assessment;
+        assessmentToEdit = CloneAssessment(assessment);
     }
 
     private void SaveAssessment()
     {
-        AddAssessmentAction?.Invoke(assessmentToEdit);
-        assessmentToEdit = null;
+        var message = AddAssessmentAction?.Invoke(assessmentToEdit) ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            assessmentToEdit = null;
+        }
     }
 
     private void UpdateAssessment()
     {
-        UpdateAssessmentAction?.Invoke(assessmentToEdit);
-        assessmentToEdit = null;
+        var message = UpdateAssessmentAction?.Invoke(assessmentToEdit) ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            assessmentToEdit = null;
+        }
     }
 
     private void DiscardAssessment()
     {
         assessmentToEdit = null;
+    }
+
+    /// <summary>
+    /// Create a detached copy of an assessment for editing.
+    /// </summary>
+    /// <param name="assessment"></param>
+    /// <returns></returns>
+    private static CompetencyAssessment CloneAssessment(CompetencyAssessment assessment)
+    {
+        return assessment.Clone();
     }
 }

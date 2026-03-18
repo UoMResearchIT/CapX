@@ -674,38 +674,49 @@ namespace PPMTool.Pages
         /// Adds an assessment
         /// </summary>
         /// <param name="assessment"></param>
-        private void AddAssessment(CompetencyAssessment assessment)
+        private string AddAssessment(CompetencyAssessment assessment)
         {
             LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
             if (ValidateAssessment(assessment, out var message))
             {
                 CompetencyService.AddAssessment(Context, assessment);
                 UpdateMet();
+                StateHasChanged();
+                return string.Empty;
             }
-            else
-            {
-                ShowValidationError(message);
-            }
+            ShowValidationError(message);
             StateHasChanged();
+            return message;
         }
 
         /// <summary>
         /// Updates an assessment
         /// </summary>
         /// <param name="assessment"></param>
-        private void UpdateAssessment(CompetencyAssessment assessment)
+        private string UpdateAssessment(CompetencyAssessment assessment)
         {
             LogInformation($"Updating assessment to Evidence: \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
             if (ValidateAssessment(assessment, out var message))
             {
-                CompetencyService.UpdateAssessment(Context, assessment);
+                var trackedAssessment = Context.CompetencyAssessments
+                    .FirstOrDefault(x => x.CompetencyAssessmentId == assessment.CompetencyAssessmentId);
+                if (trackedAssessment == null)
+                {
+                    message = "Assessment could not be found to update.";
+                    ShowValidationError(message);
+                    StateHasChanged();
+                    return message;
+                }
+
+                ApplyAssessmentValues(trackedAssessment, assessment);
+                CompetencyService.UpdateAssessment(Context, trackedAssessment);
                 UpdateMet();
+                StateHasChanged();
+                return string.Empty;
             }
-            else
-            {
-                ShowValidationError(message);
-            }
+            ShowValidationError(message);
             StateHasChanged();
+            return message;
         }
 
         /// <summary>
@@ -729,8 +740,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private bool ValidateAssessment(CompetencyAssessment assessment, out string message)
         {
-            // Need to have evidence but only if assessment status is partially met or met
-            if ((string.IsNullOrWhiteSpace(assessment.Evidence) || string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.Evidence))) && assessment.Status != AssessmentStatus.Unmet)
+            if (string.IsNullOrWhiteSpace(assessment.Evidence) || string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.Evidence)))
             {
                 message = "Evidence is required!";
                 return false;
@@ -747,6 +757,16 @@ namespace PPMTool.Pages
             }
             message = string.Empty;
             return true;
+        }
+
+        /// <summary>
+        /// Copy edited values back onto the tracked assessment entity before persisting.
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="source"></param>
+        private static void ApplyAssessmentValues(CompetencyAssessment target, CompetencyAssessment source)
+        {
+            target.CopyValuesFrom(source);
         }
 
         /// <summary>
