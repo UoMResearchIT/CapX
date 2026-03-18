@@ -280,10 +280,20 @@ namespace PPMTool.Data
         /// <param name="optionsBuilder"></param>
         /// <param name="connectionString"></param>
         /// <param name="configuration"></param>
+        /// <param name="dbProviderString"></param>
         /// <exception cref="InvalidOperationException"></exception>
         /// <returns></returns>
-        internal static DbContextOptionsBuilder AddDbProvider(this DbContextOptionsBuilder optionsBuilder, string connectionString, IConfiguration configuration)
+        public static DbContextOptionsBuilder AddDbProvider(
+            this DbContextOptionsBuilder optionsBuilder,
+            string connectionString,
+            IConfiguration configuration = null,
+            string dbProviderString = null)
         {
+            if (configuration is null && string.IsNullOrWhiteSpace(dbProviderString))
+            {
+                throw new InvalidOperationException("Configuration and DB provider string cannot both be null here!");
+            }
+
             var dbProvider = configuration.GetValue<string>("DbProvider");
             Console.WriteLine($"** Using DB provider {dbProvider}");
             switch (dbProvider)
