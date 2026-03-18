@@ -1,4 +1,6 @@
-﻿namespace PPMTool.Data.Entities
+﻿using PPMTool.Data.Interfaces;
+
+namespace PPMTool.Data.Entities
 {
     public abstract class PersonProperty : ILoggableClass
     {

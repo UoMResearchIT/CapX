@@ -1,4 +1,4 @@
-﻿namespace PPMTool.Data
+﻿namespace PPMTool.Data.Interfaces
 {
     /// <summary>
     /// A class that entities should extend where the log needs to show a particular property to make it useful to identify the entity

@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PPMTool.Migrations.SqlServe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PPMTool.Migrations.PostgresSql", "..\PPMTool.Migrations.PostgresSql\PPMTool.Migrations.PostgresSql.csproj", "{52AB5DB2-A6D6-4709-91C3-AF0E171E7A20}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PPMTool.Data", "..\PPMTool.Data\PPMTool.Data.csproj", "{F7A406D0-554B-4349-B7BE-55B35F49F7E3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Local|Any CPU = Local|Any CPU
@@ -39,6 +41,10 @@ Global
 		{52AB5DB2-A6D6-4709-91C3-AF0E171E7A20}.Local|Any CPU.Build.0 = Debug|Any CPU
 		{52AB5DB2-A6D6-4709-91C3-AF0E171E7A20}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{52AB5DB2-A6D6-4709-91C3-AF0E171E7A20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7A406D0-554B-4349-B7BE-55B35F49F7E3}.Local|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7A406D0-554B-4349-B7BE-55B35F49F7E3}.Local|Any CPU.Build.0 = Debug|Any CPU
+		{F7A406D0-554B-4349-B7BE-55B35F49F7E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7A406D0-554B-4349-B7BE-55B35F49F7E3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
