@@ -81,19 +81,19 @@
                             @(p.CostModel.GetAttribute<DisplayAttribute>().Name)
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="Project.DayRate" Title="Day Rate" Width="8rem" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="Project" Property="DayRate" Title="Day Rate" Width="8rem" MinWidth="10px">
                         <Template Context="p">
                             @(p.CostModel == CostModel.DayRate ? p.DayRate.ToString("C0") : "N/A")
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="Project.Budget" Title="Budget" FormatString="{0:C0}" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Project" Property="Project.ActualCost" Title="Actual Cost" FormatString="{0:C0}" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Project" Title="Funds Received" FormatString="{0:C0}" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="Project" Property="Budget" Title="Budget" FormatString="{0:C0}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="FundsReceived" Title="Funds Received" Filterable="false" MinWidth="10px">
                         <Template Context="p">
                             @(PaymentService.GetFundsReceived(Context, p.ProjectId).ToString("C0"))
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="Project.ActualWorkHours" Title="Actual Work" FormatString="{0:F0}" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Project" Property="ActualWorkHours" Title="Actual Work" FormatString="{0:F0}" MinWidth="10px" />
                     <RadzenDataGridColumn TItem="Project" Title="Details" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="6rem" FrozenPosition="FrozenColumnPosition.Right">
                         <Template Context="p">
                             <RadzenButton Icon="info" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => NavigateToProjectDetails(p.ProjectId))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Details"))" />
