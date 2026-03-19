@@ -255,13 +255,15 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Applies sorting by the sum of payment values (funds received) for each project.
+        /// Applies sorting by funds received for each project.
+        /// Delegates to <see cref="PaymentService.GetFundsReceived"/> so that the sort
+        /// order is consistent with the displayed column value.
         /// </summary>
         private IQueryable<Project> ApplyFundsReceivedSort(IQueryable<Project> query, SortOrder? sortOrder)
         {
             return sortOrder == SortOrder.Descending
-                ? query.OrderByDescending(x => x.Payments != null ? x.Payments.Sum(p => p.Value) : 0)
-                : query.OrderBy(x => x.Payments != null ? x.Payments.Sum(p => p.Value) : 0);
+                ? query.OrderByDescending(x => PaymentService.GetFundsReceived(Context, x.ProjectId))
+                : query.OrderBy(x => PaymentService.GetFundsReceived(Context, x.ProjectId));
         }
 
         /// <summary>
