@@ -171,7 +171,6 @@ namespace PPMTool.Data.Entities
         /// Work = Duration * Units
         /// Units = Sum of Resource Assigned FTE
         /// </summary>
-        /// the duration if the end date is fixed. Only applies to fixed duration tasks.</param>
         /// <returns>Returns null if successful otherwise error message</returns>
         public string Schedule()
         {

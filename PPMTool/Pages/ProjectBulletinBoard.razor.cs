@@ -2,12 +2,8 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
@@ -99,7 +95,7 @@ namespace PPMTool.Pages
                 }
             }
 
-            /// First time through, initialise the skills
+            // First time through, initialise the skills
             if (!skillsInitialised)
             {
                 foreach (var projWithSkills in allProjectsWithSkills)

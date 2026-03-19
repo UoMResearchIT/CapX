@@ -11,12 +11,7 @@ namespace PPMTool.Services
 {
     public class ProjectService : BaseEntityService<Project>
     {
-        /// <summary>
-        /// Adds a project. If duplicate found based on name, does not add but returns false.
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="projectModel"></param>
-        /// <returns>-1 if a duplicate name, -2 if duplciate RTP</returns>
+        /// <inheritdoc />
         public override int Add(PPMToolContext context, Project projectModel, bool commitChanges = true)
         {
             if (DuplicateDetected(context, projectModel))
@@ -72,6 +67,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="projectModel"></param>
+        /// <param name="commitChanges"></param>
         /// <returns>-1 if a duplicate name, -2 if duplciate RTP</returns>
         public override int Update(PPMToolContext context, Project projectModel, bool commitChanges = true)
         {
@@ -138,11 +134,7 @@ namespace PPMTool.Services
             return GetAll(context).Where(p => p.ProjectStatus.IsUnfunded());
         }
 
-        /// <summary>
-        /// Delete the project from the database.
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="projectModel"></param>
+        /// <inheritdoc />
         public override void Delete(PPMToolContext context, Project projectModel, bool commitChanges = true)
         {
             context.Projects.Remove(projectModel);

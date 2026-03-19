@@ -8,9 +8,9 @@ services:
       context: .
       target: final
       args:
-        BUILD_CONFIG: ${BUILD_CONFIGURATION:?}
+        BUILD_CONFIG: ${BUILD_CONFIGURATION:-Local}
     volumes:
-      - state:/app/state
+      - ${CAPX_STATE_DIR:?}:/app/state
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?}
       - API_KEY_SECRET=${API_KEY_SECRET:?}
@@ -26,10 +26,19 @@ services:
       - CAS_PROTOCOL=${CAS_PROTOCOL:-}
       - CAS_BASE_URL=${CAS_BASE_URL:-}
       - AUTH_HOST_URL=${AUTH_HOST_URL:-}
+      - AUTH_TYPE=${AUTH_TYPE:-}
+      - AUTH_HOST_URL=${AUTH_HOST_URL:-}
+      - ENTRA_INSTANCE=${ENTRA_INSTANCE:-}
+      - ENTRA_DOMAIN=${ENTRA_DOMAIN:-}
+      - ENTRA_TENANT_ID=${ENTRA_TENANT_ID:-}
+      - ENTRA_CLIENT_ID=${ENTRA_CLIENT_ID:-}
+      - ENTRA_CLIENT_SECRET=${ENTRA_CLIENT_SECRET:-}
+      - ENTRA_CALLBACK_PATH=${ENTRA_CALLBACK_PATH:-/signin-oidc}
     ports:
       - ${CAPX_HTTP_PORT:?}:8080
     command: ["dotnet", "PPMTool.dll"]
-
+    restart: always
+    
     healthcheck:
       test:
         [
@@ -41,6 +50,3 @@ services:
       timeout: 5s
       start_period: 5s
       retries: 5
-
-volumes:
-  state:

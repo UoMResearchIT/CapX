@@ -27,7 +27,7 @@ namespace PPMTool.Services
 
         /// <summary>
         /// We probably don't ever want to delete a competency as it would be messy if associated with past competency 
-        /// assessments so it ought to be a soft delete by setting the <see cref="Competency.IsActive"> property to false.
+        /// assessments so it ought to be a soft delete by setting the <see cref="Competency.IsActive" /> property to false.
         /// </summary>
         /// <param name="context"></param>
         /// <param name="entity"></param>

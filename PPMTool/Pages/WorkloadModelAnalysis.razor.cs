@@ -69,7 +69,7 @@ namespace PPMTool.Pages
         /// Method fired when a block is selected
         /// </summary>
         /// <param name="args"></param>
-        /// <param name="name"
+        /// <param name="name"></param>
         private async void OnDataPointSelection(SelectedData<WLMWeeklyDataChartItem> args, string name)
         {
             // Nvaigate to the timesheet page with the selected week and person

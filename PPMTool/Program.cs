@@ -23,7 +23,6 @@ using PPMTool.Data.Context;
 using PPMTool.Data.Helpers;
 using PPMTool.Services;
 using Radzen;
-
 #if RELEASE
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
@@ -95,7 +94,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders =
         ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.ForwardLimit = 2;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
 });
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
@@ -335,26 +335,33 @@ using (var connection = new SqliteConnection(connectionString))
     connection.Close();
 }
 
-// Seed the default superuser from the settings if it doesn't already exist
-using var scope = app.Services.CreateScope();
-SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
-
-// Seed dummy data if the flag is set to do so.
+// Set dummy data seed flag
 // This is intended for development and testing purposes only and should be used with caution as it will delete existing data.
 var shouldSeed = builder.Configuration.GetValue<bool>("DeveloperSettings:SeedDummyData");
-if (shouldSeed)
-{
-    var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
 
-    // Clear the existing DB and recreate a vanilla file
-    using (var context = dbContextFactory.CreateDbContext())
+// Create a context to run migrations and seed data if required.
+using var scope = app.Services.CreateScope();
+var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+using (var context = dbContextFactory.CreateDbContext())
+{
+    // Delete existing DB
+    if (shouldSeed)
     {
         context.Database.EnsureDeleted();
-        context.Database.Migrate();
     }
 
+    // Run migrations
+    context.Database.Migrate();
+}
+
+// Seed the default superuser from the settings if it doesn't already exist
+SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
+
+// If seeding run the dummy data seeding methods
+if (shouldSeed)
+{
+
     // Seed tables with suitable values -- Note that competencies are already seeded by migrations
-    SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
     SeedHelper.SeedPeople(scope.ServiceProvider);
     SeedHelper.SeedAbsences(scope.ServiceProvider);
     SeedHelper.SeedUsers(scope.ServiceProvider);

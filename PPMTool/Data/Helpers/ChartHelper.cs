@@ -310,7 +310,10 @@ namespace PPMTool.Data.Helpers
             /// </summary>
             /// <param name="currentWeek"></param>
             /// <param name="tasksRunningInWeek"></param>
-            public WeeklyTaskEffort(DateTime currentWeek, IEnumerable<SubTask> tasksRunningInWeek, IEnumerable<Resource> allResourcesOnProject)
+            /// <param name="allResourcesOnProject"></param>
+            public WeeklyTaskEffort(DateTime currentWeek,
+                IEnumerable<SubTask> tasksRunningInWeek,
+                IEnumerable<Resource> allResourcesOnProject)
             {
                 WeekDate = currentWeek;
 

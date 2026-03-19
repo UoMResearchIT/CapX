@@ -41,7 +41,7 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Computes how many days this task runs in the given week assuming that <see cref="currentWeekStart"/> is a Monday
+        /// Computes how many days this task runs in the given week assuming that currentWeekStart is a Monday
         /// </summary>
         /// <param name="currentWeekStart"></param>
         /// <returns></returns>

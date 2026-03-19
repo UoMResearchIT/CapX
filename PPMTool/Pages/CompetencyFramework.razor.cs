@@ -122,7 +122,13 @@ namespace PPMTool.Pages
             /// <param name="description"></param>
             /// <param name="icon"></param>
             /// <param name="groupedCompetencies"></param>
-            public CompetencyGroup(int grade, string description, string icon, IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedCompetencies, IEnumerable<CompetencyAssessment> assessments)
+            /// <param name="assessments"></param>
+            public CompetencyGroup(
+                int grade,
+                string description,
+                string icon,
+                IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedCompetencies,
+                IEnumerable<CompetencyAssessment> assessments)
             {
                 Grade = grade;
                 Description = description;
@@ -144,7 +150,7 @@ namespace PPMTool.Pages
             /// <summary>
             /// Will take a boolean flag for the state of an accordion and toggle it
             /// </summary>
-            /// <param name="state"></param>
+            /// <param name="category"></param>
             public void ToggleAccordion(CompetencyCategory? category = null)
             {
                 // Decide on which accordion to expand
@@ -723,6 +729,7 @@ namespace PPMTool.Pages
         /// Check the assessment model is correct before adding or updating
         /// </summary>
         /// <param name="assessment"></param>
+        /// <param name="message"></param>
         /// <returns></returns>
         private bool ValidateAssessment(CompetencyAssessment assessment, out string message)
         {

@@ -10,11 +10,7 @@ namespace PPMTool.Services
 {
     public class PersonService : BaseEntityService<Person>
     {
-        /// <summary>
-        /// Adds a person to the DB.
-        /// </summary>
-        /// <param name="personModel"></param>
-        /// <returns>False if an entry with the same name exists already.</returns>
+        /// <inheritdoc />
         public override int Add(PPMToolContext context, Person personModel, bool commitChanges = true)
         {
             if (DuplicateDetected(context, personModel))
@@ -55,10 +51,7 @@ namespace PPMTool.Services
             return context.People.Any(p => p.ShortName.Trim().ToLower() == entity.ShortName.Trim().ToLower() && p.PersonId != entity.PersonId);
         }
 
-        /// <summary>
-        /// Get all the people
-        /// </summary>
-        /// <returns></returns>
+        /// <inheritdoc />
         public override IEnumerable<Person> GetAll(PPMToolContext context)
         {
             return context.People
@@ -92,11 +85,7 @@ namespace PPMTool.Services
             return GetAll(context).FirstOrDefault(x => x.PersonId == personId);
         }
 
-        /// <summary>
-        /// Update an exist person in the DB
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="personModel"></param>
+        /// <inheritdoc />
         public override int Update(PPMToolContext context, Person personModel, bool commitChanges = true)
         {
             if (DuplicateDetected(context, personModel))
@@ -120,6 +109,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="entity"></param>
+        /// <param name="commitChanges"></param>
         public override void Delete(PPMToolContext context, Person entity, bool commitChanges = true)
         {
             // Set project manager on all projects owned by person to null

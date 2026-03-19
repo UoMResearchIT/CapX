@@ -69,7 +69,9 @@ namespace PPMTool.Data.Helpers
         /// <summary>
         /// Method to validate critical configuration settings are present.
         /// </summary>
+        /// <param name="logger"></param>
         /// <param name="builder"></param>
+        /// <param name="authenticationType"></param>
         internal static void ValidateConfiguration(ILogger logger, WebApplicationBuilder builder, string authenticationType)
         {
             // Validation of values that are used at runtime only
@@ -132,8 +134,15 @@ namespace PPMTool.Data.Helpers
         /// <param name="builder"></param>
         /// <param name="checkAtDesignTime"></param>
         /// <param name="justLog">Whether failed validation should only write to log rather than throwing an exception</param>
+        /// <param name="logger"></param>
         /// <exception cref="InvalidOperationException"></exception>
-        private static void ValidateValue(string envVar, string configKey, ref WebApplicationBuilder builder, bool checkAtDesignTime = false, bool justLog = false, ILogger logger = null)
+        private static void ValidateValue(
+            string envVar,
+            string configKey,
+            ref WebApplicationBuilder builder,
+            bool checkAtDesignTime = false,
+            bool justLog = false,
+            ILogger logger = null)
         {
             var isDesignTime = AppDomain.CurrentDomain.FriendlyName == "ef";
             var checkShouldRun = !isDesignTime || (isDesignTime && checkAtDesignTime);

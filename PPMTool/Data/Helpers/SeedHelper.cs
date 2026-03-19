@@ -261,9 +261,10 @@ namespace PPMTool.Data.Helpers
         /// <param name="serviceProvider"></param>
         public static void SeedSuperUserIfNotExist(IServiceProvider serviceProvider)
         {
+            // Get services
             var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
-            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             var logger = serviceProvider.GetRequiredService<ILogger>();
+            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             using (var context = dbContextFactory.CreateDbContext())
             {
                 // Create a new superuser if there isn't one
@@ -1957,6 +1958,7 @@ namespace PPMTool.Data.Helpers
         /// Private extension method to add a subtask to an exist project based on the date ranges of its current non-leadership tasks
         /// </summary>
         /// <param name="project"></param>
+        /// <param name="leadershipFTE"></param>
         private static void CreateLeadershipSubTask(this Project project, double leadershipFTE = 0.05)
         {
             if (!project.SubTasks.Any(x => !x.IsLeadershipTask)) return;

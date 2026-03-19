@@ -132,7 +132,6 @@ namespace PPMTool.Pages
         /// <summary>
         /// Load in the timesheet data from the service
         /// </summary>
-        /// <param name="showAll"></param>
         private async Task LoadDataAsync()
         {
             // Get ALL timesheets for the user, then filter stuff out based the state of the ShowAll switch. 

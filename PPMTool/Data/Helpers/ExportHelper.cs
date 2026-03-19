@@ -400,7 +400,6 @@ namespace PPMTool.Data.Helpers
             /// <summary>
             /// Returns the average costs of the target FTE for the whole window
             /// </summary>
-            /// <param name="daysInWindow"></param>
             /// <returns></returns>
             public float GetAverageTargetCosts()
             {
@@ -420,7 +419,6 @@ namespace PPMTool.Data.Helpers
             /// <summary>
             /// Returns the average costs of the recovered FTE for the whole window
             /// </summary>
-            /// <param name="daysInWindow"></param>
             /// <returns></returns>
             public float GetAverageRecoveredCosts()
             {
@@ -440,7 +438,6 @@ namespace PPMTool.Data.Helpers
             /// <summary>
             /// Returns the average costs of the recovered including leadership FTE for the whole window
             /// </summary>
-            /// <param name="daysInWindow"></param>
             /// <returns></returns>
             public float GetAverageRecoveredIncLeadershipCosts()
             {
@@ -460,7 +457,6 @@ namespace PPMTool.Data.Helpers
             /// <summary>
             /// Returns the average costs of the capped net FTE for the whole window
             /// </summary>
-            /// <param name="daysInWindow"></param>
             /// <returns></returns>
             public float GetAverageNetCappedCosts()
             {
@@ -480,7 +476,6 @@ namespace PPMTool.Data.Helpers
             /// <summary>
             /// Returns the average costs of the capped net including leadership FTE for the whole window
             /// </summary>
-            /// <param name="daysInWindow"></param>
             /// <returns></returns>
             public float GetAverageNetCappedIncLeadershipCosts()
             {
@@ -490,7 +485,6 @@ namespace PPMTool.Data.Helpers
             /// <summary>
             /// Gets the costs over the window
             /// </summary>
-            /// <param name="daysInWindow"></param>
             /// <returns></returns>
             public float GetEstimatedCosts()
             {
@@ -614,7 +608,11 @@ namespace PPMTool.Data.Helpers
                         var netValueCappedIncLeadership = netValueIncLeadership > maxOverAllocation ? maxOverAllocation : netValueIncLeadership;
 
                         // Amount in budget for the day across all chunks
-                        var inBudget = chunks.Sum(x => x.AmountCovered / (x.EndDate.Subtract(x.StartDate).TotalDays + 1));
+                        var inBudget = chunks.Sum(x =>
+                        {
+                            var duration = x.EndDate.Subtract(x.StartDate).TotalDays + 1;
+                            return x.AmountCovered / duration;
+                        });
 
                         // Update the totals based on this day
                         windowRecoveryData

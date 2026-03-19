@@ -27,17 +27,18 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="timesheetModel"></param>
+        /// <param name="commitChanges"></param>
         /// <returns>-1 if a duplicate or the id of the timesheet</returns>
-        public override int Add(PPMToolContext context, Timesheet timesheetmodel, bool commitChanges = true)
+        public override int Add(PPMToolContext context, Timesheet timesheetModel, bool commitChanges = true)
         {
-            if (DuplicateDetected(context, timesheetmodel))
+            if (DuplicateDetected(context, timesheetModel))
             {
                 return -1;
             }
 
-            context.Timesheets.Add(timesheetmodel);
+            context.Timesheets.Add(timesheetModel);
             if (commitChanges) CommitChanges(context);
-            return timesheetmodel.TimesheetId;
+            return timesheetModel.TimesheetId;
         }
 
         /// <summary>
@@ -55,7 +56,7 @@ namespace PPMTool.Services
         /// Get timesheet by its ID
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="timesheetID"></param>
+        /// <param name="timesheetId"></param>
         /// <returns></returns>
         internal Timesheet GetById(PPMToolContext context, int? timesheetId)
         {
@@ -63,12 +64,7 @@ namespace PPMTool.Services
                 .FirstOrDefault(t => t.TimesheetId == timesheetId);
         }
 
-        /// <summary>
-        /// Update an existing timesheet and returns the ID of the updated timesheet
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="timesheetModel"></param>
-        /// <returns>-1 if a duplicate</returns>
+        /// <inheritdoc />
         public override int Update(PPMToolContext context, Timesheet timesheetModel, bool commitChanges = true)
         {
             if (DuplicateDetected(context, timesheetModel))
@@ -85,6 +81,7 @@ namespace PPMTool.Services
         /// Gets all the timesheets with related data
         /// </summary>
         /// <param name="context"></param>
+        /// <param name="user"></param>
         /// <returns></returns>
         public IEnumerable<Timesheet> GetMyTimesheets(PPMToolContext context, Person user)
         {
@@ -106,11 +103,7 @@ namespace PPMTool.Services
                 .ThenInclude(x => x.InnateCode);
         }
 
-        /// <summary>
-        /// Delete the timesheet from the database
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="timesheetModel"></param>
+        /// <inheritdoc />
         public override void Delete(PPMToolContext context, Timesheet timesheetModel, bool commitChanges = true)
         {
             context.Timesheets.Remove(timesheetModel);

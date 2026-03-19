@@ -17,9 +17,10 @@ jobs:
       ASPNETCORE_ENVIRONMENT: Development
       BUILD_CONFIGURATION: Local
       API_KEY_SECRET: super-secret-key-that-is-32-chars-min
-      CONNECTION_STRING: Data Source=state/PPMTool.db;Cache=Shared;Mode=ReadWriteCreate;
-      LEAVEBOOKINGS_CONNECTION_STRING: Data Source=state/LeaveBookings.db;Cache=Shared;Mode=ReadWriteCreate;
+      CONNECTION_STRING: Data Source=/app/state/PPMTool.db;Cache=Shared;Mode=ReadWriteCreate;
+      LEAVEBOOKINGS_CONNECTION_STRING: Data Source=/app/state/LeaveBookings.db;Cache=Shared;Mode=ReadWriteCreate;
       CAPX_HTTP_PORT: 3000
+      CAPX_STATE_DIR: ./capx-state
       SUPERUSER_NAME: "Captain Marvel"
       SUPERUSER_USERNAME: c123456m
       SUPERUSER_EMAIL: captain.marvel@manchester.ac.uk
@@ -30,11 +31,14 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        
+      - name: Create state directory for bind mount
+        run: mkdir -p capx-state
 
       - name: Build Docker images
         run: docker compose build
-
-      - name: Start containers and wait for health checks
+        
+      - name: Start container and wait for health checks
         run: docker compose up --wait --wait-timeout 120
 
       - name: Test homepage responds

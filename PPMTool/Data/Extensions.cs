@@ -101,7 +101,7 @@ namespace PPMTool.Data
         /// Method to extract a suitable financial reference from a list of references given a financial year
         /// </summary>
         /// <param name="list"></param>
-        /// <param name="date"></param>
+        /// <param name="year"></param>
         /// <returns></returns>
         /// <exception cref="Exception">If no suitable references can be found</exception>
         public static FinancialReference GetSuitableFinancialReference(this IEnumerable<FinancialReference> list, int year)
@@ -216,8 +216,8 @@ namespace PPMTool.Data
 
             var durationTask = budgetDetail.Resource.SubTask.DurationDays;
             var lengthOfWindow = end.Subtract(start).TotalDays + 1;
-            var daysFunded = budgetDetail.InBudget / budgetDetail.DailyCost;
-            var proportionInBudget = lengthOfWindow / daysFunded;
+            var daysFunded = budgetDetail.DailyCost == 0 ? 0 : budgetDetail.InBudget / budgetDetail.DailyCost;
+            var proportionInBudget = daysFunded == 0 ? 0 : lengthOfWindow / daysFunded;
             if (proportionInBudget > 1)
             {
                 proportionInBudget = 1;
@@ -256,7 +256,7 @@ namespace PPMTool.Data
                         // Expires sometime during the window
                         else
                         {
-                            proportionInBudget = (expiryDate.Subtract(start).TotalDays + 1) / daysFunded;
+                            proportionInBudget = daysFunded == 0 ? 0 : (expiryDate.Subtract(start).TotalDays + 1) / daysFunded;
                             if (proportionInBudget > 1)
                             {
                                 proportionInBudget = 1;
