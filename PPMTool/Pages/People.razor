@@ -88,11 +88,14 @@
                                 @string.Join(", ", p.OwnedSkills.Select(t => t.SkillTag.Name).OrderBy(x => x))
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="Person" Property="SkillsCount" Title="Skill Count" Width="3rem" MinWidth="10px">
-                            <Template Context="p">
-                                @TagService.GetCountForPerson(Context, p.PersonId).ToString()
-                            </Template>
-                        </RadzenDataGridColumn>
+                        @if (FeatureService.IsFeatureEnabled(FeatureType.Skills))
+                        {
+                            <RadzenDataGridColumn TItem="Person" Property="SkillsCount" Title="Skill Count" Width="3rem" MinWidth="10px">
+                                <Template Context="p">
+                                    @TagService.GetCountForPerson(Context, p.PersonId).ToString()
+                                </Template>
+                            </RadzenDataGridColumn>
+                        }
                     }
                     <RadzenDataGridColumn TItem="Person" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                         <Template Context="p">
