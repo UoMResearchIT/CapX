@@ -34,7 +34,7 @@
                     </RadzenStack>
                 </RadzenStack>
                 <RadzenText Text="Evidence (Required)" TextStyle="TextStyle.Subtitle1" />
-                <RadzenText Text="Assessment must include evidence before you can save it." TextStyle="TextStyle.Body2" />
+                <HintComponent Message="Assessment must include evidence before you can save it." />
                 <RadzenHtmlEditor @bind-Value="assessmentToEdit.Evidence" Style="min-height: 10rem" Placeholder="Add evidence here to support your assessment" />
             </RadzenStack>
         }
