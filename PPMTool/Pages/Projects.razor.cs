@@ -233,14 +233,14 @@ namespace PPMTool.Pages
 
         /// <summary>
         /// Applies the cost model display order to grid sorting.
-        /// The ordering here must match <see cref="CostModelSelectionOptions.DisplayOrder"/>.
+        /// The ordering here must match the <see cref="PPMTool.Enums.Attributes.DisplayOrderAttribute"/> values on <see cref="CostModel"/>.
         /// A ternary chain is used because EF Core must translate this to SQL CASE WHEN;
         /// arbitrary method calls (e.g. <see cref="CostModelSelectionOptions.GetSortIndex"/>)
         /// cannot be used inside <see cref="IQueryable{T}"/> expressions.
         /// </summary>
         private IQueryable<Project> ApplyCostModelSort(IQueryable<Project> query, SortOrder? sortOrder)
         {
-            // Ordering must stay in sync with CostModelSelectionOptions.DisplayOrder.
+            // Ordering must stay in sync with [DisplayOrder] on CostModel enum values.
             return sortOrder == SortOrder.Descending
                 ? query.OrderByDescending(x =>
                     x.CostModel == CostModel.TechAndLeadershipWithIndirects ? 0 :
