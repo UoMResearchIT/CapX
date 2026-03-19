@@ -26,7 +26,7 @@ DB_FILE="${BIND_MOUNT_DIR}/PPMTool.db"
 
 # --- Prod server setting for copying over prod DB ---
 REMOTE_USER_HOST="mbgm6ah3@balex.itservices.manchester.ac.uk"
-REMOTE_PATH="/var/www/capx/PPMTool.db*"
+REMOTE_PATH="/var/www/capx/capx-state/PPMTool.db*"
 SSH_KEY="${HOME}/.ssh/id_rsa"
 
 # --- Mail Notfiication Settings ---
