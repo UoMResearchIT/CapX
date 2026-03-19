@@ -25,7 +25,7 @@ git fetch
 if [[ "$ENVIRONMENT" == "dev" ]]; then
   BRANCH="dev"
 else
-  BRANCH="main"
+  BRANCH="release"
 fi
 git switch "$BRANCH"
 git submodule update --init --recursive
