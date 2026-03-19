@@ -5,7 +5,9 @@
 @using PPMTool.Enums
 <PageTitle>Add Timesheet Code - CapX</PageTitle>
 
-<div class="container">
+<FeatureCheckComponent Feature="FeatureType.Timesheets">
+
+    <div class="container">
     @if (innateCode != null)
     {
         @if (InnateCodeId <= 0)
@@ -93,3 +95,5 @@
         </RadzenCard>
     }
 </div>
+
+</FeatureCheckComponent>
