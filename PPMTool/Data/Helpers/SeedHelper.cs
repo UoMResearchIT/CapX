@@ -46,12 +46,17 @@ namespace PPMTool.Data.Helpers
             logger.LogInformation("Seeding people...");
             using (var context = dbContextFactory.CreateDbContext())
             {
-                // Update superuser to anonymous
-                var person = context.People.First();
+                // Perm currently with us
+                var person = new Person();
                 person.Name = "Mavis Ledger";
                 person.ShortName = "ML";
                 person.FTE = 1.0;
                 person.StartDate = ApplyDateOffset(2023, 7, 1);    // Date required by first project
+                context.People.Add(person);
+                context.SaveChanges();
+
+                // First person manages self so add after save
+                person.LineManager = person;
                 context.SaveChanges();
 
                 // Perm currently with us
@@ -247,6 +252,37 @@ namespace PPMTool.Data.Helpers
         }
 
         /// <summary>
+        /// Add a superuser with the default values from the configuration if there isn't one
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        public static void SeedSuperUserIfNotExist(IServiceProvider serviceProvider)
+        {
+            // Get services
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Create a new superuser if there isn't one
+                var superUser = context.Users.Include(x => x.Person).FirstOrDefault(x => x.RoleType == RoleType.Superuser);
+                if (superUser == null)
+                {
+                    logger.LogWarning("No superuser found! Adding default...");
+                    superUser = new User
+                    {
+                        RoleType = RoleType.Superuser,
+                        Name = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserName"),
+                        CASUserName = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserUserName"),
+                        EmailAddress = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserEmail"),
+                        Person = null
+                    };
+                    context.Users.Add(superUser);
+                    context.SaveChanges();
+                }
+            }
+        }
+
+        /// <summary>
         /// Add some user accounts at least one for each role
         /// </summary>
         /// <param name="serviceProvider"></param>
@@ -258,13 +294,16 @@ namespace PPMTool.Data.Helpers
             var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             using (var context = dbContextFactory.CreateDbContext())
             {
-                // Update super user
-                var superUser = context.Users.Include(x => x.Person).First(x => x.RoleType == RoleType.Superuser);
-                superUser.Name = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserName");
-                superUser.CASUserName = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserUserName");
-                superUser.EmailAddress = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserEmail");
-                superUser.Person = null;
-                context.SaveChanges();
+                // Update super user if there is one to match the configuration defaults
+                var superUser = context.Users.Include(x => x.Person).FirstOrDefault(x => x.RoleType == RoleType.Superuser);
+                if (superUser != null)
+                {
+                    superUser.Name = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserName");
+                    superUser.CASUserName = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserUserName");
+                    superUser.EmailAddress = configuration.GetValue<string>("DeveloperSettings:DefaultSuperUserEmail");
+                    superUser.Person = null;
+                    context.SaveChanges();
+                }
 
                 // Manager -- Mavis and Nigel are managers
                 var manager = new User
@@ -1121,6 +1160,107 @@ namespace PPMTool.Data.Helpers
         }
 
         /// <summary>
+        /// Seeds the faculty and school org units. Must be done before seeding projects.
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        internal static void SeedOrganisationalUnits(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Seeding organisaional units...");
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Clear existing entries
+                context.Faculties.ExecuteDelete();
+                context.Schools.ExecuteDelete();
+
+                // Add the Faculties and Schools
+                var faculties = new List<Faculty>
+                {
+                    new Faculty
+                    {
+                        FacultyId = 1,
+                        Name = "None",
+                        Code = "None",
+                        Schools =
+                        {
+                            new School { Name = "None", Code = "None" }
+                        }
+                    },
+                    new Faculty
+                    {
+                        FacultyId = 2,
+                        Name = "Research IT / Internal",
+                        Code = "Int"
+                    },
+                    new Faculty
+                    {
+                        FacultyId = 3,
+                        Name = "Professional Services and Cultural Institutions",
+                        Code = "PSCI"
+                    },
+                    new Faculty
+                    {
+                        FacultyId = 4,
+                        Name = "Biology, Medical and Health Studies",
+                        Code = "FBMH",
+                        Schools =
+                        {
+                            new School { Name = "School of Biological Sciences", Code = "SBS" },
+                            new School { Name = "School of Medical Sciences", Code = "SMS" },
+                            new School { Name = "School of Health Sciences", Code = "SHS" }
+                        }
+                    },
+                    new Faculty
+                    {
+                        FacultyId = 5,
+                        Name = "Humanities",
+                        Code = "FHUM",
+                        Schools =
+                        {
+                            new School { Name = "Alliance Manchester Bus School", Code = "AMBS" },
+                            new School { Name = "School of Arts, Languages and Cultures", Code = "SALC" },
+                            new School { Name = "School of Environment, Education and Development", Code = "SEED" },
+                            new School { Name = "School of Social Sciences", Code = "SSS" }
+                        }
+                    },
+                    new Faculty
+                    {
+                        FacultyId = 6,
+                        Name = "Science and Engineering",
+                        Code = "FSE",
+                        Schools =
+                        {
+                            new School { Name = "School of Engineering", Code = "SE" },
+                            new School { Name = "School of Natural Sciences", Code = "SNS" }
+                        }
+                    },
+                    new Faculty
+                    {
+                        FacultyId = 7,
+                        Name = "Research Lifecycle Programme",
+                        Code = "RLP"
+                    },
+                    new Faculty
+                    {
+                        FacultyId = 8,
+                        Name = "Commercial / External",
+                        Code = "External"
+                    },
+                    new Faculty
+                    {
+                        FacultyId = 9,
+                        Name = "Cross-Faculty Research Institutes",
+                        Code = "ResInst",
+                    }
+                };
+
+                context.Faculties.AddRange(faculties);
+                context.SaveChanges();
+            }
+        }
+
+        /// <summary>
         /// Seed projects -- repurposes some projects from the live DB and changes details.
         /// RTP number is important as it is used to construct the dependent entities so beware of changing it!
         /// </summary>
@@ -1132,6 +1272,22 @@ namespace PPMTool.Data.Helpers
             logger.LogInformation("Seeding projects...");
             using (var context = dbContextFactory.CreateDbContext())
             {
+                // Populate the Faculty and School details for use in Projects
+                Dictionary<string, School> schools = new Dictionary<string, School>();
+                var allFaculties = context.Faculties.Include(f => f.Schools).ToList();
+
+                foreach (Faculty f in allFaculties)
+                {
+                    if (f.Schools.Count > 0)
+                    {
+                        // Add schools to dictionary
+                        foreach (School s in f.Schools)
+                        {
+                            schools[s.Code.ToLower().Trim()] = s;
+                        }
+                    }
+                }
+
                 // Create the projects
                 var projects = new List<Project>
                 {
@@ -1145,8 +1301,6 @@ namespace PPMTool.Data.Helpers
                         DayRate = 250,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2025, 07, 31),
-                        Faculty = Faculty.Internal,
-                        LeadershipFTE = 0.05f,
                         Name = "Create CoP for Research Software",
                         PI = "Dr. Waffle McSnort",
                         PlannedCost = 0.0,
@@ -1156,7 +1310,7 @@ namespace PPMTool.Data.Helpers
                         ProjectStatus = ProjectStatus.CancelledBidFailed,
                         RTP = 169,
                         RequestDocLink = "https://www.google.com",
-                        School = School.None,
+                        School = schools["none"],
                         StartDate = ApplyDateOffset(2023, 07, 03),
                     },
                     new Project
@@ -1170,9 +1324,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 262,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2025, 07, 31),
-                        Faculty = Faculty.FBMH,
                         InnateActivity = GetInnateActivityForRTP(context, 180),
-                        LeadershipFTE = 0.05f,
                         Name = "Polypharmacy KSS",
                         PI = "Prof. Pickle Pants",
                         PlannedCost = 42123.55,
@@ -1182,7 +1334,7 @@ namespace PPMTool.Data.Helpers
                         ProjectStatus = ProjectStatus.Active,
                         RTP = 180,
                         RequestDocLink = "https://www.google.com",
-                        School = School.SHS,
+                        School = schools["sms"],
                         ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/69",
                         StartDate = ApplyDateOffset(2023, 10, 02),
                     },
@@ -1196,9 +1348,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 250,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2028, 06, 30),
-                        Faculty = Faculty.FSE,
                         InnateActivity = GetInnateActivityForRTP(context, 255),
-                        LeadershipFTE = 0.05f,
                         Name = "Local Climate Zone Modelling",
                         PI = "Sir Gigglesworth",
                         PlannedCost = 64074.39,
@@ -1208,7 +1358,7 @@ namespace PPMTool.Data.Helpers
                         ProjectStatus = ProjectStatus.Funded,
                         RTP = 255,
                         RequestDocLink = "https://",
-                        School = School.SBS,
+                        School = schools["sbs"],
                         ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/193",
                         StartDate = ApplyDateOffset(2025, 07, 01),
                     },
@@ -1222,8 +1372,6 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2025, 10, 12),
-                        Faculty = Faculty.FHUMS,
-                        LeadershipFTE = 0.05f,
                         Name = "Political Research Transparency Web App",
                         PI = "Ms. Bubbles McGee",
                         PlannedCost = 7425.0,
@@ -1233,7 +1381,7 @@ namespace PPMTool.Data.Helpers
                         ProjectStatus = ProjectStatus.AwaitingOutcome,
                         RTP = 265,
                         RequestDocLink = "https://www.google.com",
-                        School = School.SSS,
+                        School = schools["sss"],
                         StartDate = ApplyDateOffset(2025, 07, 01),
                     },
                     new Project
@@ -1247,9 +1395,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 262,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2025, 03, 20),
-                        Faculty = Faculty.FBMH,
                         InnateActivity = GetInnateActivityForRTP(context, 311),
-                        LeadershipFTE = 0.025f,
                         Name = "BMBaseDB Update",
                         PI = "Captain Quirk",
                         PlannedCost = 3197.15,
@@ -1259,7 +1405,7 @@ namespace PPMTool.Data.Helpers
                         ProjectStatus = ProjectStatus.Finished,
                         RTP = 311,
                         RequestDocLink = "https://www.google.com",
-                        School = School.SBS,
+                        School = schools["sbs"],
                         ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/146",
                         StartDate = ApplyDateOffset(2025, 01, 13),
                     },
@@ -1274,9 +1420,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2028, 04, 08),
-                        Faculty = Faculty.FHUMS,
                         InnateActivity = GetInnateActivityForRTP(context, 323),
-                        LeadershipFTE = 0.025f,
                         Name = "Sustainability Trade-off Game Website",
                         PI = "Major Chuckles",
                         PlannedCost = 4633.86,
@@ -1286,7 +1430,7 @@ namespace PPMTool.Data.Helpers
                         ProjectStatus =ProjectStatus.Paused,
                         RTP = 323,
                         RequestDocLink = "https://www.google.com",
-                        School = School.AMBS,
+                        School = schools["ambs"],
                         ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/154/views/1?custom_template=33",
                         StartDate = ApplyDateOffset(2025, 02, 27),
                     },
@@ -1301,9 +1445,7 @@ namespace PPMTool.Data.Helpers
                         DayRate = 297,
                         Description = GetDummyParagraphsAsHtml(),
                         EndDate = ApplyDateOffset(2026, 01, 29),
-                        Faculty = Faculty.FBMH,
                         InnateActivity = GetInnateActivityForRTP(context, 324),
-                        LeadershipFTE = 0.05f,
                         Name = "PAPrKA",
                         PI = "Lady Lollipop",
                         PlannedCost = 12852.1,
@@ -1313,7 +1455,7 @@ namespace PPMTool.Data.Helpers
                         ProjectStatus = ProjectStatus.Maintenance,
                         RTP = 324,
                         RequestDocLink = "https://www.google.com",
-                        School = School.SMS,
+                        School = schools["sms"],
                         ScrumProjectLink = "https://github.com/orgs/UoMResearchIT/projects/158",
                         StartDate = ApplyDateOffset(2025, 03, 05),
                     }
@@ -1411,16 +1553,6 @@ namespace PPMTool.Data.Helpers
                     }
                 };
 
-                // Set as leadership funding source where cost model requires it
-                foreach (var fs in fundingSources)
-                {
-                    // If requires leadership funding source and there isn't one already then assign
-                    if (fs.Project.CostModel == CostModel.TechAndLeadership && fs.ProjectLeadershipSource == null)
-                    {
-                        fs.ProjectLeadershipSource = fs.Project;
-                    }
-                }
-
                 context.FundingSources.AddRange(fundingSources);
                 context.SaveChanges();
             }
@@ -1444,7 +1576,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = true,
                         Demand = 0.1,
                         DurationBillableDays = 458,
                         DurationDays = 760,
@@ -1464,7 +1595,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 39120.05,
                         ActualWorkHours = 1048.5,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 404,
                         DurationDays = 669,
@@ -1484,7 +1614,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = true,
                         Demand = 0.3,
                         DurationBillableDays = 38,
                         DurationDays = 63,
@@ -1504,7 +1633,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = true,
                         Demand = 0.3,
                         DurationBillableDays = 623,
                         DurationDays = 1033,
@@ -1524,7 +1652,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = true,
                         Demand = 0.38,
                         DurationBillableDays = 63,
                         DurationDays = 104,
@@ -1544,7 +1671,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 1899.49,
                         ActualWorkHours = 73.5,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 40,
                         DurationDays = 67,
@@ -1564,7 +1690,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 1960.25,
                         ActualWorkHours = 51.5,
-                        RequiresLeadership = true,
                         Demand = 0.3,
                         DurationBillableDays = 25,
                         DurationDays = 41,
@@ -1584,7 +1709,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = false,
                         Demand = 0.005,
                         DurationBillableDays = 441,
                         DurationDays = 731,
@@ -1604,7 +1728,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 1634.60,
                         ActualWorkHours = 63.25,
-                        RequiresLeadership = true,
                         Demand = 0.8,
                         DurationBillableDays = 13,
                         DurationDays = 21,
@@ -1624,7 +1747,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = false,
                         Demand = 0.1,
                         DurationBillableDays = 150,
                         DurationDays = 249,
@@ -1644,7 +1766,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 142.73,
                         ActualWorkHours = 3.75,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 5,
                         DurationDays = 7,
@@ -1664,7 +1785,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 3596.97,
                         ActualWorkHours = 94.5,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 33,
                         DurationDays = 54,
@@ -1684,7 +1804,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 1808.00,
                         ActualWorkHours = 47.5,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 32,
                         DurationDays = 53,
@@ -1704,7 +1823,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 551.91,
                         ActualWorkHours = 14.5,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 11,
                         DurationDays = 17,
@@ -1724,7 +1842,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 647.07,
                         ActualWorkHours = 17,
-                        RequiresLeadership = true,
                         Demand = 0.4,
                         DurationBillableDays = 5,
                         DurationDays = 7,
@@ -1744,7 +1861,6 @@ namespace PPMTool.Data.Helpers
                     {
                         ActualCost = 0,
                         ActualWorkHours = 0,
-                        RequiresLeadership = true,
                         Demand = 0.2,
                         DurationBillableDays = 5,
                         DurationDays = 9,
@@ -1768,6 +1884,7 @@ namespace PPMTool.Data.Helpers
                 {
                     subTasks[0]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 180);
@@ -1775,6 +1892,7 @@ namespace PPMTool.Data.Helpers
                 {
                     subTasks[1]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 255);
@@ -1784,6 +1902,7 @@ namespace PPMTool.Data.Helpers
                     subTasks[2],
                     subTasks[3]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 265);
@@ -1791,6 +1910,7 @@ namespace PPMTool.Data.Helpers
                 {
                     subTasks[4]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 311);
@@ -1798,6 +1918,7 @@ namespace PPMTool.Data.Helpers
                 {
                     subTasks[5]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 323);
@@ -1808,6 +1929,7 @@ namespace PPMTool.Data.Helpers
                     subTasks[7],
                     subTasks[8]
                 };
+                project.CreateLeadershipSubTask();
                 context.SaveChanges();
 
                 project = GetProjectByRTP(context, 324);
@@ -1823,8 +1945,37 @@ namespace PPMTool.Data.Helpers
                     subTasks[14],
                     subTasks[15]
                 };
+                project.CreateLeadershipSubTask(0.1);
                 context.SaveChanges();
             }
+        }
+
+        /// <summary>
+        /// Private extension method to add a subtask to an exist project based on the date ranges of its current non-leadership tasks
+        /// </summary>
+        /// <param name="project"></param>
+        /// <param name="leadershipFTE"></param>
+        private static void CreateLeadershipSubTask(this Project project, double leadershipFTE = 0.05)
+        {
+            if (!project.SubTasks.Any(x => !x.IsLeadershipTask)) return;
+
+            var startDate = project.SubTasks.Min(x => x.StartDate);
+            var endDate = project.SubTasks.Max(x => x.EndDate);
+            var subTask = new SubTask
+            {
+                Demand = leadershipFTE,
+                EndDate = endDate,
+                HasFixedEndDate = true,
+                HasFixedStart = true,
+                Name = "Leadership",
+                OriginalDemand = leadershipFTE,
+                StartDate = startDate,
+                TaskType = TaskType.FixedDuration,
+                UnmetDemand = 0,
+                IsLeadershipTask = true
+            };
+            subTask.Schedule();
+            project.SubTasks.Add(subTask);
         }
 
         /// <summary>
@@ -1854,6 +2005,7 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
 
                 project = GetProjectWithSubTaskAndFundingByRTP(context, 255);
@@ -1888,6 +2040,7 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
 
                 project = GetProjectWithSubTaskAndFundingByRTP(context, 265);
@@ -1907,6 +2060,7 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
 
                 project = GetProjectWithSubTaskAndFundingByRTP(context, 311);
@@ -1926,6 +2080,7 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
 
                 project = GetProjectWithSubTaskAndFundingByRTP(context, 323);
@@ -1977,6 +2132,7 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
 
                 project = GetProjectWithSubTaskAndFundingByRTP(context, 324);
@@ -2092,7 +2248,30 @@ namespace PPMTool.Data.Helpers
                         UseProjectDayRate = true
                     }
                 };
+                project.AddProjectManagerToLeadershipTasks();
                 context.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Add a resource provided to the leadership tasks in the project
+        /// </summary>
+        /// <param name="project"></param>
+        private static void AddProjectManagerToLeadershipTasks(this Project project)
+        {
+            if (!project.SubTasks.Any(x => x.IsLeadershipTask)) return;
+            foreach (var task in project.SubTasks.Where(x => x.IsLeadershipTask))
+            {
+                var resource = new Resource
+                {
+                    Person = project.ProjectManager,
+                    AssignmentFTE = task.Demand,
+                    DayRate = 300,
+                    FundedFrom = project.FundingSources.FirstOrDefault(),
+                    IsProvisional = false,
+                    UseProjectDayRate = project.CostModel == CostModel.DayRate
+                };
+                task.AssignedResources.Add(resource);
             }
         }
 
@@ -2528,7 +2707,9 @@ namespace PPMTool.Data.Helpers
             // Get a project
             var project = context.Projects
                 .Include(x => x.SubTasks)
+                    .ThenInclude(x => x.AssignedResources)
                 .Include(x => x.FundingSources)
+                .Include(x => x.ProjectManager)
                 .FirstOrDefault(x => x.RTP == rtp);
 
             // If no projects

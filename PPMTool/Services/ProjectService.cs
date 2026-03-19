@@ -7,12 +7,7 @@ namespace PPMTool.Services
 {
     public class ProjectService : BaseEntityService<Project>
     {
-        /// <summary>
-        /// Adds a project. If duplicate found based on name, does not add but returns false.
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="projectModel"></param>
-        /// <returns>-1 if a duplicate name, -2 if duplciate RTP</returns>
+        /// <inheritdoc />
         public override int Add(PPMToolContext context, Project projectModel, bool commitChanges = true)
         {
             if (DuplicateDetected(context, projectModel))
@@ -37,7 +32,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, Project projectModel)
         {
-            return context.Projects.Any(p => p.Name.ToLower().Trim() == projectModel.Name.ToLower().Trim() && projectModel.ProjectId != p.ProjectId);
+            return context.Projects.Any(p => p.Name.Trim().ToLower() == projectModel.Name.Trim().ToLower() && projectModel.ProjectId != p.ProjectId);
         }
 
         /// <summary>
@@ -68,6 +63,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="projectModel"></param>
+        /// <param name="commitChanges"></param>
         /// <returns>-1 if a duplicate name, -2 if duplciate RTP</returns>
         public override int Update(PPMToolContext context, Project projectModel, bool commitChanges = true)
         {
@@ -92,6 +88,8 @@ namespace PPMTool.Services
         public override IEnumerable<Project> GetAll(PPMToolContext context)
         {
             return context.Projects
+                .Include(p => p.School)
+                    .ThenInclude(s => s.Faculty)
                 .Include(p => p.SubTasks)
                     .ThenInclude(s => s.AssignedResources)
                         .ThenInclude(r => r.Person)
@@ -132,11 +130,7 @@ namespace PPMTool.Services
             return GetAll(context).Where(p => p.ProjectStatus.IsUnfunded());
         }
 
-        /// <summary>
-        /// Delete the project from the database.
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="projectModel"></param>
+        /// <inheritdoc />
         public override void Delete(PPMToolContext context, Project projectModel, bool commitChanges = true)
         {
             context.Projects.Remove(projectModel);

@@ -94,7 +94,8 @@
                 <RadzenTextBox @bind-Value=@competencySearchTerms
                                Placeholder="Search Competencies"
                                Change=@FilterCompetencies
-                               Disabled="@Loading" />
+                               Disabled="@Loading"
+                               class="radzen-text-box" />
                 <RadzenButton Icon="clear"
                               ButtonStyle="ButtonStyle.Light"
                               Click="@ClearSearch"

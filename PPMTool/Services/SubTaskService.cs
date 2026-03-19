@@ -8,12 +8,7 @@ namespace PPMTool.Services
 {
     public class SubTaskService : BaseEntityService<SubTask>
     {
-        /// <summary>
-        /// Adds a subtask
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="taskModel"></param>
-        /// <returns></returns>
+        /// <inheritdoc />
         public override int Add(PPMToolContext context, SubTask taskModel, bool commitChanges = true)
         {
             context.SubTasks.Add(taskModel);
@@ -21,11 +16,7 @@ namespace PPMTool.Services
             return taskModel.SubTaskId;
         }
 
-        /// <summary>
-        /// Update an existing subtask
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="taskModel"></param>
+        /// <inheritdoc />
         public override int Update(PPMToolContext context, SubTask taskModel, bool commitChanges = true)
         {
             context.SubTasks.Update(taskModel);
@@ -96,6 +87,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="subTask"></param>
+        /// <param name="commitChanges"></param>
         public override void Delete(PPMToolContext context, SubTask subTask, bool commitChanges = true)
         {
             foreach (var res in subTask.AssignedResources)
@@ -114,6 +106,10 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal bool IsUniqueTaskNameInProject(Project projectModel, SubTask taskModel)
         {
+            // Leadership tasks have a fixed name
+            if (taskModel.IsLeadershipTask) return true;
+
+            // Check other tasks
             var subSet = projectModel.SubTasks.Where(x => x.SubTaskId != taskModel.SubTaskId);
             return !subSet.Any(x => x.Name == taskModel.Name);
         }

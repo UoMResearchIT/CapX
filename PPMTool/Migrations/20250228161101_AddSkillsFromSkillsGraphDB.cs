@@ -13,7 +13,7 @@ namespace PPMTool.Migrations
         private string skillJsonEndpoint = @"https://raw.githubusercontent.com/UoMResearchIT/RSESkillsGraph/refs/heads/master/people.json";
 
         /// <summary>
-        /// Get the unique skills from the <see cref="skillJsonEndpoint"/>, save it to a <see cref="LocalFilePath"/>, update file if it exists, and return it as a HashSet<string>
+        /// Get the unique skills from the <see cref="skillJsonEndpoint"/>, save it to a <see cref="localFilePath"/>, update file if it exists, and return it as a HashSet.
         /// </summary>
         /// <exception cref="Exception">Fail to deserialise the Json from github</exception>
         /// <exception cref="HttpRequestException">Fail to get the json document on github</exception>
@@ -50,7 +50,7 @@ namespace PPMTool.Migrations
         }
 
         /// <summary>
-        /// Read the skills from <see cref="LocalFilePath"/>
+        /// Read the skills from <see cref="localFilePath"/>
         /// </summary>
         /// <returns></returns>
         /// <exception cref="FileNotFoundException"></exception>
