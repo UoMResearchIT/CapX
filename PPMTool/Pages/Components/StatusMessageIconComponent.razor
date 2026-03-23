@@ -1,6 +1,8 @@
 ﻿@using PPMTool.Data
 @using static PPMTool.Data.StatusMessage
 
+@* TODO: Just needs a wrapper to check the feature requirements *@
+
 @if (Messages?.Where(x => x.Type == Type && x.Status).Count() > 1)
 {
     <RadzenBadge BadgeStyle="BadgeStyle.Light">

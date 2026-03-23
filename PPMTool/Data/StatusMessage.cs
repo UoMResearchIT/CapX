@@ -2,16 +2,34 @@
 
 namespace PPMTool.Data
 {
+    /// <summary>
+    /// A model for a status message
+    /// </summary>
     public class StatusMessage
     {
+        /// <summary>
+        /// The message
+        /// </summary>
         public string Message { get; }
 
+        /// <summary>
+        /// The type of message (severity)
+        /// </summary>
         public MessageType Type { get; }
 
+        /// <summary>
+        /// Conditional expression for when the message should be shown.
+        /// </summary>
         public Func<bool> Condition { get; }
 
+        /// <summary>
+        /// Whether the message should be shown or not. Updated by calling Update, which checks the condition.
+        /// </summary>
         public bool Status { get; private set; }
 
+        /// <summary>
+        /// Feature that is required to make this message relevant
+        /// </summary>
         public FeatureType RelevantFeature { get; set; }
 
         /// <summary>
@@ -29,11 +47,17 @@ namespace PPMTool.Data
             RelevantFeature = relevantFeature;
         }
 
+        /// <summary>
+        /// Evaluate the condition to update the status
+        /// </summary>
         public void Update()
         {
             Status = Condition != null ? Condition.Invoke() : false;
         }
 
+        /// <summary>
+        /// Type / severity of the message
+        /// </summary>
         public enum MessageType
         {
             Success,
