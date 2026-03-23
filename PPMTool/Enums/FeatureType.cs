@@ -19,6 +19,7 @@ namespace PPMTool.Enums
         [Description("Project Finance")]
         ProjectFinance = 7,
         [Description("Data Dashboard")]
-        DataDashboard = 8
+        DataDashboard = 8,
+        None = 9
     }
 }
