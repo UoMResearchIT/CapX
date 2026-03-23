@@ -4,7 +4,6 @@
 @using PPMTool.Data.Entities
 @using PPMTool.Services
 @using System.Diagnostics
-@inject FeatureService FeatureService
 
 <RadzenCard>
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween" Gap="0rem" Wrap="FlexWrap.Wrap">
@@ -13,7 +12,7 @@
                 <RadzenText TextStyle="TextStyle.H5" Text="@Project.GetFullName()" />
                 <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
             </RadzenStack>
-            <StatusMessageSummaryComponent Messages="Project.GetLatestStatusMessages()" />
+            <StatusMessageSummaryComponent Messages="Project.GetLatestStatusMessages()" RelevantFeatures="@enabledFeatures"/>
         </RadzenStack>
         @if (NextDueDate != null)
         {
@@ -44,7 +43,7 @@
                 </ChildContent>
             </RadzenSplitButton>
             <RadzenButton Click=@(args => EditProject(Project)) Icon="edit" Disabled="@(!EditAuthorised)" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Edit Project"))" />
-            @if(FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance))
+            @if (financeEnabled)
             {
                 <RadzenButton Click="@(args => EditFinance(Project))" Icon="payments" Disabled="@(!EditAuthorised)" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Finance"))" />
             }
@@ -82,8 +81,15 @@
     [Inject]
     private NavigationManager Navigation { get; set; }
 
+    [Inject] 
+    private FeatureService FeatureService { get; set; }
+
+    private bool financeEnabled = true;
+    private bool timesheetsEnabled = true;
+
     private string borderClass;
     private ButtonStyle buttonStyle;
+    private List<FeatureType> enabledFeatures = new List<FeatureType>();
 
     override protected void OnInitialized()
     {
@@ -104,6 +110,8 @@
             borderClass = "rz-border-base-400";
             buttonStyle = ButtonStyle.Light;
         }
+
+        enabledFeatures = FeatureService.GetEnabledFeatures();
     }
 
     /// <summary>
