@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using PPMTool.Enums;
+using PPMTool.Services;
 
 namespace PPMTool.Data.Entities
 {
@@ -29,7 +30,7 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("Task has zero demand but assigned resources!", StatusMessage.MessageType.Warning, () => HasZeroDemandButResourced()),
 
                 // Error
-                new StatusMessage("Resource on this task has no associated funding source and task is in progress or ran in the past!", StatusMessage.MessageType.Error, () => HasResourceWithNoFundingSourceAndRunning()),
+                new StatusMessage("Resource on this task has no associated funding source and task is in progress or ran in the past!", StatusMessage.MessageType.Error, () => HasResourceWithNoFundingSourceAndRunning(), FeatureType.ProjectFinance), // Finance
                 new StatusMessage("Task has resource(s) with zero FTE assignment!", StatusMessage.MessageType.Warning, () => HasResourceWithZeroFTE()),
                 
                 // Success
