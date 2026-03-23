@@ -119,6 +119,11 @@ namespace PPMTool.Pages
         private bool lastDue;
         private CancellationTokenSource loadCts;
 
+        // Feature statuses for ease of showing/hiding aspects of the page
+        private bool financeEnabled;
+        private bool timesheetsEnabled;
+        private bool skillsEnabled;
+
         /// <summary>
         /// Mention state
         /// </summary>
@@ -206,6 +211,11 @@ namespace PPMTool.Pages
         private async Task LoadDataAsync(CancellationToken ct)
         {
             Debug.WriteLine("** [Project Details] Loading Data...");
+
+            financeEnabled = FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance);
+            timesheetsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Timesheets);
+            skillsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Skills);
+
             try
             {
                 Loading = true;
