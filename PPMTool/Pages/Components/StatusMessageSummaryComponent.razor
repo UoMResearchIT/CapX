@@ -9,7 +9,11 @@
     <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.1rem" class="align-self-start">
         @foreach (var message in activeMessages)
         {
-            <StatusMessageComponent Message=message />
+            // Show the message if it has no feature dependencies (default) or the relevant feature is enabled
+            if (message.RelevantFeature == FeatureType.None || RelevantFeatures.Contains(message.RelevantFeature))
+            {
+                <StatusMessageComponent Message=message />
+            }
         }
     </RadzenStack>
 }
@@ -34,4 +38,7 @@ else
 
     [Parameter]
     public bool IgnoreStatus { get; set; } = false;
+
+    [Parameter]
+    public List<FeatureType> RelevantFeatures { get; set; } = new List<FeatureType>();
 }
