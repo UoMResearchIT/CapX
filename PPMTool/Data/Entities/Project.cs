@@ -171,7 +171,7 @@ namespace PPMTool.Data.Entities
                 
                 // Success
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
-            };             
+            };
         }
 
         /// <summary>
