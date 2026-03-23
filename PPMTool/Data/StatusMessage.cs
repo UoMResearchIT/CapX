@@ -1,4 +1,6 @@
-﻿namespace PPMTool.Data
+﻿using PPMTool.Enums;
+
+namespace PPMTool.Data
 {
     public class StatusMessage
     {
@@ -10,17 +12,21 @@
 
         public bool Status { get; private set; }
 
+        public FeatureType RelevantFeature { get; set; }
+
         /// <summary>
         /// Create a new status message. Note, the condition will not be immediately checked. Update must be manually called.
         /// </summary>
         /// <param name="message"></param>
         /// <param name="type"></param>
         /// <param name="condition"></param>
-        public StatusMessage(string message, MessageType type, Func<bool> condition = null)
+        /// <param name="relevantFeature"></param>
+        public StatusMessage(string message, MessageType type, Func<bool> condition = null, FeatureType relevantFeature = FeatureType.None)
         {
             Message = message;
             Type = type;
             Condition = condition;
+            RelevantFeature = relevantFeature;
         }
 
         public void Update()
