@@ -21,6 +21,8 @@ namespace PPMTool.Pages
         private int count;
         private int pageCount = 10;
 
+        private bool skillsEnabled;
+
         private bool includeLeavers;
         public bool IncludeLeavers
         {
@@ -39,6 +41,8 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            skillsEnabled = FeatureService.IsFeatureEnabled(Enums.FeatureType.Skills);
+
             Loading = true;
             EnqueueLoadData(GetLoadTask);
 
