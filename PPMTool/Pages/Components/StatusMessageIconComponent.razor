@@ -1,9 +1,9 @@
-﻿@using PPMTool.Data
+﻿@using PPMTool.Data+
+@using PPMTool.Services
 @using static PPMTool.Data.StatusMessage
+@inject FeatureService FeatureService
 
-@* TODO: Just needs a wrapper to check the feature requirements *@
-
-@if (Messages?.Where(x => x.Type == Type && x.Status).Count() > 1)
+@* @if (Messages?.Where(x => x.Type == Type && x.Status).Count() > 1)
 {
     <RadzenBadge BadgeStyle="BadgeStyle.Light">
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
@@ -15,19 +15,46 @@
 else if (Messages?.Where(x => x.Type == Type && x.Status).Count() > 0)
 {
     <RadzenIcon Icon=@icon IconStyle=@iconStyle title="@(string.Join('\n', Messages?.Where(x => x.Type == Type && x.Status).Select(x => x.Message)))" />
+} *@
+
+
+<!-- Create a curated list of messages which are to be reported on -->
+@foreach (StatusMessage item in Messages?.Where(x => x.Type == Type && x.Status))
+{
+    if (item.RelevantFeature == Enums.FeatureType.None || FeatureService.IsFeatureEnabled(item.RelevantFeature)) 
+    { 
+        FilteredMessages.Add(item); 
+    }
 }
+
+@if (FilteredMessages.Count() > 1)
+{
+    <RadzenBadge BadgeStyle="BadgeStyle.Light">
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
+            <RadzenIcon Icon=@icon IconStyle=@iconStyle title="@(string.Join('\n', FilteredMessages.Select(x => x.Message)))" />
+            <RadzenText Style="margin-bottom: 0rem" TextStyle="TextStyle.Body2" TextAlign="TextAlign.Center" Text=@(FilteredMessages.Count().ToString()) />
+        </RadzenStack>
+    </RadzenBadge>
+}
+else if (FilteredMessages.Count() > 0)
+{
+    <RadzenIcon Icon=@icon IconStyle=@iconStyle title="@(string.Join('\n', FilteredMessages.Select(x => x.Message)))" />
+} 
 
 @code
 {
     [Parameter]
     public IList<StatusMessage> Messages { get; set; }
-    
+
     [Parameter]
     public MessageType? Type { get; set; }
 
     private IconStyle iconStyle;
     private string icon;
     private MessageType? type = null;
+
+    // Holds only valid, feature specific messages to be displayed
+    private IList<StatusMessage> FilteredMessages { get; set; } = new List<StatusMessage>();
 
     protected override void OnParametersSet()
     {

@@ -61,16 +61,5 @@ namespace PPMTool.Services
             }
             return false;
         }
-
-        /// <summary>
-        /// Get a list of all enabled features
-        /// </summary>
-        /// <returns></returns>
-        public List<FeatureType> GetEnabledFeatures()
-        {
-            return FeatureState.Where(kvp => kvp.Value)
-                               .Select(kvp => kvp.Key)
-                               .ToList();
-        }
     }
 }

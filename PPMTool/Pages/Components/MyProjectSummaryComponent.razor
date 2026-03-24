@@ -12,7 +12,7 @@
                 <RadzenText TextStyle="TextStyle.H5" Text="@Project.GetFullName()" />
                 <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
             </RadzenStack>
-            <StatusMessageSummaryComponent Messages="Project.GetLatestStatusMessages()" RelevantFeatures="@enabledFeatures"/>
+            <StatusMessageSummaryComponent Messages="Project.GetLatestStatusMessages()" />
         </RadzenStack>
         @if (NextDueDate != null)
         {
@@ -89,7 +89,6 @@
 
     private string borderClass;
     private ButtonStyle buttonStyle;
-    private List<FeatureType> enabledFeatures = new List<FeatureType>();
 
     override protected void OnInitialized()
     {
@@ -110,8 +109,6 @@
             borderClass = "rz-border-base-400";
             buttonStyle = ButtonStyle.Light;
         }
-
-        enabledFeatures = FeatureService.GetEnabledFeatures();
     }
 
     /// <summary>
