@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using PPMTool.Data.Enums;
+using PPMTool.Data.Helpers;
 using PPMTool.Data.Interfaces;
 
 namespace PPMTool.Data.Entities
@@ -122,7 +123,7 @@ namespace PPMTool.Data.Entities
             else
             {
                 // Convert to assignment chunks and recompute the costs of the chunks
-                chunks = ExportHelper.GetAssignmentChunks(
+                chunks = AssignmentHelper.GetAssignmentChunks(
                     Person,
                     new List<Project> { project },
                     finrefs,

@@ -217,5 +217,15 @@ namespace PPMTool.Data.Enums
             }
             return "background-color: var(--rz-danger-lighter);";
         }
+
+        /// <summary>
+        /// Test whether a link is valid URL
+        /// </summary>
+        /// <param name="test"></param>
+        /// <returns></returns>
+        public static bool IsValidURL(this string test)
+        {
+            return !string.IsNullOrWhiteSpace(test) && test.StartsWith("http") && test.Length >= 12 && Uri.TryCreate(test, UriKind.Absolute, out _);
+        }
     }
 }

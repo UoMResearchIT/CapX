@@ -28,7 +28,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        internal static int GetFinancialYear(DateTime date)
+        public static int GetFinancialYear(DateTime date)
         {
             return date.Date.Month < 8 ? date.Date.Year - 1 : date.Date.Year;
         }
@@ -41,7 +41,7 @@ namespace PPMTool.Data.Entities
         /// <param name="endDate"></param>
         /// <exception cref="ArgumentException">If start date is after end date</exception>
         /// <returns></returns>
-        internal static float GetProportionOfFinancialYearInRange(int currentFY, DateTime startDate, DateTime endDate)
+        public static float GetProportionOfFinancialYearInRange(int currentFY, DateTime startDate, DateTime endDate)
         {
             var startFY = new DateTime(currentFY, 8, 1);
             var endFY = new DateTime(currentFY + 1, 7, 31);
@@ -99,7 +99,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="rate"></param>
         /// <returns></returns>
-        internal double GetJuniorOrStandardAnnualCosts(Rate rate)
+        public double GetJuniorOrStandardAnnualCosts(Rate rate)
         {
             // Junior Rate
             if (rate == Rate.Junior)
@@ -128,7 +128,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="grade"></param>
         /// <returns></returns>
-        internal double GetMidGradeCosts(int grade)
+        public double GetMidGradeCosts(int grade)
         {
             if (grade <= 4)
             {

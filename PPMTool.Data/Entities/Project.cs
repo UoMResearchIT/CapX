@@ -245,7 +245,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool HasStartedButHasNoScrumProjectLink()
         {
-            return !ProjectStatus.IsCancelled() && DateTime.Today >= StartDate && DateTime.Today <= EndDate && !HtmlHelper.IsValidLink(ScrumProjectLink);
+            return !ProjectStatus.IsCancelled() && DateTime.Today >= StartDate && DateTime.Today <= EndDate && !ScrumProjectLink.IsValidURL();
         }
 
         /// <summary>
@@ -254,7 +254,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool HasNoRequestDocLink()
         {
-            return !HtmlHelper.IsValidLink(RequestDocLink);
+            return !RequestDocLink.IsValidURL();
         }
 
 

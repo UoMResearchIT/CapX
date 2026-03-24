@@ -92,16 +92,6 @@ namespace PPMTool.Helpers
         }
 
         /// <summary>
-        /// Test whether a link is valid
-        /// </summary>
-        /// <param name="test"></param>
-        /// <returns></returns>
-        public static bool IsValidLink(string test)
-        {
-            return !string.IsNullOrWhiteSpace(test) && test.StartsWith("http") && test.Length >= 12 && Uri.TryCreate(test, UriKind.Absolute, out _);
-        }
-
-        /// <summary>
         /// Method to take HTML with simple tags and convert it to plain text and insert it as a paragraph in the DocX document provided
         /// </summary>
         /// <param name="doc"></param>
