@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Globalization;
 using PPMTool.Data.Helpers;
 using PPMTool.Enums;
-using PPMTool.Services;
 using static PPMTool.Data.ValidationAttributes;
 
 namespace PPMTool.Data.Entities
@@ -163,7 +162,7 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project has no link to a request document!", StatusMessage.MessageType.Error, () => HasNoRequestDocLink()),
                 new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, () => HasNoDescription()),
                 new StatusMessage("This project has no tasks!", StatusMessage.MessageType.Error, () => SubTasks == null || SubTasks.Count == 0),
-                new StatusMessage("This project is active but hasn't had its actuals updated for more than a month!", StatusMessage.MessageType.Error, () => ActiveButNotHadActualsUpdatedForAMonth(), FeatureType.ProjectFinance), // Timesheets
+                new StatusMessage("This project is active but hasn't had its actuals updated for more than a month!", StatusMessage.MessageType.Error, () => ActiveButNotHadActualsUpdatedForAMonth(), FeatureType.Timesheets), // Timesheets
                 new StatusMessage("This project has no funding sources but is either finished or is active!", StatusMessage.MessageType.Error, () => HasNoFundingSourcesButRan(), FeatureType.ProjectFinance), // Finance
                 new StatusMessage("This project has a task with a resource without a funding source and is currently running or has run in the past!", StatusMessage.MessageType.Error, () => HasResourcesWithNoFundingSourceOnRunningTask(), FeatureType.ProjectFinance), // Finance
                 new StatusMessage("This project uses the Day Rate model but has a DI funding source which is not allowed! DI funding sources must use salary costs for recharge.", StatusMessage.MessageType.Error, () => DayRateWithDIFunding(), FeatureType.ProjectFinance), // Finance
@@ -226,8 +225,6 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         private bool ActiveButNotHadActualsUpdatedForAMonth()
         {
-            FeatureService fs = new FeatureService();
-            if (!fs.IsFeatureEnabled(FeatureType.Timesheets)) return false;
             if (ProjectStatus != ProjectStatus.Active) return false;
             DateTime lastUpdated = string.IsNullOrEmpty(ActualsLastUpdated) ? default : DateTime.ParseExact(ActualsLastUpdated, "R", CultureInfo.InvariantCulture);
             return lastUpdated.AddMonths(1) < DateTime.Now;

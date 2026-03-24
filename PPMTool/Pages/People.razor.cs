@@ -20,7 +20,6 @@ namespace PPMTool.Pages
         private IEnumerable<Person> people;
         private int count;
         private int pageCount = 10;
-
         private bool skillsEnabled;
 
         private bool includeLeavers;

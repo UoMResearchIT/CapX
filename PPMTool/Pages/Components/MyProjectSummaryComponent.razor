@@ -84,15 +84,14 @@
     [Inject] 
     private FeatureService FeatureService { get; set; }
 
-    private bool financeEnabled = true;
-    private bool timesheetsEnabled = true;
-
+    private bool financeEnabled;
     private string borderClass;
     private ButtonStyle buttonStyle;
 
     override protected void OnInitialized()
     {
         base.OnInitialized();
+        financeEnabled = FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance);
 
         if (OverDueNoteCount > 0)
         {

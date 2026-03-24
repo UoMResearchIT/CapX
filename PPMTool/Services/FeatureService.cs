@@ -38,6 +38,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="feature"></param>
+        /// <param name="commitChanges"></param>
         internal void UpdateFeatureState(PPMToolContext context, Feature feature, bool commitChanges = true)
         {
             FeatureState[feature.FeatureType] = feature.Enabled;
