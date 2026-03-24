@@ -1,4 +1,6 @@
-﻿namespace PPMTool.Data.Enums
+﻿using PPMTool.Data.Enums.Attributes;
+
+namespace PPMTool.Data.Enums
 {
     public enum SkillRareness
     {

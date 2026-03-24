@@ -203,7 +203,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="obj">Other person</param>
         /// <returns></returns>
-        public int CompareTo(object obj)
+        public int CompareTo(object? obj)
         {
             return Name.CompareTo((obj as Person)?.Name);
         }
