@@ -403,3 +403,8 @@ span.mention {
 .inactive {
     background-color: var(--rz-switch-checked);
 }
+
+.rz-accordion-header > button {
+    display: block;
+    width: 100%;
+}
