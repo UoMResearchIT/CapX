@@ -1,10 +1,8 @@
-﻿using System;
-
-namespace PPMTool.Data
+﻿namespace PPMTool.Data
 {
     public class DutyChartItem : BaseDemandChartItem
     {
-        internal void UpdateMinMax()
+        public void UpdateMinMax()
         {
             Min = Math.Min(StaffManagementShortfall, PSManagementShortfall);
             Min = Math.Min(Min, RSAShortfall);

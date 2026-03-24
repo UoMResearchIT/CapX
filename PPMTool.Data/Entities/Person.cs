@@ -163,7 +163,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        internal WorkloadModelChange GetWorkloadModelOnDateOrDefault(DateTime date)
+        public WorkloadModelChange GetWorkloadModelOnDateOrDefault(DateTime date)
         {
             // Get the workload model that is active at the beginning of the week
             var activeModel = WorkloadModelChanges

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Components.Forms;
 using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 using Radzen.Blazor;

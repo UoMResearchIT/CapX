@@ -47,6 +47,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PPMTool.Data\PPMTool.Data.csproj" />
+    <ProjectReference Include="..\PPMTool.Migrations.PostgresSql\PPMTool.Migrations.PostgresSql.csproj" />
+    <ProjectReference Include="..\PPMTool.Migrations.Sqlite\PPMTool.Migrations.Sqlite.csproj" />
+    <ProjectReference Include="..\PPMTool.Migrations.SqlServer\PPMTool.Migrations.SqlServer.csproj" />
   </ItemGroup>
 
 </Project>

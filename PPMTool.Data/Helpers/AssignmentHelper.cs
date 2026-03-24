@@ -7,7 +7,7 @@ namespace PPMTool.Data.Helpers
     /// <summary>
     /// Helper methods for manipulating tasks into assignment DTOs for reporting purposes. This includes chunking tasks based on changes in grade or financial year and proportioning costs accordingly.
     /// </summary>
-    internal class AssignmentHelper
+    public class AssignmentHelper
     {
         /// <summary>
         /// Converts the subtasks of the projects provided, or the subtasks provided, into assingment chunk representation.
@@ -21,7 +21,7 @@ namespace PPMTool.Data.Helpers
         /// <param name="shouldCalculateCosts">If false the chunks will use the cost values already attached to the resources. If true, the mid-grade cost calculator will be used to estimate the cost of the chunk and overwrite anything stored.</param>
         /// <param name="budgetDetails">An optional dictionary of information about the budget status of each resource assignment that can be added to the data if supplied and matched.</param>
         /// <returns></returns>
-        internal static IEnumerable<AssignmentChunk> GetAssignmentChunks(
+        public static IEnumerable<AssignmentChunk> GetAssignmentChunks(
             Person person,
             IEnumerable<Project> projectsInWindow,
             IEnumerable<FinancialReference> finrefs,

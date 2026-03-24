@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 using static PPMTool.Data.StatusMessage;

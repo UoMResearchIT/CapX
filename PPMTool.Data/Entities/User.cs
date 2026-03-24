@@ -78,7 +78,7 @@ namespace PPMTool.Data.Entities
         /// Method to return the trimmed lowercase instance of the CAS user name
         /// </summary>
         /// <returns></returns>
-        internal string GetStandardisedUserName()
+        public string? GetStandardisedUserName()
         {
             return CASUserName?.Clean();
         }

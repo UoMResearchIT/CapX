@@ -1,11 +1,12 @@
 ﻿using PPMTool.Data.Entities;
+using PPMTool.Data.Interfaces;
 
 namespace PPMTool.Data
 {
     /// <summary>
     /// Represents a block on the schedule chart
     /// </summary>
-    internal class GanttBlock : IChartItem
+    public class GanttBlock : IChartItem
     {
         public GanttBlock(SubTask t, string groupName, bool isFake = false, bool isLeadershipTask = false)
         {
