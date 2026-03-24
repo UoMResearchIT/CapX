@@ -1,5 +1,5 @@
-﻿using PPMTool.Data.Interfaces;
-using PPMTool.Enums;
+﻿using PPMTool.Data.Enums;
+using PPMTool.Data.Interfaces;
 
 namespace PPMTool.Data.Entities
 {

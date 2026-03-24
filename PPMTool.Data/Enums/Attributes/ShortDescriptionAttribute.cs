@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace PPMTool.Enums.Attributes
+﻿namespace PPMTool.Data.Enums.Attributes
 {
     /// <summary>
     /// An abbreviated description if the description attribute is already in use

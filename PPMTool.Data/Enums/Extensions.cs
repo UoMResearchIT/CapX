@@ -1,11 +1,32 @@
-﻿using System.Reflection;
-using PPMTool.Enums.Attributes;
+﻿using System.ComponentModel;
+using System.Reflection;
+using PPMTool.Data.Enums.Attributes;
 using Radzen;
 
-namespace PPMTool.Enums
+namespace PPMTool.Data.Enums
 {
     public static class Extensions
     {
+        /// <summary>
+        /// Extension method to get the description attribute of an enum value
+        /// </summary>
+        /// <param name="genericEnum"></param>
+        /// <returns></returns>
+        public static string GetDescription(this Enum genericEnum)
+        {
+            Type genericEnumType = genericEnum.GetType();
+            MemberInfo[] memberInfo = genericEnumType.GetMember(genericEnum.ToString());
+            if ((memberInfo != null && memberInfo.Length > 0))
+            {
+                var _Attribs = memberInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
+                if ((_Attribs != null && _Attribs.Count() > 0))
+                {
+                    return ((DescriptionAttribute)_Attribs.ElementAt(0)).Description;
+                }
+            }
+            return genericEnum.ToString();
+        }
+
         /// <summary>
         /// Whether a cost model is one which carries indirects
         /// </summary>

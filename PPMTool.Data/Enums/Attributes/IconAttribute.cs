@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace PPMTool.Enums
+﻿namespace PPMTool.Data.Enums.Attributes
 {
     /// <summary>
     /// Reference an icon by its name as a string

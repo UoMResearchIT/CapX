@@ -1,8 +1,6 @@
 ﻿using System.ComponentModel;
-using PPMTool.Enums.Attributes;
-using Radzen;
 
-namespace PPMTool.Enums
+namespace PPMTool.Data.Enums
 {
     /// <summary>
     /// Statuses a project can be in as part of our demand and monitoring process

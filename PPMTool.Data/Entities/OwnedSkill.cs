@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Data.Entities
 {

@@ -65,7 +65,7 @@ namespace PPMTool.Data.Helpers
             ref WebApplicationBuilder builder,
             bool checkAtDesignTime = false,
             bool justLog = false,
-            ILogger logger = null)
+            ILogger? logger = null)
         {
             var isDesignTime = AppDomain.CurrentDomain.FriendlyName == "ef";
             var checkShouldRun = !isDesignTime || (isDesignTime && checkAtDesignTime);

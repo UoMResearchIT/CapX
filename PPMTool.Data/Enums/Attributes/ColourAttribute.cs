@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace PPMTool.Enums.Attributes
+﻿namespace PPMTool.Data.Enums.Attributes
 {
     /// <summary>
     /// Add a hex colour string to an enum

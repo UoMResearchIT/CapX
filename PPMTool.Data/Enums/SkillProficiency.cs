@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace PPMTool.Enums
+namespace PPMTool.Data.Enums
 {
     public enum SkillProficiency
     {

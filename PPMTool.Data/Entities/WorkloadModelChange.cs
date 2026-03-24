@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using PPMTool.Enums;
+﻿using System.ComponentModel.DataAnnotations;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Data.Entities
 {

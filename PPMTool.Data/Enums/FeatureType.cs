@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace PPMTool.Enums
+namespace PPMTool.Data.Enums
 {
     /// <summary>
     /// Compile-time reference to a feature in the system.

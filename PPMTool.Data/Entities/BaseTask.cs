@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using PPMTool.Data.Interfaces;
 
 namespace PPMTool.Data.Entities
 {

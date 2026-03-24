@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel;
-using PPMTool.Enums.Attributes;
+using PPMTool.Data.Enums.Attributes;
 using Radzen;
 
-namespace PPMTool.Enums
+namespace PPMTool.Data.Enums
 {
     public enum AssessmentStatus
     {

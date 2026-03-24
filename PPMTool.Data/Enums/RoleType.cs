@@ -1,4 +1,4 @@
-﻿namespace PPMTool.Enums
+﻿namespace PPMTool.Data.Enums
 {
     public enum RoleType
     {

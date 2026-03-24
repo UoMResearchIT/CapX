@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using PPMTool.Data.Enums;
 using PPMTool.Data.Interfaces;
-using PPMTool.Enums;
 
 namespace PPMTool.Data.Entities
 {

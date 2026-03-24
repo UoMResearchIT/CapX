@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace PPMTool.Enums
+namespace PPMTool.Data.Enums
 {
     /// <summary>
     /// This is the rate that a resource is to be costed at when using a non-day-rate approach to costing.

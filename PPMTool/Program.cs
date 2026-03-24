@@ -17,9 +17,10 @@ using PPMTool.API.Filters;
 using PPMTool.API.Services;
 using PPMTool.Data;
 using PPMTool.Data.Context;
-using PPMTool.Data.Helpers;
+using PPMTool.Helpers;
 using PPMTool.Services;
 using Radzen;
+using EnvironmentHelper = PPMTool.Helpers.EnvironmentHelper;
 
 
 #if RELEASE
@@ -357,6 +358,9 @@ using (var context = dbContextFactory.CreateDbContext())
 
 // Seed the default superuser from the settings if it doesn't already exist
 SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
+
+// Seed features
+SeedHelper.SeedFeatures(scope.ServiceProvider);
 
 // If seeding run the dummy data seeding methods
 if (shouldSeed)

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using PPMTool.Data.Enums;
+using PPMTool.Data.Enums.Attributes;
 using PPMTool.Data.Interfaces;
-using PPMTool.Enums;
-using PPMTool.Enums.Attributes;
 
 namespace PPMTool.Data.Entities
 {
@@ -24,12 +24,12 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// The actual account code e.g. R / P / A code or N/A if not applicable
         /// </summary>
-        public string AccountCode { get; set; }
+        public string? AccountCode { get; set; }
 
         /// <summary>
         ///  Some information about what this funding source is if known
         /// </summary>
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         /// <summary>
         /// This is the amount of money available in the funding source for RSE costs

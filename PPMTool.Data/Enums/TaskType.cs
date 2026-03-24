@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace PPMTool.Enums
+namespace PPMTool.Data.Enums
 {
     /// <summary>
     /// The type of task. This influences which of the three parameters remains fixed during scheduling.

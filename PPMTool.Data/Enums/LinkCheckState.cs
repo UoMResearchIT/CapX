@@ -1,4 +1,4 @@
-﻿namespace PPMTool.Enums
+﻿namespace PPMTool.Data.Enums
 {
     /// <summary>
     /// When checking whether a link gives a 404 we can represent its state with this

@@ -1,8 +1,6 @@
 ﻿using System.ComponentModel;
-using PPMTool.Enums.Attributes;
-using Radzen;
 
-namespace PPMTool.Enums
+namespace PPMTool.Data.Enums
 {
     /// <summary>
     /// State an invoice can be in

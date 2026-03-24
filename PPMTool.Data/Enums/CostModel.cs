@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace PPMTool.Enums
+namespace PPMTool.Data.Enums
 {
     public enum CostModel
     {

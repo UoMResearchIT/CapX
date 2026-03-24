@@ -37,7 +37,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.5" />
     <PackageReference Include="Microsoft.Identity.Web" Version="4.5.0" />
 	<PackageReference Include="MySql.Data" Version="9.6.0" />
-    <PackageReference Include="Radzen.Blazor" Version="10.0.5" />
     <PackageReference Include="Sentry.AspNetCore" Version="6.2.0" />
     <PackageReference Include="Serilog" Version="4.3.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />

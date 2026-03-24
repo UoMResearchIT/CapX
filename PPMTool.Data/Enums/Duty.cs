@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
-using PPMTool.Enums.Attributes;
+using PPMTool.Data.Enums.Attributes;
 
-namespace PPMTool.Enums
+namespace PPMTool.Data.Enums
 {
     /// <summary>
     /// Duty within which a particular timesheet code is categorised for WLM analysis

@@ -1,4 +1,4 @@
-﻿using PPMTool.Enums;
+﻿using PPMTool.Data.Enums;
 
 namespace PPMTool.Data
 {
@@ -20,7 +20,7 @@ namespace PPMTool.Data
         /// <summary>
         /// Conditional expression for when the message should be shown.
         /// </summary>
-        public Func<bool> Condition { get; }
+        public Func<bool>? Condition { get; }
 
         /// <summary>
         /// Whether the message should be shown or not. Updated by calling Update, which checks the condition.
@@ -39,7 +39,7 @@ namespace PPMTool.Data
         /// <param name="type"></param>
         /// <param name="condition"></param>
         /// <param name="relevantFeature"></param>
-        public StatusMessage(string message, MessageType type, Func<bool> condition = null, FeatureType relevantFeature = FeatureType.None)
+        public StatusMessage(string message, MessageType type, Func<bool>? condition = null, FeatureType relevantFeature = FeatureType.None)
         {
             Message = message;
             Type = type;

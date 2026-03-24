@@ -1,4 +1,6 @@
-﻿namespace PPMTool.Data
+﻿using PPMTool.Data.Interfaces;
+
+namespace PPMTool.Data
 {
     /// <summary>
     /// A helper class to assist with finding how much of the tasks run during a financial year

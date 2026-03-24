@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace PPMTool.Enums
+namespace PPMTool.Data.Enums
 {
     /// <summary>
     /// RAG status for whether a task is in budget or not

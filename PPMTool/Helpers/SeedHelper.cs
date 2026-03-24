@@ -3,9 +3,10 @@ using System.Text;
 using System.Text.RegularExpressions;
 using LoremNET;
 using Microsoft.EntityFrameworkCore;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Helpers
 {
@@ -2644,6 +2645,13 @@ namespace PPMTool.Helpers
             return list;
         }
 
+        /// <summary>
+        /// Selects a random innate code task associated with the specified duty from the queryable collection.
+        /// </summary>
+        /// <param name="allTasks">An IQueryable collection of InnateCodeTask objects to search for tasks matching the specified duty.</param>
+        /// <param name="duty">The duty for which to retrieve a random innate code task.</param>
+        /// <returns>An InnateCodeTask object randomly selected from those associated with the specified duty.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if there are no innate code tasks associated with the specified duty.</exception>
         private static InnateCodeTask GetRandomTask(this IQueryable<InnateCodeTask> allTasks, Duty duty)
         {
             var rnd = new Random();
@@ -2816,6 +2824,107 @@ namespace PPMTool.Helpers
         public static string RemoveParenthesesText(string stringWithParentheses)
         {
             return Regex.Replace(stringWithParentheses, @"\s*\(.*?\)\s*", "");
+        }
+
+        /// <summary>
+        /// Seeds the database with a predefined set of features if they do not already exist.
+        /// </summary>
+        /// <remarks>This method is typically called during application startup to ensure that essential
+        /// features are present in the database. Existing features are not duplicated. Logging is used to provide
+        /// information about the seeding process.</remarks>
+        /// <param name="serviceProvider">The service provider used to resolve required services, such as the database context factory and logger.</param>
+        public static void SeedFeatures(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("SeedFeatures");
+
+            logger.LogInformation("Seeding features...");
+
+            using var context = dbContextFactory.CreateDbContext();
+
+            // Define the canonical seed list (ported from your SQL)
+            var seedFeatures = new List<Feature>
+            {
+                new Feature
+                {
+                    FeatureType = FeatureType.People,
+                    Name = "People",
+                    Description = "This is a mandatory feature that allows administrators to manage a team of people. People are at the centre of the data model so this cannot be disabled.",
+                    Enabled = true,
+                    MustAlwaysBeEnabled = true
+                },
+                new Feature
+                {
+                    FeatureType = FeatureType.ProjectsAndCapacity,
+                    Name = "Projects & Capacity",
+                    Description = "Allows mangers to add projects to the database and assign people to them. It also allows them to visualise the capacity of their team based on the project assignments and workload models of the people."
+                },
+                new Feature
+                {
+                    FeatureType = FeatureType.Absences,
+                    Name = "Absences",
+                    Description = "Allows mangers to add absences for team members, notifying project managers when their resources may be unavailable."
+                },
+                new Feature
+                {
+                    FeatureType = FeatureType.Skills,
+                    Name = "Skills",
+                    Description = "Allows administrators to curate a list of skill tags, people to add their skill profiles and tasks within projects to be associated with skill tags."
+                },
+                new Feature
+                {
+                    FeatureType = FeatureType.DevelopmentJourney,
+                    Name = "Development Journey",
+                    Description = "Allows the inclusion of a three-tier competency framework and the ability of staff and managers to use it as a tool to support development."
+                },
+                new Feature
+                {
+                    FeatureType = FeatureType.API,
+                    Name = "API",
+                    Description = "Enables the API endpoints. The available endpoints will be determined by the features enabled."
+                },
+                new Feature
+                {
+                    FeatureType = FeatureType.Timesheets,
+                    Name = "Timesheets",
+                    Description = "Allows people to enter weekly timesheet data against activity and task codes curated by administrators. This also enables workload model analysis to allow people to monitor how they are spending their time against their workload mdoel."
+                },
+                new Feature
+                {
+                    FeatureType = FeatureType.ProjectFinance,
+                    Name = "Project Finance",
+                    Description = "Allows managers to keep financial records associated with projects including funding sources and invoices. Allows the cost of projects to calculated."
+                },
+                new Feature
+                {
+                    FeatureType = FeatureType.DataDashboard,
+                    Name = "Data Dashboard",
+                    Description = "Provides a page visible to all system users that summarises key information and allows export of data from the database in structured reports."
+                }
+            };
+
+            // Pull existing names once
+            var existingNames = context.Features
+                .AsNoTracking()
+                .Select(f => f.Name.Clean())
+                .ToHashSet();
+
+            // Compare
+            var toInsert = seedFeatures
+                .Where(f => !existingNames.Contains(f.Name.Clean()))
+                .ToList();
+
+            // Any left to insert?
+            if (toInsert.Count == 0)
+            {
+                logger.LogInformation("No new features to seed (all already present).");
+                return;
+            }
+
+            context.Features.AddRange(toInsert);
+            context.SaveChanges();
+
+            logger.LogInformation("Seeded {Count} features: {Names}", toInsert.Count, string.Join(", ", toInsert.Select(f => f.Name)));
         }
     }
 }
