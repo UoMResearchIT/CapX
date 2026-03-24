@@ -1,0 +1,29 @@
+﻿@using PPMTool.Data
+@using PPMTool.Enums
+@inject NavigationManager Nav
+@inject PPMTool.Services.FeatureService FeatureService
+
+@if (!isFeatureEnabled)
+{
+    <StatusMessageComponent Message=@(new StatusMessage($"The '{Feature.ToNiceString()}' feature has not been enabled by your system administrator.", StatusMessage.MessageType.Error)) />
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+
+    [Parameter]
+    public FeatureType Feature { get; set; }
+
+    [Parameter] 
+    public RenderFragment ChildContent { get; set; }
+
+    private bool isFeatureEnabled = false;
+
+    protected override void OnInitialized()
+    {
+        isFeatureEnabled = FeatureService.IsFeatureEnabled(Feature);
+    }
+}

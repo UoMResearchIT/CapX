@@ -82,6 +82,7 @@ builder.Services.AddScoped<InvoiceService>();
 builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<FundingSourceService>();
+builder.Services.AddSingleton<FeatureService>();
 builder.Services.AddScoped<FacultyService>();
 builder.Services.AddScoped<SchoolService>();
 builder.Services.AddSingleton<APIAuthService>();
@@ -384,6 +385,13 @@ CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Clean local application file path
 FileHelper.CleanLocalApplicationFilePath(logger);
+
+// Initialise feature service cache
+using (var context = dbContextFactory.CreateDbContext())
+{
+    var featureService = app.Services.GetRequiredService<FeatureService>();
+    _ = featureService.IntialiseServiceCacheAsync(context);
+}
 
 // Run the app
 app.Run();

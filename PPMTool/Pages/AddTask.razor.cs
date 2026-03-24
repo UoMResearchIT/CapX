@@ -142,10 +142,18 @@ namespace PPMTool.Pages
         private IEnumerable<SkillTag> availableTags;
         private string autoCompleteText;
         private bool actualsLoading = false;
+        bool timesheetsEnabled;
+        bool financeEnabled;
+        bool skillsEnabled;
 
         protected override async Task OnInitializedAsync()
         {
             await base.OnInitializedAsync();
+
+            // Set the feature flags for the page based on the features enabled
+            bool timesheetsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Timesheets);
+            bool financeEnabled = FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance);
+            bool skillsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Skills);
 
             // Initialise the component if not expecting manual initialisation
             if (!IsSplit)
