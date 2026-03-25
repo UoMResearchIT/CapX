@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
-using PPMTool.Data.Helpers;
+using PPMTool.Helpers;
 using PPMTool.Services;
 using Radzen.Blazor;
 

@@ -213,7 +213,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        internal double GetProjectManagementCapacityOnDate(DateTime date)
+        public double GetProjectManagementCapacityOnDate(DateTime date)
         {
             // If person hasn't started on day then return zero
             if (StartDate > date) return 0;

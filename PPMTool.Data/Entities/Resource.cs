@@ -185,7 +185,7 @@ namespace PPMTool.Data.Entities
         /// Does not apply to leadership assignments.
         /// </summary>
         /// <param name="model"></param>
-        internal void UpdateBilledFTE(CostModel model)
+        public void UpdateBilledFTE(CostModel model)
         {
             // Do not apply indirects to leadership assignments
             BilledFTE = (model.HasIndirects() && !SubTask.IsLeadershipTask) ? AssignmentFTE * (1 + GlobalDefaults.BAUTopSliceFractionDefault) : AssignmentFTE;

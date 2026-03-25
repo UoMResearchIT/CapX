@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Tests.API
 {

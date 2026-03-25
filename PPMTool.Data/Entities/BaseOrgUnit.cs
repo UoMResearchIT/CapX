@@ -40,7 +40,7 @@ namespace PPMTool.Data.Entities
         /// Method to check that the name and code have a value
         /// </summary>
         /// <returns></returns>
-        internal bool Validate()
+        public bool Validate()
         {
             return !string.IsNullOrWhiteSpace(Name) && !string.IsNullOrWhiteSpace(Code);
         }

@@ -563,7 +563,7 @@ namespace PPMTool.Data.Entities
         /// <param name="project"></param>
         /// <param name="finrefs"></param>
         /// <returns>Assignment chunk representation of the resources on the task</returns>
-        internal IEnumerable<AssignmentChunk> UpdateSubTaskCosts(Project project, IEnumerable<FinancialReference> finrefs)
+        public IEnumerable<AssignmentChunk> UpdateSubTaskCosts(Project project, IEnumerable<FinancialReference> finrefs)
         {
             // Reset the totals for this sub task
             ActualCost = 0;
@@ -591,7 +591,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="personAssigned"></param>
         /// <returns></returns>
-        internal double GetAssignmentValueForPerson(Person personAssigned)
+        public double GetAssignmentValueForPerson(Person personAssigned)
         {
             return AssignedResources.FirstOrDefault(x => x.Person?.PersonId == personAssigned.PersonId)?.AssignmentFTE ?? 0;
         }
@@ -601,7 +601,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="personAssigned"></param>
         /// <returns></returns>
-        internal bool IsProvisionalResource(Person personAssigned)
+        public bool IsProvisionalResource(Person personAssigned)
         {
             return AssignedResources.FirstOrDefault(x => x.Person?.PersonId == personAssigned.PersonId)?.IsProvisional ?? false;
         }
