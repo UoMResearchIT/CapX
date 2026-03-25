@@ -166,7 +166,7 @@ namespace PPMTool.Data.Entities
         /// Generates a unique resource key based on the project, subtask and resource combination
         /// </summary>
         /// <returns></returns>
-        internal string GenerateUniqueResourceKey()
+        public string GenerateUniqueResourceKey()
         {
             // Should be a unique set of information as leadership tasks without IDs don't overlap
             var composite = $"{SubTask.OwningProject.RTP}|{SubTask.SubTaskId}|{SubTask.StartDate:yyyyMMdd}|{SubTask.EndDate:yyyyMMdd}|{ResourceId}";

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Services
 {
@@ -56,7 +57,7 @@ namespace PPMTool.Services
         public double GetFundsRequested(PPMToolContext context, int projectId)
         {
             return context.Invoices
-                .Where(x => x.Project.ProjectId == projectId && x.Status != Enums.InvoiceStatus.Cancelled)
+                .Where(x => x.Project.ProjectId == projectId && x.Status != InvoiceStatus.Cancelled)
                 .RoundedSum(x => x.Value, 0);
         }
     }

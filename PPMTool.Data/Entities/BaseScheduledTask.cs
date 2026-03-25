@@ -76,7 +76,7 @@ namespace PPMTool.Data.Entities
         /// <param name="startDate"></param>
         /// <param name="durationCalendarDays"></param>
         /// <returns></returns>
-        internal static double GetNumberOfBillableDays(DateTime startDate, int durationCalendarDays)
+        public static double GetNumberOfBillableDays(DateTime startDate, int durationCalendarDays)
         {
             var endDate = startDate.AddDays(durationCalendarDays);
             return GetNumberOfBillableDays(startDate, endDate);

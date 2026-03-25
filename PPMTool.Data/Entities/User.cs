@@ -97,7 +97,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="claimName"></param>
         /// <returns></returns>
-        internal bool MatchesClaim(string claimName)
+        public bool MatchesClaim(string claimName)
         {
             var emails = GetNormalisedEmailAddresses();
             return GetStandardisedUserName() == claimName || emails.Contains(claimName);

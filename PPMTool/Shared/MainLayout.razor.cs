@@ -196,7 +196,7 @@ namespace PPMTool.Shared
                         oldIncompleteSkillsValue != totalIncompleteSkills)
                     {
                         // Only expand the Admin menu item if SuperUser accessing the page and there are codes to be deactivated
-                        adminMenuItemExpanded = totalTimesheetCodesToDeactivate > 0 && loginView.ActiveUser.RoleType == Enums.RoleType.Superuser;
+                        adminMenuItemExpanded = totalTimesheetCodesToDeactivate > 0 && loginView.ActiveUser.RoleType == RoleType.Superuser;
 
                         // Now force a re-draw
                         StateHasChanged();

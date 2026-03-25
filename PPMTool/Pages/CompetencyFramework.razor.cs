@@ -3,8 +3,10 @@ using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
+using PPMTool.Helpers;
 using PPMTool.Services;
 using Radzen;
 using Xceed.Words.NET;
@@ -266,7 +268,7 @@ namespace PPMTool.Pages
                 Category = competency.Category.GetDescription();
                 Description = HtmlHelper.ConvertToPlainText(competency.Description);
                 LatestAssessmentDate = latestAssessment == null ? new DateTime() : DateTime.Parse(latestAssessment.DateCreated);
-                AssessmentStatus = latestAssessment == null ? Enums.AssessmentStatus.Unmet.ToNiceString() : latestAssessment.Status.ToNiceString();
+                AssessmentStatus = latestAssessment == null ? Data.Enums.AssessmentStatus.Unmet.ToNiceString() : latestAssessment.Status.ToNiceString();
                 Evidence = latestAssessment == null ? "Never assessed!" : HtmlHelper.ConvertToPlainText(latestAssessment.Evidence);
             }
         }

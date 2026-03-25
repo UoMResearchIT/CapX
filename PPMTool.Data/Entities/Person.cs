@@ -145,7 +145,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        internal double GetProjectWorkAvailabilityOnDate(DateTime date)
+        public double GetProjectWorkAvailabilityOnDate(DateTime date)
         {
             // If person hasn't started on day then return zero
             if (StartDate > date) return 0;
@@ -231,7 +231,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        internal double GetWorkloadModelTotalOnDate(DateTime date)
+        public double GetWorkloadModelTotalOnDate(DateTime date)
         {
             // If person hasn't started on day then return zero
             if (StartDate > date) return 0;
@@ -250,7 +250,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        internal int? GetGradeOnDate(DateTime date)
+        public int? GetGradeOnDate(DateTime date)
         {
             // If person hasn't started on day then return null
             if (StartDate > date) return null;
@@ -266,7 +266,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        internal WorkloadModelChange GetFirstWorkloadModelAfter(DateTime date)
+        public WorkloadModelChange GetFirstWorkloadModelAfter(DateTime date)
         {
             return WorkloadModelChanges
                 .Where(x => x.ChangeDate >= date)
@@ -279,7 +279,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        internal WorkloadModelChange GetLastWorkloadModelBefore(DateTime date)
+        public WorkloadModelChange GetLastWorkloadModelBefore(DateTime date)
         {
             return WorkloadModelChanges
                 .Where(x => x.ChangeDate <= date)

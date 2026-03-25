@@ -27,27 +27,27 @@ namespace PPMTool.Data.Entities
 
         public DateTime? CompletedDate { get; set; }
 
-        internal string GetNoteEditorText()
+        public string? GetNoteEditorText()
         {
             return Editor != null ? $"Last edited by {Editor?.Name ?? "[User Not Found]"} on {EditedDate.ToString("dd/MM/yyyy HH:mm:ss")}" : null;
         }
 
-        internal string GetNoteAuthorText()
+        public string GetNoteAuthorText()
         {
             return $"{Author?.Name ?? "[User Not Found]"} posted on {CreatedDate.ToString("dd/MM/yyyy HH:mm:ss")}";
         }
 
-        internal bool IsCompleted()
+        public bool IsCompleted()
         {
             return CompletedDate.HasValue;
         }
 
-        internal bool IsDue()
+        public bool IsDue()
         {
             return DueDate.HasValue && DueDate.Value.AddDays(-7) <= DateTime.Now && !IsCompleted() && !IsOverDue();
         }
 
-        internal bool IsOverDue()
+        public bool IsOverDue()
         {
             return DueDate.HasValue && DueDate.Value <= DateTime.Now && !IsCompleted();
         }
