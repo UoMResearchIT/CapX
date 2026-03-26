@@ -9,7 +9,7 @@ namespace PPMTool.Data.Helpers
         /// Method to build a configuration object injecting the connection string from the environment
         /// </summary>
         /// <returns></returns>
-        public static IConfiguration BuildConfiguration(string[] args)
+        public static IConfiguration BuildConfiguration()
         {
             // Create a new config builder
             var builder = new ConfigurationBuilder();

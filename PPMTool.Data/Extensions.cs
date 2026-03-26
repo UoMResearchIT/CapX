@@ -216,26 +216,26 @@ namespace PPMTool.Data
         public static DbContextOptionsBuilder AddDbProvider(
             this DbContextOptionsBuilder optionsBuilder,
             string connectionString,
-            IConfiguration configuration = null,
-            string dbProviderString = null)
+            IConfiguration? configuration = null,
+            string? dbProviderString = null)
         {
             if (configuration is null && string.IsNullOrWhiteSpace(dbProviderString))
             {
                 throw new InvalidOperationException("Configuration and DB provider string cannot both be null here!");
             }
 
-            var dbProvider = configuration.GetValue<string>("DbProvider");
+            var dbProvider = configuration?.GetValue<string>("DbProvider");
             Console.WriteLine($"** Using DB provider {dbProvider}");
             switch (dbProvider)
             {
                 case "sqlite":
-                    optionsBuilder.UseSqlite(connectionString, o => o.MigrationsAssembly("PPMTool.Migrations.Sqlite").UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+                    optionsBuilder.UseSqlite(connectionString, o => o.MigrationsAssembly(typeof(SqliteMigrationsMarker).Assembly.FullName).UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
                     break;
                 case "sqlserver":
-                    optionsBuilder.UseSqlServer(connectionString, o => o.MigrationsAssembly("PPMTool.Migrations.SqlServer"));
+                    optionsBuilder.UseSqlServer(connectionString, o => o.MigrationsAssembly(typeof(SqlServerMigrationsMarker).Assembly.FullName));
                     break;
                 case "postgresql":
-                    optionsBuilder.UseNpgsql(connectionString, o => o.MigrationsAssembly("PPMTool.Migrations.PostgresSql"));
+                    optionsBuilder.UseNpgsql(connectionString, o => o.MigrationsAssembly(typeof(PostgresSqlMigrationsMarker).Assembly.FullName));
                     break;
                 default:
                     throw new InvalidOperationException($"DesignTimeDbContextFactory: Unsupported DbProvider '{dbProvider}' specified in environment variable.");
