@@ -7,19 +7,19 @@ namespace PPMTool.Data.Entities
         public int NoteId { get; set; }
 
         [Required]
-        public string HtmlContent { get; set; }
+        public string HtmlContent { get; set; } = null!;
 
         [Required]
-        public virtual User Author { get; set; }
+        public virtual User Author { get; set; } = null!;
 
         [Required]
-        public virtual Project Project { get; set; }
+        public virtual Project Project { get; set; } = null!;
 
         public DateTime CreatedDate { get; set; }
 
         public DateTime EditedDate { get; set; }
 
-        public virtual User Editor { get; set; }
+        public virtual User? Editor { get; set; }
 
         public bool IsFinanceInfo { get; set; }
 

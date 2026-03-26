@@ -13,19 +13,19 @@ namespace PPMTool.Data.Entities
         /// The user who owns this API key
         /// </summary>
         [Required]
-        public virtual User Owner { get; set; }
+        public virtual User Owner { get; set; } = null!;
 
         /// <summary>
         /// The key itself
         /// </summary>
         [Required]
-        public string Key { get; set; }
+        public string Key { get; set; } = null!;
 
         /// <summary>
         /// Description of the key
         /// </summary>
         [Required]
-        public string Description { get; set; }
+        public string Description { get; set; } = null!;
 
         /// <summary>
         /// Whether the key is active or expired

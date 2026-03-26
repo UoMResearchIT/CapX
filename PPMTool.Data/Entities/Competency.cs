@@ -12,13 +12,13 @@ namespace PPMTool.Data.Entities
         /// Description of the competency
         /// </summary>
         [Required]
-        public string Description { get; set; }
+        public string Description { get; set; } = null!;
 
         /// <summary>
         /// HTML of how the competency can be demonstrated via a SMART objective
         /// </summary>
         [Required]
-        public string Objective { get; set; }
+        public string Objective { get; set; } = null!;
 
         /// <summary>
         /// Grade to which this competency belongs
@@ -59,7 +59,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// This is the ID of the competency if it existed in v1.8 of the paper version of the framework
         /// </summary>
-        public string LegacyId { get; set; }
+        public string LegacyId { get; set; } = null!;
 
         /// <summary>
         /// The number of the competency within the category-grade combination

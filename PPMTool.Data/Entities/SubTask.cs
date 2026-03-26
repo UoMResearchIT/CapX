@@ -67,7 +67,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// For now, restricted to a single predecessor task and an "finish-to-start" contraint
         /// </summary>
-        public virtual SubTask Predecessor { get; set; }
+        public virtual SubTask? Predecessor { get; set; }
 
         /// <summary>
         /// Represents the list of tasks for which this task is a predecessor
@@ -150,7 +150,8 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Project which owns the subtask
         /// </summary>
-        public virtual Project OwningProject { get; set; }
+        [Required]
+        public virtual Project OwningProject { get; set; } = null!;
 
         /// <summary>
         /// Skills that this task requires
@@ -286,40 +287,40 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Event invoked when the task type is changed
         /// </summary>
-        public event EventHandler TaskTypeChanged;
+        public event EventHandler? TaskTypeChanged;
         protected virtual void OnTaskTypeChanged(EventArgs e)
         {
-            EventHandler handler = TaskTypeChanged;
+            EventHandler? handler = TaskTypeChanged;
             handler?.Invoke(this, e);
         }
 
         /// <summary>
         /// Event invoked when the fixed start setting is changed
         /// </summary>
-        public event EventHandler FixedStartChanged;
+        public event EventHandler? FixedStartChanged;
         protected virtual void OnFixedStartChanged(EventArgs e)
         {
-            EventHandler handler = FixedStartChanged;
+            EventHandler? handler = FixedStartChanged;
             handler?.Invoke(this, e);
         }
 
         /// <summary>
         /// Event invoked when the end date fixed setting is changed
         /// </summary>
-        public event EventHandler EndDateDrivenChanged;
+        public event EventHandler? EndDateDrivenChanged;
         protected virtual void OnHasFixedEndDateChanged(EventArgs e)
         {
-            EventHandler handler = EndDateDrivenChanged;
+            EventHandler? handler = EndDateDrivenChanged;
             handler?.Invoke(this, e);
         }
 
         /// <summary>
         /// Event invoked when the is done setting is changed
         /// </summary>
-        public event EventHandler DoneChanged;
+        public event EventHandler? DoneChanged;
         protected virtual void OnDoneChanged(EventArgs e)
         {
-            EventHandler handler = DoneChanged;
+            EventHandler? handler = DoneChanged;
             handler?.Invoke(this, e);
         }
 
@@ -327,7 +328,7 @@ namespace PPMTool.Data.Entities
         /// Updates the unmet demand value for this task.
         /// </summary>
         /// <param name="assignedResources">List of resources to use in the update. If not supplied will use the resources saved on the entity.</param>
-        public void UpdateUnmetDemand(IEnumerable<Resource> assignedResources = null)
+        public void UpdateUnmetDemand(IEnumerable<Resource>? assignedResources = null)
         {
             if (assignedResources == null)
             {

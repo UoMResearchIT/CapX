@@ -12,13 +12,13 @@ namespace PPMTool.Data.Entities
         /// Name of the school or department
         /// </summary>
         [Required]
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
 
         /// <summary>
         /// Abbreviated name or code of the organisational unit.
         /// </summary>
         [Required]
-        public string Code { get; set; }
+        public string Code { get; set; } = null!;
 
         /// <summary>
         /// For soft deletion/visibility toggling

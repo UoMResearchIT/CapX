@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace PPMTool.Data.Entities
 {
@@ -24,7 +23,7 @@ namespace PPMTool.Data.Entities
         /// Details of the item as free text not captured by other fields
         /// </summary>
         [Required]
-        public string Description { get; set; }
+        public string Description { get; set; } = null!;
 
         /// <summary>
         /// Method to get a suitable description of the item for posting to a note

@@ -13,7 +13,7 @@ namespace PPMTool.Data.Entities
         /// The faculty to which this school or department belongs
         /// </summary>
         [Required]
-        public Faculty Faculty { get; set; }
+        public Faculty Faculty { get; set; } = null!;
 
         /// <summary>
         /// Return primary key

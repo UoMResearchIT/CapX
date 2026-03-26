@@ -24,7 +24,7 @@ namespace PPMTool.Data.Entities
         /// The principal investigator of the project (our customer)
         /// </summary>
         [Required]
-        public string PI { get; set; }
+        public string PI { get; set; } = null!;
 
         /// <summary>
         /// School within the faculty in which the project sits
@@ -36,12 +36,12 @@ namespace PPMTool.Data.Entities
         /// The project manager of this project
         /// </summary>
         [InverseProperty("ManagedProjects")]
-        public virtual Person ProjectManager { get; set; }
+        public virtual Person? ProjectManager { get; set; }
 
         /// <summary>
         /// The tasks that make up this project
         /// </summary>
-        public virtual IList<SubTask> SubTasks { get; set; }
+        public virtual IList<SubTask> SubTasks { get; set; } = new List<SubTask>();
 
         /// <summary>
         /// This is the amount of money the PI has requested from the funder
@@ -70,26 +70,26 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// The Innate Activity Code to which this work is booked on the timesheeting system
         /// </summary>
-        public virtual InnateCode InnateActivity { get; set; }
+        public virtual InnateCode? InnateActivity { get; set; }
 
         /// <summary>
         /// HTML formatted text representing the description of the project
         /// </summary>
         [Required]
-        public string Description { get; set; }
+        public string Description { get; set; } = null!;
 
         /// <summary>
         /// Link to the scrum project on GitHub Projects
         /// </summary>
         [DataType(DataType.Url)]
-        public string ScrumProjectLink { get; set; }
+        public string? ScrumProjectLink { get; set; }
 
         /// <summary>
         /// Link to the RSE request document on SharePoint
         /// </summary>
         [Required]
         [DataType(DataType.Url)]
-        public string RequestDocLink { get; set; }
+        public string RequestDocLink { get; set; } = null!;
 
         /// <summary>
         /// List of people who follow the project updates
@@ -120,17 +120,17 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// List of Invoices associated with this project
         /// </summary>
-        public virtual ICollection<Invoice> Invoices { get; set; }
+        public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
 
         /// <summary>
         /// List of payments associate with this project
         /// </summary>
-        public virtual ICollection<Payment> Payments { get; set; }
+        public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
         /// <summary>
         /// List of funding sources for this project
         /// </summary>
-        public virtual ICollection<FundingSource> FundingSources { get; set; }
+        public virtual ICollection<FundingSource> FundingSources { get; set; } = new List<FundingSource>();
 
         /// <summary>
         /// Constructor also adds default status messages
@@ -245,7 +245,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool HasStartedButHasNoScrumProjectLink()
         {
-            return !ProjectStatus.IsCancelled() && DateTime.Today >= StartDate && DateTime.Today <= EndDate && !ScrumProjectLink.IsValidURL();
+            return !ProjectStatus.IsCancelled() && DateTime.Today >= StartDate && DateTime.Today <= EndDate && !(ScrumProjectLink?.IsValidURL() ?? false);
         }
 
         /// <summary>

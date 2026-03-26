@@ -9,7 +9,7 @@ namespace PPMTool.Data.Entities
         public int InnateCodeTaskId { get; set; }
 
         [Required]
-        public string TaskName { get; set; }
+        public string TaskName { get; set; } = null!;
 
         /// <summary>
         /// This is the category of work that this timesheet code is classified as when doing WLM analysis

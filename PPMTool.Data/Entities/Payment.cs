@@ -17,13 +17,13 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Optional invoice to which the payent is linked
         /// </summary>
-        public virtual Invoice Invoice { get; set; }
+        public virtual Invoice? Invoice { get; set; }
 
         /// <summary>
         /// Mandatory funding source to which payment is attached
         /// </summary>
         [Required]
-        public virtual FundingSource Source { get; set; }
+        public virtual FundingSource Source { get; set; } = null!;
 
         /// <summary>
         /// To identify the Invoice in the logs and on exports

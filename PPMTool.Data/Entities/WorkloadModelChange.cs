@@ -76,7 +76,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Optional notes to explain anything about the change
         /// </summary>
-        public string Notes { get; set; }
+        public string? Notes { get; set; }
 
         public override string GetSensibleObjectName()
         {

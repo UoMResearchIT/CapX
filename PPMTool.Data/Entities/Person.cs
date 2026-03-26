@@ -11,7 +11,7 @@ namespace PPMTool.Data.Entities
     {
         public int PersonId { get; set; }
 
-        private string name;
+        private string name = null!;
         /// <summary>
         /// Name of the person
         /// </summary>
@@ -25,7 +25,8 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Initials of the person -- auto populated but can be edited
         /// </summary>
-        public string ShortName { get; set; }
+        [Required]
+        public string ShortName { get; set; } = null!;
 
         /// <summary>
         /// When they started in post
@@ -48,12 +49,13 @@ namespace PPMTool.Data.Entities
         /// Line manager of this person
         /// </summary>
         [JsonIgnore]
-        public virtual Person LineManager { get; set; }
+        [Required]
+        public virtual Person LineManager { get; set; } = null!;
 
         /// <summary>
         /// Pipe-separated list of timesheet tasks that represent the person's timesheet template
         /// </summary>
-        public string TimesheetTemplateData { get; set; }
+        public string? TimesheetTemplateData { get; set; }
 
         /// <summary>
         /// Any changes to their WLMs

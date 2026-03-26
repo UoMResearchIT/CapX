@@ -19,19 +19,19 @@ namespace PPMTool.Data.Entities
         /// UoM username of the user
         /// </summary>
         [Required]
-        public string CASUserName { get; set; }
+        public string CASUserName { get; set; } = null!;
 
         /// <summary>
         /// Display name of the user (will get it from the person if there is one)
         /// </summary>
         [Required]
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
 
-        private Person person;
+        private Person? person;
         /// <summary>
         /// Optional person associated with this user
         /// </summary>
-        public virtual Person Person
+        public virtual Person? Person
         {
             get => person;
             set
@@ -50,12 +50,13 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// DateTime when the user last logged in
         /// </summary>
-        public string LastLoggedIn { get; set; }
+        public string? LastLoggedIn { get; set; }
 
         /// <summary>
         /// Comma separated list of email addresses for this user
         /// </summary>
-        public string EmailAddress { get; set; }
+        [Required]
+        public string EmailAddress { get; set; } = null!;
 
         /// <summary>
         /// List of notes this person has authored

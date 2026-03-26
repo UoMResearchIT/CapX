@@ -18,13 +18,13 @@ namespace PPMTool.Data.Entities
         /// The owner of the skill tag instance
         /// </summary>
         [Required]
-        public virtual Person Owner { get; set; }
+        public virtual Person Owner { get; set; } = null!;
 
         /// <summary>
         /// Which skill tag this instance refers to
         /// </summary>
         [Required]
-        public virtual SkillTag SkillTag { get; set; }
+        public virtual SkillTag SkillTag { get; set; } = null!;
 
         /// <summary>
         /// The last time this skill was used "in anger"

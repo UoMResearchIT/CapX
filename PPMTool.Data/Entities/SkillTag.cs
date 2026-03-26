@@ -14,9 +14,9 @@ namespace PPMTool.Data.Entities
         /// This is the name of the skill tag as visible to users
         /// </summary>
         [Required]
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
 
-        private string controlledName;
+        private string controlledName = null!;
         /// <summary>
         /// This is the controlled vocabulary name for the skill tag -- historically it has come from Wikipedia main entries
         /// </summary>
@@ -44,7 +44,7 @@ namespace PPMTool.Data.Entities
         /// Instances of this skill tag owned by people (not serialisable to avoid circular references)
         /// </summary>
         [JsonIgnore]
-        public virtual ICollection<OwnedSkill> OwnedSkills { get; set; }
+        public virtual ICollection<OwnedSkill>? OwnedSkills { get; set; }
 
         /// <summary>
         /// Rareness of the skill based on how many people have an owned instance of it
@@ -59,7 +59,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// The tasks that require this skill
         /// </summary>
-        public virtual ICollection<SubTask> TasksNeedingThisSkill { get; set; }
+        public virtual ICollection<SubTask>? TasksNeedingThisSkill { get; set; }
 
         /// <summary>
         /// Required override for logging identification

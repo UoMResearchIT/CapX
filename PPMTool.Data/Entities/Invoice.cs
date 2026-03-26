@@ -18,7 +18,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Reference to either an actual invoice or a payment request of sorts
         /// </summary>
-        public string InvoiceReference { get; set; }
+        public string? InvoiceReference { get; set; }
 
         /// <summary>
         /// Status of the invoice
@@ -31,13 +31,13 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         [DataType(DataType.Url)]
-        public string InvoiceUrl { get; set; }
+        public string InvoiceUrl { get; set; } = null!;
 
         /// <summary>
         /// An optional list of payments that pay all or part of this invoice
         /// </summary>
         [Required]
-        public virtual ICollection<Payment> Payments { get; set; }
+        public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
         /// <summary>
         /// To identify the Invoice in the logs and on exports

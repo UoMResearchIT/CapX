@@ -11,13 +11,13 @@ namespace PPMTool.Data.Entities
         /// Code of the activity
         /// </summary>
         [Required]
-        public string ActivityCode { get; set; }
+        public string ActivityCode { get; set; } = null!;
 
         /// <summary>
         /// Name of the activity
         /// </summary>
         [Required]
-        public string ActivityName { get; set; }
+        public string ActivityName { get; set; } = null!;
 
         /// <summary>
         /// Whether this code is active and can be booked to

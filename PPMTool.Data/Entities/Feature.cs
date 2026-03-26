@@ -26,7 +26,7 @@ namespace PPMTool.Data.Entities
         /// Description of the feature
         /// </summary>
         [Required]
-        public string Description { get; set; }
+        public string Description { get; set; } = null!;
 
         /// <summary>
         /// State of the feature (enabled/disabled)

@@ -14,7 +14,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// HTML string detailing the evidence supporting the assessment.
         /// </summary>
-        public string Evidence { get; set; }
+        public string Evidence { get; set; } = null!;
 
         /// <summary>
         /// Date the assessment was created.
@@ -37,13 +37,13 @@ namespace PPMTool.Data.Entities
         /// Description of the revision of the competency this assessment is associated with.
         /// </summary>
         [Required]
-        public string CompetencyDescription { get; set; }
+        public string CompetencyDescription { get; set; } = null!;
 
         /// <summary>
         /// Objective of the revision of the competency this assessment is associated with.
         /// </summary>
         [Required]
-        public string CompetencyObjective { get; set; }
+        public string CompetencyObjective { get; set; } = null!;
 
         /// <summary>
         /// ID of the competency this assessment relates to

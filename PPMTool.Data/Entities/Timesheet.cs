@@ -25,7 +25,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         [InverseProperty("Timesheets")]
-        public virtual Person Owner { get; set; }
+        public virtual Person Owner { get; set; } = null!;
 
         /// <summary>
         /// The date when the timesheet was created
@@ -42,7 +42,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Additional information about the timesheet
         /// </summary>
-        public string Info { get; set; }
+        public string? Info { get; set; }
 
         /// <summary>
         /// Represents the status of the timesheet (submitted, approved, rejected, etc.)
@@ -58,7 +58,7 @@ namespace PPMTool.Data.Entities
         /// Represents the person who made the status change.
         /// </summary>
         [InverseProperty("TimesheetsChanged")]
-        public virtual Person StatusChangedBy { get; set; }
+        public virtual Person? StatusChangedBy { get; set; }
 
         /// <summary>
         /// Represents the records of hours spent on tasks on the days associated with the specific timesheet.

@@ -9,7 +9,7 @@ namespace PPMTool.Data.Entities
     public abstract class BaseTask : CostedItem, IWithin
     {
         [Required]
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
 
         public DateTime StartDate { get; set; } = DateTime.Today;
 
