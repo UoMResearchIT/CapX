@@ -21,7 +21,7 @@ namespace PPMTool.Data
 
         public string Colour { get; }
 
-        public string TooltipMessages { get; }
+        public string? TooltipMessages { get; }
 
         private bool isHatched;
         private bool isFake;
@@ -34,7 +34,7 @@ namespace PPMTool.Data
             double value1,
             double value2,
             bool isHatched,
-            string tooltipMessages = null,
+            string? tooltipMessages = null,
             bool isFake = false)
         {
             StartDate = start;

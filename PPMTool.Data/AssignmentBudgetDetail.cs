@@ -11,7 +11,7 @@ namespace PPMTool.Data
         /// <summary>
         /// The resource assignment details
         /// </summary>
-        public Resource Resource { get; set; }
+        public Resource Resource { get; set; } = null!;
 
         /// <summary>
         /// Budget status of the assignment

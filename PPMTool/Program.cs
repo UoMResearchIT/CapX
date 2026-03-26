@@ -229,7 +229,7 @@ builder.Services.AddSwaggerGen(
         opt.OperationFilter<SkillTagShallowOperationFilter>();
 
         // Include XMl comments for better documentation in Swagger UI
-        string? docFilePath = Directory.GetFiles(
+        string docFilePath = Directory.GetFiles(
             path: AppContext.BaseDirectory,
             searchPattern: $"{Assembly.GetExecutingAssembly().GetName().Name}.xml",
             searchOption: SearchOption.AllDirectories)

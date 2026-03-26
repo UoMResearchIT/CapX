@@ -66,7 +66,7 @@ namespace PPMTool.Tests.API
                     if (report != null)
                     {
                         ManagerApiKey = key.Key;
-                        ManagerName = key.Owner.Person.Name;
+                        ManagerName = key.Owner!.Person?.Name;
                         ManagerReport = report.Name;
                         return;
                     }

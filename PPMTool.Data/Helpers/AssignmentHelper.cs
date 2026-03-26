@@ -27,9 +27,9 @@ namespace PPMTool.Data.Helpers
             IEnumerable<FinancialReference> finrefs,
             DateTime? startDate = null,
             DateTime? endDate = null,
-            IEnumerable<SubTask> tasksInWindow = null,
+            IEnumerable<SubTask>? tasksInWindow = null,
             bool shouldCalculateCosts = false,
-            IDictionary<string, AssignmentBudgetDetail> budgetDetails = null)
+            IDictionary<string, AssignmentBudgetDetail>? budgetDetails = null)
         {
             // New list
             var data = new List<AssignmentChunk>();

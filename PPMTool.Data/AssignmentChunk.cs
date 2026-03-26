@@ -9,7 +9,7 @@ namespace PPMTool.Data
     /// </summary>
     public class AssignmentChunk : DateRange
     {
-        public string EmployeeName { get; set; }
+        public string EmployeeName { get; set; } = null!;
 
         [Description("The grade of the person for the duration of this assignment")]
         public int Grade { get; set; }
@@ -26,17 +26,17 @@ namespace PPMTool.Data
         [Description("The FTE we are recharging to the project for this assignment")]
         public double BilledFTE { get; set; }
 
-        public string ProjectName { get; set; }
+        public string ProjectName { get; set; } = null!;
 
-        public string LeadRSE { get; set; }
+        public string LeadRSE { get; set; } = null!;
 
-        public string TaskName { get; set; }
+        public string TaskName { get; set; } = null!;
 
-        public string PI { get; set; }
+        public string PI { get; set; } = null!;
 
-        public string Faculty { get; set; }
+        public string Faculty { get; set; } = null!;
 
-        public string School { get; set; }
+        public string School { get; set; } = null!;
 
         /// <summary>
         /// This is the estimated salary cost of the individual resource based on their grade and FTE -- essentially the cost to the department
@@ -66,19 +66,19 @@ namespace PPMTool.Data
 
         public int FinancialYear { get; set; }
 
-        public string AccountCode { get; set; }
+        public string? AccountCode { get; set; }
 
         [Description("Based on how we understand the costing was done - DI/DA or something else because DA/DI doesn't apply")]
-        public string FundingSourceType { get; set; }
+        public string? FundingSourceType { get; set; }
 
         [Description("Costs of the assignment that we estimate will be covered by what we have been told is in the funding source")]
         public double AmountCovered { get; set; }
 
         [Description("Whether the overall assignment is considered fully covered, partially covered or not covered at all by the money in the funding source")]
-        public string BudgetStatus { get; set; }
+        public string BudgetStatus { get; set; } = null!;
 
         [Description("Supplementary notes on what we know about the funding source used to cover the cost of this assignment")]
-        public string FundingSourceDescription { get; set; }
+        public string? FundingSourceDescription { get; set; }
 
         [Description("Whether the assignment is a leadership assignment which are not always rechargeable")]
         public bool IsLeadershipAssignment { get; set; }
