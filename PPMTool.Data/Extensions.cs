@@ -224,18 +224,19 @@ namespace PPMTool.Data
                 throw new InvalidOperationException("Configuration and DB provider string cannot both be null here!");
             }
 
-            var dbProvider = configuration?.GetValue<string>("DbProvider");
+            // If we pass in a DB Provider then use that, otherwise look in the configuration (which will check environment variables) for a provider
+            var dbProvider = dbProviderString == null ? configuration?.GetValue<string>("DbProvider") : dbProviderString;
             Console.WriteLine($"** Using DB provider {dbProvider}");
             switch (dbProvider)
             {
                 case "sqlite":
-                    optionsBuilder.UseSqlite(connectionString, o => o.MigrationsAssembly(typeof(SqliteMigrationsMarker).Assembly.FullName).UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+                    optionsBuilder.UseSqlite(connectionString, o => o.MigrationsAssembly("PPMTool.Migrations.Sqlite").UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
                     break;
                 case "sqlserver":
-                    optionsBuilder.UseSqlServer(connectionString, o => o.MigrationsAssembly(typeof(SqlServerMigrationsMarker).Assembly.FullName));
+                    optionsBuilder.UseSqlServer(connectionString, o => o.MigrationsAssembly("PPMTool.Migrations.SqlServer"));
                     break;
                 case "postgresql":
-                    optionsBuilder.UseNpgsql(connectionString, o => o.MigrationsAssembly(typeof(PostgresSqlMigrationsMarker).Assembly.FullName));
+                    optionsBuilder.UseNpgsql(connectionString, o => o.MigrationsAssembly("PPMTool.Migrations.PostgresSql"));
                     break;
                 default:
                     throw new InvalidOperationException($"DesignTimeDbContextFactory: Unsupported DbProvider '{dbProvider}' specified in environment variable.");
