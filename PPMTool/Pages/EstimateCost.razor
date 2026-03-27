@@ -1,6 +1,7 @@
 ﻿@page "/estimatecost"
 @inherits BasePage
 @using PPMTool.Data
+@using PPMTool.Data.Helpers
 @using PPMTool.Enums
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
@@ -37,7 +38,7 @@
                                  Component="CostModel" /><br />
                     <RadzenDropDown class="radzen-dropdown"
                                     @bind-Value="CostModel"
-                                    Data="@CostModelSelectionOptions.DisplayOrder"
+                                    Data="@DisplayOrderHelper.GetOrderListOfCostModels()"
                                     Name="CostModel">
                         <Template Context="cost">
                             @($"{((CostModel)cost).GetAttribute<DisplayAttribute>().Name} : {((CostModel)cost).GetDescription()}")

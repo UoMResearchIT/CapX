@@ -129,7 +129,7 @@
                     <div class="row">
                         <div class="col-6">
                             <RadzenLabel class="radzen-form-label" Text="Cost Model" /><br />
-                            <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.CostModel" Data="@(Enum.GetValues(typeof(CostModel)))">
+                            <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.CostModel" Data="@costModels">
                                 <Template Context="cost">
                                     @($"{((CostModel)cost).GetAttribute<DisplayAttribute>().Name} : {((CostModel)cost).GetDescription()}")
                                 </Template>
