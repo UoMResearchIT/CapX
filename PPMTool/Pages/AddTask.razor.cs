@@ -638,9 +638,6 @@ namespace PPMTool.Pages
         {
             LogInformation($"Task {TaskModel?.SubTaskId}: Created new row for {resource.GetSensibleObjectName()}");
 
-            // Add task explicitly as needed for cost calculation
-            resource.SubTask = taskModel;
-
             // Add to the data grid
             dataGridEntities.Add(resource);
 
@@ -687,6 +684,12 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override async Task SaveRow(Resource entity)
         {
+            // Ensure the resource has the subtask set to allow following calculations
+            if (entity.SubTask == null)
+            {
+                entity.SubTask = TaskModel;
+            }
+
             // Update the billed FTE
             entity.UpdateBilledFTE(projectModel.CostModel);
 

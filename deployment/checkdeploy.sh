@@ -36,6 +36,7 @@ output=$(git rev-list --left-right --count HEAD...@{upstream} | cut -f2 || echo 
 if [ "${output}" -gt 0 ]; then
   # Run the dploy script with the same environment
   echo "Pulling and deploying as changes detected on $BRANCH"
+  git pull
   "${REPO_DIR}/deployment/deploy.sh" "${ENVIRONMENT}"
 else
   echo "Up-to-date on $BRANCH branch; no redeploy"
