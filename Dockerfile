@@ -10,9 +10,13 @@ ARG BUILD_CONFIG=Local
 WORKDIR /src
 COPY nuget.config nuget.config
 
-COPY PPMTool/PPMTool.csproj PPMTool/PPMTool.csproj
 COPY PPMTool/PPMTool.sln PPMTool/PPMTool.sln
+COPY PPMTool/PPMTool.csproj PPMTool/PPMTool.csproj
 COPY PPMTool.Tests/PPMTool.Tests.csproj PPMTool.Tests/PPMTool.Tests.csproj
+COPY PPMTool.Data/PPMTool.Data.csproj PPMTool.Data/PPMTool.Data.csproj
+COPY PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj
+COPY PPMTool.Migrations.SqlServer/PPMTool.Migrations.SqlServer.csproj PPMTool.Migrations.SqlServer/PPMTool.Migrations.SqlServer.csproj
+COPY PPMTool.Migrations.PostgreSql/PPMTool.Migrations.PostgreSql.csproj PPMTool.Migrations.PostgreSql/PPMTool.Migrations.PostgreSql.csproj
 
 # Restore packages
 RUN dotnet nuget locals all --clear \
@@ -20,6 +24,10 @@ RUN dotnet nuget locals all --clear \
 
 # Copy full sources (inc. git for GitInfo library)
 COPY PPMTool PPMTool
+COPY PPMTool.Data PPMTool.Data
+COPY PPMTool.Migrations.Sqlite PPMTool.Migrations.Sqlite
+COPY PPMTool.Migrations.SqlServer PPMTool.Migrations.SqlServer
+COPY PPMTool.Migrations.PostgreSql PPMTool.Migrations.PostgreSql
 COPY .git .git
 
 # Second restore needed for .NET 10 EF tools but don't know why
