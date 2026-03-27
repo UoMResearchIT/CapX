@@ -104,7 +104,7 @@ namespace PPMTool.Pages
                     PersonService.Update(Context, personModel);
 
                     // Send emails based on diff information (fire and forget)
-                    _ = EmailService.SendAbsenceEmailNotificationsAsync(newAbsences, updatedAbsences, deletedAbsences);
+                    _ = EmailService.SendAbsenceEmailNotificationsAsync(personModel.PersonId, newAbsences, updatedAbsences, deletedAbsences);
                 }
                 else
                 {
