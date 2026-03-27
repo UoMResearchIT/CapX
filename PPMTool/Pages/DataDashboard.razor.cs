@@ -1259,11 +1259,11 @@ namespace PPMTool.Pages
                             AddSummaryRow(ws, 6, "How much we could recover (if all work we do as assignments is paid for)", moneyFormat, $"=Costs!N{totalRow}");
                             AddSummaryRow(ws, 7, "How much we can't recover as money ran out (i.e. work we did for free)", moneyFormat, $"=Costs!Q{totalRow} - Costs!N{totalRow}");
                             AddSummaryRow(ws, 8, "How much we actually can recover (based on money in the project budgets)", moneyFormat, null, "=R[-2]C + R[-1]C");
-                            AddSummaryRow(ws, 9, "Actual shortfall against cost recovery target due to combination of working for free and under assignment", moneyFormat, null, "=R[-1]C + R[-4]C");
+                            AddSummaryRow(ws, 9, "Actual shortfall against cost recovery target due to combination of working for free and under assignment", moneyFormat, null, "=R[-1]C - R[-4]C");
                             AddSummaryRow(ws, 10, "How much ITS give us (baseline budget)", moneyFormat, null, "=R[-8]C * R[-7]C / 12");
-                            AddSummaryRow(ws, 11, "Shortfall in the budget provided by ITS to cover current operation (salary estimate)", moneyFormat, null, "=R[-1]C - (R[-6]C - R[-3]C)");
+                            AddSummaryRow(ws, 11, "Shortfall in the budget provided by ITS to cover current operation (salary estimate)", moneyFormat, null, "=R[-1]C - (R[-7]C - R[-3]C)");
                             AddSummaryRow(ws, 12, "How much we actually cost (from tracker)", moneyFormat, $"Costs!D{totalRow}");
-                            AddSummaryRow(ws, 13, "Shortfall in the budget provided by ITS to cover operation based on actual costs from tracker", moneyFormat, null, "=R[-3]C - (R[-1]C - R[-4]C)");
+                            AddSummaryRow(ws, 13, "Shortfall in the budget provided by ITS to cover operation based on actual costs from tracker", moneyFormat, null, "=R[-3]C - (R[-1]C - R[-5]C)");
 
                             // Style final row
                             range = ws.Range("A13:B13");

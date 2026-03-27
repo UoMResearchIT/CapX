@@ -29,6 +29,7 @@ namespace PPMTool.Data.Context
         public DbSet<FundingSource> FundingSources { get; set; }
         public DbSet<School> Schools { get; set; }
         public DbSet<Faculty> Faculties { get; set; }
+        public DbSet<Feature> Features { get; set; }
 
         /// <summary>
         /// Inject options.

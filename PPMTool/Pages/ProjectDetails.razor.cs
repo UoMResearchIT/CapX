@@ -119,6 +119,11 @@ namespace PPMTool.Pages
         private bool lastDue;
         private CancellationTokenSource loadCts;
 
+        // Feature statuses for ease of showing/hiding aspects of the page
+        private bool financeEnabled;
+        private bool timesheetsEnabled;
+        private bool skillsEnabled;
+
         /// <summary>
         /// Mention state
         /// </summary>
@@ -147,6 +152,17 @@ namespace PPMTool.Pages
             public double ClientHeight { get; set; }
         }
 
+        /// <summary>
+        /// Fired when the component is first created - used here to check feature flags and log the page view
+        /// </summary>
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+            financeEnabled = FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance);
+            timesheetsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Timesheets);
+            skillsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Skills);
+            LogInformation("Viewing project details");
+        }
 
         /// <summary>
         /// Fired when the paramters are changed
@@ -206,6 +222,7 @@ namespace PPMTool.Pages
         private async Task LoadDataAsync(CancellationToken ct)
         {
             Debug.WriteLine("** [Project Details] Loading Data...");
+
             try
             {
                 Loading = true;

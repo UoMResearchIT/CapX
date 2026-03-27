@@ -334,5 +334,13 @@ namespace PPMTool.Shared
             ErrorMessage = null;
             StateHasChanged();
         }
+
+        /// <summary>
+        /// Force a redraw of the component
+        /// </summary>
+        internal void Render()
+        {
+            StateHasChanged();
+        }
     }
 }
