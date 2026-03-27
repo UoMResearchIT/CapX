@@ -236,7 +236,7 @@ namespace PPMTool.Data
                     optionsBuilder.UseSqlServer(connectionString, o => o.MigrationsAssembly("PPMTool.Migrations.SqlServer"));
                     break;
                 case "postgresql":
-                    optionsBuilder.UseNpgsql(connectionString, o => o.MigrationsAssembly("PPMTool.Migrations.PostgresSql"));
+                    optionsBuilder.UseNpgsql(connectionString, o => o.MigrationsAssembly("PPMTool.Migrations.PostgreSql"));
                     break;
                 default:
                     throw new InvalidOperationException($"DesignTimeDbContextFactory: Unsupported DbProvider '{dbProvider}' specified in environment variable.");

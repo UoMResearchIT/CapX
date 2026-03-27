@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PPMTool.Migrations.Sqlite",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PPMTool.Migrations.SqlServer", "..\PPMTool.Migrations.SqlServer\PPMTool.Migrations.SqlServer.csproj", "{4DB7A701-1E01-4D1D-9562-8BA99DED4E2D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PPMTool.Migrations.PostgresSql", "..\PPMTool.Migrations.PostgresSql\PPMTool.Migrations.PostgresSql.csproj", "{52AB5DB2-A6D6-4709-91C3-AF0E171E7A20}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PPMTool.Migrations.PostgreSql", "..\PPMTool.Migrations.PostgreSql\PPMTool.Migrations.PostgreSql.csproj", "{52AB5DB2-A6D6-4709-91C3-AF0E171E7A20}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PPMTool.Data", "..\PPMTool.Data\PPMTool.Data.csproj", "{F7A406D0-554B-4349-B7BE-55B35F49F7E3}"
 EndProject

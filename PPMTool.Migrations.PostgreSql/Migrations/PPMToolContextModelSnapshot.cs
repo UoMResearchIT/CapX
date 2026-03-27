@@ -2,21 +2,18 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PPMTool.Data.Context;
 
 #nullable disable
 
-namespace PPMTool.Migrations.PostgresSql.Migrations
+namespace PPMTool.Migrations.PostgreSql.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    [Migration("20260326152918_InitialCreate")]
-    partial class InitialCreate
+    partial class PPMToolContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
