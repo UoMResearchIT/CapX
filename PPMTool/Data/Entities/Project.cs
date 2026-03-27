@@ -59,7 +59,7 @@ namespace PPMTool.Data.Entities
         /// The cost model this project uses
         /// </summary>
         [Required]
-        public CostModel CostModel { get; set; }
+        public CostModel CostModel { get; set; } = CostModel.TechAndLeadershipWithIndirects;
 
         /// <summary>
         /// The status of the project
