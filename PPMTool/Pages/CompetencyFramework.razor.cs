@@ -671,48 +671,28 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Adds an assessment
+        /// Adds or updates an assessment
         /// </summary>
         /// <param name="assessment"></param>
-        private string AddAssessment(CompetencyAssessment assessment)
+        /// <param name="isUpdate"></param>
+        /// <returns>An error message or empty string if successful</returns>
+        private string AddOrUpdateAssessment(CompetencyAssessment assessment, bool isUpdate = false)
         {
-            LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
+            LogInformation($"{(isUpdate ? "Updating" : "Adding")} assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
             if (ValidateAssessment(assessment, out var message))
             {
-                CompetencyService.AddAssessment(Context, assessment);
-                UpdateMet();
-                StateHasChanged();
-                return string.Empty;
-            }
-            ShowValidationError(message);
-            StateHasChanged();
-            return message;
-        }
-
-        /// <summary>
-        /// Updates an assessment
-        /// </summary>
-        /// <param name="assessment"></param>
-        private string UpdateAssessment(CompetencyAssessment assessment)
-        {
-            LogInformation($"Updating assessment to Evidence: \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
-            if (ValidateAssessment(assessment, out var message))
-            {
-                var trackedAssessment = Context.CompetencyAssessments
-                    .FirstOrDefault(x => x.CompetencyAssessmentId == assessment.CompetencyAssessmentId);
-                if (trackedAssessment == null)
+                try
                 {
-                    message = "Assessment could not be found to update.";
-                    ShowValidationError(message);
-                    StateHasChanged();
-                    return message;
+                    _ = isUpdate ?
+                    CompetencyService.UpdateAssessment(Context, assessment) :
+                    CompetencyService.AddAssessment(Context, assessment);
+                    UpdateMet();
+                    return string.Empty;
                 }
-
-                ApplyAssessmentValues(trackedAssessment, assessment);
-                CompetencyService.UpdateAssessment(Context, trackedAssessment);
-                UpdateMet();
-                StateHasChanged();
-                return string.Empty;
+                catch (Exception ex)
+                {
+                    message = $"Failed to {(isUpdate ? "update" : "add")} assessment: {ex.Message}";
+                }
             }
             ShowValidationError(message);
             StateHasChanged();
@@ -740,7 +720,8 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private bool ValidateAssessment(CompetencyAssessment assessment, out string message)
         {
-            if (string.IsNullOrWhiteSpace(assessment.Evidence) || string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.Evidence)))
+            // Only check the evidence required condition when not setting an assessment to unmet
+            if ((string.IsNullOrWhiteSpace(assessment.Evidence) || string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.Evidence))) && assessment.Status != AssessmentStatus.Unmet)
             {
                 message = "Evidence is required!";
                 return false;
@@ -757,16 +738,6 @@ namespace PPMTool.Pages
             }
             message = string.Empty;
             return true;
-        }
-
-        /// <summary>
-        /// Copy edited values back onto the tracked assessment entity before persisting.
-        /// </summary>
-        /// <param name="target"></param>
-        /// <param name="source"></param>
-        private static void ApplyAssessmentValues(CompetencyAssessment target, CompetencyAssessment source)
-        {
-            target.CopyValuesFrom(source);
         }
 
         /// <summary>
