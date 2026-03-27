@@ -67,6 +67,7 @@ To set this up, create a `.env` file in the repository root with the following r
 | `SUPERUSER_NAME` | Name of the superuser (required if seeding) |
 | `SUPERUSER_USERNAME` | Username of the superuser (required if seeding) |
 | `SUPERUSER_EMAIL` | Email of the superuser (required if seeding) |
+| `DB_PROVIDER` | Which DB provider should be used. Supports sqlite, sqlserver, postgresql values. |
 
 The following variables need only be set when not using the "Local" solution configuration:
 
