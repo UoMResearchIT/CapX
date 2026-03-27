@@ -18,13 +18,13 @@ namespace PPMTool.Data
         /// Represents the innate code
         /// </summary>
         [Required]
-        public InnateCode InnateCode { get; set; }
+        public InnateCode InnateCode { get; set; } = null!;
 
         /// <summary>
         /// Represents the innate code task
         /// </summary>
         [Required]
-        public InnateCodeTask InnateCodeTask { get; set; }
+        public InnateCodeTask InnateCodeTask { get; set; } = null!;
 
         /// <summary>
         /// Returns a useful string to identify the entity

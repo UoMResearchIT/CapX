@@ -15,17 +15,17 @@ namespace PPMTool.Data
 
         public int ProjectRTP { get; set; }
 
-        public string ProjectName { get; set; }
+        public string ProjectName { get; set; } = null!;
 
-        public string ProjectPI { get; set; }
+        public string ProjectPI { get; set; } = null!;
 
         public ProjectStatus ProjectStatus { get; set; }
 
-        public School School { get; set; }
+        public School School { get; set; } = null!;
 
-        public Faculty Faculty { get; set; }
+        public Faculty Faculty { get; set; } = null!;
 
-        public string ProjectPM { get; set; }
+        public string ProjectPM { get; set; } = null!;
 
         public CostModel CostModel { get; set; }
 
@@ -71,17 +71,17 @@ namespace PPMTool.Data
 
         public double ActualHours { get; set; }
 
-        public string PlannedCostColour { get; }
+        public string? PlannedCostColour { get; }
 
-        public string ActualCostColour { get; }
+        public string? ActualCostColour { get; }
 
-        public string FundsReceivedColour { get; }
+        public string? FundsReceivedColour { get; }
 
-        public string FundsRequestedColour { get; }
+        public string? FundsRequestedColour { get; }
 
         public double FundsOwed { get; }
 
-        public string FundsOwedColour { get; }
+        public string? FundsOwedColour { get; }
 
         public double FundsDA { get; }
 
@@ -89,7 +89,7 @@ namespace PPMTool.Data
 
         public double AvailableFundsDI { get; }
 
-        public string FundsDIColour { get; }
+        public string? FundsDIColour { get; }
 
         public MarkupString ListOfFundingSources { get; }
 

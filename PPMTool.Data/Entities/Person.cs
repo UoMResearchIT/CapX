@@ -268,7 +268,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        public WorkloadModelChange GetFirstWorkloadModelAfter(DateTime date)
+        public WorkloadModelChange? GetFirstWorkloadModelAfter(DateTime date)
         {
             return WorkloadModelChanges
                 .Where(x => x.ChangeDate >= date)
@@ -281,7 +281,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        public WorkloadModelChange GetLastWorkloadModelBefore(DateTime date)
+        public WorkloadModelChange? GetLastWorkloadModelBefore(DateTime date)
         {
             return WorkloadModelChanges
                 .Where(x => x.ChangeDate <= date)

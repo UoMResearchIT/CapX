@@ -67,7 +67,7 @@ namespace PPMTool.Data.Entities
         /// <inheritdoc/>
         public string GetSensibleObjectName()
         {
-            return $"{(HasAccountCode ? AccountCode : "No Account")} ({FundingSourceType.GetAttribute<ShortDescriptionAttribute>().Value}) {AmountAvailable.ToString("C0")}";
+            return $"{(HasAccountCode ? AccountCode : "No Account")} ({FundingSourceType.GetAttribute<ShortDescriptionAttribute>()?.Value}) {AmountAvailable.ToString("C0")}";
         }
     }
 }

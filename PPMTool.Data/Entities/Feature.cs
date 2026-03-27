@@ -20,7 +20,7 @@ namespace PPMTool.Data.Entities
         /// Name of the feature
         /// </summary>
         [Required]
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
 
         /// <summary>
         /// Description of the feature

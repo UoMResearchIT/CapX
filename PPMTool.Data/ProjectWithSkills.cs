@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using PPMTool.Data.Entities;
+﻿using PPMTool.Data.Entities;
 
 namespace PPMTool.Data
 {
@@ -11,11 +10,11 @@ namespace PPMTool.Data
         /// <summary>
         ///  The project entity
         /// </summary>
-        public Project Project { get; set; }
+        public Project Project { get; set; } = null!;
 
         /// <summary>
         /// List of skills entities
         /// </summary>
-        public IEnumerable<SkillTag> Skills { get; set; }
+        public IEnumerable<SkillTag>? Skills { get; set; }
     }
 }

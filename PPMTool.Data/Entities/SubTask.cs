@@ -169,7 +169,7 @@ namespace PPMTool.Data.Entities
         /// Units = Sum of Resource Assigned FTE
         /// </summary>
         /// <returns>Returns null if successful otherwise error message</returns>
-        public string Schedule()
+        public string? Schedule()
         {
             try
             {

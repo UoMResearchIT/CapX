@@ -27,7 +27,7 @@ namespace PPMTool.Data
         {
             try
             {
-                string secretKey = configuration["Jwt:SecretKey"];
+                string secretKey = configuration["Jwt:SecretKey"] ?? string.Empty;
                 var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
 
                 var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);

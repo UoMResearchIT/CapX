@@ -1,20 +1,17 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-namespace PPMTool.Data
+﻿namespace PPMTool.Data
 {
     public abstract class ObjectWithStatusMessages
     {
         /// <summary>
         /// List of status messages
         /// </summary>
-        protected IList<StatusMessage> statusMessages;
+        protected IList<StatusMessage>? statusMessages;
 
         /// <summary>
         /// Calls update on the status messages in the list and returns the updated list
         /// </summary>
         /// <returns></returns>
-        public virtual IList<StatusMessage> GetLatestStatusMessages()
+        public virtual IList<StatusMessage>? GetLatestStatusMessages()
         {
             if (statusMessages != null)
             {

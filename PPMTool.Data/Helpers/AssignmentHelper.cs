@@ -45,7 +45,7 @@ namespace PPMTool.Data.Helpers
             }
 
             // Check tasks and infer from projects if not specified
-            List<SubTask> tempTasksInWindow = null;
+            List<SubTask>? tempTasksInWindow = null;
             if (tasksInWindow == null)
             {
                 // If there are no subtasks or resources then just replace with empty enumerables
@@ -110,7 +110,7 @@ namespace PPMTool.Data.Helpers
                 // If budget infomation provided then use to populate chunk
                 var amountCovered = 0d;
                 var budgetStatus = BudgetStatus.NotInBudget.GetDescription();
-                AssignmentBudgetDetail budgetLine = null;
+                AssignmentBudgetDetail? budgetLine = null;
                 if (budgetDetails != null)
                 {
                     // Find the budget line associated with this chunk
