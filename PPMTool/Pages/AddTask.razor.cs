@@ -151,9 +151,9 @@ namespace PPMTool.Pages
             await base.OnInitializedAsync();
 
             // Set the feature flags for the page based on the features enabled
-            bool timesheetsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Timesheets);
-            bool financeEnabled = FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance);
-            bool skillsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Skills);
+            timesheetsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Timesheets);
+            financeEnabled = FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance);
+            skillsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Skills);
 
             // Initialise the component if not expecting manual initialisation
             if (!IsSplit)
