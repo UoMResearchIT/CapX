@@ -29,8 +29,8 @@ namespace PPMTool.Pages
         private bool compareToWLM = true;
         private bool normalisedByTotalHours = false;
         private bool useStackedBars = true;
-        private DateTime? startDate = DateTime.Today.StartOfMonth().StartOfWeek();
-        private DateTime? endDate = DateTime.Today.StartOfWeek().AddDays(7);
+        private DateTime? startDate = DateTime.Today.StartOfWeek().AddMonths(-3);
+        private DateTime? endDate = DateTime.Today.StartOfWeek();
         private IEnumerable<Person> availablePeople;
         private IEnumerable<Person> selectedPeople;
         private string loadingMessage;
@@ -106,6 +106,15 @@ namespace PPMTool.Pages
         private void SetEndDate(int numberOfMonths)
         {
             endDate = startDate.Value.AddMonths(numberOfMonths);
+        }
+
+        /// <summary>
+        /// Method to set the start date to so many months before the end date
+        /// </summary>
+        /// <param name="numberOfMonths"></param>
+        private void SetStartDate(int numberOfMonths)
+        {
+            startDate = endDate.Value.AddMonths(-numberOfMonths);
         }
 
         /// <summary>

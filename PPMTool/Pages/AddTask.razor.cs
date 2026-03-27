@@ -142,10 +142,18 @@ namespace PPMTool.Pages
         private IEnumerable<SkillTag> availableTags;
         private string autoCompleteText;
         private bool actualsLoading = false;
+        bool timesheetsEnabled;
+        bool financeEnabled;
+        bool skillsEnabled;
 
         protected override async Task OnInitializedAsync()
         {
             await base.OnInitializedAsync();
+
+            // Set the feature flags for the page based on the features enabled
+            bool timesheetsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Timesheets);
+            bool financeEnabled = FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance);
+            bool skillsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Skills);
 
             // Initialise the component if not expecting manual initialisation
             if (!IsSplit)
@@ -630,9 +638,6 @@ namespace PPMTool.Pages
         {
             LogInformation($"Task {TaskModel?.SubTaskId}: Created new row for {resource.GetSensibleObjectName()}");
 
-            // Add task explicitly as needed for cost calculation
-            resource.SubTask = taskModel;
-
             // Add to the data grid
             dataGridEntities.Add(resource);
 
@@ -679,6 +684,12 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override async Task SaveRow(Resource entity)
         {
+            // Ensure the resource has the subtask set to allow following calculations
+            if (entity.SubTask == null)
+            {
+                entity.SubTask = TaskModel;
+            }
+
             // Update the billed FTE
             entity.UpdateBilledFTE(projectModel.CostModel);
 

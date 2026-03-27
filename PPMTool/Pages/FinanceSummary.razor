@@ -8,7 +8,9 @@
 @using System.ComponentModel.DataAnnotations
 <PageTitle>Finance Summary - CapX</PageTitle>
 
-<div class="container">
+<FeatureCheckComponent Feature="FeatureType.ProjectFinance">
+
+    <div class="container">
     <div class="row align-items-center">
         <div class="col mr-auto">
             <h1>Finance Summary</h1>
@@ -94,3 +96,5 @@
         </RadzenDataGrid>
     </RadzenCard>
 </div>
+
+</FeatureCheckComponent>

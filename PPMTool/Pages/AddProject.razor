@@ -7,153 +7,157 @@
 @using System.ComponentModel.DataAnnotations
 <PageTitle>Add Project - CapX</PageTitle>
 
-@if (Loading)
-{
-    <LoadingComponent />
-}
-else
-{
-    <div class="container">
-        @if (ProjectId <= 0)
-        {
-            <h1>Add Project</h1>
-        }
-        else
-        {
-            <div class="row">
-                <div class="col">
-                    <h1>Edit <i>@projectModel.GetFullName()</i></h1>
-                </div>
-                <div class="col-auto" style="align-content: center">
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteProject" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
-                </div>
-            </div>
-        }
-        @if (!EditAuthorised)
-        {
-            <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.1rem">
-                <ProjectManagerOnlyComponent />
-            </RadzenStack>
-        }
-        <hr />
-        <RadzenCard>
-            <EditForm EditContext="editContext">
-                <div class="row">
-                    <div class="col-8">
-                        <RadzenLabel class="radzen-form-label" Text="Project Name" Component="Name" /><br />
-                        <RadzenTextBox class="radzen-text-box" Name="Name" @bind-Value="projectModel.Name" />
-                    </div>
-                    <div class="col-4">
-                        <RadzenLabel class="radzen-form-label" Text="Project Status" /><br />
-                        <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.ProjectStatus" Data=@statuses>
-                            <Template Context="x">
-                                @GetNiceString(x)
-                            </Template>
-                        </RadzenDropDown>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-4">
-                        <RadzenLabel class="radzen-form-label" Text="RTP Number" /><br />
-                        <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Step="1" @bind-Value="projectModel.RTP" />
-                    </div>
-                    <div class="col-4">
-                        <RadzenLabel class="radzen-form-label" Text="Faculty" /><br />
-                        <RadzenDropDown class="radzen-dropdown"
-                                        TValue="Faculty"
-                                        Data="@faculties"
-                                        Change="OnFacultyChosen"
-                                        Placeholder="Select a faculty"
-                                        Value="@chosenFaculty">
-                            <Template Context="x">
-                                @x.GetSensibleObjectName()
-                            </Template>
-                        </RadzenDropDown>
-                    </div>
-                    <div class="col-4">
-                        <RadzenLabel class="radzen-form-label" Text="School" /><br />
-                        <RadzenDropDown class="radzen-dropdown"
-                                        TValue="School"
-                                        @bind-Value="projectModel.School"
-                                        Data="@schools"
-                                        Placeholder="Select a school">
-                            <Template Context="x">
-                                @x.GetSensibleObjectName()
-                            </Template>
-                        </RadzenDropDown>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-4">
-                        <RadzenLabel class="radzen-form-label" Text="Principal Investigator" /><br />
-                        <RadzenTextBox class="radzen-text-box" @bind-Value="projectModel.PI" />
-                    </div>
-                    <div class="col-4">
-                        <RadzenLabel class="radzen-form-label" Text="Project Manager" /><br />
-                        <RadzenDropDown class="radzen-dropdown"  @bind-Value="projectModel.ProjectManager" Data="@projectManagers" Change="OnProjectManagerChosen">
-                            <Template Context="person">
-                                @person.Name
-                            </Template>
-                        </RadzenDropDown>
-                    </div>
-                    <div class="col-4">
-                        <RadzenLabel class="radzen-form-label" Text="Timesheet Activity" /><br />
-                        <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.InnateActivity" Data="@innateActivities" 
-                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true" AllowClear="true"
-                                        LoadData="@LoadInnateDropdownData">
-                            <Template Context="activity">
-                                @activity.GetCodeAsString()
-                            </Template>
-                        </RadzenDropDown>
-                    </div>
-                </div>
+<FeatureCheckComponent Feature="FeatureType.ProjectsAndCapacity">
+
+    @if (Loading)
+    {
+        <LoadingComponent />
+    }
+    else
+    {
+        <div class="container">
+            @if (ProjectId <= 0)
+            {
+                <h1>Add Project</h1>
+            }
+            else
+            {
                 <div class="row">
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Description" />
-                        <HintComponent Message="Remember that this description is visible to the whole department. Do not put anything in this field that you would not be happy to share with the wider institution." /><br/>
-                        <RadzenHtmlEditor @bind-Value="@projectModel.Description" Style="min-height: 10rem" Placeholder="Note that this description will be displayed on the project bullentin board and will be visible to all users!" />
+                        <h1>Edit <i>@projectModel.GetFullName()</i></h1>
+                    </div>
+                    <div class="col-auto" style="align-content: center">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteProject" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-6">
-                        <RadzenLabel class="radzen-form-label" Text="Link to Request Doc" /><br />
-                        <RadzenTextBox class="radzen-text-box" @bind-Value="projectModel.RequestDocLink" Placeholder="https://..."  />
+            }
+            @if (!EditAuthorised)
+            {
+                <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.1rem">
+                    <ProjectManagerOnlyComponent />
+                </RadzenStack>
+            }
+            <hr />
+            <RadzenCard>
+                <EditForm EditContext="editContext">
+                    <div class="row">
+                        <div class="col-8">
+                            <RadzenLabel class="radzen-form-label" Text="Project Name" Component="Name" /><br />
+                            <RadzenTextBox class="radzen-text-box" Name="Name" @bind-Value="projectModel.Name" />
+                        </div>
+                        <div class="col-4">
+                            <RadzenLabel class="radzen-form-label" Text="Project Status" /><br />
+                            <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.ProjectStatus" Data=@statuses>
+                                <Template Context="x">
+                                    @GetNiceString(x)
+                                </Template>
+                            </RadzenDropDown>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <RadzenLabel class="radzen-form-label" Text="Link to Scrum Project" /><br />
-                        <RadzenTextBox class="radzen-text-box" @bind-Value="projectModel.ScrumProjectLink" Placeholder="https://..." />
+                    <div class="row">
+                        <div class="col-4">
+                            <RadzenLabel class="radzen-form-label" Text="RTP Number" /><br />
+                            <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Step="1" @bind-Value="projectModel.RTP" />
+                        </div>
+                        <div class="col-4">
+                            <RadzenLabel class="radzen-form-label" Text="Faculty" /><br />
+                            <RadzenDropDown class="radzen-dropdown"
+                                            TValue="Faculty"
+                                            Data="@faculties"
+                                            Change="OnFacultyChosen"
+                                            Placeholder="Select a faculty"
+                                            Value="@chosenFaculty">
+                                <Template Context="x">
+                                    @x.GetSensibleObjectName()
+                                </Template>
+                            </RadzenDropDown>
+                        </div>
+                        <div class="col-4">
+                            <RadzenLabel class="radzen-form-label" Text="School" /><br />
+                            <RadzenDropDown class="radzen-dropdown"
+                                            TValue="School"
+                                            @bind-Value="projectModel.School"
+                                            Data="@schools"
+                                            Placeholder="Select a school">
+                                <Template Context="x">
+                                    @x.GetSensibleObjectName()
+                                </Template>
+                            </RadzenDropDown>
+                        </div>
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col-6">
-                        <RadzenLabel class="radzen-form-label" Text="Cost Model" /><br />
-                        <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.CostModel" Data="@CostModelSelectionOptions.DisplayOrder">
-                            <Template Context="cost">
-                                @($"{((CostModel)cost).GetAttribute<DisplayAttribute>().Name} : {((CostModel)cost).GetDescription()}")
-                            </Template>
-                        </RadzenDropDown>
+                    <div class="row">
+                        <div class="col-4">
+                            <RadzenLabel class="radzen-form-label" Text="Principal Investigator" /><br />
+                            <RadzenTextBox class="radzen-text-box" @bind-Value="projectModel.PI" />
+                        </div>
+                        <div class="col-4">
+                            <RadzenLabel class="radzen-form-label" Text="Project Manager" /><br />
+                            <RadzenDropDown class="radzen-dropdown"  @bind-Value="projectModel.ProjectManager" Data="@projectManagers" Change="OnProjectManagerChosen">
+                                <Template Context="person">
+                                    @person.Name
+                                </Template>
+                            </RadzenDropDown>
+                        </div>
+                        <div class="col-4">
+                            <RadzenLabel class="radzen-form-label" Text="Timesheet Activity" /><br />
+                            <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.InnateActivity" Data="@innateActivities" 
+                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true" AllowClear="true"
+                                            LoadData="@LoadInnateDropdownData">
+                                <Template Context="activity">
+                                    @activity.GetCodeAsString()
+                                </Template>
+                            </RadzenDropDown>
+                        </div>
                     </div>
-                    <div class="col-3">
-                        <RadzenLabel class="radzen-form-label" Text="Day Rate (£)" />
-                        <RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Current cost model chosen does not require a day rate" Visible="@(projectModel.CostModel != CostModel.DayRate)" /><br />
-                        @if (projectModel.CostModel == CostModel.DayRate)
-                        {
-                            <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.DayRate" />
-                        }
-                        else
-                        {
-                            <RadzenTextBox class="radzen-text-box" Value="N/A" Disabled="true" />
-                        }
+                    <div class="row">
+                        <div class="col">
+                            <RadzenLabel class="radzen-form-label" Text="Description" />
+                            <HintComponent Message="Remember that this description is visible to the whole department. Do not put anything in this field that you would not be happy to share with the wider institution." /><br/>
+                            <RadzenHtmlEditor @bind-Value="@projectModel.Description" Style="min-height: 10rem" Placeholder="Note that this description will be displayed on the project bullentin board and will be visible to all users!" />
+                        </div>
                     </div>
-                    <div class="col-3">
-                        <RadzenLabel class="radzen-form-label" Text="Agreed Budget (£)" />
-                        <RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="The agreed budget is computed from the total amount in the funding sources associated with the project" /><br />
-                        <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.Budget" Disabled="true" />
+                    <div class="row">
+                        <div class="col-6">
+                            <RadzenLabel class="radzen-form-label" Text="Link to Request Doc" /><br />
+                            <RadzenTextBox class="radzen-text-box" @bind-Value="projectModel.RequestDocLink" Placeholder="https://..."  />
+                        </div>
+                        <div class="col-6">
+                            <RadzenLabel class="radzen-form-label" Text="Link to Scrum Project" /><br />
+                            <RadzenTextBox class="radzen-text-box" @bind-Value="projectModel.ScrumProjectLink" Placeholder="https://..." />
+                        </div>
                     </div>
-                </div>
-                <hr />
-                <DataAnnotationsValidator />
-            </EditForm>
-        </RadzenCard>
-    </div>
-}
+                    <div class="row">
+                        <div class="col-6">
+                            <RadzenLabel class="radzen-form-label" Text="Cost Model" /><br />
+                            <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.CostModel" Data="@(Enum.GetValues(typeof(CostModel)))">
+                                <Template Context="cost">
+                                    @($"{((CostModel)cost).GetAttribute<DisplayAttribute>().Name} : {((CostModel)cost).GetDescription()}")
+                                </Template>
+                            </RadzenDropDown>
+                        </div>
+                        <div class="col-3">
+                            <RadzenLabel class="radzen-form-label" Text="Day Rate (£)" />
+                            <RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Current cost model chosen does not require a day rate" Visible="@(projectModel.CostModel != CostModel.DayRate)" /><br />
+                            @if (projectModel.CostModel == CostModel.DayRate)
+                            {
+                                <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.DayRate" />
+                            }
+                            else
+                            {
+                                <RadzenTextBox class="radzen-text-box" Value="N/A" Disabled="true" />
+                            }
+                        </div>
+                        <div class="col-3">
+                            <RadzenLabel class="radzen-form-label" Text="Agreed Budget (£)" />
+                            <RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="The agreed budget is computed from the total amount in the funding sources associated with the project" /><br />
+                            <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.01" Placeholder="0.00" @bind-Value="projectModel.Budget" Disabled="true" />
+                        </div>
+                    </div>
+                    <hr />
+                    <DataAnnotationsValidator />
+                </EditForm>
+            </RadzenCard>
+        </div>
+    }
+
+</FeatureCheckComponent>

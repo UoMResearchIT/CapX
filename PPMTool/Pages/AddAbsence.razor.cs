@@ -88,7 +88,6 @@ namespace PPMTool.Pages
                 var newAbsences = dataGridEntities.Where(x => !personModel.Absences.Contains(x)).ToList();
                 var deletedAbsences = personModel.Absences.Where(x => !dataGridEntities.Contains(x)).ToList();
                 var updatedAbsences = PersonService.GetDiffList<Absence>(Context).Where(x => x.State == EntityState.Modified).GroupBy(x => x.Entity);
-                var delAbsencesDictionary = deletedAbsences.ToDictionary(x => x.Person.PersonId);
 
                 // If there are no changes then just navigate back
                 if (newAbsences.Count > 0 || updatedAbsences.Count() > 0 || deletedAbsences.Count > 0)
@@ -105,7 +104,7 @@ namespace PPMTool.Pages
                     PersonService.Update(Context, personModel);
 
                     // Send emails based on diff information (fire and forget)
-                    _ = EmailService.SendAbsenceEmailNotificationsAsync(newAbsences, updatedAbsences, delAbsencesDictionary);
+                    _ = EmailService.SendAbsenceEmailNotificationsAsync(personModel.PersonId, newAbsences, updatedAbsences, deletedAbsences);
                 }
                 else
                 {

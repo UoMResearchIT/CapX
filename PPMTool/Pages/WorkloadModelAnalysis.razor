@@ -48,6 +48,7 @@
                         <RadzenText Text="to" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
                         <RadzenDatePicker @bind-Value="@endDate" ShowTime="false" DateFormat="dd/MM/yyyy" Disabled="@Loading" />
                         <RadzenButton Text="3 Months From Start" Click="@(() => SetEndDate(3))" Disabled="@(Loading || startDate == null)" />
+                        <RadzenButton Text="3 Months From End" Click="@(() => SetStartDate(3))" Disabled="@(Loading || endDate == null)" />
                     </RadzenStack>
                     <RadzenButton Text="Generate" Click="GenerateCharts" Disabled="@(Loading || startDate == null || endDate == null || selectedPeople == null || selectedPeople?.Count() == 0)" />
                 </RadzenStack>
