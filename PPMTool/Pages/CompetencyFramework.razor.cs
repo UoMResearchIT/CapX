@@ -671,41 +671,33 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Adds an assessment
+        /// Adds or updates an assessment
         /// </summary>
         /// <param name="assessment"></param>
-        private void AddAssessment(CompetencyAssessment assessment)
+        /// <param name="isUpdate"></param>
+        /// <returns>An error message or empty string if successful</returns>
+        private string AddOrUpdateAssessment(CompetencyAssessment assessment, bool isUpdate = false)
         {
-            LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
+            LogInformation($"{(isUpdate ? "Updating" : "Adding")} assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
             if (ValidateAssessment(assessment, out var message))
             {
-                CompetencyService.AddAssessment(Context, assessment);
-                UpdateMet();
+                try
+                {
+                    _ = isUpdate ?
+                    CompetencyService.UpdateAssessment(Context, assessment) :
+                    CompetencyService.AddAssessment(Context, assessment);
+                    UpdateMet();
+                    StateHasChanged();
+                    return string.Empty;
+                }
+                catch (Exception ex)
+                {
+                    message = $"Failed to {(isUpdate ? "update" : "add")} assessment: {ex.Message}";
+                }
             }
-            else
-            {
-                ShowValidationError(message);
-            }
+            ShowValidationError(message);
             StateHasChanged();
-        }
-
-        /// <summary>
-        /// Updates an assessment
-        /// </summary>
-        /// <param name="assessment"></param>
-        private void UpdateAssessment(CompetencyAssessment assessment)
-        {
-            LogInformation($"Updating assessment to Evidence: \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
-            if (ValidateAssessment(assessment, out var message))
-            {
-                CompetencyService.UpdateAssessment(Context, assessment);
-                UpdateMet();
-            }
-            else
-            {
-                ShowValidationError(message);
-            }
-            StateHasChanged();
+            return message;
         }
 
         /// <summary>
@@ -729,7 +721,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private bool ValidateAssessment(CompetencyAssessment assessment, out string message)
         {
-            // Need to have evidence but only if assessment status is partially met or met
+            // Only check the evidence required condition when not setting an assessment to unmet
             if ((string.IsNullOrWhiteSpace(assessment.Evidence) || string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.Evidence))) && assessment.Status != AssessmentStatus.Unmet)
             {
                 message = "Evidence is required!";
