@@ -687,6 +687,7 @@ namespace PPMTool.Pages
                     CompetencyService.UpdateAssessment(Context, assessment) :
                     CompetencyService.AddAssessment(Context, assessment);
                     UpdateMet();
+                    StateHasChanged();
                     return string.Empty;
                 }
                 catch (Exception ex)
