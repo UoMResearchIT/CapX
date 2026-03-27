@@ -5,7 +5,7 @@ using PPMTool.Data.Interfaces;
 
 namespace PPMTool.Data.Entities
 {
-    public class User : ILoggableClass
+    public class User : ILoggableObject
     {
         public int UserId { get; set; }
 

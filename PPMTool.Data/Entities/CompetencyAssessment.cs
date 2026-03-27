@@ -7,7 +7,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents an assessment against a competency
     /// </summary>
-    public class CompetencyAssessment : ILoggableClass
+    public class CompetencyAssessment : ILoggableObject
     {
         public int CompetencyAssessmentId { get; set; }
 

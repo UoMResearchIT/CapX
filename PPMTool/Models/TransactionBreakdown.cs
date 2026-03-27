@@ -1,6 +1,6 @@
 ﻿using PPMTool.Data.Entities;
 
-namespace PPMTool.Data
+namespace PPMTool.Models
 {
     /// <summary>
     /// Represents the state of funding for a project

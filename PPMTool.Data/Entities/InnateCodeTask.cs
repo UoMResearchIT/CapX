@@ -4,7 +4,7 @@ using PPMTool.Data.Interfaces;
 
 namespace PPMTool.Data.Entities
 {
-    public class InnateCodeTask : ILoggableClass
+    public class InnateCodeTask : ILoggableObject
     {
         public int InnateCodeTaskId { get; set; }
 

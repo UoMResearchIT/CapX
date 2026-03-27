@@ -1,4 +1,4 @@
-﻿namespace PPMTool.Data
+﻿namespace PPMTool.Models
 {
     public class DutyChartItem : BaseDemandChartItem
     {

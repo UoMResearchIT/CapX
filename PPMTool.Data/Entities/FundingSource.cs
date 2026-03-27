@@ -5,7 +5,7 @@ using PPMTool.Data.Interfaces;
 
 namespace PPMTool.Data.Entities
 {
-    public class FundingSource : BaseFinanceItem, ILoggableClass
+    public class FundingSource : BaseFinanceItem, ILoggableObject
     {
         public int FundingSourceId { get; set; }
 

@@ -10,7 +10,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents a group of subtask that form a project
     /// </summary>
-    public class Project : BaseTask, ILoggableClass
+    public class Project : BaseTask, ILoggableObject
     {
         public int ProjectId { get; set; }
 

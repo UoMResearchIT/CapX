@@ -1,7 +1,8 @@
 ﻿using System.Diagnostics;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Data.Interfaces;
+using PPMTool.Models;
+using PPMTool.Models.Interfaces;
 
 namespace PPMTool.Helpers
 {

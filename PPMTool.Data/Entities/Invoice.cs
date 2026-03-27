@@ -7,7 +7,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents an invoice or a payment request for a project. May be paid by one or more payments.
     /// </summary>
-    public class Invoice : FinanceItem, ILoggableClass
+    public class Invoice : FinanceItem, ILoggableObject
     {
         /// <summary>
         /// Primary key

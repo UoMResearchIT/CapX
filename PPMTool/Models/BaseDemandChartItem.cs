@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace PPMTool.Data
+﻿namespace PPMTool.Models
 {
     public abstract class BaseDemandChartItem
     {

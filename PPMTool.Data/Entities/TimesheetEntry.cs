@@ -7,7 +7,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents an entry in the timesheet indicating the number of hours worked on a particular timesheet task on a given day
     /// </summary>
-    public class TimesheetEntry : ILoggableClass
+    public class TimesheetEntry : ILoggableObject
     {
         /// <summary>
         /// Represents the ID of the timesheet entry record.

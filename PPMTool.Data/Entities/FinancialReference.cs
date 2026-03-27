@@ -3,7 +3,7 @@ using PPMTool.Data.Interfaces;
 
 namespace PPMTool.Data.Entities
 {
-    public class FinancialReference : ILoggableClass
+    public class FinancialReference : ILoggableObject
     {
         public int FinancialReferenceId { get; set; }
 

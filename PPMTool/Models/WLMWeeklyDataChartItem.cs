@@ -1,6 +1,6 @@
 ﻿using PPMTool.Data.Enums;
 
-namespace PPMTool.Data
+namespace PPMTool.Models
 {
     public class WLMWeeklyDataChartItem
     {

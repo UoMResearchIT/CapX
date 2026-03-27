@@ -3,7 +3,7 @@ using PPMTool.Data.Interfaces;
 
 namespace PPMTool.Data.Entities
 {
-    public class InnateCode : ILoggableClass
+    public class InnateCode : ILoggableObject
     {
         public int InnateCodeId { get; set; }
 

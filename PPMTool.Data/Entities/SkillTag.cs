@@ -6,7 +6,7 @@ using PPMTool.Data.Interfaces;
 
 namespace PPMTool.Data.Entities
 {
-    public class SkillTag : ILoggableClass
+    public class SkillTag : ILoggableObject
     {
         public int SkillTagId { get; set; }
 

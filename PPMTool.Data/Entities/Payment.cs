@@ -6,7 +6,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents a received payment which may or may not be associated with an invoice
     /// </summary>
-    public class Payment : FinanceItem, ILoggableClass
+    public class Payment : FinanceItem, ILoggableObject
     {
         /// <summary>
         /// Primary key

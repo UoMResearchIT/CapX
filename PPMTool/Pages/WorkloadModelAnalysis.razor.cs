@@ -2,10 +2,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
 using PPMTool.Helpers;
+using PPMTool.Models;
 using PPMTool.Services;
 using Radzen;
 using Radzen.Blazor.Rendering;

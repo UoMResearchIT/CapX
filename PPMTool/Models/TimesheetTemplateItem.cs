@@ -2,12 +2,12 @@
 using PPMTool.Data.Entities;
 using PPMTool.Data.Interfaces;
 
-namespace PPMTool.Data
+namespace PPMTool.Models
 {
     /// <summary>
     /// Represents timesheet template item
     /// </summary>
-    public class TimesheetTemplateItem : ILoggableClass
+    public class TimesheetTemplateItem : ILoggableObject
     {
         /// <summary>
         /// Represents the ID of the timesheet entry record

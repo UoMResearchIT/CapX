@@ -1,7 +1,7 @@
-﻿using PPMTool.Data.Interfaces;
-using PPMTool.Enums;
+﻿using PPMTool.Enums;
+using PPMTool.Models.Interfaces;
 
-namespace PPMTool.Data
+namespace PPMTool.Models
 {
     /// <summary>
     /// Represents an aggregation of the assignments of a particular person for the purposes of plotting.
@@ -21,7 +21,7 @@ namespace PPMTool.Data
 
         public string Colour { get; }
 
-        public string? TooltipMessages { get; }
+        public string TooltipMessages { get; }
 
         private bool isHatched;
         private bool isFake;
@@ -34,7 +34,7 @@ namespace PPMTool.Data
             double value1,
             double value2,
             bool isHatched,
-            string? tooltipMessages = null,
+            string tooltipMessages = null,
             bool isFake = false)
         {
             StartDate = start;

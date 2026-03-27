@@ -7,7 +7,7 @@ using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
-    public abstract class DataGridPage<T> : BasePage where T : class, ILoggableClass
+    public abstract class DataGridPage<T> : BasePage where T : class, ILoggableObject
     {
         protected RadzenDataGrid<T> dataGrid;
         protected IList<T> dataGridEntities;

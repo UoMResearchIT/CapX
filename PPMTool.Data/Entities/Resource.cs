@@ -8,7 +8,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents a person as a resource to be assigned to a subtask
     /// </summary>
-    public class Resource : CostedItem, ILoggableClass
+    public class Resource : CostedItem, ILoggableObject
     {
         /// <summary>
         /// Primary key

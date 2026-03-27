@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Components;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
 
-namespace PPMTool.Data
+namespace PPMTool.Models
 {
     /// <summary>
     /// Represents the key information for a project related to its financial state
@@ -71,17 +72,17 @@ namespace PPMTool.Data
 
         public double ActualHours { get; set; }
 
-        public string? PlannedCostColour { get; }
+        public string PlannedCostColour { get; }
 
-        public string? ActualCostColour { get; }
+        public string ActualCostColour { get; }
 
-        public string? FundsReceivedColour { get; }
+        public string FundsReceivedColour { get; }
 
-        public string? FundsRequestedColour { get; }
+        public string FundsRequestedColour { get; }
 
         public double FundsOwed { get; }
 
-        public string? FundsOwedColour { get; }
+        public string FundsOwedColour { get; }
 
         public double FundsDA { get; }
 
@@ -89,7 +90,7 @@ namespace PPMTool.Data
 
         public double AvailableFundsDI { get; }
 
-        public string? FundsDIColour { get; }
+        public string FundsDIColour { get; }
 
         public MarkupString ListOfFundingSources { get; }
 

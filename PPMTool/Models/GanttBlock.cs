@@ -1,7 +1,7 @@
 ﻿using PPMTool.Data.Entities;
-using PPMTool.Data.Interfaces;
+using PPMTool.Models.Interfaces;
 
-namespace PPMTool.Data
+namespace PPMTool.Models
 {
     /// <summary>
     /// Represents a block on the schedule chart

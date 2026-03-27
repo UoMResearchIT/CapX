@@ -6,7 +6,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents an organisational unit (faculty, school, department, etc)
     /// </summary>
-    public abstract class BaseOrgUnit : ILoggableClass
+    public abstract class BaseOrgUnit : ILoggableObject
     {
         /// <summary>
         /// Name of the school or department

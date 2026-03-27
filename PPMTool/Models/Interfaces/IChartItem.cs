@@ -1,4 +1,4 @@
-﻿namespace PPMTool.Data.Interfaces
+﻿namespace PPMTool.Models.Interfaces
 {
     public interface IChartItem
     {

@@ -4,7 +4,7 @@ using PPMTool.Data.Interfaces;
 
 namespace PPMTool.Data.Entities
 {
-    public class Competency : ILoggableClass
+    public class Competency : ILoggableObject
     {
         public int CompetencyId { get; set; }
 

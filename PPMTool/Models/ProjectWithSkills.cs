@@ -1,6 +1,6 @@
 ﻿using PPMTool.Data.Entities;
 
-namespace PPMTool.Data
+namespace PPMTool.Models
 {
     /// <summary>
     /// Represents a Project with Associated Skills
@@ -15,6 +15,6 @@ namespace PPMTool.Data
         /// <summary>
         /// List of skills entities
         /// </summary>
-        public IEnumerable<SkillTag>? Skills { get; set; }
+        public IEnumerable<SkillTag> Skills { get; set; }
     }
 }
