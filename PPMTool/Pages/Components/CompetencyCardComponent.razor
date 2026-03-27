@@ -33,8 +33,11 @@
                         <RadzenButton Icon="clear" Text="Discard" ButtonStyle="ButtonStyle.Danger" Click="@DiscardAssessment" />
                     </RadzenStack>
                 </RadzenStack>
-                <RadzenText Text="Evidence (Required)" TextStyle="TextStyle.Subtitle1" />
-                <HintComponent Message="Assessment must include evidence before you can save it." />
+                <RadzenText Text="Evidence" TextStyle="TextStyle.Subtitle1" />
+                @if (assessmentToEdit.Status != AssessmentStatus.Unmet)
+                {
+                    <HintComponent Message="Assessment must include evidence before you can save it." />
+                }
                 <RadzenHtmlEditor @bind-Value="assessmentToEdit.Evidence" Style="min-height: 10rem" Placeholder="Add evidence here to support your assessment" />
             </RadzenStack>
         }
