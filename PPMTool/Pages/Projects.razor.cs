@@ -1,8 +1,10 @@
 ﻿using System.Diagnostics;
 using System.Linq.Dynamic.Core;
+using System.Linq.Expressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Helpers;
 using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
@@ -58,9 +60,16 @@ namespace PPMTool.Pages
             }
         }
 
+        // Expression for sorting by cost model display order
+        private Expression<Func<Project, int>> costModelSortKey;
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
+
+            // Initialise the sort key expression for the data grid sort
+            costModelSortKey = DisplayOrderHelper.CreateOrderAttributeSortingExpression<Project, CostModel>(p => p.CostModel);
+
             Loading = true;
             EnqueueLoadData(() => GetLoadTask());
             LogInformation("Viewing project grid");
@@ -233,25 +242,16 @@ namespace PPMTool.Pages
 
         /// <summary>
         /// Applies the cost model display order to grid sorting.
-        /// The ordering here must match the <see cref="PPMTool.Enums.Attributes.DisplayOrderAttribute"/> values on <see cref="CostModel"/>.
-        /// A ternary chain is used because EF Core must translate this to SQL CASE WHEN;
-        /// arbitrary method calls (e.g. <see cref="CostModelSelectionOptions.GetSortIndex"/>)
-        /// cannot be used inside <see cref="IQueryable{T}"/> expressions.
+        /// Ordering is derived directly from [DisplayOrder] on <see cref="CostModel"/>.
+        /// EF Core translates this to SQL CASE WHEN.
         /// </summary>
-        private IQueryable<Project> ApplyCostModelSort(IQueryable<Project> query, SortOrder? sortOrder)
+        private IQueryable<Project> ApplyCostModelSort(
+            IQueryable<Project> query,
+            SortOrder? sortOrder)
         {
-            // Ordering must stay in sync with [DisplayOrder] on CostModel enum values.
             return sortOrder == SortOrder.Descending
-                ? query.OrderByDescending(x =>
-                    x.CostModel == CostModel.TechAndLeadershipWithIndirects ? 0 :
-                    x.CostModel == CostModel.TechAndLeadership ? 1 :
-                    x.CostModel == CostModel.TechOnlyWithIndirects ? 2 :
-                    x.CostModel == CostModel.TechOnly ? 3 : 4)
-                : query.OrderBy(x =>
-                    x.CostModel == CostModel.TechAndLeadershipWithIndirects ? 0 :
-                    x.CostModel == CostModel.TechAndLeadership ? 1 :
-                    x.CostModel == CostModel.TechOnlyWithIndirects ? 2 :
-                    x.CostModel == CostModel.TechOnly ? 3 : 4);
+                ? query.OrderByDescending(costModelSortKey)
+                : query.OrderBy(costModelSortKey);
         }
 
         /// <summary>
