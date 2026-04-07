@@ -107,13 +107,6 @@ namespace PPMTool.Pages
                 query = query.Where(x => x.PersonId == ActiveUser.Person.PersonId);
             }
 
-            // Apply filter
-            if (!string.IsNullOrEmpty(args.Filter))
-            {
-                // Filter via the Where method
-                query = query.Where(args.Filter);
-            }
-
             // Now apply the custom filters
             if (args.Filters is { } filters && filters.Any())
             {
@@ -133,6 +126,13 @@ namespace PPMTool.Pages
                         x.LineManager != null &&
                         ((x.LineManager.Name ?? "").Trim().ToLower()).Contains(filterValueLower));
                 }
+            }
+
+            // Apply standard filters
+            else if (!string.IsNullOrEmpty(args.Filter))
+            {
+                // Filter via the Where method
+                query = query.Where(args.Filter);
             }
 
             // Apply custom order
