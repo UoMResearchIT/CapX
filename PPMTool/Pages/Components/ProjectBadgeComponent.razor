@@ -1,8 +1,8 @@
 ﻿@using PPMTool.Enums
 
-<RadzenBadge Style="padding: 10px 15px;"
-             BadgeStyle="@(ProjectStatus.GetBadgeStyle())"
-             Text="@ProjectStatus.ToNiceString()" />
+<RadzenBadge BadgeStyle="@(ProjectStatus.GetBadgeStyle())"
+             Text="@ProjectStatus.ToNiceString()" 
+             Style="padding: 4px 10px;"/>
 
 @code {
     [Parameter]

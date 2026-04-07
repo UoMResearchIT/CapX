@@ -7,9 +7,9 @@
 
 <RadzenCard>
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween" Gap="0rem" Wrap="FlexWrap.Wrap">
-        <RadzenStack class="col-5 p-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.3rem">
+        <RadzenStack class="col-5 p-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.4rem">
             <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0rem">
-                <RadzenText TextStyle="TextStyle.H5" Text="@Project.GetFullName()" />
+                <RadzenText TextStyle="TextStyle.H5" Text="@Project.GetFullName()" Style="margin-bottom: 0.3rem;"/>
                 <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
             </RadzenStack>
             <StatusMessageSummaryComponent Messages="Project.GetLatestStatusMessages()" />

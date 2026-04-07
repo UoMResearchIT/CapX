@@ -31,7 +31,7 @@
     }
     else
     {
-        <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.3rem">
+        <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.4rem">
             @foreach (var projectAndNotes in ownedProjectsAndDueNotes.OrderBy(x => x.Key.ProjectStatus))
             {
                 <MyProjectSummaryComponent Project="projectAndNotes.Key"

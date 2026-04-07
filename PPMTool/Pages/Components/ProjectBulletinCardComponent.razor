@@ -11,20 +11,20 @@
 
         <!-- Status & Unmet demand -->
         <div>
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem" AlignItems="AlignItems.Center">
                 <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
 
-                <div style="border: 2px solid #ccc; background-color: #eee; padding: 3px 10px; border-radius: 5px;">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.2rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                <div style="margin-left: 0.5rem;">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.2rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" >
 
                         <RadzenText TextStyle="TextStyle.Subtitle1" Text="Unmet Demand (FTE) :" Style="margin-right: 0.1rem;"/>
-                        <RadzenBadge Style="font-size: medium"
+                        <RadzenBadge Style="font-size: medium;"
                                      BadgeStyle="BadgeStyle.Danger"
                                      Text="@(minDemand.ToString())" />
                         @if (minDemand != maxDemand)
                         {
                             <RadzenText Text="-" />
-                            <RadzenBadge Style="font-size: medium"
+                            <RadzenBadge Style="font-size: medium;"
                                          BadgeStyle="BadgeStyle.Danger"
                                          Text="@(maxDemand.ToString())" />
                         }
@@ -76,10 +76,10 @@
     </RadzenStack>
 
     <!-- PROJECT DETAILS -->
-    <div style="border: 1px dashed black; padding: 15px 10px; border-radius: 5px; margin-bottom: 1rem;">
+    <div style="border: 1px solid #ddd; padding: 15px 10px; border-radius: 5px; margin-bottom: 1rem;">
         <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="2rem">
 
-            <div style="padding: 15px 10px 25px 10px; background-color: #ddd; margin: -15px -10px -10px -10px;">
+            <div style="padding: 15px 10px 25px 10px; background-color: #eee; margin: -15px -10px -10px -10px;">
                 <RadzenText TextStyle="TextStyle.H3" Style="font-size: 2rem; margin-bottom: -1rem;" Text="@Project.GetFullName()" />
             </div>
 
