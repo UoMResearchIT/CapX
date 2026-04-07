@@ -4,60 +4,96 @@
 @using System.Diagnostics
 @using PPMTool.Services
 
-<RadzenCard style="min-height: 5rem">
-    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-        <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.2rem">
-            <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0rem">
-                <RadzenText TextStyle="TextStyle.H5" Text="@Project.GetFullName()" />
+<RadzenCard Style="margin-bottom: 1rem;">
+
+    <!-- STATUS / UNMET DEMAND -->
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="2rem" Style="margin-bottom: 1rem;">
+
+        <!-- Status & Unmet demand -->
+        <div>
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
                 <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
+
+                <div style="border: 2px solid #ccc; background-color: #eee; padding: 3px 10px; border-radius: 5px;">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.2rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Text="Unmet Demand (FTE) :" Style="margin-right: 0.1rem;"/>
+                        <RadzenBadge Style="font-size: medium"
+                                     BadgeStyle="BadgeStyle.Danger"
+                                     Text="@(minDemand.ToString())" />
+                        @if (minDemand != maxDemand)
+                        {
+                            <RadzenText Text="-" />
+                            <RadzenBadge Style="font-size: medium"
+                                         BadgeStyle="BadgeStyle.Danger"
+                                         Text="@(maxDemand.ToString())" />
+                        }
+
+                    </RadzenStack>
+                </div>
             </RadzenStack>
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal">
-                <RadzenText Style="min-width:8rem" TextStyle="TextStyle.Subtitle1" Text="Project Manager:" />
+        </div>
+
+        <!-- Request doc & Project detail buttons -->
+        <div>
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.2rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                <RadzenButton Text=@(Project.HasNoRequestDocLink() ? "No Request Doc Link" : "Request Doc")
+                              Icon="description" Click="@(args => ViewRequestDocClickedAsync(Project))"
+                              ButtonStyle=@(Project.HasNoRequestDocLink() ? ButtonStyle.Light : ButtonStyle.Primary)
+                              Disabled=@Project.HasNoRequestDocLink() />
+                @if (ShowDetailsButton)
+                {
+                    <RadzenButton Text="View Project Details"
+                                  Icon="info" Click="@(args => ViewDetails(Project.ProjectId))"
+                                  ButtonStyle=ButtonStyle.Primary />
+                }
+            </RadzenStack>
+        </div>
+
+    </RadzenStack>
+
+    <!-- PM / DATES -->
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="2rem" Style="margin-bottom: 1rem;">
+
+        <!-- Project Manager details -->
+        <div style="padding: 5px 0px;">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Text="Project Manager :" />
                 <RadzenText TextStyle="TextStyle.Body1">
                     @(Project.ProjectManager?.Name ?? "Not Set")
                 </RadzenText>
             </RadzenStack>
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal">
-                <RadzenText Style="min-width:8rem" TextStyle="TextStyle.Subtitle1" Text="Description:" />
-                <RadzenText TextStyle="TextStyle.Body1">
-                    @((MarkupString)Project.Description)
-                </RadzenText>
+        </div>
+
+        <!-- Dates -->
+        <div style="padding: 5px 0px;">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Text="Dates : " />
+                <RadzenText TextStyle="TextStyle.Body1">@windowDatesFormatted</RadzenText>
             </RadzenStack>
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal">
-                <RadzenText Style="min-width:8rem" TextStyle="TextStyle.Subtitle1" Text="Skills Required:" />
-                <SkillsAsBadgesComponent SkillsList="@SkillsList" />
-            </RadzenStack>
-        </RadzenStack>
-        <RadzenStack Style="min-width:15rem" Orientation="Radzen.Orientation.Vertical" Gap="0.2rem" AlignItems="AlignItems.Center">
-            <RadzenText TextStyle="TextStyle.Subtitle1" Text="Unmet Demand (FTE)" />
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.2rem" AlignItems="AlignItems.Center">
-                <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
-                             BadgeStyle="BadgeStyle.Danger"
-                             Text="@(minDemand.ToString())" />
-                @if (minDemand != maxDemand)
-                {
-                    <RadzenText Text="-" />
-                    <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
-                                 BadgeStyle="BadgeStyle.Danger"
-                                 Text="@(maxDemand.ToString())" />
-                }
-            </RadzenStack>
-            <RadzenText TextStyle="TextStyle.Subtitle1" Text="Dates" />
-            <RadzenText TextStyle="TextStyle.Body1">@windowDatesFormatted</RadzenText>
-            <RadzenButton Text=@(Project.HasNoRequestDocLink() ? "No Request Doc Link" : "View Request Doc")
-                          Icon="description" Click="@(args => ViewRequestDocClickedAsync(Project))"
-                          ButtonStyle=@(Project.HasNoRequestDocLink() ? ButtonStyle.Light : ButtonStyle.Primary)
-                          Disabled=@Project.HasNoRequestDocLink()
-                          Style="width: 100%" />
-            @if (ShowDetailsButton)
-            {
-                <RadzenButton Text="View Project Details"
-                              Icon="info" Click="@(args => ViewDetails(Project.ProjectId))"
-                              ButtonStyle=ButtonStyle.Primary
-                              Style="width: 100%" />
-            }
-        </RadzenStack>
+        </div>
+
     </RadzenStack>
+
+    <!-- PROJECT DETAILS -->
+    <div style="border: 1px dashed black; padding: 15px 10px; border-radius: 5px; margin-bottom: 1rem;">
+        <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="2rem">
+
+            <div style="padding: 15px 10px 25px 10px; background-color: #ddd; margin: -15px -10px -10px -10px;">
+                <RadzenText TextStyle="TextStyle.H3" Style="font-size: 2rem; margin-bottom: -1rem;" Text="@Project.GetFullName()" />
+            </div>
+
+            <!-- Project details -->
+            <RadzenText TextStyle="TextStyle.Body1">
+                @((MarkupString)Project.Description)
+            </RadzenText>
+
+        </RadzenStack>
+    </div>
+
+    <!-- REQUIRED SKILLS -->
+    <SkillsAsBadgesComponent SkillsList="@SkillsList" />
+
 </RadzenCard>
 
 @code {
@@ -122,9 +158,10 @@
         await JSRuntime.InvokeVoidAsync("open", $"{project.RequestDocLink}", "_blank");
     }
 
-    private void ViewDetails(int id)
+    private async void ViewDetails(int id)
     {
-        Navigation.NavigateTo($"projects/projectdetails/{id}");
+        string url = $"projects/projectdetails/{id}";
+        await JSRuntime.InvokeVoidAsync("open", url, "_blank");
     }
 
     /// <summary>
