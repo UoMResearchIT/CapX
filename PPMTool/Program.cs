@@ -21,8 +21,7 @@ using PPMTool.Helpers;
 using PPMTool.Services;
 using Radzen;
 using EnvironmentHelper = PPMTool.Helpers.EnvironmentHelper;
-
-
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 #if RELEASE
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
@@ -63,12 +62,12 @@ builder.Services.AddServerSideBlazor().AddHubOptions(o =>
 });
 
 var connectionString = builder.Configuration.GetConnectionString("PPMToolContextConnection");
-var dbProvider = builder.Configuration.GetValue<string>("DbProvider");
-builder.Services.AddDbContextFactory<PPMToolContext>(options => options.AddDbProvider(connectionString, builder.Configuration));
+var dbProvider = builder.Configuration.GetValue<string>("DbProvider").Clean();
+builder.Services.AddDbContextFactory<PPMToolContext>(options => options.AddDbProvider(connectionString, dbProvider));
 builder.Services.AddBlazoredSessionStorage();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddRadzenComponents();
-builder.Services.AddTransient<Microsoft.Extensions.Logging.ILogger>(s => s.GetRequiredService<ILogger<Program>>());
+builder.Services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Program>>());
 builder.Services.AddScoped<InnateCodeService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<PersonService>();

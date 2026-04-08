@@ -1,6 +1,5 @@
 ﻿using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
@@ -209,23 +208,14 @@ namespace PPMTool.Data
         /// </summary>
         /// <param name="optionsBuilder"></param>
         /// <param name="connectionString"></param>
-        /// <param name="configuration"></param>
-        /// <param name="dbProviderString"></param>
+        /// <param name="dbProvider"></param>
         /// <exception cref="InvalidOperationException"></exception>
         /// <returns></returns>
         public static DbContextOptionsBuilder AddDbProvider(
             this DbContextOptionsBuilder optionsBuilder,
             string connectionString,
-            IConfiguration? configuration = null,
-            string? dbProviderString = null)
+            string dbProvider)
         {
-            if (configuration is null && string.IsNullOrWhiteSpace(dbProviderString))
-            {
-                throw new InvalidOperationException("Configuration and DB provider string cannot both be null here!");
-            }
-
-            // If we pass in a DB Provider then use that, otherwise look in the configuration (which will check environment variables) for a provider
-            var dbProvider = dbProviderString == null ? configuration?.GetValue<string>("DbProvider") : dbProviderString;
             Console.WriteLine($"** Using DB provider {dbProvider}");
             switch (dbProvider)
             {
