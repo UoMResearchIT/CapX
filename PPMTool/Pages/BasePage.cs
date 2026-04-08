@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using PPMTool.Shared;
 using Radzen;

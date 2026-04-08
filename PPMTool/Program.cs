@@ -15,10 +15,13 @@ using PPMTool.API.Authentication;
 using PPMTool.API.Endpoints;
 using PPMTool.API.Filters;
 using PPMTool.API.Services;
+using PPMTool.Data;
 using PPMTool.Data.Context;
-using PPMTool.Data.Helpers;
+using PPMTool.Helpers;
 using PPMTool.Services;
 using Radzen;
+using EnvironmentHelper = PPMTool.Helpers.EnvironmentHelper;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 #if RELEASE
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
@@ -59,14 +62,12 @@ builder.Services.AddServerSideBlazor().AddHubOptions(o =>
 });
 
 var connectionString = builder.Configuration.GetConnectionString("PPMToolContextConnection");
-builder.Services.AddDbContextFactory<PPMToolContext>(options =>
-    options.UseSqlite(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
-);
-
+var dbProvider = builder.Configuration.GetValue<string>("DbProvider").Clean();
+builder.Services.AddDbContextFactory<PPMToolContext>(options => options.AddDbProvider(connectionString, dbProvider));
 builder.Services.AddBlazoredSessionStorage();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddRadzenComponents();
-builder.Services.AddTransient<Microsoft.Extensions.Logging.ILogger>(s => s.GetRequiredService<ILogger<Program>>());
+builder.Services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Program>>());
 builder.Services.AddScoped<InnateCodeService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<PersonService>();
@@ -320,16 +321,19 @@ app.UseWhen(
 app.MapFallbackToPage("/_Host");
 
 // Set the journal mode on the DB
-using (var connection = new SqliteConnection(connectionString))
+if (dbProvider == "sqlite")
 {
-    // Setting this should persist across connections
-    // https://learn.microsoft.com/en-gb/dotnet/standard/data/sqlite/compare#connection-strings
-    connection.Open();
-    using (var command = new SqliteCommand("PRAGMA journal_mode=WAL;", connection))
+    using (var connection = new SqliteConnection(connectionString))
     {
-        command.ExecuteNonQuery();
+        // Setting this should persist across connections
+        // https://learn.microsoft.com/en-gb/dotnet/standard/data/sqlite/compare#connection-strings
+        connection.Open();
+        using (var command = new SqliteCommand("PRAGMA journal_mode=WAL;", connection))
+        {
+            command.ExecuteNonQuery();
+        }
+        connection.Close();
     }
-    connection.Close();
 }
 
 // Set dummy data seed flag
@@ -341,7 +345,7 @@ using var scope = app.Services.CreateScope();
 var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
 using (var context = dbContextFactory.CreateDbContext())
 {
-    // Delete existing DB
+    // Delete existing DB if seeding to ensure a clean slate
     if (shouldSeed)
     {
         context.Database.EnsureDeleted();
@@ -353,6 +357,9 @@ using (var context = dbContextFactory.CreateDbContext())
 
 // Seed the default superuser from the settings if it doesn't already exist
 SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
+
+// Seed features
+SeedHelper.SeedFeatures(scope.ServiceProvider);
 
 // If seeding run the dummy data seeding methods
 if (shouldSeed)

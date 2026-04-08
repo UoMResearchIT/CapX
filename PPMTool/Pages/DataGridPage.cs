@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
+using PPMTool.Data.Interfaces;
 using PPMTool.Services;
 using Radzen;
 using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
-    public abstract class DataGridPage<T> : BasePage where T : class, ILoggableClass
+    public abstract class DataGridPage<T> : BasePage where T : class, ILoggableObject
     {
         protected RadzenDataGrid<T> dataGrid;
         protected IList<T> dataGridEntities;

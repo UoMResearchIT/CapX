@@ -3,6 +3,7 @@ using FluentDateTime;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Services
 {
@@ -308,7 +309,7 @@ namespace PPMTool.Services
             // Get user's rejected timesheet numbers
             selfNotificationsCount += await context.Timesheets
                 .Include(x => x.Owner)
-                .Where(x => x.Owner.PersonId == activeUserId && x.Status == Enums.TimesheetStatus.Rejected)
+                .Where(x => x.Owner.PersonId == activeUserId && x.Status == TimesheetStatus.Rejected)
                 .CountAsync();
             HasOwnTimesheetActions = selfNotificationsCount > 0;
 
@@ -321,7 +322,7 @@ namespace PPMTool.Services
                 {
                     staffNotificationsCount += await context.Timesheets
                         .Include(x => x.Owner)
-                        .Where(x => x.Owner.PersonId == p.PersonId && x.Status == Enums.TimesheetStatus.Submitted)
+                        .Where(x => x.Owner.PersonId == p.PersonId && x.Status == TimesheetStatus.Submitted)
                         .CountAsync();
                 }
             }

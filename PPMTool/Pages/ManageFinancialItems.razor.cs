@@ -5,10 +5,11 @@ using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Data.Helpers;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
+using PPMTool.Data.Interfaces;
+using PPMTool.Helpers;
+using PPMTool.Models;
 using PPMTool.Pages.Components;
 using PPMTool.Services;
 using Radzen;
@@ -364,13 +365,13 @@ namespace PPMTool.Pages
                 for (int j = 0; j < properties.Length; j++)
                 {
                     var value = properties[j].GetValue(item);
-                    string textValue = value is ILoggableClass ? (value as ILoggableClass)?.GetSensibleObjectName() : value?.ToString();
+                    string textValue = value is ILoggableObject ? (value as ILoggableObject)?.GetSensibleObjectName() : value?.ToString();
                     if (value is IEnumerable && value is not string)
                     {
                         textValue = "[";
                         foreach (var colItem in (value as IEnumerable))
                         {
-                            textValue += colItem is ILoggableClass ? (colItem as ILoggableClass)?.GetSensibleObjectName() : colItem?.ToString();
+                            textValue += colItem is ILoggableObject ? (colItem as ILoggableObject)?.GetSensibleObjectName() : colItem?.ToString();
                         }
                         textValue += "]";
                     }

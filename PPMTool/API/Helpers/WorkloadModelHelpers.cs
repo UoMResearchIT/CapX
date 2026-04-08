@@ -2,7 +2,8 @@
 using PPMTool.API.DTOs;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
-using PPMTool.Data.Helpers;
+using PPMTool.Data.Enums;
+using PPMTool.Helpers;
 
 namespace PPMTool.API.Helpers
 {

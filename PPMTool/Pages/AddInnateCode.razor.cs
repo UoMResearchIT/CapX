@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 
 namespace PPMTool.Pages
@@ -127,19 +128,19 @@ namespace PPMTool.Pages
             {
                 TaskName = "Management",
                 InnateCode = innateCode,
-                Duty = Enums.Duty.ProjectAndServiceMgmt
+                Duty = Duty.ProjectAndServiceMgmt
             });
             dataGridEntities.Add(new InnateCodeTask
             {
                 TaskName = "Development",
                 InnateCode = innateCode,
-                Duty = Enums.Duty.ProjectWork
+                Duty = Duty.ProjectWork
             });
             dataGridEntities.Add(new InnateCodeTask
             {
                 TaskName = "Maintenance",
                 InnateCode = innateCode,
-                Duty = Enums.Duty.ProjectWork
+                Duty = Duty.ProjectWork
             });
             await dataGrid.Reload();
         }

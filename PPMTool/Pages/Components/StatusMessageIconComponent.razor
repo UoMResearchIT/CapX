@@ -1,4 +1,5 @@
 ﻿@using PPMTool.Data
+@using PPMTool.Data.Enums
 @using PPMTool.Services
 @using System.Diagnostics
 @using static PPMTool.Data.StatusMessage
@@ -47,7 +48,7 @@ else if (FilteredMessages.Count() > 0)
         FilteredMessages.Clear();
         foreach (StatusMessage item in Messages?.Where(x => x.Type == Type && x.Status))
         {
-            if (item.RelevantFeature == Enums.FeatureType.None || FeatureService.IsFeatureEnabled(item.RelevantFeature))
+            if (item.RelevantFeature == FeatureType.None || FeatureService.IsFeatureEnabled(item.RelevantFeature))
             {
                 FilteredMessages.Add(item);
             }

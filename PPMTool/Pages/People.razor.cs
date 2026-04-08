@@ -3,6 +3,7 @@ using System.Linq.Dynamic.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -40,7 +41,7 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            skillsEnabled = FeatureService.IsFeatureEnabled(Enums.FeatureType.Skills);
+            skillsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Skills);
 
             Loading = true;
             EnqueueLoadData(GetLoadTask);

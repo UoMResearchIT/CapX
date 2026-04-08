@@ -6,11 +6,13 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Data.Helpers;
-using PPMTool.Enums;
+using PPMTool.Helpers;
+using PPMTool.Models;
 using PPMTool.Services;
 using Radzen;
-using static PPMTool.Data.Helpers.ExportHelper;
+using static PPMTool.Helpers.ExportHelper;
 using Fill = ApexCharts.Fill;
 
 namespace PPMTool.Pages
@@ -796,7 +798,7 @@ namespace PPMTool.Pages
 
                             // Represent the assignments (including leadership assignments if cost model allows recharge) in the window as chunks.
                             // Do not recompute the costs here as it is a waste of effort.
-                            var data = ExportHelper.GetAssignmentChunks(
+                            var data = AssignmentHelper.GetAssignmentChunks(
                                 person,
                                 projectsInWindow,
                                 allFinRefs,

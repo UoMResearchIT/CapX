@@ -2,8 +2,8 @@
 @using Microsoft.Extensions.Logging
 @using PPMTool.Data
 @using PPMTool.Data.Entities
+@using PPMTool.Data.Enums
 @using PPMTool.Data.Helpers
-@using PPMTool.Enums
 @using Radzen
 
 <RadzenTemplateForm TItem="Invoice" Submit="@(() => HandleValidSubmit())" Data="@Invoice">
@@ -114,7 +114,7 @@
             errorMessage = "You must give this item a description!";
             return false;
         }
-        if (!HtmlHelper.IsValidLink(Invoice.InvoiceUrl))
+        if (!Invoice.InvoiceUrl.IsValidURL())
         {
             errorMessage = "Invoice URL is required which links to an invoice or email as a SharePoint document so there is a physical record of the payment request!";
             return false;

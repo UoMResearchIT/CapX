@@ -36,7 +36,7 @@ The software can be cloned with the usual `git clone` command. However, dependin
 The database connection string needs to be specified in a `CONNECTION_STRING` environment variable. During development in Visual Studio, See the `.env.sample` file for example connection strings. Note that this is also required at "design-time" when running EF Core tools to update the database. The CapX API also connects the [leave booking system](https://holiday.its.manchester.ac.uk/) database. The connection string for this connection also needs to be specified in the same way in a variable called `LEAVEBOOKINGS_CONNECTION_STRING=`. During development, User Secrets can be used to override the blank value in the `appsettings.json`.
 
 ### Seeding the Database
-The default database produced when first running EF Core's `dotnet ef database update` command (or `Update-Database` from within the Visual Studio Package Manager Console) runs the migrations available in the source code checked out. This produces an empty database. When the app starts, a single super user will be added to allow you to login. In addition, based on the migration data available in the source code, the timesheet activities and tasks in use at UoM at the time the feature was added are also there as well as the initial version of the RSE competency framework. Every other table is blank. This limits the ability to test new features or to demo the software without first adding records to the blank tables through the UI which takes time. To faciltate better testing, developers can set the `SEED_DUMMY_DATA` environment variable to "TRUE" (case insensitive) to have the software populate all the empty tables with dummy data on start-up.
+The app will run migrations every time it starts. If the connection string permits it, it will therefore create a blank database on first run. Furthermore, a single super user will be added to allow you to login. A blank database limits the ability to test new features or to demo the software without first adding records to the blank tables through the UI which takes time. To faciltate better testing, developers can set the `SEED_DUMMY_DATA` environment variable to "TRUE" (case insensitive) to have the software populate all the empty tables with dummy data on start-up.
 
 > [!WARNING] 
 > This feature overwrites all data in the tables as soon as the app starts!
@@ -67,6 +67,7 @@ To set this up, create a `.env` file in the repository root with the following r
 | `SUPERUSER_NAME` | Name of the superuser (required if seeding) |
 | `SUPERUSER_USERNAME` | Username of the superuser (required if seeding) |
 | `SUPERUSER_EMAIL` | Email of the superuser (required if seeding) |
+| `DB_PROVIDER` | Which DB provider should be used. Supports sqlite, sqlserver, postgresql values. |
 
 The following variables need only be set when not using the "Local" solution configuration:
 

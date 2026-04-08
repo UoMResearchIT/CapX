@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.API.Helpers
 {
@@ -61,7 +62,7 @@ namespace PPMTool.API.Helpers
             // Add filter to query based on status if necessary
             if (approvedOnly)
             {
-                query = query.Where(t => t.Status == Enums.TimesheetStatus.Approved);
+                query = query.Where(t => t.Status == TimesheetStatus.Approved);
             }
 
             return query;
