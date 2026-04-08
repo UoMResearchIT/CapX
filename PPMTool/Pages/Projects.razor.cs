@@ -1,8 +1,10 @@
 ﻿using System.Diagnostics;
 using System.Linq.Dynamic.Core;
+using System.Linq.Expressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Helpers;
 using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
@@ -58,9 +60,16 @@ namespace PPMTool.Pages
             }
         }
 
+        // Expression for sorting by cost model display order
+        private Expression<Func<Project, int>> costModelSortKey;
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
+
+            // Initialise the sort key expression for the data grid sort
+            costModelSortKey = DisplayOrderHelper.CreateOrderAttributeSortingExpression<Project, CostModel>(p => p.CostModel);
+
             Loading = true;
             EnqueueLoadData(() => GetLoadTask());
             LogInformation("Viewing project grid");
@@ -146,59 +155,7 @@ namespace PPMTool.Pages
                 }
             }
 
-            // Sorting
-            if (!string.IsNullOrEmpty(args.OrderBy))
-            {
-                if (args.OrderBy.StartsWith("Faculty") || args.OrderBy.StartsWith("School"))
-                {
-                    // Sorting for Faculty and School
-                    if (args.Sorts is { } sorts && sorts.Any())
-                    {
-                        var sort = args.Sorts?.FirstOrDefault();
-                        if (sort != null)
-                        {
-
-                            if (sort.Property == "Faculty")
-                            {
-                                query = sort.SortOrder == SortOrder.Ascending
-                                    ? query.OrderBy(x =>
-                                        x.School != null && x.School.Faculty != null
-                                            ? x.School.Faculty.Code
-                                            : "")
-                                    : query.OrderByDescending(x =>
-                                        x.School != null && x.School.Faculty != null
-                                            ? x.School.Faculty.Code
-                                            : "");
-                            }
-                            else if (sort.Property == "School")
-                            {
-                                query = sort.SortOrder == SortOrder.Ascending
-                                    ? query.OrderBy(x =>
-                                        x.School != null
-                                            ? x.School.Code
-                                            : "")
-                                    : query.OrderByDescending(x =>
-                                        x.School != null
-                                            ? x.School.Code
-                                            : "");
-                            }
-                        }
-                        else
-                        {
-                            // Should never happen but default to this if it ever did
-                            query = query.OrderBy(args.OrderBy);
-                        }
-                    }
-                    else
-                    {
-                        // Apply standard sorting
-                        if (args.OrderBy != null)
-                        {
-                            query = query.OrderBy(args.OrderBy);
-                        }
-                    }
-                }
-            }
+            query = ApplySorting(query, args);
 
 
             // Assign to grid source
@@ -214,6 +171,99 @@ namespace PPMTool.Pages
             }
 
             Debug.WriteLine($"** {data.Count()} projects loaded. {projects.Count()} displayed.");
+        }
+
+        /// <summary>
+        /// Applies data grid sorting, including custom sort orders for derived columns.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        private IQueryable<Project> ApplySorting(IQueryable<Project> query, LoadDataArgs args)
+        {
+            if (string.IsNullOrWhiteSpace(args.OrderBy))
+            {
+                return query;
+            }
+
+            var sort = args.Sorts?.FirstOrDefault();
+            if (sort == null || string.IsNullOrWhiteSpace(sort.Property))
+            {
+                return query.OrderBy(args.OrderBy);
+            }
+
+            return sort.Property switch
+            {
+                "Faculty" => ApplyFacultySort(query, sort.SortOrder),
+                "School" => ApplySchoolSort(query, sort.SortOrder),
+                "CostModel" => ApplyCostModelSort(query, sort.SortOrder),
+                "FundsReceived" => ApplyFundsReceivedSort(query, sort.SortOrder),
+                _ => query.OrderBy(args.OrderBy)
+            };
+        }
+
+        /// <summary>
+        /// Applies sorting for the derived faculty column.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="sortOrder"></param>
+        /// <returns></returns>
+        private IQueryable<Project> ApplyFacultySort(IQueryable<Project> query, SortOrder? sortOrder)
+        {
+            return sortOrder == SortOrder.Descending
+                ? query.OrderByDescending(x =>
+                    x.School != null && x.School.Faculty != null
+                        ? x.School.Faculty.Code
+                        : "")
+                : query.OrderBy(x =>
+                    x.School != null && x.School.Faculty != null
+                        ? x.School.Faculty.Code
+                        : "");
+        }
+
+        /// <summary>
+        /// Applies sorting for the derived school column.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="sortOrder"></param>
+        /// <returns></returns>
+        private IQueryable<Project> ApplySchoolSort(IQueryable<Project> query, SortOrder? sortOrder)
+        {
+            return sortOrder == SortOrder.Descending
+                ? query.OrderByDescending(x =>
+                    x.School != null
+                        ? x.School.Code
+                        : "")
+                : query.OrderBy(x =>
+                    x.School != null
+                        ? x.School.Code
+                        : "");
+        }
+
+        /// <summary>
+        /// Applies the cost model display order to grid sorting.
+        /// Ordering is derived directly from [DisplayOrder] on <see cref="CostModel"/>.
+        /// EF Core translates this to SQL CASE WHEN.
+        /// </summary>
+        private IQueryable<Project> ApplyCostModelSort(
+            IQueryable<Project> query,
+            SortOrder? sortOrder)
+        {
+            return sortOrder == SortOrder.Descending
+                ? query.OrderByDescending(costModelSortKey)
+                : query.OrderBy(costModelSortKey);
+        }
+
+        /// <summary>
+        /// Applies sorting by funds received for each project.
+        /// Delegates to <see cref="PaymentService.GetFundsReceived"/> so that the sort
+        /// order is consistent with the displayed column value.
+        /// </summary>
+        private IQueryable<Project> ApplyFundsReceivedSort(IQueryable<Project> query, SortOrder? sortOrder)
+        {
+            return sortOrder == SortOrder.Descending
+                ? query.OrderByDescending(x => PaymentService.GetFundsReceived(Context, x.ProjectId))
+                : query.OrderBy(x => PaymentService.GetFundsReceived(Context, x.ProjectId));
         }
 
         /// <summary>

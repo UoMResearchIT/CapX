@@ -175,8 +175,8 @@ namespace PPMTool.Pages
             editContext.NotifyValidationStateChanged();
             if (editContext.Validate())
             {
-                // Extra validation
-                if (!CheckLineManagerSet())
+                // Extra validation -- only check if there are managers to pick from
+                if (managers.Any() && !CheckLineManagerSet())
                 {
                     UpdateErrorOnActionBarFromContextMessageStore();
                     return;

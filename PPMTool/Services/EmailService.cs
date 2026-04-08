@@ -131,10 +131,15 @@ namespace PPMTool.Services
         /// <summary>
         /// Send absence email notifications to relevant project managers
         /// </summary>
+        /// <param name="personId">Manually supply the person ID as deletion may not have this info any more</param>
         /// <param name="newAbsences"></param>
         /// <param name="modifiedAbsences"></param>
         /// <param name="deletedAbsences"></param>
-        public async Task SendAbsenceEmailNotificationsAsync(IEnumerable<Absence> newAbsences, IEnumerable<IGrouping<Absence, EntityDiff<Absence>>> modifiedAbsences, Dictionary<int, Absence> deletedAbsences)
+        public async Task SendAbsenceEmailNotificationsAsync(
+            int personId,
+            IEnumerable<Absence> newAbsences,
+            IEnumerable<IGrouping<Absence, EntityDiff<Absence>>> modifiedAbsences,
+            IEnumerable<Absence> deletedAbsences)
         {
             // Run this task on a background thread
             await Task.Run(async () =>
@@ -142,21 +147,21 @@ namespace PPMTool.Services
                 // Create context and get people for lookup
                 using (var context = DbContextFactory.CreateDbContext())
                 {
+                    // Get all people
                     var people = UserService.GetAll(context).Select(x => x.Person).DistinctBy(x => x.Name);
 
+                    // Get name of the affected person
+                    var name = people.FirstOrDefault(x => x.PersonId == personId)?.Name;
+
                     // Get various lists of relevant info
-                    var allUpdatedAbsences = newAbsences.Concat(modifiedAbsences.Select(x => x.Key)).Concat(deletedAbsences.Values);
-                    var updatedAbsentPeople = allUpdatedAbsences.Select(x => x.Person).Distinct();
+                    var allUpdatedAbsences = newAbsences.Concat(modifiedAbsences.Select(x => x.Key)).Concat(deletedAbsences);
 
                     // Find projects where they have subtasks affected by the absence
                     var affectedProjects = ProjectService.GetAll(context).Where(x => x.SubTasks.Any(x =>
                     {
                         foreach (var absence in allUpdatedAbsences)
                         {
-                            // If a deletion, need to provide a person ID
-                            var kvp = deletedAbsences.FirstOrDefault(x => x.Value == absence);
-                            int? id = kvp.Key == 0 ? null : kvp.Key;
-                            if (x.IsAffectedByAbsence(absence, id))
+                            if (x.IsAffectedByAbsence(absence, personId))
                             {
                                 return true;
                             }
@@ -183,7 +188,7 @@ namespace PPMTool.Services
                         // Create email body
                         StringBuilder body = new StringBuilder();
                         body.Append($"<p>Dear {pm.Name},</p>");
-                        body.Append($"<p>{(affectedPMs.Contains(pm) ? Configuration["Email:AbsenceEmailBody"] : Configuration["Email:AbsenceEmailBodyNotAffected"])}</p>");
+                        body.Append($"<p>{(affectedPMs.Any(x => x.PersonId == pm.PersonId) ? Configuration["Email:AbsenceEmailBody"] : Configuration["Email:AbsenceEmailBodyNotAffected"])}</p>");
 
                         // Initialise a list of absences have been previously mentioned
                         var mentionedAbsences = new List<Absence>();
@@ -198,9 +203,7 @@ namespace PPMTool.Services
                             var relevantAbsences = new List<Absence>();
                             foreach (var absence in allUpdatedAbsences)
                             {
-                                var kvp = deletedAbsences.FirstOrDefault(x => x.Value == absence);
-                                int? id = kvp.Key == 0 ? null : kvp.Key;
-                                if (project.SubTasks.Any(x => x.IsAffectedByAbsence(absence, id)))
+                                if (project.SubTasks.Any(x => x.IsAffectedByAbsence(absence, personId)))
                                 {
                                     relevantAbsences.Add(absence);
                                 }
@@ -219,15 +222,7 @@ namespace PPMTool.Services
                                     }
 
                                     // Decide on the state of the absence
-                                    var state = GetAbsenceState(ab, newAbsences, modifiedAbsences, deletedAbsences.Select(x => x.Value));
-
-                                    // If absence is deletion need to pass name
-                                    string name = null;
-                                    if (deletedAbsences.ContainsValue(ab))
-                                    {
-                                        var id = deletedAbsences.FirstOrDefault(x => x.Value == ab).Key;
-                                        name = people.FirstOrDefault(x => x.PersonId == id)?.Name;
-                                    }
+                                    var state = GetAbsenceState(ab, newAbsences, modifiedAbsences, deletedAbsences);
 
                                     // Write absence info
                                     body.Append(GetFormattedAbsenceLine(ab, state, name));
@@ -249,15 +244,7 @@ namespace PPMTool.Services
                             foreach (var ab in notProjectRelatedAbsences)
                             {
                                 // Decide on the state of the absence
-                                var state = GetAbsenceState(ab, newAbsences, modifiedAbsences, deletedAbsences.Select(x => x.Value));
-
-                                // If absence is deletion need to pass name
-                                string name = null;
-                                if (deletedAbsences.ContainsValue(ab))
-                                {
-                                    var id = deletedAbsences.FirstOrDefault(x => x.Value == ab).Key;
-                                    name = people.FirstOrDefault(x => x.PersonId == id)?.Name;
-                                }
+                                var state = GetAbsenceState(ab, newAbsences, modifiedAbsences, deletedAbsences);
 
                                 // Write absence info
                                 body.Append(GetFormattedAbsenceLine(ab, state, name));
@@ -265,7 +252,7 @@ namespace PPMTool.Services
                         }
 
                         // Add closing statement
-                        if (affectedPMs.Contains(pm))
+                        if (affectedPMs.Any(x => x.PersonId == pm.PersonId))
                         {
                             body.Append($"<p>{Configuration["Email:AbsenceEmailEndBody"]}</p>");
                         }

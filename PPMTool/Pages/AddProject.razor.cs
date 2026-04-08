@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.Forms;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
+using PPMTool.Data.Helpers;
 using PPMTool.Services;
 using Radzen;
 using static PPMTool.Data.StatusMessage;
@@ -59,6 +60,7 @@ namespace PPMTool.Pages
         private IEnumerable<Faculty> faculties = new List<Faculty>();
         private IEnumerable<School> schools = new List<School>();
         private IEnumerable<ProjectStatus> statuses = new List<ProjectStatus>();
+        private IEnumerable<CostModel> costModels = new List<CostModel>();
         private ValidationMessageStore messageStore;
         private EditContext editContext;
         private double fundsReceived;
@@ -119,6 +121,7 @@ namespace PPMTool.Pages
                     && x.Person != null
                 );
             projectManagers = people.Where(x => users.Any(y => y.Person.PersonId == x.PersonId)).ToList();
+            costModels = DisplayOrderHelper.GetOrderListOfCostModels();
 
             // Create edit context and message store
             editContext = new EditContext(projectModel);
