@@ -41,6 +41,19 @@ The app will run migrations every time it starts. If the connection string permi
 > [!WARNING] 
 > This feature overwrites all data in the tables as soon as the app starts!
 
+### Database Migrations
+As CapX supports multiple DB providers, the migrations required to set up the database and its tables are specific to the provider. Each supported provider has its own `.Migrations` project containing the relevant migrations for ensuring the DB is aligned to the models in the code. To add a new migration for a particular provider, the following command can be used from the root directory to invoke the EF Core Tools e.g. for `DB_PROVIDER=sqlite` (change paths if running from somewhere else):
+
+```
+dotnet ef migrations add NameOfMigrationHere --context PPMToolContext --project PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj --startup-project PPMTool/PPMTool.csproj
+```
+
+The database can be updated manually with the following command but the web app calls `context.Database.Migrate();` anyway so the database will be created/updated as soon as the app runs making manual update rarely necessary.
+
+```
+dotnet ef database update --context PPMToolContext --project PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj --startup-project PPMTool/PPMTool.csproj
+```
+
 ### Solution/Build and Launch Configurations
 The Visual Studio solution no-longer has _launch_ configurations since the web app and the API are now integrated into one application. However, there are two _solution_ configurations: `Local` and `Release` that combine project-level _build_ configurations.
 - `Local` is to be used for development on your own machine as it bypasses third-party CAS authentication integrations and instead allows the developer to "sign-in" with any user in the database for testing purposes.    
