@@ -58,7 +58,7 @@
         <!-- Project Manager details -->
         <div style="padding: 5px 0px;">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
-                <RadzenText TextStyle="TextStyle.Subtitle1" Text="Project Manager :" />
+                <RadzenIcon Icon="article_person" title="Project Manager" />
                 <RadzenText TextStyle="TextStyle.Body1">
                     @(Project.ProjectManager?.Name ?? "Not Set")
                 </RadzenText>
@@ -68,7 +68,7 @@
         <!-- Dates -->
         <div style="padding: 5px 0px;">
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
-                <RadzenText TextStyle="TextStyle.Subtitle1" Text="Dates : " />
+                <RadzenIcon Icon="calendar_month" title="Dates" />
                 <RadzenText TextStyle="TextStyle.Body1">@windowDatesFormatted</RadzenText>
             </RadzenStack>
         </div>
