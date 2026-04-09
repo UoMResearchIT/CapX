@@ -93,7 +93,6 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("LegacyId")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Number")
@@ -140,7 +139,6 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Evidence")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("PersonId")
@@ -481,7 +479,7 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                     b.Property<double>("FTE")
                         .HasColumnType("REAL");
 
-                    b.Property<int>("LineManagerPersonId")
+                    b.Property<int?>("LineManagerPersonId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
@@ -524,7 +522,6 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                         .HasColumnType("REAL");
 
                     b.Property<string>("ActualsLastUpdated")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<double>("Budget")
@@ -1129,9 +1126,7 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 {
                     b.HasOne("PPMTool.Data.Entities.Person", "LineManager")
                         .WithMany("PeopleManaged")
-                        .HasForeignKey("LineManagerPersonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("LineManagerPersonId");
 
                     b.Navigation("LineManager");
                 });

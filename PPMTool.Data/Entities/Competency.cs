@@ -59,7 +59,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// This is the ID of the competency if it existed in v1.8 of the paper version of the framework
         /// </summary>
-        public string LegacyId { get; set; } = null!;
+        public string? LegacyId { get; set; }
 
         /// <summary>
         /// The number of the competency within the category-grade combination

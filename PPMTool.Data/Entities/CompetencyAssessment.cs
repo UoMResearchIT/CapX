@@ -14,7 +14,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// HTML string detailing the evidence supporting the assessment.
         /// </summary>
-        public string Evidence { get; set; } = null!;
+        public string? Evidence { get; set; }
 
         /// <summary>
         /// Date the assessment was created.
