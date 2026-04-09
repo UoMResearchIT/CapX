@@ -12,7 +12,7 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations.PostgreSql.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    [Migration("20260326152918_InitialCreate")]
+    [Migration("20260409131548_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -107,7 +107,6 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("LegacyId")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("Number")
@@ -156,7 +155,6 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Evidence")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("PersonId")
@@ -519,7 +517,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                     b.Property<double>("FTE")
                         .HasColumnType("double precision");
 
-                    b.Property<int>("LineManagerPersonId")
+                    b.Property<int?>("LineManagerPersonId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
@@ -564,7 +562,6 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         .HasColumnType("double precision");
 
                     b.Property<string>("ActualsLastUpdated")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<double>("Budget")
@@ -1185,9 +1182,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.HasOne("PPMTool.Data.Entities.Person", "LineManager")
                         .WithMany("PeopleManaged")
-                        .HasForeignKey("LineManagerPersonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("LineManagerPersonId");
 
                     b.Navigation("LineManager");
                 });

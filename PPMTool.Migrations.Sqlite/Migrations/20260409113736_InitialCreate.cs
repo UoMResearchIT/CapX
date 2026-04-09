@@ -25,7 +25,7 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                     CreatedDate = table.Column<string>(type: "TEXT", nullable: false),
                     RevisionDate = table.Column<string>(type: "TEXT", nullable: false),
                     IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    LegacyId = table.Column<string>(type: "TEXT", nullable: false),
+                    LegacyId = table.Column<string>(type: "TEXT", nullable: true),
                     Number = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -112,7 +112,7 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                     StartDate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     EndDate = table.Column<DateTime>(type: "TEXT", nullable: true),
                     FTE = table.Column<double>(type: "REAL", nullable: false),
-                    LineManagerPersonId = table.Column<int>(type: "INTEGER", nullable: false),
+                    LineManagerPersonId = table.Column<int>(type: "INTEGER", nullable: true),
                     TimesheetTemplateData = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
@@ -122,8 +122,7 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                         name: "FK_People_People_LineManagerPersonId",
                         column: x => x.LineManagerPersonId,
                         principalTable: "People",
-                        principalColumn: "PersonId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PersonId");
                 });
 
             migrationBuilder.CreateTable(
@@ -213,7 +212,7 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 {
                     CompetencyAssessmentId = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Evidence = table.Column<string>(type: "TEXT", nullable: false),
+                    Evidence = table.Column<string>(type: "TEXT", nullable: true),
                     DateCreated = table.Column<string>(type: "TEXT", nullable: false),
                     Status = table.Column<int>(type: "INTEGER", nullable: false),
                     CompetencyRevision = table.Column<int>(type: "INTEGER", nullable: false),
@@ -372,7 +371,7 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                     PlannedLeadershipCosts = table.Column<double>(type: "REAL", nullable: false),
                     ActualLeadershipCosts = table.Column<double>(type: "REAL", nullable: false),
                     BudgetedIndirects = table.Column<double>(type: "REAL", nullable: false),
-                    ActualsLastUpdated = table.Column<string>(type: "TEXT", nullable: false),
+                    ActualsLastUpdated = table.Column<string>(type: "TEXT", nullable: true),
                     PlannedWorkHours = table.Column<double>(type: "REAL", nullable: false),
                     ActualWorkHours = table.Column<double>(type: "REAL", nullable: false),
                     PlannedCost = table.Column<double>(type: "REAL", nullable: false),

@@ -49,8 +49,7 @@ namespace PPMTool.Data.Entities
         /// Line manager of this person
         /// </summary>
         [JsonIgnore]
-        [Required]
-        public virtual Person LineManager { get; set; } = null!;
+        public virtual Person? LineManager { get; set; }
 
         /// <summary>
         /// Pipe-separated list of timesheet tasks that represent the person's timesheet template
