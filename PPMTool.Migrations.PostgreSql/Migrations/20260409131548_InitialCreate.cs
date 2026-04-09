@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -25,7 +26,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                     CreatedDate = table.Column<string>(type: "text", nullable: false),
                     RevisionDate = table.Column<string>(type: "text", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    LegacyId = table.Column<string>(type: "text", nullable: false),
+                    LegacyId = table.Column<string>(type: "text", nullable: true),
                     Number = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
@@ -112,7 +113,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                     StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     FTE = table.Column<double>(type: "double precision", nullable: false),
-                    LineManagerPersonId = table.Column<int>(type: "integer", nullable: false),
+                    LineManagerPersonId = table.Column<int>(type: "integer", nullable: true),
                     TimesheetTemplateData = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -122,8 +123,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         name: "FK_People_People_LineManagerPersonId",
                         column: x => x.LineManagerPersonId,
                         principalTable: "People",
-                        principalColumn: "PersonId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PersonId");
                 });
 
             migrationBuilder.CreateTable(
@@ -213,7 +213,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     CompetencyAssessmentId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Evidence = table.Column<string>(type: "text", nullable: false),
+                    Evidence = table.Column<string>(type: "text", nullable: true),
                     DateCreated = table.Column<string>(type: "text", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     CompetencyRevision = table.Column<int>(type: "integer", nullable: false),
@@ -372,7 +372,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                     PlannedLeadershipCosts = table.Column<double>(type: "double precision", nullable: false),
                     ActualLeadershipCosts = table.Column<double>(type: "double precision", nullable: false),
                     BudgetedIndirects = table.Column<double>(type: "double precision", nullable: false),
-                    ActualsLastUpdated = table.Column<string>(type: "text", nullable: false),
+                    ActualsLastUpdated = table.Column<string>(type: "text", nullable: true),
                     PlannedWorkHours = table.Column<double>(type: "double precision", nullable: false),
                     ActualWorkHours = table.Column<double>(type: "double precision", nullable: false),
                     PlannedCost = table.Column<double>(type: "double precision", nullable: false),

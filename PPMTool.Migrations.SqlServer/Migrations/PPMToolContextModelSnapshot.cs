@@ -104,7 +104,6 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("LegacyId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Number")
@@ -153,7 +152,6 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Evidence")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PersonId")
@@ -516,7 +514,7 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                     b.Property<double>("FTE")
                         .HasColumnType("float");
 
-                    b.Property<int>("LineManagerPersonId")
+                    b.Property<int?>("LineManagerPersonId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -561,7 +559,6 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                         .HasColumnType("float");
 
                     b.Property<string>("ActualsLastUpdated")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("Budget")
@@ -1182,9 +1179,7 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                 {
                     b.HasOne("PPMTool.Data.Entities.Person", "LineManager")
                         .WithMany("PeopleManaged")
-                        .HasForeignKey("LineManagerPersonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("LineManagerPersonId");
 
                     b.Navigation("LineManager");
                 });

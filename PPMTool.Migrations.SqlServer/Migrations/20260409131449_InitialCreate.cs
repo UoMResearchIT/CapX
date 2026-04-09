@@ -25,7 +25,7 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                     CreatedDate = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     RevisionDate = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    LegacyId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LegacyId = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Number = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -112,7 +112,7 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                     StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EndDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     FTE = table.Column<double>(type: "float", nullable: false),
-                    LineManagerPersonId = table.Column<int>(type: "int", nullable: false),
+                    LineManagerPersonId = table.Column<int>(type: "int", nullable: true),
                     TimesheetTemplateData = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
@@ -122,8 +122,7 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                         name: "FK_People_People_LineManagerPersonId",
                         column: x => x.LineManagerPersonId,
                         principalTable: "People",
-                        principalColumn: "PersonId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PersonId");
                 });
 
             migrationBuilder.CreateTable(
@@ -213,7 +212,7 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                 {
                     CompetencyAssessmentId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Evidence = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Evidence = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     DateCreated = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
                     CompetencyRevision = table.Column<int>(type: "int", nullable: false),
@@ -372,7 +371,7 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                     PlannedLeadershipCosts = table.Column<double>(type: "float", nullable: false),
                     ActualLeadershipCosts = table.Column<double>(type: "float", nullable: false),
                     BudgetedIndirects = table.Column<double>(type: "float", nullable: false),
-                    ActualsLastUpdated = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ActualsLastUpdated = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PlannedWorkHours = table.Column<double>(type: "float", nullable: false),
                     ActualWorkHours = table.Column<double>(type: "float", nullable: false),
                     PlannedCost = table.Column<double>(type: "float", nullable: false),
