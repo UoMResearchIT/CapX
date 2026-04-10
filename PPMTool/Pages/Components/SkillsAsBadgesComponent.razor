@@ -12,7 +12,7 @@
         {
             <RadzenBadge Style="@($"background-color: {skill.Rareness.GetTextColourCode()};")" title="@($"{skill.RarenessCount} RSE(s) with this tag")">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.4rem">
-                    <SkillTagRarenessEmblemComponent SkillTag="skill" SizeInRem="1" />
+                    <div style="background-color: white; border-radius: 5px; padding: 1px;"><SkillTagRarenessEmblemComponent SkillTag="skill" SizeInRem="1" /></div>
                     <RadzenText Text="@skill.Name" Style="color: white; margin-bottom: 0;" />
                     @if (RemoveSkill != null)
                     {

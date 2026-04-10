@@ -6,33 +6,31 @@
 
 <RadzenCard Style="margin-bottom: 1rem;">
 
-    <!-- STATUS / UNMET DEMAND -->
-    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="2rem" Style="margin-bottom: 1rem;">
+    <!-- TOP ROW -->
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="2rem" Style="margin-bottom: 1rem;" AlignItems="AlignItems.Center">
 
         <!-- Status & Unmet demand -->
-        <div>
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem" AlignItems="AlignItems.Center">
-                <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem" AlignItems="AlignItems.Center">
+            <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
 
-                <div style="margin-left: 0.5rem;">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.2rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" >
+            <div style="margin-left: 0.5rem;">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.2rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" >
 
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Text="Unmet Demand (FTE) :" Style="margin-right: 0.1rem;"/>
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Text="Unmet Demand (FTE) :" Style="margin-right: 0.1rem;"/>
+                    <RadzenBadge Style="font-size: medium;"
+                                    BadgeStyle="BadgeStyle.Danger"
+                                    Text="@(minDemand.ToString())" />
+                    @if (minDemand != maxDemand)
+                    {
+                        <RadzenText Text="-" />
                         <RadzenBadge Style="font-size: medium;"
-                                     BadgeStyle="BadgeStyle.Danger"
-                                     Text="@(minDemand.ToString())" />
-                        @if (minDemand != maxDemand)
-                        {
-                            <RadzenText Text="-" />
-                            <RadzenBadge Style="font-size: medium;"
-                                         BadgeStyle="BadgeStyle.Danger"
-                                         Text="@(maxDemand.ToString())" />
-                        }
+                                        BadgeStyle="BadgeStyle.Danger"
+                                        Text="@(maxDemand.ToString())" />
+                    }
 
-                    </RadzenStack>
-                </div>
-            </RadzenStack>
-        </div>
+                </RadzenStack>
+            </div>
+        </RadzenStack>
 
         <!-- Request doc & Project detail buttons -->
         <div>
@@ -51,31 +49,8 @@
         </div>
 
     </RadzenStack>
-
-    <!-- PM / DATES -->
-    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="2rem" Style="margin-bottom: 1rem;">
-
-        <!-- Project Manager details -->
-        <div style="padding: 5px 0px;">
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
-                <RadzenIcon Icon="article_person" title="Project Manager" />
-                <RadzenText TextStyle="TextStyle.Body1">
-                    @(Project.ProjectManager?.Name ?? "Not Set")
-                </RadzenText>
-            </RadzenStack>
-        </div>
-
-        <!-- Dates -->
-        <div style="padding: 5px 0px;">
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
-                <RadzenIcon Icon="calendar_month" title="Dates" />
-                <RadzenText TextStyle="TextStyle.Body1">@windowDatesFormatted</RadzenText>
-            </RadzenStack>
-        </div>
-
-    </RadzenStack>
-
-    <!-- PROJECT DETAILS -->
+    
+    <!-- MIDDLE SECTION -->
     <div style="border: 1px solid #ddd; padding: 15px 10px; border-radius: 5px; margin-bottom: 1rem;">
         <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="2rem">
 
@@ -83,7 +58,30 @@
                 <RadzenText TextStyle="TextStyle.H3" Style="font-size: 2rem; margin-bottom: -1rem;" Text="@Project.GetFullName()" />
             </div>
 
-            <!-- Project details -->
+            <!-- PM / DATES -->
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="2rem">
+
+                <!-- Project Manager -->
+                <div style="padding: 5px 0px;">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
+                        <RadzenIcon Icon="article_person" title="Project Manager" />
+                        <RadzenText TextStyle="TextStyle.Body1">
+                            @(Project.ProjectManager?.Name ?? "Not Set")
+                        </RadzenText>
+                    </RadzenStack>
+                </div>
+
+                <!-- Dates -->
+                <div style="padding: 5px 0px;">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
+                        <RadzenIcon Icon="calendar_month" title="Dates" />
+                        <RadzenText TextStyle="TextStyle.Body1">@windowDatesFormatted</RadzenText>
+                    </RadzenStack>
+                </div>
+
+            </RadzenStack>
+
+            <!-- DESCRIPTION -->
             <RadzenText TextStyle="TextStyle.Body1">
                 @((MarkupString)Project.Description)
             </RadzenText>
@@ -91,7 +89,7 @@
         </RadzenStack>
     </div>
 
-    <!-- REQUIRED SKILLS -->
+    <!-- BOTTOM ROW -->
     <SkillsAsBadgesComponent SkillsList="@SkillsList" />
 
 </RadzenCard>
