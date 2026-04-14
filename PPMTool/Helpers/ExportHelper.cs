@@ -16,13 +16,17 @@ namespace PPMTool.Helpers
         {
             public string Name { get; }
 
+            public float StaffFTE { get; private set; }
+
+            public float StaffCosts { get; private set; }
+
+            public float PMFTE { get; private set; }
+
+            public float PMCosts { get; private set; }
+
             public float SMFTE { get; private set; }
 
             public float SMCosts { get; private set; }
-
-            public float PSMFTE { get; private set; }
-
-            public float PSMCosts { get; private set; }
 
             public float BAUFTE { get; private set; }
 
@@ -62,53 +66,57 @@ namespace PPMTool.Helpers
             /// </summary>
             /// <param name="staffFTE"></param>
             /// <param name="projManFTE"></param>
+            /// <param name="servManFTE"></param>
             /// <param name="bauFTE"></param>
             /// <param name="pdFTE"></param>
             /// <param name="techLeadFTE"></param>
             /// <param name="assignmentFTE">Total FTE of the assignments for this person</param>
             /// <param name="wlmTotal">Capacity of the person based on their WLM</param>
             /// <param name="actualCosts">Costs of the person on the day (zero if left or not start)</param>
-            /// <param name="costs">Annual cost / 365 (non-zero even if left or not started)</param>
+            /// <param name="dailyCosts">Annual cost / 365 (non-zero even if left or not started)</param>
             /// <param name="inBudget">Amount considered in budget for recovery</param>
             public void Update(
                 float staffFTE,
                 float projManFTE,
+                float servManFTE,
                 float bauFTE,
                 float pdFTE,
                 float techLeadFTE,
                 float assignmentFTE,
                 float wlmTotal,
                 float actualCosts,
-                float costs,
+                float dailyCosts,
                 float inBudget)
             {
                 // Update the WLM categories
-                SMFTE += staffFTE;
-                SMCosts += staffFTE * costs;
-                PSMFTE += projManFTE;
-                PSMCosts += projManFTE * costs;
+                StaffFTE += staffFTE;
+                StaffCosts += staffFTE * dailyCosts;
+                PMFTE += projManFTE;
+                PMCosts += projManFTE * dailyCosts;
+                SMFTE += servManFTE;
+                SMCosts += servManFTE * dailyCosts;
                 BAUFTE += bauFTE;
-                BAUCosts += bauFTE * costs;
+                BAUCosts += bauFTE * dailyCosts;
                 PDFTE += pdFTE;
-                PDCosts += pdFTE * costs;
+                PDCosts += pdFTE * dailyCosts;
                 TLFTE += techLeadFTE;
-                TLCosts += techLeadFTE * costs;
+                TLCosts += techLeadFTE * dailyCosts;
 
                 // Project work is then the rest
-                var nonProjectTime = staffFTE + projManFTE + bauFTE + pdFTE + techLeadFTE;
+                var nonProjectTime = staffFTE + projManFTE + servManFTE + bauFTE + pdFTE + techLeadFTE;
                 var projectWorkFTE = wlmTotal - nonProjectTime;
                 ProjectWorkFTE += projectWorkFTE;
-                ProjectWorkCosts += projectWorkFTE * costs;
+                ProjectWorkCosts += projectWorkFTE * dailyCosts;
 
                 // Update the amount recovered based on assignments
                 RecoveredIncLeadership += assignmentFTE;
-                RecoveredIncLeadershipCosts += assignmentFTE * costs;
+                RecoveredIncLeadershipCosts += assignmentFTE * dailyCosts;
 
                 // Difference between recovered and target (cap as cannot recover more than wlmTotal for a person)
                 var net = assignmentFTE - projectWorkFTE;
                 var netCapped = net > nonProjectTime ? nonProjectTime : net;
                 NetCappedIncLead += netCapped;
-                NetCappedIncLeadCosts += netCapped * costs;
+                NetCappedIncLeadCosts += netCapped * dailyCosts;
 
                 PersonCosts += actualCosts;
                 InBudgetCosts += inBudget;
@@ -140,16 +148,16 @@ namespace PPMTool.Helpers
             /// <returns></returns>
             public float GetAverageStaffFTE(int daysInWindow)
             {
-                return SMFTE / daysInWindow;
+                return StaffFTE / daysInWindow;
             }
 
             /// <summary>
             /// Returns the average costs of the staff management duty FTE for the whole window
             /// </summary>
             /// <returns></returns>
-            public float GetAverageStaffFTECosts()
+            public float GetAverageStaffMgmtCosts()
             {
-                return SMCosts;
+                return StaffCosts;
             }
 
             /// <summary>
@@ -159,16 +167,35 @@ namespace PPMTool.Helpers
             /// <returns></returns>
             public float GetAverageProjectManagementFTE(int daysInWindow)
             {
-                return PSMFTE / daysInWindow;
+                return PMFTE / daysInWindow;
             }
 
             /// <summary>
             /// Returns the average costs of the project management duty FTE for the whole window
             /// </summary>
             /// <returns></returns>
-            public float GetAverageProjectManagementFTECosts()
+            public float GetAverageProjectManagementCosts()
             {
-                return PSMCosts;
+                return PMCosts;
+            }
+
+            /// <summary>
+            /// Returns the FTE of the service management duty for the whole window
+            /// </summary>
+            /// <param name="daysInWindow"></param>
+            /// <returns></returns>
+            public float GetAverageServiceManagementFTE(int daysInWindow)
+            {
+                return SMFTE / daysInWindow;
+            }
+
+            /// <summary>
+            /// Returns the average costs of the service management duty FTE for the whole window
+            /// </summary>
+            /// <returns></returns>
+            public float GetAverageServiceManagementCosts()
+            {
+                return SMCosts;
             }
 
             /// <summary>
@@ -349,12 +376,13 @@ namespace PPMTool.Helpers
                         var gradeOnDay = wlm?.Grade ?? null;
                         var wlmTotal = wlm?.Total() ?? 0;
 
-                        // Get day costs for person based on mid-grade and scale for any part-time arrangement or planned absence
-                        // Actual costs based on WLM, reference costs based on grade (or inferred grade if no WLM on the day)
+                        // Get day costs for person based on mid-grade
                         var actualCostsOnDay = (gradeOnDay == null || gradeOnDay > 7) ? 0 : finref.GetMidGradeCosts(gradeOnDay ?? 6);
                         actualCostsOnDay /= 365.0;
-                        actualCostsOnDay *= wlmTotal;
                         var referenceCostsForADay = actualCostsOnDay;
+
+                        // Scale actual costs for any part-time arrangement or planned absence
+                        actualCostsOnDay *= wlmTotal;
 
                         // If we don't have a grade for the day then we won't have reference costs so
                         // need to compute them from first or last grade we know about
@@ -379,17 +407,14 @@ namespace PPMTool.Helpers
                         }
 
                         // Build out the values to update the totals with based on the WLM
-                        if (wlm == null)
-                        {
-                            wlm = person.GetWorkloadModelOnDateOrDefault(currentDate);
-                        }
-                        var projectWorkFTE = wlm.ProjectWorkFTE;
-                        var staffFTE = wlm.StaffManagementFTE;
-                        var psmFTE = wlm.ProjectAndServiceManagementFTE;
-                        var bauFTE = wlm.BusinessAsUsualFTE;
-                        var pdFTE = wlm.PersonalDevelopmentFTE;
-                        var tlFTE = wlm.ArchitectureFTE;
-                        wlmTotal = wlm.Total();
+                        var projectWorkFTE = wlm?.ProjectWorkFTE ?? 0;
+                        var staffFTE = wlm?.StaffManagementFTE ?? 0;
+                        var pmFTE = wlm?.ProjectManagementFTE ?? 0;
+                        var smFTE = wlm?.ServiceManagementFTE ?? 0;
+                        var bauFTE = wlm?.BusinessAsUsualFTE ?? 0;
+                        var pdFTE = wlm?.PersonalDevelopmentFTE ?? 0;
+                        var tlFTE = wlm?.ArchitectureFTE ?? 0;
+                        wlmTotal = wlm?.Total() ?? 0;
 
                         // Get the sum of their assignments on the day (including leadership)
                         var projectAssignmentsFTEIncLeadership = chunks
@@ -407,7 +432,8 @@ namespace PPMTool.Helpers
                             .First(x => x.Name == person.Name)
                             .Update(
                                 (float)staffFTE,
-                                (float)psmFTE,
+                                (float)pmFTE,
+                                (float)smFTE,
                                 (float)bauFTE,
                                 (float)pdFTE,
                                 (float)tlFTE,
