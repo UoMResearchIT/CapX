@@ -166,11 +166,8 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public WorkloadModelChange GetWorkloadModelOnDateOrDefault(DateTime date)
         {
-            // Get the workload model that is active at the beginning of the week
-            var activeModel = WorkloadModelChanges
-                .Where(x => x.ChangeDate <= date)
-                .OrderBy(x => x.ChangeDate)
-                .LastOrDefault();
+            // Try get model in play on date
+            var activeModel = GetWorkloadModelOnDate(date);
 
             // If no workload model active then default to the standard 100% project work model
             if (activeModel == null)
@@ -188,6 +185,26 @@ namespace PPMTool.Data.Entities
             }
 
             return activeModel;
+        }
+
+        /// <summary>
+        /// Return the workload model change that is active for the person on the date given, or null if no model changes in play at that time i.e. if they have left or haven't started yet
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        public WorkloadModelChange? GetWorkloadModelOnDate(DateTime date)
+        {
+            // If person hasn't started on day then return zero
+            if (StartDate > date) return null;
+
+            // If the person has left before this day then return zero
+            if (EndDate != null && EndDate < date) return null;
+
+            // Get the workload model that is active on day
+            return WorkloadModelChanges
+                .Where(x => x.ChangeDate <= date)
+                .OrderBy(x => x.ChangeDate)
+                .LastOrDefault();
         }
 
         /// <summary>
