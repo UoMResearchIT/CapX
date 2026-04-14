@@ -1077,12 +1077,12 @@ namespace PPMTool.Pages
 
                                 // Target FTE
                                 cell = worksheetTotals.Cell(2 + i, 6);
-                                cell.Value = totalItem.GetAverageTarget(averagePeriod);
+                                cell.Value = totalItem.GetAverageProjectWorkTarget(averagePeriod);
                                 cell.Style.NumberFormat.Format = numberFormat;
 
                                 // Target Costs
                                 cell = worksheetTotals.Cell(2 + i, 7);
-                                var targetCosts = totalItem.GetAverageTargetCosts();
+                                var targetCosts = totalItem.GetAverageProjectWorkTargetCosts();
                                 cell.Value = targetCosts;
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
