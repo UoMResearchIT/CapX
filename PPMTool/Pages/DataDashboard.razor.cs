@@ -825,7 +825,7 @@ namespace PPMTool.Pages
                         );
                         Debug.WriteLine($"** {totalData.Count()} recovery summary entries generated!");
 
-                        // Genearte data for project summary
+                        // Generate data for project summary
                         var projectData = new List<ProjectBudgetSummary>();
                         foreach (var assignment in assignmentChunks)
                         {
@@ -972,23 +972,19 @@ namespace PPMTool.Pages
                             var totalPeople = peopleActive.Count;
                             var columnTitles = new List<string>
                             {
-                                "Estimated Costs",
-                                "Actual Costs",
+                                "Estimated Costs (Mid-Grade)",
+                                "Actual Costs (Tracker)",
                                 "Estimate Error",
-                                "Target",
-                                "Target Costs",
-                                "Baseline Budget",
-                                "Recovered",
-                                "Recovered Costs",
-                                "Net (Capped)",
-                                "Net Costs",
-                                "Recovered (Inc Lead)",
-                                "Recovered Costs (Inc Lead)",
-                                "Net (Capped, Inc Lead)",
-                                "Net Costs (Inc Lead)",
-                                "In Budget Costs (Inc Lead)",
-                                "Actual Baseline (Inc Lead)",
-                                "Baseline Difference (Inc Lead)"
+                                "Assignment FTE",
+                                "Assignment Costs",
+                                "Estimated Baseline",
+                                "Potential Recovered FTE",
+                                "Potential Recovered Costs",
+                                "Surplus FTE",
+                                "Surplus Recovered Costs",
+                                "In Budget Costs",
+                                "Actual Baseline",
+                                "Baseline Surplus"
                             };
 
                             var columnComnnets = new List<string>
@@ -999,12 +995,8 @@ namespace PPMTool.Pages
                                 "This is the average technical target recovery FTE for the person over the reporting period based on their workload model.",
                                 "These are the technical target recovery costs of the person over the reporting period based on mid-grade estimates.",
                                 "This is the required baseline budget for the person over the reporting period (estimated costs - target costs).",
-                                "This is the average recovered FTE for the person over the reporting period based on their technical assignments.",
-                                "These are the recovered costs of the person over the reporting period based on mid-grade estimates for their technical assignments.",
-                                "This is the average net FTE (capped to their full-time FTE) for the person over the reporting period (technical target - recovered).",
-                                "These are the net (capped) costs of the person over the reporting period based on mid-grade estimates for their technical assignments.",
-                                "This is the average recovered FTE including leadership assignments (assuming we can recharge these) for the person over the reporting period based on their assignments",
-                                "These are the recovered costs of the person including leaership assignments over the reporting period based on mid-grade estimates.",
+                                "This is the average recovered FTE including leadership assignments (that we can recharge) for the person over the reporting period based on their assignments",
+                                "These are the recovered costs of the person including leadership assignments over the reporting period based on mid-grade estimates.",
                                 "This is the average net FTE (capped to their full-time FTE) and including leadership assignments for the person over the reporting period (target - recovered inc lead).",
                                 "These are the net (capped) costs of the person including leadership assignments over the reporting period based on mid-grade estimates.",
                                 "These are the costs that can be covered by known research funding sources for all assignments (technical and leadership).",
@@ -1099,61 +1091,41 @@ namespace PPMTool.Pages
                                 cell.FormulaR1C1 = "=RC[-5]-RC[-1]";
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
-                                // Recovered FTE
-                                cell = worksheetTotals.Cell(2 + i, 9);
-                                cell.Value = totalItem.GetAverageRecovered(averagePeriod);
-                                cell.Style.NumberFormat.Format = numberFormat;
-
-                                // Recovered Costs
-                                cell = worksheetTotals.Cell(2 + i, 10);
-                                cell.Value = totalItem.GetAverageRecoveredCosts();
-                                cell.Style.NumberFormat.Format = moneyFormat;
-
-                                // Net Capped
-                                cell = worksheetTotals.Cell(2 + i, 11);
-                                cell.Value = totalItem.GetAverageNetCapped(averagePeriod);
-                                cell.Style.NumberFormat.Format = numberFormat;
-
-                                // Net Capped Costs
-                                cell = worksheetTotals.Cell(2 + i, 12);
-                                cell.Value = totalItem.GetAverageNetCappedCosts();
-                                cell.Style.NumberFormat.Format = moneyFormat;
-
                                 // Recovered Inc Lead
-                                cell = worksheetTotals.Cell(2 + i, 13);
+                                cell = worksheetTotals.Cell(2 + i, 9);
                                 cell.Value = totalItem.GetAverageRecoveredIncLeadership(averagePeriod);
                                 cell.Style.NumberFormat.Format = numberFormat;
 
                                 // Recovered Inc Lead Costs
-                                cell = worksheetTotals.Cell(2 + i, 14);
+                                cell = worksheetTotals.Cell(2 + i, 10);
                                 cell.Value = totalItem.GetAverageRecoveredIncLeadershipCosts();
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Net Capped Inc Leads
-                                cell = worksheetTotals.Cell(2 + i, 15);
+                                cell = worksheetTotals.Cell(2 + i, 11);
                                 cell.Value = totalItem.GetAverageNetCappedIncLeadership(averagePeriod);
                                 cell.Style.NumberFormat.Format = numberFormat;
 
                                 // Net Capped Inc Lead Costs
-                                cell = worksheetTotals.Cell(2 + i, 16);
+                                cell = worksheetTotals.Cell(2 + i, 12);
                                 cell.Value = totalItem.GetAverageNetCappedIncLeadershipCosts();
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Amount in budget
-                                cell = worksheetTotals.Cell(2 + i, 17);
+                                cell = worksheetTotals.Cell(2 + i, 13);
                                 cell.Value = totalItem.GetInBudgetTotals();
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Baseline
-                                cell = worksheetTotals.Cell(2 + i, 18);
+                                cell = worksheetTotals.Cell(2 + i, 14);
                                 // = C - Q, both on the same row (relative R1C1: no anchors)
-                                cell.FormulaR1C1 = "=RC[-15]-RC[-1]";
+                                cell.FormulaR1C1 = "=RC[-11]-RC[-1]";
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Difference to baseline
-                                cell = worksheetTotals.Cell(2 + i, 19);
-                                // = H - (baseline in col 18), same row (relative R1C1: no anchors)
-                                cell.FormulaR1C1 = "=RC[-11]-RC[-1]";
+                                cell = worksheetTotals.Cell(2 + i, 15);
+                                // = H - (baseline in col 14), same row (relative R1C1: no anchors)
+                                cell.FormulaR1C1 = "=RC[-7]-RC[-1]";
                                 cell.Style.NumberFormat.Format = moneyFormat;
                             }
 
@@ -1258,8 +1230,8 @@ namespace PPMTool.Pages
                             // Write the rows
                             AddSummaryRow(ws, 4, "How much I think we cost (mid-grade estimates)", moneyFormat, $"=Costs!C{totalRow}");
                             AddSummaryRow(ws, 5, "How much we aim to recover through WLM project work allocations (salary estimates)", moneyFormat, $"=Costs!G{totalRow}");
-                            AddSummaryRow(ws, 6, "How much we could recover (if all work we do as assignments is paid for)", moneyFormat, $"=Costs!N{totalRow}");
-                            AddSummaryRow(ws, 7, "How much we can't recover as money ran out (i.e. work we did for free)", moneyFormat, $"=Costs!Q{totalRow} - Costs!N{totalRow}");
+                            AddSummaryRow(ws, 6, "How much we could recover (if all work we do as assignments is paid for)", moneyFormat, $"=Costs!J{totalRow}");
+                            AddSummaryRow(ws, 7, "How much we can't recover as money ran out (i.e. work we did for free)", moneyFormat, $"=Costs!M{totalRow} - Costs!J{totalRow}");
                             AddSummaryRow(ws, 8, "How much we actually can recover (based on money in the project budgets)", moneyFormat, null, "=R[-2]C + R[-1]C");
                             AddSummaryRow(ws, 9, "Actual surplus against cost recovery target due to combination of working for free and under assignment", moneyFormat, null, "=R[-1]C - R[-4]C");
                             AddSummaryRow(ws, 10, "How much ITS give us (baseline budget)", moneyFormat, null, "=R[-8]C * R[-7]C / 12");

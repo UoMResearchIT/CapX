@@ -16,21 +16,13 @@ namespace PPMTool.Helpers
         {
             public string Name { get; }
 
-            public float Target { get; private set; }
+            public float TargetFTE { get; private set; }
 
             public float TargetCosts { get; private set; }
-
-            public float Recovered { get; private set; }
-
-            public float RecoveredCosts { get; private set; }
 
             public float RecoveredIncLeadership { get; private set; }
 
             public float RecoveredIncLeadershipCosts { get; private set; }
-
-            public float NetCapped { get; private set; }
-
-            public float NetCappedCosts { get; private set; }
 
             public float NetCappedIncLead { get; private set; }
 
@@ -49,7 +41,6 @@ namespace PPMTool.Helpers
             /// Update the values based on the FTE for the day
             /// </summary>
             /// <param name="targetFTE"></param>
-            /// <param name="assignedFTE"></param>
             /// <param name="assignedIncLeadFTE"></param>
             /// <param name="maxCap"></param>
             /// <param name="actualCosts">Costs of the person on the day (zero if left or not start)</param>
@@ -57,27 +48,19 @@ namespace PPMTool.Helpers
             /// <param name="inBudget">Amount considered in budget for recovery</param>
             public void Update(
                 float targetFTE,
-                float assignedFTE,
                 float assignedIncLeadFTE,
                 float maxCap,
                 float actualCosts,
                 float costs,
                 float inBudget)
             {
-                Target += targetFTE;
+                TargetFTE += targetFTE;
                 TargetCosts += targetFTE * costs;
-                Recovered += assignedFTE;
-                RecoveredCosts += assignedFTE * costs;
                 RecoveredIncLeadership += assignedIncLeadFTE;
                 RecoveredIncLeadershipCosts += assignedIncLeadFTE * costs;
 
-                var net = assignedFTE - targetFTE;
+                var net = assignedIncLeadFTE - targetFTE;
                 var netCapped = net > maxCap ? maxCap : net;
-                NetCapped += netCapped;
-                NetCappedCosts += netCapped * costs;
-
-                net = assignedIncLeadFTE - targetFTE;
-                netCapped = net > maxCap ? maxCap : net;
                 NetCappedIncLead += netCapped;
                 NetCappedIncLeadCosts += netCapped * costs;
 
@@ -92,7 +75,7 @@ namespace PPMTool.Helpers
             /// <returns></returns>
             public float GetAverageTarget(int daysInWindow)
             {
-                return Target / daysInWindow;
+                return TargetFTE / daysInWindow;
             }
 
             /// <summary>
@@ -102,25 +85,6 @@ namespace PPMTool.Helpers
             public float GetAverageTargetCosts()
             {
                 return TargetCosts;
-            }
-
-            /// <summary>
-            /// Returns the FTE of the recovered for the whole window
-            /// </summary>
-            /// <param name="daysInWindow"></param>
-            /// <returns></returns>
-            public float GetAverageRecovered(int daysInWindow)
-            {
-                return Recovered / daysInWindow;
-            }
-
-            /// <summary>
-            /// Returns the average costs of the recovered FTE for the whole window
-            /// </summary>
-            /// <returns></returns>
-            public float GetAverageRecoveredCosts()
-            {
-                return RecoveredCosts;
             }
 
             /// <summary>
@@ -140,25 +104,6 @@ namespace PPMTool.Helpers
             public float GetAverageRecoveredIncLeadershipCosts()
             {
                 return RecoveredIncLeadershipCosts;
-            }
-
-            /// <summary>
-            /// Returns the FTE of the capped net for the whole window
-            /// </summary>
-            /// <param name="daysInWindow"></param>
-            /// <returns></returns>
-            public float GetAverageNetCapped(int daysInWindow)
-            {
-                return NetCapped / daysInWindow;
-            }
-
-            /// <summary>
-            /// Returns the average costs of the capped net FTE for the whole window
-            /// </summary>
-            /// <returns></returns>
-            public float GetAverageNetCappedCosts()
-            {
-                return NetCappedCosts;
             }
 
             /// <summary>
@@ -289,20 +234,15 @@ namespace PPMTool.Helpers
                         }
 
                         // Get the sum of their assignments on the day with and without leadership
-                        var projectAssignmentsFTE = chunks
-                            .Where(x => !x.IsLeadershipAssignment)
-                            .Sum(x => x.BilledFTE);
                         var projectAssignmentsFTEIncLeadership = chunks
                             .Sum(x => x.BilledFTE);
 
                         // Net value
-                        var netValue = projectAssignmentsFTE - projectWorkTargetFTE;
                         var netValueIncLeadership = projectAssignmentsFTEIncLeadership - projectWorkTargetFTE;
 
                         // Net value capped
                         var maxOverAllocation = wlmTotal - projectWorkTargetFTE;
                         if (maxOverAllocation < 0) maxOverAllocation = 0;
-                        var netValueCapped = netValue > maxOverAllocation ? maxOverAllocation : netValue;
                         var netValueCappedIncLeadership = netValueIncLeadership > maxOverAllocation ? maxOverAllocation : netValueIncLeadership;
 
                         // Amount in budget for the day across all chunks
@@ -317,7 +257,6 @@ namespace PPMTool.Helpers
                             .First(x => x.Name == person.Name)
                             .Update(
                                 (float)projectWorkTargetFTE,
-                                (float)projectAssignmentsFTE,
                                 (float)projectAssignmentsFTEIncLeadership,
                                 (float)maxOverAllocation,
                                 (float)actualCostsOnDay,
