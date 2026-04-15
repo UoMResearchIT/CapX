@@ -148,7 +148,11 @@ namespace PPMTool.Services
                 using (var context = DbContextFactory.CreateDbContext())
                 {
                     // Get all people
-                    var people = UserService.GetAll(context).Select(x => x.Person).DistinctBy(x => x.Name);
+                    var people = UserService
+                        .GetAll(context)
+                        .Select(x => x.Person)
+                        .Where(p => p != null)
+                        .DistinctBy(x => x.Name);
 
                     // Get name of the affected person
                     var name = people.FirstOrDefault(x => x.PersonId == personId)?.Name;
