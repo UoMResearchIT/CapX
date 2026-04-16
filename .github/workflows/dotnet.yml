@@ -38,11 +38,7 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Format
-        run: dotnet format PPMTool.sln \
-          --exclude ../Blazor-ApexCharts/src/Blazor-ApexCharts.csproj \
-          --verify-no-changes \
-          --no-restore \
-          --verbosity detailed
+        run: dotnet format PPMTool.sln --exclude ../Blazor-ApexCharts/src/Blazor-ApexCharts.csproj --verify-no-changes --no-restore --verbosity detailed
 
   build:
     if: github.actor != 'dependabot[bot]'
