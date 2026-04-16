@@ -311,6 +311,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Mavis Ledger",
                     CASUserName = "mledger",
+                    EmailAddress = "mledger@manc.ac.uk;mavis@manc.ac.uk",
                     RoleType = RoleType.Manager,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "ML")
                 };
@@ -320,7 +321,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Nigel Overfetch-Nelson",
                     CASUserName = "noverfetchnelson",
-                    EmailAddress = "",
+                    EmailAddress = "no@manc.ac.uk",
                     RoleType = RoleType.Manager,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "NO")
                 };
@@ -331,7 +332,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Clive Bugworthy",
                     CASUserName = "cbugworthy",
-                    EmailAddress = "",
+                    EmailAddress = "cb@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "CB")
                 };
@@ -341,7 +342,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Tina Breakaway",
                     CASUserName = "tbreakaway",
-                    EmailAddress = "",
+                    EmailAddress = "tb@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "TB")
                 };
@@ -351,7 +352,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Ankle Goblin",
                     CASUserName = "agoblin",
-                    EmailAddress = "",
+                    EmailAddress = "ag@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "AG")
                 };
@@ -361,7 +362,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Bingo McTrousers",
                     CASUserName = "bmctrou",
-                    EmailAddress = "",
+                    EmailAddress = "bm@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "BM")
                 };
@@ -371,7 +372,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Cheddar Swoosh",
                     CASUserName = "cswoosh",
-                    EmailAddress = "",
+                    EmailAddress = "cs@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "CS")
                 };
@@ -381,7 +382,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Eggplant Acrobat",
                     CASUserName = "eacrobat",
-                    EmailAddress = "",
+                    EmailAddress = "ea@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "EA")
                 };
@@ -391,7 +392,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Gravy Commander",
                     CASUserName = "gcomm",
-                    EmailAddress = "",
+                    EmailAddress = "gc@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "GC")
                 };
@@ -401,7 +402,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Lumpy Sprinkles",
                     CASUserName = "lspring",
-                    EmailAddress = "",
+                    EmailAddress = "ls@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "LS")
                 };
@@ -411,7 +412,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Lemon Lasso",
                     CASUserName = "llasso",
-                    EmailAddress = "",
+                    EmailAddress = "ll@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "LL")
                 };
@@ -421,7 +422,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Soggy Apple Nibbler",
                     CASUserName = "sanibb",
-                    EmailAddress = "",
+                    EmailAddress = "san@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "SAN")
                 };
@@ -432,7 +433,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Sue Permann",
                     CASUserName = "spermann",
-                    EmailAddress = "",
+                    EmailAddress = "sp@manc.ac.uk",
                     RoleType = RoleType.Reader,
                     Person = null // No person associated as assumed not a team member
                 };
@@ -443,7 +444,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Penny Pincher",
                     CASUserName = "ppincher",
-                    EmailAddress = "",
+                    EmailAddress = "pp@manc.ac.uk",
                     RoleType = RoleType.Finance,
                     Person = null // No person associated as assumed not a team member
                 };
@@ -454,7 +455,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Janet Nullington",
                     CASUserName = "jnullington",
-                    EmailAddress = "",
+                    EmailAddress = "jn@manc.ac.uk",
                     RoleType = RoleType.None,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "JN")
                 };
@@ -990,47 +991,106 @@ namespace PPMTool.Helpers
                 )
                 .ExecuteDelete();
 
-                // Check there are some left
-                if (context.InnateCodes.Count() == 0)
+                // Fresh databases created from the reset migrations start empty, so bootstrap the
+                // minimum non-project set of codes and tasks needed by the dummy data.
+                if (!context.InnateCodes.Any())
                 {
-                    throw new InvalidOperationException("No InnateCodes left after deletion! There should be a migration that adds them!");
+                    logger.LogWarning("No innate codes were added by migrations. Seeding a bootstrap dataset for dummy data.");
+                    context.InnateCodes.AddRange(GetBootstrapInnateCodes());
                 }
-
-                context.SaveChanges();
-
-                // Remove any brackets which may have Researcher names in them
-                foreach (InnateCode code in context.InnateCodes)
+                else
                 {
-                    code.ActivityName = RemoveParenthesesText(code.ActivityName);
-                }
-
-                // Add in missing codes
-                context.InnateCodes.AddRange(new List<InnateCode>
-                {
-                    new InnateCode
+                    // Remove any brackets which may have Researcher names in them
+                    foreach (InnateCode code in context.InnateCodes)
                     {
-                        ActivityCode = "S-RES-RTP-255",
-                        ActivityName = "Local Climate",
-                        IsActive = true,
-                        Tasks = GetDefaultInnateCodeTasks()
-                    },
-                    new InnateCode
-                    {
-                        ActivityCode = "S-RES-RTP-323",
-                        ActivityName = "Trade-Off Grade",
-                        IsActive = true,
-                        Tasks = GetDefaultInnateCodeTasks()
-                    },
-                    new InnateCode
-                    {
-                        ActivityCode = "S-RES-RTP-324",
-                        ActivityName = "PaPrKA",
-                        IsActive = true,
-                        Tasks = GetDefaultInnateCodeTasks()
+                        code.ActivityName = RemoveParenthesesText(code.ActivityName);
                     }
-                });
+                }
+
+                // Add in missing RTP codes used by the dummy seeded projects
+                EnsureInnateCodeExists(context, "S-RES-RTP-180", "Polypharmacy KSS");
+                EnsureInnateCodeExists(context, "S-RES-RTP-255", "Local Climate");
+                EnsureInnateCodeExists(context, "S-RES-RTP-311", "BMBaseDB Update");
+                EnsureInnateCodeExists(context, "S-RES-RTP-323", "Trade-Off Grade");
+                EnsureInnateCodeExists(context, "S-RES-RTP-324", "PaPrKA");
                 context.SaveChanges();
             }
+        }
+
+        /// <summary>
+        /// Creates a minimum set of innate codes and tasks so dummy seeding can run against a fresh database.
+        /// </summary>
+        /// <returns></returns>
+        private static IList<InnateCode> GetBootstrapInnateCodes()
+        {
+            return new List<InnateCode>
+            {
+                new InnateCode
+                {
+                    ActivityCode = "00",
+                    ActivityName = "Annual Leave",
+                    IsActive = true,
+                    Tasks = new List<InnateCodeTask>
+                    {
+                        new InnateCodeTask
+                        {
+                            TaskName = "Annual Leave (Holidays)",
+                            Duty = Duty.Other
+                        }
+                    }
+                },
+                new InnateCode
+                {
+                    ActivityCode = "01",
+                    ActivityName = "RSE Department Work",
+                    IsActive = true,
+                    Tasks = new List<InnateCodeTask>
+                    {
+                        new InnateCodeTask
+                        {
+                            TaskName = "BAU",
+                            Duty = Duty.BAU
+                        },
+                        new InnateCodeTask
+                        {
+                            TaskName = "Project and Service Management",
+                            Duty = Duty.ProjectAndServiceMgmt
+                        },
+                        new InnateCodeTask
+                        {
+                            TaskName = "Staff Management",
+                            Duty = Duty.StaffMgmt
+                        },
+                        new InnateCodeTask
+                        {
+                            TaskName = "Technical Leadership",
+                            Duty = Duty.RSA
+                        }
+                    }
+                }
+            };
+        }
+
+        /// <summary>
+        /// Ensures that an innate code exists for a seeded project RTP.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="activityCode"></param>
+        /// <param name="activityName"></param>
+        private static void EnsureInnateCodeExists(PPMToolContext context, string activityCode, string activityName)
+        {
+            if (context.InnateCodes.Any(x => x.ActivityCode == activityCode))
+            {
+                return;
+            }
+
+            context.InnateCodes.Add(new InnateCode
+            {
+                ActivityCode = activityCode,
+                ActivityName = activityName,
+                IsActive = true,
+                Tasks = GetDefaultInnateCodeTasks()
+            });
         }
 
         /// <summary>
