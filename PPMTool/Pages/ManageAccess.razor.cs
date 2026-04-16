@@ -54,6 +54,11 @@ namespace PPMTool.Pages
                 SetErrorMessage(new StatusMessage("You must give the user a name", StatusMessage.MessageType.Error));
                 return;
             }
+            if (string.IsNullOrWhiteSpace(entity.EmailAddress))
+            {
+                SetErrorMessage(new StatusMessage("Users must have a valid email address", StatusMessage.MessageType.Error));
+                return;
+            }
 
             await base.SaveRow(entity);
         }
