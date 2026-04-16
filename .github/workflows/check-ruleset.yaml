@@ -28,8 +28,7 @@ name: Check Repository Ruleset
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
 
 jobs:
@@ -41,12 +40,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.ORG_ACTIONS_BOT_APP_ID }}
+          private-key: ${{ secrets.ORG_ACTIONS_BOT_PRIVATE_KEY }}
+
       - name: Fetch Standard RSE Ruleset
         id: expected
         uses: UoMResearchIT/actions/get-repo-ruleset@v0.3
         with:
           repository: UoMResearchIT/RSE-Repository-Template
-          token: ${{ secrets.ACTIONS_REPO_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Fetch This Repository's Ruleset
         id: current
