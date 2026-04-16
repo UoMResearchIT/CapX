@@ -311,7 +311,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Mavis Ledger",
                     CASUserName = "mledger",
-                    EmailAddress = "",
+                    EmailAddress = "mledger@manc.ac.uk;mavis@manc.ac.uk",
                     RoleType = RoleType.Manager,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "ML")
                 };
@@ -321,7 +321,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Nigel Overfetch-Nelson",
                     CASUserName = "noverfetchnelson",
-                    EmailAddress = "",
+                    EmailAddress = "no@manc.ac.uk",
                     RoleType = RoleType.Manager,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "NO")
                 };
@@ -332,7 +332,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Clive Bugworthy",
                     CASUserName = "cbugworthy",
-                    EmailAddress = "",
+                    EmailAddress = "cb@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "CB")
                 };
@@ -342,7 +342,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Tina Breakaway",
                     CASUserName = "tbreakaway",
-                    EmailAddress = "",
+                    EmailAddress = "tb@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "TB")
                 };
@@ -352,7 +352,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Ankle Goblin",
                     CASUserName = "agoblin",
-                    EmailAddress = "",
+                    EmailAddress = "ag@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "AG")
                 };
@@ -362,7 +362,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Bingo McTrousers",
                     CASUserName = "bmctrou",
-                    EmailAddress = "",
+                    EmailAddress = "bm@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "BM")
                 };
@@ -372,7 +372,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Cheddar Swoosh",
                     CASUserName = "cswoosh",
-                    EmailAddress = "",
+                    EmailAddress = "cs@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "CS")
                 };
@@ -382,7 +382,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Eggplant Acrobat",
                     CASUserName = "eacrobat",
-                    EmailAddress = "",
+                    EmailAddress = "ea@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "EA")
                 };
@@ -392,7 +392,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Gravy Commander",
                     CASUserName = "gcomm",
-                    EmailAddress = "",
+                    EmailAddress = "gc@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "GC")
                 };
@@ -402,7 +402,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Lumpy Sprinkles",
                     CASUserName = "lspring",
-                    EmailAddress = "",
+                    EmailAddress = "ls@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "LS")
                 };
@@ -412,7 +412,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Lemon Lasso",
                     CASUserName = "llasso",
-                    EmailAddress = "",
+                    EmailAddress = "ll@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "LL")
                 };
@@ -422,7 +422,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Soggy Apple Nibbler",
                     CASUserName = "sanibb",
-                    EmailAddress = "",
+                    EmailAddress = "san@manc.ac.uk",
                     RoleType = RoleType.Developer,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "SAN")
                 };
@@ -433,7 +433,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Sue Permann",
                     CASUserName = "spermann",
-                    EmailAddress = "",
+                    EmailAddress = "sp@manc.ac.uk",
                     RoleType = RoleType.Reader,
                     Person = null // No person associated as assumed not a team member
                 };
@@ -444,7 +444,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Penny Pincher",
                     CASUserName = "ppincher",
-                    EmailAddress = "",
+                    EmailAddress = "pp@manc.ac.uk",
                     RoleType = RoleType.Finance,
                     Person = null // No person associated as assumed not a team member
                 };
@@ -455,7 +455,7 @@ namespace PPMTool.Helpers
                 {
                     Name = "Janet Nullington",
                     CASUserName = "jnullington",
-                    EmailAddress = "",
+                    EmailAddress = "jn@manc.ac.uk",
                     RoleType = RoleType.None,
                     Person = context.People.FirstOrDefault(x => x.ShortName == "JN")
                 };
