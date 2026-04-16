@@ -1027,8 +1027,8 @@ namespace PPMTool.Helpers
             {
                 new InnateCode
                 {
-                    ActivityCode = "DUMMY-LEAVE",
-                    ActivityName = "Dummy Leave",
+                    ActivityCode = "00",
+                    ActivityName = "Annual Leave",
                     IsActive = true,
                     Tasks = new List<InnateCodeTask>
                     {
@@ -1041,29 +1041,29 @@ namespace PPMTool.Helpers
                 },
                 new InnateCode
                 {
-                    ActivityCode = "DUMMY-GENERAL",
-                    ActivityName = "Dummy General Work",
+                    ActivityCode = "01",
+                    ActivityName = "RSE Department Work",
                     IsActive = true,
                     Tasks = new List<InnateCodeTask>
                     {
                         new InnateCodeTask
                         {
-                            TaskName = "Dummy BAU",
+                            TaskName = "BAU",
                             Duty = Duty.BAU
                         },
                         new InnateCodeTask
                         {
-                            TaskName = "Dummy Project and Service Management",
+                            TaskName = "Project and Service Management",
                             Duty = Duty.ProjectAndServiceMgmt
                         },
                         new InnateCodeTask
                         {
-                            TaskName = "Dummy Staff Management",
+                            TaskName = "Staff Management",
                             Duty = Duty.StaffMgmt
                         },
                         new InnateCodeTask
                         {
-                            TaskName = "Dummy Technical Leadership",
+                            TaskName = "Technical Leadership",
                             Duty = Duty.RSA
                         }
                     }
