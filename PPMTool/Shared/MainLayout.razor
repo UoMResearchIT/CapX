@@ -180,7 +180,10 @@ else
                     <RadzenPanelMenuItem Text="Admin" Icon="admin_panel_settings" Expanded="@adminMenuItemExpanded">
                         <AuthorizeView Roles="Superuser">
                             <Authorized Context="sub_context">
-                                <RadzenPanelMenuItem Path="manageorgunits" Text="Org Units" Icon="widgets" />
+                                @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity)
+                                {
+                                    <RadzenPanelMenuItem Path="manageorgunits" Text="Org Units" Icon="widgets" />
+                                }
                                 <RadzenPanelMenuItem Path="manageaccess" Text="Access Control" Icon="lock" />
                                 @if (FeatureService.IsFeatureEnabled(FeatureType.Timesheets))
                                 {
