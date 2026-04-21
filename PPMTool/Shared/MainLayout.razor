@@ -63,7 +63,7 @@ else
 
             <AuthorizeView Roles="Superuser,Manager,Reader,Developer,Finance">
                 <Authorized>
-                    @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity) || FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance))
+                    @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
                     {
                         <RadzenPanelMenuItem Text="Projects" Icon="work" Expanded="true">
                             @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
