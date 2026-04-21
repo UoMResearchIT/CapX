@@ -80,6 +80,13 @@ namespace PPMTool.Pages
             // Load settings the first time
             if (firstRender)
             {
+                // Navigate away if feature not enabled
+                if (!FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
+                {
+                    Navigation.NavigateTo("people");
+                    return;
+                }
+
                 // Get data grid filters and sort settings
                 settings = await SessionStorage.GetItemAsync<DataGridSettings>("project-settings");
 
