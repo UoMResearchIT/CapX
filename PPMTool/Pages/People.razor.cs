@@ -105,7 +105,7 @@ namespace PPMTool.Pages
             if (!EditAuthorised)
             {
                 // Only show the person themselves if in developer view
-                query = query.Where(x => x.PersonId == ActiveUser.Person.PersonId);
+                query = query.Where(x => ActiveUser.Person != null && x.PersonId == ActiveUser.Person!.PersonId);
             }
 
             // Now apply the custom filters (pattern matching syntax for non-null object)

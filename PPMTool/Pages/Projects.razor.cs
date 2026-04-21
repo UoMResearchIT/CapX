@@ -124,7 +124,7 @@ namespace PPMTool.Pages
             IQueryable<Project> query = ProjectService.GetAll(Context).OrderBy(x => x.RTP).AsQueryable();
             if (ActiveUserRoleType == RoleType.Developer)
             {
-                query = query.Where(x => x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person.PersonId == ActiveUser.Person.PersonId)));
+                query = query.Where(x => ActiveUser.Person != null && x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person.PersonId == ActiveUser.Person!.PersonId)));
             }
 
             // Remove the ones that are not active if necessary
