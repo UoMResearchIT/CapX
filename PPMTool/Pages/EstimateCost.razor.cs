@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Enums;
 using PPMTool.Services;
+using static PPMTool.Data.Extensions;
 using static PPMTool.Pages.Components.TaskConfigurationComponent;
 
 namespace PPMTool.Pages
@@ -29,18 +30,27 @@ namespace PPMTool.Pages
 
         private Dictionary<string, TaskConfigModel> models;
         private TaskConfigModel summaryModel;
+        private bool isUsable = true;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
-            summaryModel = new TaskConfigModel(FinancialReferenceService, Context, false);
-            models = new Dictionary<string, TaskConfigModel>
+            try
             {
-                { "Leadership", new TaskConfigModel(FinancialReferenceService, Context, true) },
-                { "RSE 1", new TaskConfigModel(FinancialReferenceService, Context, false) }
-            };
-            CostModel = CostModel.TechAndLeadershipWithIndirects;
+                FinancialReferenceService.GetFinancialReferenceForDate(Context, DateTime.Today);
+                summaryModel = new TaskConfigModel(FinancialReferenceService, Context, false);
+                models = new Dictionary<string, TaskConfigModel>
+                {
+                    { "Leadership", new TaskConfigModel(FinancialReferenceService, Context, true) },
+                    { "RSE 1", new TaskConfigModel(FinancialReferenceService, Context, false) }
+                };
+                CostModel = CostModel.TechAndLeadershipWithIndirects;
+            }
+            catch (FinancialRefException e)
+            {
+                isUsable = false;
+            }
             Loading = false;
         }
 

@@ -28,7 +28,7 @@ namespace PPMTool.Data
         /// <param name="list"></param>
         /// <param name="year"></param>
         /// <returns></returns>
-        /// <exception cref="Exception">If no suitable references can be found</exception>
+        /// <exception cref="FinancialRefException">If no suitable references can be found</exception>
         public static FinancialReference GetSuitableFinancialReference(this IEnumerable<FinancialReference> list, int year)
         {
             // Try find matching reference
@@ -49,10 +49,18 @@ namespace PPMTool.Data
             // If there are no matches then there are no references so throw exception
             if (match == null)
             {
-                throw new Exception("No suitable financial references can be found!");
+                throw new FinancialRefException("No suitable financial references can be found!");
             }
 
             return match;
+        }
+
+        /// <summary>
+        /// Special exception for financial references so it can be easily trapped.
+        /// </summary>
+        public class FinancialRefException : Exception
+        {
+            public FinancialRefException(string? message) : base(message) { }
         }
 
         /// <summary>
