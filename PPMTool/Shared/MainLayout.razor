@@ -177,43 +177,51 @@ else
 
             <AuthorizeView Roles="Superuser,Manager">
                 <Authorized>
-                    <RadzenPanelMenuItem Text="Admin" Icon="admin_panel_settings" Expanded="@adminMenuItemExpanded">
-                        <AuthorizeView Roles="Superuser">
-                            <Authorized Context="sub_context">
-                                @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
-                                {
-                                    <RadzenPanelMenuItem Path="manageorgunits" Text="Org Units" Icon="widgets" />
-                                }
-                                <RadzenPanelMenuItem Path="manageaccess" Text="Access Control" Icon="lock" />
-                                @if (FeatureService.IsFeatureEnabled(FeatureType.Timesheets))
-                                {
-                                    <RadzenPanelMenuItem Path="managecodes" Icon="punch_clock">
-                                        <Template>
-                                            <div style="flex: 1;">
-                                                @if (sidebarExpanded)
-                                                {
-                                                    <span>Timesheet Codes</span>
-                                                }
-                                                @if (totalTimesheetCodesToDeactivate > 0)
-                                                {
-                                                    <span class="rz-badge rz-badge-warning notification-badge" style="margin-left: 0.25rem;">@totalTimesheetCodesToDeactivate</span>
-                                                }
-                                            </div>
-                                        </Template>
-                                    </RadzenPanelMenuItem>
-                                }
-                                <RadzenPanelMenuItem Path="managefeatures" Text="Features" Icon="extension" />
-                            </Authorized>
-                        </AuthorizeView>
-                        @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity) && FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance))
-                        {
-                            <RadzenPanelMenuItem Path="managefinref" Text="Financial Refs" Icon="currency_pound" />
-                        }
-                        @if (FeatureService.IsFeatureEnabled(FeatureType.Skills))
-                        {
-                            <RadzenPanelMenuItem Path="manageskills" Text="Skills Tags" Icon="style" />
-                        }
-                    </RadzenPanelMenuItem>
+                    @if (activeUserRoleType == RoleType.Superuser ||
+                            (activeUserRoleType == RoleType.Manager &&
+                                (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity) && FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance)) ||
+                                            FeatureService.IsFeatureEnabled(FeatureType.Skills)
+                            )
+                        )
+                    {
+                        <RadzenPanelMenuItem Text="Admin" Icon="admin_panel_settings" Expanded="@adminMenuItemExpanded">
+                            <AuthorizeView Roles="Superuser">
+                                <Authorized Context="sub_context">
+                                    @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
+                                    {
+                                        <RadzenPanelMenuItem Path="manageorgunits" Text="Org Units" Icon="widgets" />
+                                    }
+                                    <RadzenPanelMenuItem Path="manageaccess" Text="Access Control" Icon="lock" />
+                                    @if (FeatureService.IsFeatureEnabled(FeatureType.Timesheets))
+                                    {
+                                        <RadzenPanelMenuItem Path="managecodes" Icon="punch_clock">
+                                            <Template>
+                                                <div style="flex: 1;">
+                                                    @if (sidebarExpanded)
+                                                    {
+                                                        <span>Timesheet Codes</span>
+                                                    }
+                                                    @if (totalTimesheetCodesToDeactivate > 0)
+                                                    {
+                                                        <span class="rz-badge rz-badge-warning notification-badge" style="margin-left: 0.25rem;">@totalTimesheetCodesToDeactivate</span>
+                                                    }
+                                                </div>
+                                            </Template>
+                                        </RadzenPanelMenuItem>
+                                    }
+                                    <RadzenPanelMenuItem Path="managefeatures" Text="Features" Icon="extension" />
+                                </Authorized>
+                            </AuthorizeView>
+                            @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity) && FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance))
+                            {
+                                <RadzenPanelMenuItem Path="managefinref" Text="Financial Refs" Icon="currency_pound" />
+                            }
+                            @if (FeatureService.IsFeatureEnabled(FeatureType.Skills))
+                            {
+                                <RadzenPanelMenuItem Path="manageskills" Text="Skills Tags" Icon="style" />
+                            }
+                        </RadzenPanelMenuItem>
+                    }
                 </Authorized>
             </AuthorizeView>
 
