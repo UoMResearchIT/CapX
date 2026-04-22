@@ -75,10 +75,13 @@
                                 @(task.Duty.GetDescription())
                             </Template>
                             <EditTemplate Context="task">
-                                <RadzenDropDown @bind-Value="task.Duty" Data="@Enum.GetValues(typeof(Duty))" />
+                                <RadzenDropDown TValue="Duty"
+                                                @bind-Value="task.Duty"
+                                                Data="duties"
+                                                ValueProperty="Value"
+                                                TextProperty="Text" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-
                         <RadzenDataGridColumn TItem="InnateCodeTask" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
                             <Template Context="c">
                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />

@@ -27,6 +27,10 @@
     {
         <LoadingComponent />
     }
+    else if (!isUsable)
+    {
+        <StatusMessageComponent Message="@(new StatusMessage("There are no financial references available in the system. You must add at least one before this page can be used.", StatusMessage.MessageType.Error))" />
+    }
     else
     {
         <RadzenCard>

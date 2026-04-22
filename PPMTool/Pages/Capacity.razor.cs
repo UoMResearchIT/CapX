@@ -37,6 +37,13 @@ namespace PPMTool.Pages
 
             if (!firstRender) return;
 
+            // Navigate away if feature not enabled
+            if (!FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
+            {
+                Navigation.NavigateTo("people");
+                return;
+            }
+
             // Certain roles can use the dropdowns and save manager settings so need to reload
             if (EditAuthorised || ActiveUserRoleType == RoleType.Reader)
             {

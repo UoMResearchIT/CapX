@@ -13,7 +13,7 @@
                 <h1>Manage Skills</h1>
             </div>
             <div class="col-auto py-2 align-items-center">
-                <RadzenButton Text="Verify" Icon="cloud_done" Click="@VerifyControlledNames" Disabled="@(entityToInsert != null || Loading || !EditAuthorised)" />
+                <RadzenButton Text="Verify" Icon="cloud_done" Click="@VerifyControlledNamesAsync" Disabled="@(entityToInsert != null || Loading || !EditAuthorised)" />
                 <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled="@(entityToInsert != null || Loading || !EditAuthorised)" />
             </div>
         </div>

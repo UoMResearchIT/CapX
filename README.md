@@ -136,4 +136,5 @@ TBC
 ## Known Issues
 1. CapX will run slowly in Firefox while the ad blocker is enabled. Disabling the ad blocker resolves this issue.
 2. Use of the Bitwarden browser plugin has been know to slow down the response of the interactive graphs. See [Issue 302](https://github.com/UoMResearchIT/CapX/issues/302) for details.
-3. CapX does not work properly in Safari on macOS when run from Docker.
+3. CapX does not work properly in Safari on macOS when run from Docker. See [Issue 570](https://github.com/UoMResearchIT/CapX/issues/570) for details.
+4. Use of GitInfo library means that the app must have access to the `.git` directory at compile-time. If checked out as a submodule this wont' be the case so this is not supported. See [Issue 1255](https://github.com/UoMResearchIT/CapX/issues/1255) for details.
