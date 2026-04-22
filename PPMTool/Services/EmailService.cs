@@ -174,20 +174,24 @@ namespace PPMTool.Services
                         return false;
                     }));
 
-                    // Get affected PMs
+                    // Get affected PMs based on projects they currently own
                     var affectedPMs = affectedProjects.Select(x => x.ProjectManager).Distinct().ToList();
 
-                    // If any affected PM is currently absent then notify all PMs
+                    // Get all PMs based on their current WLM
                     var managersToNotify = UserService
                         .GetAll(context)
                         .Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
                         .Select(x => x.Person)
-                        .DistinctBy(x => x.Name);
+                        .DistinctBy(x => x.Name)
+                        .Where(x => x.GetWorkloadModelOnDate(DateTime.Today)?.ProjectManagementFTE > 0);
+
+                    // Check to see whether any PMs are currently absent
                     var currentPMAbsences = PersonService
                         .GetAbsencesForPeople(context, affectedPMs)
                         .Where(x => x.IsCurrentAbsence());
 
                     // Just need to notify the affected if there are no affected PMs who are absent at the moment
+                    // Otherwise leave the managers to notfy as all PMs
                     if (currentPMAbsences.Count() == 0)
                     {
                         managersToNotify = affectedPMs;
