@@ -18,6 +18,16 @@ namespace PPMTool.Pages
 
         private InnateCode innateCode;
 
+        /// <summary>
+        /// Represents a duty and its text string representation for dropdown sources.
+        /// Probably can make this avialable elsewhere too.
+        /// </summary>
+        /// <param name="Value"></param>
+        /// <param name="Text"></param>
+        public record DutyOption(Duty Value, string Text);
+        private IEnumerable<DutyOption> duties =
+            Enum.GetValues<Duty>().Select(d => new DutyOption(d, d.GetDescription()));
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
