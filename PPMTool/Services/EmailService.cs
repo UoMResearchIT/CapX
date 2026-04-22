@@ -147,7 +147,7 @@ namespace PPMTool.Services
                 // Create context and get people for lookup
                 using (var context = DbContextFactory.CreateDbContext())
                 {
-                    // Get all people
+                    // Get all people who are in the user list
                     var people = UserService
                         .GetAll(context)
                         .Select(x => x.Person)
@@ -155,7 +155,8 @@ namespace PPMTool.Services
                         .DistinctBy(x => x.Name);
 
                     // Get name of the affected person
-                    var name = people.FirstOrDefault(x => x.PersonId == personId)?.Name;
+                    var absentPerson = people.FirstOrDefault(x => x.PersonId == personId);
+                    var name = absentPerson?.Name;
 
                     // Get various lists of relevant info
                     var allUpdatedAbsences = newAbsences.Concat(modifiedAbsences.Select(x => x.Key)).Concat(deletedAbsences);
@@ -177,13 +178,30 @@ namespace PPMTool.Services
                     var affectedPMs = affectedProjects.Select(x => x.ProjectManager).Distinct().ToList();
 
                     // If any affected PM is currently absent then notify all PMs
-                    var managersToNotify = UserService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).DistinctBy(x => x.Name);
-                    var currentPMAbsences = PersonService.GetAbsencesForPeople(context, affectedPMs).Where(x => x.IsCurrentAbsence());
+                    var managersToNotify = UserService
+                        .GetAll(context)
+                        .Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
+                        .Select(x => x.Person)
+                        .DistinctBy(x => x.Name);
+                    var currentPMAbsences = PersonService
+                        .GetAbsencesForPeople(context, affectedPMs)
+                        .Where(x => x.IsCurrentAbsence());
 
                     // Just need to notify the affected if there are no affected PMs who are absent at the moment
                     if (currentPMAbsences.Count() == 0)
                     {
                         managersToNotify = affectedPMs;
+                    }
+                    // Log that we are choosing to notify all managers due to the current absence of at least one affected PM
+                    else
+                    {
+                        Logger.LogInformation($"Following affected PMs are currently absent. Notifying all managers... {string.Join(", ", currentPMAbsences.Select(x => $"{x.Person.Name} ({x.StartDate.ToShortDateString()} to {x.EndDate?.ToShortDateString() ?? "present"})"))}");
+                    }
+
+                    // Do not notify a manager if it is their own absence
+                    if (managersToNotify.Any(x => x.PersonId == personId))
+                    {
+                        managersToNotify = managersToNotify.Where(x => x.PersonId != personId).ToList();
                     }
 
                     // For each manager to notify
