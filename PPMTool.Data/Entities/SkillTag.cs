@@ -94,12 +94,15 @@ namespace PPMTool.Data.Entities
         /// </summary>
         public async Task<LinkCheckState> UpdateValidLinkAsync()
         {
-            HasValidWikiLink = LinkCheckState.Pending;
+            var newLinkStatus = LinkCheckState.Pending;
             var url = GetWikiLink();
 
             using (HttpClient client = new HttpClient())
             {
                 client.Timeout = TimeSpan.FromSeconds(3);
+                client.DefaultRequestHeaders.UserAgent.ParseAdd(
+                    $"CapX/SkillVerification (contact: University of Manchester)"
+                );
 
                 try
                 {
@@ -107,12 +110,12 @@ namespace PPMTool.Data.Entities
 
                     if (response.StatusCode == System.Net.HttpStatusCode.OK)
                     {
-                        HasValidWikiLink = LinkCheckState.Success;
+                        newLinkStatus = LinkCheckState.Success;
                     }
                     else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                     {
                         Debug.WriteLine($"** Link validation failed: {url}");
-                        HasValidWikiLink = LinkCheckState.Fail;
+                        newLinkStatus = LinkCheckState.Fail;
                     }
                 }
                 catch (TaskCanceledException)
@@ -125,7 +128,9 @@ namespace PPMTool.Data.Entities
                 }
             }
 
-            return HasValidWikiLink;
+            // Update the link status
+            HasValidWikiLink = newLinkStatus;
+            return newLinkStatus;
         }
 
         /// <summary>
