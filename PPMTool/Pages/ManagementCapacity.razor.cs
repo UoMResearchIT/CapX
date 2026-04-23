@@ -25,6 +25,9 @@ namespace PPMTool.Pages
 
             await PeopleSelectionChangedAsync(chosenPeople);
 
+            // Load the chart source based on the current configuration
+            await ConfigureChartSourceAsync();
+
             LogInformation($"Viewing management capacity page");
         }
 
