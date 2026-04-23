@@ -5,6 +5,7 @@ using Blazored.LocalStorage;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -100,6 +101,16 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
     options.Secure = CookieSecurePolicy.Always;
     options.MinimumSameSitePolicy = SameSiteMode.None;
 });
+
+// Set the data protection settings rather than using the default
+// Allows us to store the encryption keys on disk instead of in memory to allow load balancing etc.
+var keyPath = builder.Configuration.GetValue<string>("DataProtection:KeyPath", null);
+if (keyPath != null)
+{
+    builder.Services.AddDataProtection()
+        .PersistKeysToFileSystem(new DirectoryInfo(keyPath))
+        .SetApplicationName("CapX");
+}
 
 // Choose the authentication type based on configuration
 var authenticationType = builder.Configuration.GetValue("Authentication:Type", "CAS");

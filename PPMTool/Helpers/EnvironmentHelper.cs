@@ -97,6 +97,9 @@
             ReadValue("AUTH_TYPE", "Authentication:Type", ref overridingValues);
             ReadValue("AUTH_HOST_URL", "Authentication:HostUrl", ref overridingValues);
 
+            // Data protection
+            ReadValue("DP_KEY_PATH", "DataProtection:KeyPath", ref overridingValues);
+
             // Set seed dummy data flag if environment variable is set to true (case insensitive)
             var seedDummyData = Environment.GetEnvironmentVariable("SEED_DUMMY_DATA");
             if (seedDummyData?.ToLowerInvariant() == true.ToString().ToLowerInvariant())
@@ -125,6 +128,7 @@
             ValidateValue("SUPERUSER_NAME", "DeveloperSettings:DefaultSuperUserName", ref builder);
             ValidateValue("SUPERUSER_USERNAME", "DeveloperSettings:DefaultSuperUserUserName", ref builder);
             ValidateValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref builder);
+            ValidateValue("DP_KEY_PATH", "DataProtection:KeyPath", ref builder, justLog: true, logger: logger);
 
 #if RELEASE
             ValidateValue("SENTRY_DSN", "Sentry:Dsn", ref builder, justLog: true, logger: logger);
