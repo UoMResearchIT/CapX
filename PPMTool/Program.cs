@@ -105,7 +105,7 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
 // Set the data protection settings rather than using the default
 // Allows us to store the encryption keys on disk instead of in memory to allow load balancing etc.
 var keyPath = builder.Configuration.GetValue<string>("DataProtection:KeyPath", null);
-if (keyPath != null)
+if (!string.IsNullOrEmpty(keyPath))
 {
     builder.Services.AddDataProtection()
         .PersistKeysToFileSystem(new DirectoryInfo(keyPath))
