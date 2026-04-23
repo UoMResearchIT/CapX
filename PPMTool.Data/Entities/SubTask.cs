@@ -413,7 +413,10 @@ namespace PPMTool.Data.Entities
             {
                 id = absence.Person.PersonId;
             }
-            return AssignedResources.Any(r => r.Person.PersonId == id) && absence.StartDate.Date.AddDays(7) >= StartDate.Date && absence.StartDate.Date <= EndDate.Date;
+            return AssignedResources
+                .Any(r => r.Person.PersonId == id) &&
+                absence.StartDate.Date.AddDays(7) >= StartDate.Date &&
+                absence.StartDate.Date <= EndDate.Date;
         }
 
         /// <summary>
