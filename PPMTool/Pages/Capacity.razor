@@ -60,6 +60,7 @@
                                                    LeaversSwitchChanged="@(async value => await LeaversSwitchChangedAsync(value))"
                                                    UnFundedSwitchChanged="@(async value => await UnFundedSwitchChangedAsync(value))"
                                                    SetZoomToMonthsAhead="@SetZoomToMonthsAhead"
+                                                   GenerateChartsClicked="@(async () => await ConfigureChartSourceAsync())"
                                                    @bind-IncludeUnFunded="@includeUnFunded"
                                                    @bind-IncludeLeavers="@includeLeavers"
                                                    @bind-IncludeFinished="@includeFinished" />
