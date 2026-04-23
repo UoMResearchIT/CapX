@@ -128,7 +128,6 @@
             ValidateValue("SUPERUSER_NAME", "DeveloperSettings:DefaultSuperUserName", ref builder);
             ValidateValue("SUPERUSER_USERNAME", "DeveloperSettings:DefaultSuperUserUserName", ref builder);
             ValidateValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref builder);
-            ValidateValue("DP_KEY_PATH", "DataProtection:KeyPath", ref builder, justLog: true, logger: logger);
 
 #if RELEASE
             ValidateValue("SENTRY_DSN", "Sentry:Dsn", ref builder, justLog: true, logger: logger);
