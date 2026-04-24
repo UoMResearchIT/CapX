@@ -408,3 +408,9 @@ span.mention {
     display: block;
     width: 100%;
 }
+
+.capacity-gen-button {
+    align-self: end;
+    justify-self: end;
+    min-width: fit-content;
+}

@@ -1,33 +1,25 @@
 ﻿@using System.Diagnostics
 @using Blazored.SessionStorage
-@using Data.Enums
-@inherits BaseComponent
 
-<RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" Wrap="FlexWrap.Wrap">
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
-            <RadzenLabel Text="Include Unfunded:" Component="IncludeUnfunded" />
-            <RadzenSwitch @bind-Value="@IncludeUnFunded" Disabled="@Loading" Change="@UnfundedChangedAsync" Name="IncludeUnfunded" />
-        </RadzenStack>
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
-            <RadzenLabel Text="Include Leavers:" Component="Includeleavers" />
-            <RadzenSwitch @bind-Value="@IncludeLeavers" Disabled="@Loading" Change="@LeaversChangedAsync" Name="IncludeLeavers" />
-        </RadzenStack>
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
-            <RadzenLabel Text="Include Finished:" Component="IncludeFinished" />
-            <RadzenSwitch @bind-Value="@IncludeFinished" Disabled="@Loading" Change="@FinishedChangedAsync" Name="IncludeFinished" />
-        </RadzenStack>
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
-            <RadzenButton Text="3 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(3))" />
-            <RadzenButton Text="6 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(6))" />
-            <RadzenButton Text="9 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(9))" />
-            <RadzenButton Text="12 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(12))" />
-        </RadzenStack>
+<RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" Wrap="FlexWrap.Wrap">
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
+        <RadzenLabel Text="Include Unfunded:" Component="IncludeUnfunded" />
+        <RadzenSwitch @bind-Value="@IncludeUnFunded" Disabled="@Loading" Change="@UnfundedChangedAsync" Name="IncludeUnfunded" />
     </RadzenStack>
-    @if (ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser)
-    {
-        <RadzenButton Text="Generate" Click="@(() => GenerateChartsClicked?.Invoke())" Icon="refresh" />
-    }
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
+        <RadzenLabel Text="Include Leavers:" Component="Includeleavers" />
+        <RadzenSwitch @bind-Value="@IncludeLeavers" Disabled="@Loading" Change="@LeaversChangedAsync" Name="IncludeLeavers" />
+    </RadzenStack>
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
+        <RadzenLabel Text="Include Finished:" Component="IncludeFinished" />
+        <RadzenSwitch @bind-Value="@IncludeFinished" Disabled="@Loading" Change="@FinishedChangedAsync" Name="IncludeFinished" />
+    </RadzenStack>
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem">
+        <RadzenButton Text="3 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(3))" />
+        <RadzenButton Text="6 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(6))" />
+        <RadzenButton Text="9 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(9))" />
+        <RadzenButton Text="12 Months" Click="@(() => SetZoomToMonthsAhead?.Invoke(12))" />
+    </RadzenStack>
 </RadzenStack>
 
 @code {
@@ -61,9 +53,6 @@
 
     [Parameter]
     public Action<int> SetZoomToMonthsAhead { get; set; }
-
-    [Parameter]
-    public Action GenerateChartsClicked { get; set; }
 
     [CascadingParameter]
     public bool Loading { get; set; }
