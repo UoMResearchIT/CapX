@@ -1,5 +1,6 @@
 ﻿@page "/managementcapacity"
 @inherits BaseCapacityPage
+@using PPMTool.Data.Enums
 @using PPMTool.Pages.Components
 @using PPMTool.Data
 <PageTitle>Management Capacity - CapX</PageTitle>
@@ -18,29 +19,39 @@
     else
     {
         <RadzenCard>
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
-                <RadzenDropDown @bind-Value=@chosenPeople
-                                Data=@filteredPeople
-                                TextProperty="Name"
-                                ValueProperty="Name"
-                                Multiple=true
-                                AllowClear=true
-                                Placeholder="Filter Manager"
-                                Chips=true
-                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                FilterOperator="StringFilterOperator.Contains"
-                                AllowFiltering="true"
-                                Style="width: 100%; max-width: 400px;"
-                                Change="@(async args => await PeopleSelectionChangedAsync(args))"
-                                LoadData="@LoadFilteredPeople"
-                                Disabled="@Loading" />
-                <CapacityChartControlComponent FinishedSwitchChanged="@(async value => await FinishedSwitchChangedAsync(value))"
-                                               LeaversSwitchChanged="@(async value => await LeaversSwitchChangedAsync(value))"
-                                               UnFundedSwitchChanged="@(async value => await UnFundedSwitchChangedAsync(value))"
-                                               SetZoomToMonthsAhead="@SetZoomToMonthsAhead"
-                                               @bind-IncludeUnFunded="@includeUnFunded"
-                                               @bind-IncludeLeavers="@includeLeavers"
-                                               @bind-IncludeFinished="@includeFinished" />
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+                    <RadzenDropDown @bind-Value=@chosenPeople
+                                    Data=@filteredPeople
+                                    TextProperty="Name"
+                                    ValueProperty="Name"
+                                    Multiple=true
+                                    AllowClear=true
+                                    Placeholder="Filter Manager"
+                                    Chips=true
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    FilterOperator="StringFilterOperator.Contains"
+                                    AllowFiltering="true"
+                                    Style="width: 100%; max-width: 400px;"
+                                    Change="@(async args => await PeopleSelectionChangedAsync(args))"
+                                    LoadData="@LoadFilteredPeople"
+                                    Disabled="@Loading" />
+                    <CapacityChartControlComponent FinishedSwitchChanged="@(async value => await FinishedSwitchChangedAsync(value))"
+                                                   LeaversSwitchChanged="@(async value => await LeaversSwitchChangedAsync(value))"
+                                                   UnFundedSwitchChanged="@(async value => await UnFundedSwitchChangedAsync(value))"
+                                                   SetZoomToMonthsAhead="@SetZoomToMonthsAhead"
+                                                   GenerateChartsClicked="@(async () => await ConfigureChartSourceAsync())"
+                                                   @bind-IncludeUnFunded="@includeUnFunded"
+                                                   @bind-IncludeLeavers="@includeLeavers"
+                                                   @bind-IncludeFinished="@includeFinished" />
+                </RadzenStack>
+                @if (ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser)
+                {
+                    <RadzenButton Text="Generate"
+                                  Click="@(async () => await ConfigureChartSourceAsync())"
+                                  Icon="refresh"
+                                  class="capacity-gen-button" />
+                }
             </RadzenStack>
         </RadzenCard>
 

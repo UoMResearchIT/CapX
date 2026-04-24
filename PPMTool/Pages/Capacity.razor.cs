@@ -56,9 +56,6 @@ namespace PPMTool.Pages
                 {
                     await ReloadDropDownSourcesAsync();
                 }
-
-                // Load the chart source based on the current configuration
-                await ConfigureChartSource();
             }
             else
             {
@@ -71,6 +68,9 @@ namespace PPMTool.Pages
                 // Will automatically load the chart source
                 await PeopleSelectionChangedAsync(chosenPeople);
             }
+
+            // Load the chart source based on the current configuration
+            await ConfigureChartSourceAsync();
 
             LogInformation($"Viewing capacity page");
         }
@@ -179,9 +179,7 @@ namespace PPMTool.Pages
             // Reload the people to include just those working on projects that PM manages
             await ReloadDropDownSourcesAsync();
 
-            // Reconfigure the chart
-            await ConfigureChartSource();
-
+            // Log selection
             LogInformation($"Selected manager: {item?.Name}");
         }
 
@@ -204,11 +202,11 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Wrapper for the chart configuration event that sets the optional paramters relevant for this page
+        /// Wrapper for the chart configuration event that sets the optional parameters relevant for this page
         /// </summary>
-        private async Task ConfigureChartSource()
+        private async Task ConfigureChartSourceAsync()
         {
-            await ConfigureChartSource(
+            await ConfigureChartSourceAsync(
                 customChartTitleGenerator: (name) => $"Load for {(!string.IsNullOrEmpty(name) ? name : "All")} {(ManagerChosen() ? " with manager " + ChosenManager.Name : "")}",
                 projectModeCondition: () => ManagerChosen()
             );

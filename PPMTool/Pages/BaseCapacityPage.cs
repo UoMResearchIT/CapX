@@ -63,7 +63,6 @@ namespace PPMTool.Pages
         {
             includeUnFunded = value;
             await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-unfunded", value);
-            await ConfigureChartSource();
         }
 
         /// <summary>
@@ -74,7 +73,6 @@ namespace PPMTool.Pages
             includeLeavers = value;
             await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-leavers", value);
             await ReloadDropDownSourcesAsync();
-            await ConfigureChartSource();
         }
 
         /// <summary>
@@ -84,7 +82,6 @@ namespace PPMTool.Pages
         {
             includeFinished = value;
             await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished", value);
-            await ConfigureChartSource();
         }
 
         /// <summary>
@@ -103,9 +100,6 @@ namespace PPMTool.Pages
 
             // Save the new state
             await SavePeopleStateAsync();
-
-            // Regenerate the chart data
-            await ConfigureChartSource();
         }
 
         /// <summary>
@@ -297,7 +291,7 @@ namespace PPMTool.Pages
         /// <param name="manualEndDate">Overrides the end window for things like axis limits</param>
         /// <param name="customChartTitleGenerator">Generates the title for the charts - takes the name of the person if in project mode</param>
         /// <param name="projectModeCondition">Optional OR condition for deciding whether in project mode</param>
-        protected async Task ConfigureChartSource(
+        protected async Task ConfigureChartSourceAsync(
             Action afterConfigureTask = null,
             DateTime? manualStartDate = null,
             DateTime? manualEndDate = null,
