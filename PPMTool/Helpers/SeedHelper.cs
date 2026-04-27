@@ -2947,7 +2947,7 @@ namespace PPMTool.Helpers
                 {
                     FeatureType = FeatureType.Timesheets,
                     Name = "Timesheets",
-                    Description = "Allows people to enter weekly timesheet data against activity and task codes curated by administrators. This also enables workload model analysis to allow people to monitor how they are spending their time against their workload mdoel."
+                    Description = "Allows people to enter weekly timesheet data against activity and task codes curated by administrators. This also enables workload model analysis to allow people to monitor how they are spending their time against their workload model."
                 },
                 new Feature
                 {

@@ -170,6 +170,7 @@ namespace PPMTool.Pages
                     await PeopleSelectionChangedAsync(chosenPeople);
                 }
             }
+            await ConfigureChartSourceAsync();
         }
 
         /// <summary>
