@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using PPMTool.Data.Enums;
 using PPMTool.Data.Interfaces;
 
@@ -16,6 +17,12 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         public SettingType SettingType { get; set; }
+
+        /// <summary>
+        /// Shadow property to get the name of the setting type as a string for use in the UI. This is not mapped to the database as it is derived from the SettingType enum.
+        /// </summary>
+        [NotMapped]
+        public string SettingTypeAsText => SettingType.ToString();
 
         /// <summary>
         /// Value of the setting as a string.
