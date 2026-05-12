@@ -69,7 +69,7 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Wrapper to set an error message at the top of the page and ifre a notification
+        /// Wrapper to set an error message at the top of the page and fire a notification
         /// </summary>
         /// <param name="message"></param>
         private void SetError(string message)

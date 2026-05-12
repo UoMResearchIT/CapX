@@ -8,7 +8,7 @@ namespace PPMTool.Services
     /// <summary>
     /// Service to manage the state of the application settings.
     /// </summary>
-    public class SettingsService
+    public class SettingsService : BaseEntityService<Setting>
     {
         // The state of the settings should be cached in memory as well as the DB for performance
         private IDictionary<SettingType, string> SettingStates { get; set; } = new Dictionary<SettingType, string>();
@@ -85,6 +85,53 @@ namespace PPMTool.Services
                 return SettingStates[setting];
             }
             return string.Empty;
+        }
+
+        /// <summary>
+        /// Override for the add method. Not implemented as settings don't work like this.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entity"></param>
+        /// <param name="commitChanges"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public override int Add(PPMToolContext context, Setting entity, bool commitChanges = true)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public override IEnumerable<Setting> GetAll(PPMToolContext context)
+        {
+            return GetAllSettingsAsync(context).Result;
+        }
+
+        /// <summary>
+        /// Updates the specified setting in the database and optionally commits the changes.
+        /// </summary>
+        /// <remarks>If commitChanges is set to false, the changes will not be persisted to the database
+        /// until SaveChanges is called on the context.</remarks>
+        /// <param name="context">The database context used to access and update the setting.</param>
+        /// <param name="entity">The setting entity containing the updated values to be saved.</param>
+        /// <param name="commitChanges">true to commit the changes to the database immediately; otherwise, false.</param>
+        /// <returns>The unique identifier of the updated setting.</returns>
+        public override int Update(PPMToolContext context, Setting entity, bool commitChanges = true)
+        {
+            // Update the local cache and the DB
+            UpdateSettingValue(context, entity, commitChanges);
+            return entity.SettingId;
+        }
+
+        /// <summary>
+        /// Override for the delete method. Not implemented as settings don't work like this.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entity"></param>
+        /// <param name="commitChanges"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        public override void Delete(PPMToolContext context, Setting entity, bool commitChanges = true)
+        {
+            throw new NotImplementedException();
         }
     }
 }
