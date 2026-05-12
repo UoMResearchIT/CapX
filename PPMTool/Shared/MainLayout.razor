@@ -188,6 +188,7 @@ else
                         <RadzenPanelMenuItem Text="Admin" Icon="admin_panel_settings" Expanded="@adminMenuItemExpanded">
                             <AuthorizeView Roles="Superuser">
                                 <Authorized Context="sub_context">
+                                    <RadzenPanelMenuItem Path="managesettings" Text="Settings" Icon="settings" />
                                     @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
                                     {
                                         <RadzenPanelMenuItem Path="manageorgunits" Text="Org Units" Icon="widgets" />
