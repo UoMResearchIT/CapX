@@ -13,12 +13,36 @@ namespace PPMTool.Services
         // The state of the settings should be cached in memory as well as the DB for performance
         private IDictionary<SettingType, string> SettingStates { get; set; } = new Dictionary<SettingType, string>();
 
+        private async Task SetDefaultSettings(PPMToolContext context)
+        {
+            // Clear the table and re-initialise
+            context.Settings.RemoveRange(context.Settings);
+
+            // List of default settings for each of the setting types
+            var allSettingTypes = Enum.GetValues<SettingType>().ToList();
+            var defaultSettings = allSettingTypes.Select(setting => new Setting
+            {
+                SettingType = setting,
+                SettingValue = setting.GetDefaultSettingValue(),
+                Description = setting.GetDescription()
+            }).ToList();
+            context.Settings.AddRange(defaultSettings);
+            await context.SaveChangesAsync();
+        }
+
         /// <summary>
         /// Method to initialise the cache from the database
         /// </summary>
         /// <returns></returns>
         public async Task IntialiseServiceCacheAsync(PPMToolContext context)
         {
+            // If we have no settings in the DB then we need to set the defaults before populating the cache
+            if (!context.Settings.Any())
+            {
+                await SetDefaultSettings(context);
+            }
+
+            // Pull the settings out of the DB and populate the cache
             var settings = await GetAllSettingsAsync(context);
             SettingStates = settings.ToDictionary(x => x.SettingType, x => x.SettingValue);
         }

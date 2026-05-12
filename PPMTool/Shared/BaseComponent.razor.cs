@@ -10,6 +10,14 @@ using Radzen;
 
 namespace PPMTool.Shared
 {
+    /// <summary>
+    /// Provides a base class for Blazor components that require access to user authentication state, user information,
+    /// and application services.
+    /// </summary>
+    /// <remarks>BaseComponent centralises common functionality for components, including retrieving the
+    /// current authenticated user, their role, and application settings. It also provides access to the database
+    /// context and various injected services. Components that inherit from BaseComponent can use these members to
+    /// simplify user and context management.</remarks>
     public partial class BaseComponent : ComponentBase
     {
         [CascadingParameter]
@@ -32,6 +40,15 @@ namespace PPMTool.Shared
         [Inject]
         protected ThemeService ThemeService { get; set; }
 
+        [Inject]
+        protected SettingsService SettingService { get; set; }
+
+        /// <summary>
+        /// Initializes the component and sets up the user context based on the current authentication state.
+        /// </summary>
+        /// <remarks>This method retrieves the authenticated user's information and role, and initialises
+        /// the database context if authentication is successful. It should be called as part of the component's
+        /// initialisation lifecycle. If the user is not authenticated, user-related properties remain unset.</remarks>
         protected override void OnInitialized()
         {
             base.OnInitialized();
@@ -59,6 +76,17 @@ namespace PPMTool.Shared
                     ActiveUserRoleType = user?.RoleType ?? RoleType.None;
                 }
             }
+        }
+
+        /// <summary>
+        /// Base method to make it easy to get a setting from any component in the UI
+        /// </summary>
+        /// <param name="setting"></param>
+        /// <returns></returns>
+        protected string GetSetting(SettingType setting)
+        {
+            // Just pass through to the service
+            return SettingService.GetSetting(setting);
         }
     }
 }

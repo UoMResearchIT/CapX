@@ -13,6 +13,7 @@
 @using PPMTool.Services
 @inject IWebHostEnvironment Environment
 @inject IConfiguration Configuration
+@inject SettingsService SettingsService
 @inject FeatureService FeatureService
 <PageTitle>CapX - Log In</PageTitle>
 
@@ -283,7 +284,10 @@ else
                     </RadzenStack>
                 </Authorized>
             </AuthorizeView>
-            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.Span" class="@($"header-footer-text {(Environment.IsDevelopment() ? "header-footer-text-dev" : "")}")" Text="The University of Manchester - Research IT" />
+            <RadzenText TextStyle="TextStyle.Subtitle2"
+                        TagName="TagName.Span"
+                        class="@($"header-footer-text {(Environment.IsDevelopment() ? "header-footer-text-dev" : "")}")"
+                        Text="@SettingsService.GetSetting(SettingType.OrganisationName)" />
         </RadzenStack>
     </RadzenFooter>
 </RadzenLayout>
