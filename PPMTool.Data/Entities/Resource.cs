@@ -90,11 +90,13 @@ namespace PPMTool.Data.Entities
         /// <param name="project"></param>
         /// <param name="subTask"></param>
         /// <param name="finrefs"></param>
+        /// <param name="indirectsPercentage"></param>
         /// <returns>A list of assignment chunks that represent this resource assignment</returns>
         internal IEnumerable<AssignmentChunk> UpdateResourceCosts(
             Project project,
             SubTask subTask,
-            IEnumerable<FinancialReference> finrefs)
+            IEnumerable<FinancialReference> finrefs,
+            float indirectsPercentage)
         {
             // Costs to the department are always salary-based regardless of the recharge cost model (day-rate or salary based)
             // Therefore this computes the actual cost of the resource chosen over the full task (planned cost)
@@ -107,7 +109,7 @@ namespace PPMTool.Data.Entities
             var fundingSourceType = FundedFrom?.FundingSourceType;
 
             // Update the billed FTE value for the resource based on the cost model
-            UpdateBilledFTE(project.CostModel);
+            UpdateBilledFTE(project.CostModel, indirectsPercentage);
 
             // If using the day rate model the planned cost is only day rate
             if (project.CostModel == CostModel.DayRate)
@@ -153,10 +155,10 @@ namespace PPMTool.Data.Entities
             if (project.CostModel.HasIndirects() && !subTask.IsLeadershipTask)
             {
                 // Planned indirects are just proportion of the technical costs
-                PlannedIndirectCost = (PlannedCost * GlobalDefaults.BAUTopSliceFractionDefault) / (1 + GlobalDefaults.BAUTopSliceFractionDefault);
+                PlannedIndirectCost = (PlannedCost * indirectsPercentage) / (1 + indirectsPercentage);
 
                 // Actual costs are also just proportion of the actual technical costs
-                ActualIndirectCost = (ActualCost * GlobalDefaults.BAUTopSliceFractionDefault) / (1 + GlobalDefaults.BAUTopSliceFractionDefault);
+                ActualIndirectCost = (ActualCost * indirectsPercentage) / (1 + indirectsPercentage);
             }
 
             return chunks;
@@ -185,10 +187,11 @@ namespace PPMTool.Data.Entities
         /// Does not apply to leadership assignments.
         /// </summary>
         /// <param name="model"></param>
-        public void UpdateBilledFTE(CostModel model)
+        /// <param name="indirectsPercentage"></param>
+        public void UpdateBilledFTE(CostModel model, float indirectsPercentage)
         {
             // Do not apply indirects to leadership assignments
-            BilledFTE = (model.HasIndirects() && !SubTask.IsLeadershipTask) ? AssignmentFTE * (1 + GlobalDefaults.BAUTopSliceFractionDefault) : AssignmentFTE;
+            BilledFTE = (model.HasIndirects() && !SubTask.IsLeadershipTask) ? AssignmentFTE * (1 + indirectsPercentage) : AssignmentFTE;
         }
     }
 }

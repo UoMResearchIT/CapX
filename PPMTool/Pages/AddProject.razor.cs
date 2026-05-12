@@ -94,7 +94,7 @@ namespace PPMTool.Pages
             }
             else
             {
-                projectModel.DayRate = GlobalDefaults.DayRateDefault;
+                projectModel.DayRate = GetSetting(SettingType.DayRateDefault, 0f);
 
                 // Auto generate the RTP number based on the highest in the DB
                 projectModel.RTP = ProjectService.GetAll(Context).Select(x => x.RTP).DefaultIfEmpty(0).Max() + 1;
@@ -218,7 +218,8 @@ namespace PPMTool.Pages
 
                     // Update the project summary values
                     var finrefs = FinancialReferenceService.GetAll(Context);
-                    projectModel.UpdateProjectMetaData(true, finrefs);
+                    var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+                    projectModel.UpdateProjectMetaData(true, finrefs, bauTopSlicePercentage);
 
                     if (ProjectId > 0)
                     {

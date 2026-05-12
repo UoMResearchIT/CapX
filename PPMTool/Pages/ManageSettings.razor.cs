@@ -13,8 +13,8 @@ namespace PPMTool.Pages
             await base.OnInitializedAsync();
 
             // Load the settings from the database
-            dataGridEntityService = SettingService;
-            dataGridEntities = SettingService
+            dataGridEntityService = SettingsService;
+            dataGridEntities = SettingsService
                 .GetAll(Context)
                 .OrderBy(x => x.SettingType.ToString())
                 .ToList();

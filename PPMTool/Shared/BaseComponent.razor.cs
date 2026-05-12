@@ -41,7 +41,7 @@ namespace PPMTool.Shared
         protected ThemeService ThemeService { get; set; }
 
         [Inject]
-        protected SettingsService SettingService { get; set; }
+        protected SettingsService SettingsService { get; set; }
 
         /// <summary>
         /// Initializes the component and sets up the user context based on the current authentication state.
@@ -86,7 +86,21 @@ namespace PPMTool.Shared
         protected string GetSetting(SettingType setting)
         {
             // Just pass through to the service
-            return SettingService.GetSetting(setting);
+            return SettingsService.GetSetting(setting);
+        }
+
+        /// <summary>
+        /// Retrieves the value of the specified setting, converted to the specified type. Returns a default value if
+        /// the setting is not found or cannot be converted.
+        /// </summary>
+        /// <typeparam name="T">The type to which the setting value is converted and returned.</typeparam>
+        /// <param name="setting">The setting to retrieve.</param>
+        /// <param name="defaultValue">The value to return if the setting is not found or cannot be converted to the specified type.</param>
+        /// <returns>The value of the specified setting converted to type T, or the provided default value if the setting is not
+        /// found or conversion fails.</returns>
+        protected T GetSetting<T>(SettingType setting, T defaultValue)
+        {
+            return SettingsService.GetSetting<T>(setting, defaultValue);
         }
     }
 }

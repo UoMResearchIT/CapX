@@ -320,7 +320,8 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="recomputeSubTaskCosts">Whether to update the subtask costs and save to database</param>
         /// <param name="financialReferences">If necessary a set of financial references</param>
-        public void UpdateProjectMetaData(bool recomputeSubTaskCosts, IEnumerable<FinancialReference> financialReferences)
+        /// <param name="indirectsPercentage">The percentage of top slice to apply from the settings</param>
+        public void UpdateProjectMetaData(bool recomputeSubTaskCosts, IEnumerable<FinancialReference> financialReferences, float indirectsPercentage)
         {
             // Check conditions for cost update
             if (CostModel != CostModel.DayRate && (financialReferences == null || financialReferences.Count() == 0))
@@ -354,7 +355,7 @@ namespace PPMTool.Data.Entities
                     if (recomputeSubTaskCosts)
                     {
                         // Update the cost of the tasks (and resources)
-                        task.UpdateSubTaskCosts(this, financialReferences);
+                        task.UpdateSubTaskCosts(this, financialReferences, indirectsPercentage);
                     }
 
                     // Read subtask costs and hours and accumulate inot the relevant categories
@@ -377,15 +378,15 @@ namespace PPMTool.Data.Entities
             // Compute the budgeted indirects
             if (FundingSources != null && FundingSources.Count > 0)
             {
-                budgetIndirects = GlobalDefaults.BAUTopSliceFractionDefault * FundingSources.Sum(x => x.AmountAvailable);
+                budgetIndirects = indirectsPercentage * FundingSources.Sum(x => x.AmountAvailable);
             }
             BudgetedIndirects = Math.Round(100 * budgetIndirects) / 100;
 
             // If we are using indirects then they will be included for tech so remove
             if (CostModel.HasIndirects())
             {
-                plannedTech /= (1d + GlobalDefaults.BAUTopSliceFractionDefault);
-                actualTech /= (1d + GlobalDefaults.BAUTopSliceFractionDefault);
+                plannedTech /= (1d + indirectsPercentage);
+                actualTech /= (1d + indirectsPercentage);
             }
 
             // Update project dates

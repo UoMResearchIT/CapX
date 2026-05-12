@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Globalization;
+using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
@@ -85,6 +86,75 @@ namespace PPMTool.Services
                 return SettingStates[setting];
             }
             return string.Empty;
+        }
+
+        /// <summary>
+        /// Retrieves the value of the specified setting, converted to the specified type. Returns a default value if
+        /// the setting is not found or cannot be converted.
+        /// </summary>
+        /// <remarks>If the setting value cannot be converted to the specified type, the method returns
+        /// the default value for type T. This method is useful for retrieving strongly typed configuration values with
+        /// a fallback.</remarks>
+        /// <typeparam name="T">The type to which the setting value is converted and returned.</typeparam>
+        /// <param name="setting">The setting to retrieve.</param>
+        /// <param name="defaultValue">The value to return if the setting is not found or cannot be converted to the specified type.</param>
+        /// <returns>The value of the specified setting converted to type T, or the provided default value if the setting is not
+        /// found or conversion fails.</returns>
+        public T GetSetting<T>(SettingType setting, T defaultValue)
+        {
+            string settingValue = GetSetting(setting);
+
+            if (string.IsNullOrWhiteSpace(settingValue))
+                return defaultValue;
+
+            try
+            {
+                var targetType = typeof(T);
+
+                // Handle Nullable<T>
+                var underlyingType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+
+                // Strings
+                if (underlyingType == typeof(string))
+                    return (T)(object)settingValue;
+
+                // Int
+                if (underlyingType == typeof(int) &&
+                    int.TryParse(settingValue, NumberStyles.Any, CultureInfo.InvariantCulture, out var i))
+                    return (T)(object)i;
+
+                // Float
+                if (underlyingType == typeof(float) &&
+                    float.TryParse(settingValue, NumberStyles.Any, CultureInfo.InvariantCulture, out var f))
+                    return (T)(object)f;
+
+                // Double
+                if (underlyingType == typeof(double) &&
+                    double.TryParse(settingValue, NumberStyles.Any, CultureInfo.InvariantCulture, out var d))
+                    return (T)(object)d;
+
+                // Decimal
+                if (underlyingType == typeof(decimal) &&
+                    decimal.TryParse(settingValue, NumberStyles.Any, CultureInfo.InvariantCulture, out var m))
+                    return (T)(object)m;
+
+                // Bool
+                if (underlyingType == typeof(bool) &&
+                    bool.TryParse(settingValue, out var b))
+                    return (T)(object)b;
+
+                // Enum
+                if (underlyingType.IsEnum &&
+                    Enum.TryParse(underlyingType, settingValue, ignoreCase: true, out var e))
+                    return (T)e;
+
+                // Fallback
+                return (T)Convert.ChangeType(settingValue, underlyingType, CultureInfo.InvariantCulture);
+            }
+            catch
+            {
+                return defaultValue;
+            }
         }
 
         /// <summary>

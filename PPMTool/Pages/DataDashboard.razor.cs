@@ -548,7 +548,7 @@ namespace PPMTool.Pages
                         StaffManFTE = wlmStaff,
                         RSAFTE = wlmRSA,
                         NumberOfStaff = numStaff,
-                        NumberStaffRequiringLineManagement = numStaff - GlobalDefaults.NumberOfStaffManagedByHeadDefault,
+                        NumberStaffRequiringLineManagement = numStaff - GetSetting(SettingType.NumberOfStaffManagedByHeadDefault, 0),
                         NumberOfConfirmedProjects = numberConfirmed,
                         NumberOfUnconfirmedProjects = numberUnconfirmed,
                         UnmetDemandFTE = unmetDemand,
@@ -581,9 +581,13 @@ namespace PPMTool.Pages
                     numberOfWeeks++;
                     var item = dutyChartItems.Last();
                     item.ProjectShortfall = UpdateAverage(item.ProjectShortfall, wlmProject - totalDemand, numberOfWeeks);
-                    item.StaffManagementShortfall = UpdateAverage(item.StaffManagementShortfall, wlmStaff - (numStaff - GlobalDefaults.NumberOfStaffManagedByHeadDefault) * GlobalDefaults.StaffManagementDefaultFTE, numberOfWeeks);
+                    item.StaffManagementShortfall = UpdateAverage(
+                        item.StaffManagementShortfall,
+                        wlmStaff - (numStaff - GetSetting(SettingType.NumberOfStaffManagedByHeadDefault, 0)) * GetSetting(SettingType.StaffManagementDefaultFTE, 0f),
+                        numberOfWeeks
+                    );
                     item.PSManagementShortfall = UpdateAverage(item.PSManagementShortfall, wlmPM - leadershipDemand, numberOfWeeks);
-                    item.RSAShortfall = UpdateAverage(item.RSAShortfall, wlmRSA - (numberConfirmed + numberUnconfirmed) * GlobalDefaults.TechnicalLeadershipDefaultFTE, numberOfWeeks);
+                    item.RSAShortfall = UpdateAverage(item.RSAShortfall, wlmRSA - (numberConfirmed + numberUnconfirmed) * GetSetting(SettingType.TechnicalLeadershipDefaultFTE, 0f), numberOfWeeks);
 
                     // Move to next week
                     currentWeekStart = currentWeekStart.AddDays(7);

@@ -569,7 +569,8 @@ namespace PPMTool.Pages
 
                     // Update the project summary values
                     var finrefs = FinancialReferenceService.GetAll(Context);
-                    ProjectModel.UpdateProjectMetaData(false, finrefs);
+                    var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+                    ProjectModel.UpdateProjectMetaData(false, finrefs, bauTopSlicePercentage);
 
                     // Update the project in the database
                     LogInformation($"Saving project {ProjectModel?.GetFullName()}...");
@@ -691,7 +692,8 @@ namespace PPMTool.Pages
             }
 
             // Update the billed FTE
-            entity.UpdateBilledFTE(projectModel.CostModel);
+            var indirectsPercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+            entity.UpdateBilledFTE(projectModel.CostModel, indirectsPercentage);
 
             // Save the row to the DB
             await base.SaveRow(entity);
@@ -814,7 +816,8 @@ namespace PPMTool.Pages
             // Update planned and actual costs from the resources now scheduling has completed
             var projectDayRate = ProjectModel.DayRate;
             var finrefs = FinancialReferenceService.GetAll(Context);
-            TaskModel.UpdateSubTaskCosts(ProjectModel, finrefs);
+            var indirectsPercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+            TaskModel.UpdateSubTaskCosts(ProjectModel, finrefs, indirectsPercentage);
 
             // Set validity based on scheduler result
             IsValid = error == null;
@@ -958,7 +961,8 @@ namespace PPMTool.Pages
                     if (!IsSplit)
                     {
                         var finrefs = FinancialReferenceService.GetAll(Context);
-                        ProjectModel.UpdateProjectMetaData(false, finrefs);
+                        var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+                        ProjectModel.UpdateProjectMetaData(false, finrefs, bauTopSlicePercentage);
 
                         // Update the project in the database
                         LogInformation($"Task {TaskModel?.SubTaskId}: Saving project {ProjectModel?.GetFullName()}...");

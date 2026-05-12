@@ -387,7 +387,8 @@ namespace PPMTool.Pages
 
                 // Update the project summary values
                 var finrefs = FinancialReferenceService.GetAll(Context);
-                owningProject.UpdateProjectMetaData(false, finrefs);
+                var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+                owningProject.UpdateProjectMetaData(false, finrefs, bauTopSlicePercentage);
 
                 // Update the project in the database
                 LogInformation($"Saving project {owningProject?.GetFullName()}...");
