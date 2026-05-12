@@ -11,5 +11,8 @@ namespace PPMTool.Data.Enums
         [Description("Name of the organisation to be used in the UI and communications.")]
         [DefaultSettingValue("The University of Manchester - Research IT")]
         OrganisationName = 0,
+        [Description("How any external links to more granular project management tools should be referenced.")]
+        [DefaultSettingValue("GitHub Project Board")]
+        ProjectBoardName = 1,
     }
 }

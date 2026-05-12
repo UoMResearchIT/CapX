@@ -122,7 +122,7 @@
                             <RadzenTextBox class="radzen-text-box" @bind-Value="projectModel.RequestDocLink" Placeholder="https://..."  />
                         </div>
                         <div class="col-6">
-                            <RadzenLabel class="radzen-form-label" Text="Link to Scrum Project" /><br />
+                            <RadzenLabel class="radzen-form-label" Text="@($"Link to {GetSetting(SettingType.ProjectBoardName)}")" /><br />
                             <RadzenTextBox class="radzen-text-box" @bind-Value="projectModel.ScrumProjectLink" Placeholder="https://..." />
                         </div>
                     </div>

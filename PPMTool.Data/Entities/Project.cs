@@ -148,7 +148,7 @@ namespace PPMTool.Data.Entities
                 // Warning
                 new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => SubTasks?.Any(x => x.HasProvisionalResources()) ?? false),
                 new StatusMessage("A current or future task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemandInWindow()),
-                new StatusMessage("This project has started but has no link to a Scrum project!", StatusMessage.MessageType.Warning, () => HasStartedButHasNoScrumProjectLink()),
+                new StatusMessage("This project has started but has no link to a project board!", StatusMessage.MessageType.Warning, () => HasStartedButHasNoScrumProjectLink()),
                 new StatusMessage("Task has resource(s) with zero FTE assignment!", StatusMessage.MessageType.Warning, () => HasResourceWithZeroFTE()),
 
                 // Error

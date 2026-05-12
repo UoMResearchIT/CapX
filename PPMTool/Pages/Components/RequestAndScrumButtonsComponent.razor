@@ -1,4 +1,5 @@
-﻿@using System.Diagnostics
+﻿@inherits BaseComponent
+@using System.Diagnostics
 @using PPMTool.Data
 @using PPMTool.Data.Entities
 @using PPMTool.Data.Enums
@@ -49,7 +50,7 @@
         base.OnParametersSet();
         hasScrumLink = Project?.ScrumProjectLink?.IsValidURL() ?? false;
         hasRequestDoc = !Project?.HasNoRequestDocLink() ?? false;
-        scrumText = hasScrumLink ? "Scrum Project" : "No Scrum Project";
+        scrumText = hasScrumLink ? $"{GetSetting(SettingType.ProjectBoardName)}" : $"No {GetSetting(SettingType.ProjectBoardName)}";
         requestText = hasRequestDoc ? "Request Doc" : "No Request Doc";
     }
 }
