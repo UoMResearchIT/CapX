@@ -225,7 +225,7 @@ namespace PPMTool.Pages
                         return;
                     }
 
-                    // Update the project summary values. Don't allow null/zero count returns.
+                    // Update the project summary values. Don't allow null/zero count returns here.
                     var finrefs = FinancialReferenceService.GetAll(Context, false);
                     projectModel.UpdateProjectMetaData(true, finrefs);
 
