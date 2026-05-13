@@ -47,7 +47,7 @@ namespace PPMTool.Pages
                 };
                 CostModel = CostModel.TechAndLeadershipWithIndirects;
             }
-            catch (FinancialRefException e)
+            catch (FinancialRefException)
             {
                 isUsable = false;
             }
