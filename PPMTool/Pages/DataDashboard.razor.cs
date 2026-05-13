@@ -834,11 +834,12 @@ namespace PPMTool.Pages
                         foreach (var assignment in assignmentChunks)
                         {
                             // Find existing entry or add new
-                            var summary = projectData.FirstOrDefault(x => x.ProjectName == assignment.ProjectName);
+                            var summary = projectData.FirstOrDefault(x => x.ProjectId == assignment.ProjectId.ToString());
                             if (summary == null)
                             {
                                 summary = new ProjectBudgetSummary
                                 {
+                                    ProjectId = assignment.ProjectId.ToString(),
                                     ProjectName = assignment.ProjectName
                                 };
                                 projectData.Add(summary);
@@ -1251,7 +1252,7 @@ namespace PPMTool.Pages
 
                                 // Column A: Project name
                                 cell = worksheetProjects.Cell(2 + i, 1);
-                                cell.Value = proj.ProjectName;
+                                cell.Value = $"{GetSetting(SettingType.ProjectAbbreviation)}-{proj.ProjectId} {proj.ProjectName}";
 
                                 // Column B: PlannedCosts
                                 cell = worksheetProjects.Cell(2 + i, 2);

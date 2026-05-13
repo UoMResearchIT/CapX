@@ -7,6 +7,13 @@ namespace PPMTool.Services
 {
     public class ProjectService : BaseEntityService<Project>
     {
+        private readonly SettingsService settingsService;
+
+        public ProjectService(SettingsService settingsService)
+        {
+            this.settingsService = settingsService;
+        }
+
         /// <inheritdoc />
         public override int Add(PPMToolContext context, Project projectModel, bool commitChanges = true)
         {
@@ -174,6 +181,16 @@ namespace PPMTool.Services
                 .Include(x => x.ProjectManager)
                 .FirstOrDefault(x => x.ProjectId == projectId)?
                 .ProjectManager;
+        }
+
+        /// <summary>
+        /// Returns the project name prefixed by the abbreviation from settings
+        /// </summary>
+        public string GetFullName(Project project)
+        {
+            var abbreviation = settingsService.GetSetting(SettingType.ProjectAbbreviation);
+            abbreviation ??= string.Empty;
+            return $"{abbreviation}-{project?.RTP} {project?.Name}";
         }
     }
 }

@@ -412,15 +412,6 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method which returns the project name prefixed by the RTP code
-        /// </summary>
-        /// <returns></returns>
-        public string GetFullName()
-        {
-            return $"RTP-{RTP} {Name}";
-        }
-
-        /// <summary>
         /// Method to return the dates in which there is unmet demand.
         /// </summary>
         /// <param name="windowStart">The start of the unmet demand window</param>

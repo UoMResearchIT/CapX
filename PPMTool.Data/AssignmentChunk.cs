@@ -26,6 +26,8 @@ namespace PPMTool.Data
         [Description("The FTE we are recharging to the project for this assignment")]
         public double BilledFTE { get; set; }
 
+        public int ProjectId { get; set; }
+
         public string ProjectName { get; set; } = null!;
 
         public string LeadRSE { get; set; } = null!;
@@ -103,6 +105,7 @@ namespace PPMTool.Data
             Grade = taskToCopy.Grade;
             FTE = taskToCopy.FTE;
             BilledFTE = taskToCopy.BilledFTE;
+            ProjectId = taskToCopy.ProjectId;
             ProjectName = taskToCopy.ProjectName;
             LeadRSE = taskToCopy.LeadRSE;
             Faculty = taskToCopy.Faculty;

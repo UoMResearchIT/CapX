@@ -24,7 +24,7 @@
             {
                 <div class="row">
                     <div class="col">
-                        <h1>Edit <i>@projectModel.GetFullName()</i></h1>
+                        <h1>Edit <i>@ProjectService.GetFullName(projectModel)</i></h1>
                     </div>
                     <div class="col-auto" style="align-content: center">
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteProject" Text="Delete" Icon="delete" Disabled=!EditAuthorised />

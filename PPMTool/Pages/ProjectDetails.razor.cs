@@ -710,14 +710,14 @@ namespace PPMTool.Pages
                 project.Followers.Remove(ActiveUser?.Person);
                 ProjectService.Update(Context, project);
                 isCurrentUserFollowing = false;
-                LogInformation($"Stopped following project {project.GetFullName()}");
+                LogInformation($"Stopped following project {project.GetSensibleObjectName()}");
             }
             else
             {
                 project.Followers.Add(ActiveUser?.Person);
                 ProjectService.Update(Context, project);
                 isCurrentUserFollowing = true;
-                LogInformation($"Now following project {project.GetFullName()}");
+                LogInformation($"Now following project {project.GetSensibleObjectName()}");
             }
             StateHasChanged();
         }
@@ -1011,7 +1011,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void DiscardClicked()
         {
-            LogInformation($"Discarding changes to note {noteModel?.NoteId} on {project.GetFullName()}");
+            LogInformation($"Discarding changes to note {noteModel?.NoteId} on {project.GetSensibleObjectName()}");
             if (isEditExistingNote)
             {
                 NoteService.RestoreModel(Context, ref noteModel);
@@ -1042,7 +1042,7 @@ namespace PPMTool.Pages
             noteModel.CreatedDate = DateTime.Now;
             ResolveMentionsInCurrentNoteModel();
             NoteService.Add(Context, noteModel);
-            LogInformation($"Added note for {project.GetFullName()}");
+            LogInformation($"Added note for {project.GetSensibleObjectName()}");
             noteSearchTerms = string.Empty;
             LoadNotesFromDB();
             InvokeAsync(async () => await FilterHighlightScrollNotesAsync());
@@ -1062,7 +1062,7 @@ namespace PPMTool.Pages
             NoteService.Update(Context, noteModel, false);
             var listOfNoteChanges = NoteService.GetDiffList<Note>(Context);
             NoteService.Update(Context, noteModel, true);
-            LogInformation($"Updated note {noteModel.NoteId} for {project.GetFullName()}");
+            LogInformation($"Updated note {noteModel.NoteId} for {project.GetSensibleObjectName()}");
             LoadNotesFromDB();
             InvokeAsync(async () => await FilterHighlightScrollNotesAsync());
             ShowOrHideEditor(false);
@@ -1080,7 +1080,7 @@ namespace PPMTool.Pages
 
             // Set state
             ShowOrHideEditor(true);
-            LogInformation($"Editing note {noteModel.NoteId} for {project.GetFullName()}");
+            LogInformation($"Editing note {noteModel.NoteId} for {project.GetSensibleObjectName()}");
             noteModel = noteToEdit;
             isEditExistingNote = true;
         }
@@ -1091,7 +1091,7 @@ namespace PPMTool.Pages
         /// <param name="noteToDelete"></param>
         private async void DeleteNote(Note noteToDelete)
         {
-            bool confirmed = await DialogService.Confirm($"You are about to delete a note from {project.GetFullName()}!", "Delete Note") ?? false;
+            bool confirmed = await DialogService.Confirm($"You are about to delete a note from {ProjectService.GetFullName(project)}!", "Delete Note") ?? false;
             if (confirmed)
             {
                 LogInformation($"Deleting note {noteToDelete.NoteId} | {noteToDelete.HtmlContent} | {noteToDelete.GetNoteAuthorText()}");
@@ -1117,7 +1117,7 @@ namespace PPMTool.Pages
         /// <param name="note"></param>
         private void MarkComplete(Note note)
         {
-            LogInformation($"Completing note {note.NoteId} for {project.GetFullName()}");
+            LogInformation($"Completing note {note.NoteId} for {project.GetSensibleObjectName()}");
             note.CompletedDate = DateTime.Now;
             NoteService.Update(Context, note);
             StateHasChanged();
@@ -1201,7 +1201,8 @@ namespace PPMTool.Pages
                     .FirstOrDefault(x => x.RTP.ToString().Equals(trimmedMatch.Substring(5), StringComparison.OrdinalIgnoreCase));
                 if (match != null)
                 {
-                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(trimmedMatch, $"&nbsp;<a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>&nbsp;");
+                    var fullName = ProjectService.GetFullName(match);
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(trimmedMatch, $"&nbsp;<a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{fullName}</a>&nbsp;");
                 }
                 else
                 {
@@ -1340,7 +1341,7 @@ namespace PPMTool.Pages
         /// </summary>
         private async Task ViewDescription()
         {
-            await DialogService.OpenAsync<ProjectDescriptionPopupComponent>(project?.GetFullName(), new Dictionary<string, object>() { { "Project", project } });
+            await DialogService.OpenAsync<ProjectDescriptionPopupComponent>(ProjectService.GetFullName(project), new Dictionary<string, object>() { { "Project", project } });
         }
 
         /// <summary>
@@ -1353,7 +1354,7 @@ namespace PPMTool.Pages
                 "Have you checked the actuals?") ?? false;
             if (confirmed)
             {
-                LogInformation($"Silencing actuals warning for {project?.GetFullName()}");
+                LogInformation($"Silencing actuals warning for {project.GetSensibleObjectName()}");
 
                 // Set timestamp and save to DB
                 project.ActualsLastUpdated = DateTime.Now.ToString("R");

@@ -97,9 +97,9 @@ namespace PPMTool.Pages
             // Load invoices and payments for the selected project
             LoadData();
 
-            LogInformation($"Viewing project finance for {selectedProject?.GetFullName()}");
+            LogInformation($"Viewing project finance for {selectedProject.GetSensibleObjectName()}");
 
-            Debug.WriteLine($"** {(value as Project)?.GetFullName() ?? "Nothing"}");
+            Debug.WriteLine($"** {(value as Project)?.GetSensibleObjectName() ?? "Nothing"}");
         }
 
         /// <summary>
@@ -154,7 +154,7 @@ namespace PPMTool.Pages
             Loading = false;
             StateHasChanged();
 
-            Debug.WriteLine($"** Selected Project = {selectedProject?.GetFullName()}. {invoices?.Count()} Invoices. {payments?.Count()} Payments. {sources?.Count()} Sources");
+            Debug.WriteLine($"** Selected Project = {selectedProject?.GetSensibleObjectName()}. {invoices?.Count()} Invoices. {payments?.Count()} Payments. {sources?.Count()} Sources");
         }
 
         /// <summary>
@@ -192,7 +192,7 @@ namespace PPMTool.Pages
             if (!string.IsNullOrEmpty(args?.Filter))
             {
                 Debug.WriteLine($"** Filter projects on: {args?.Filter}");
-                temp = temp.Where(x => x.GetFullName().ToLower().Contains(args.Filter.ToLower()));
+                temp = temp.Where(x => ProjectService.GetFullName(x).ToLower().Contains(args.Filter.ToLower()));
                 Debug.WriteLine($"** {temp.Count()} matched.");
             }
             projects = temp.ToList();
@@ -208,7 +208,7 @@ namespace PPMTool.Pages
             if ((item == null && selectedTab == 0) || item is Invoice invoice)
             {
                 DialogService.Open<InvoiceFormComponent>(
-                    $"{(item == null ? "Add" : "Edit")} Invoice ({(selectedProject == null ? item.Project.GetFullName() : selectedProject.GetFullName())})",
+                    $"{(item == null ? "Add" : "Edit")} Invoice ({(selectedProject == null ? ProjectService.GetFullName(item.Project) : ProjectService.GetFullName(selectedProject))})",
                     new Dictionary<string, object>
                     {
                         { nameof(InvoiceFormComponent.Invoice), item },
@@ -228,7 +228,7 @@ namespace PPMTool.Pages
             else if ((item == null && selectedTab == 1) || item is Payment)
             {
                 DialogService.Open<PaymentFormComponent>(
-                    $"{(item == null ? "Add" : "Edit")} Payment ({(selectedProject == null ? item.Project.GetFullName() : selectedProject.GetFullName())})",
+                    $"{(item == null ? "Add" : "Edit")} Payment ({(selectedProject == null ? ProjectService.GetFullName(item.Project) : ProjectService.GetFullName(selectedProject))})",
                     new Dictionary<string, object>
                     {
                         { nameof(PaymentFormComponent.Payment), item },
@@ -248,7 +248,7 @@ namespace PPMTool.Pages
             else if ((item == null && selectedTab == 2) || item is FundingSource)
             {
                 DialogService.Open<FundingSourceFormComponent>(
-                    $"{(item == null ? "Add" : "Edit")} Funding Source ({(selectedProject == null ? item.Project.GetFullName() : selectedProject.GetFullName())})",
+                    $"{(item == null ? "Add" : "Edit")} Funding Source ({(selectedProject == null ? ProjectService.GetFullName(item.Project) : ProjectService.GetFullName(selectedProject))})",
                     new Dictionary<string, object>
                     {
                         { nameof(FundingSourceFormComponent.Source), item },

@@ -33,7 +33,7 @@
                     else
                     {
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                            <h1>@project.GetFullName()</h1>
+                            <h1>@ProjectService.GetFullName(project)</h1>
                             <ProjectBadgeComponent ProjectStatus="@project.ProjectStatus" />
                         </RadzenStack>
                     }

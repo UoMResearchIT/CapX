@@ -247,7 +247,7 @@ namespace PPMTool.Services
                                 // Add to email for this project
                                 if (relevantAbsences.Count > 0)
                                 {
-                                    body.Append($"<h4>{project.GetFullName()}</h4>");
+                                    body.Append($"<h4>{ProjectService.GetFullName(project)}</h4>");
                                     foreach (var ab in relevantAbsences)
                                     {
                                         // Add to the mentioned absences if not already there
@@ -453,7 +453,7 @@ namespace PPMTool.Services
                             body.Append($"<br /><a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails?rtp={note.Project.RTP}&filteredNote={note.NoteId}\">View this note on CapX</a>");
 
                             // Send email
-                            var subject = $"{Configuration["Email:MentionEmailSubject"]} - {note.Project.GetFullName()}";
+                            var subject = $"{Configuration["Email:MentionEmailSubject"]} - {ProjectService.GetFullName(note.Project)}";
                             var pmUsers = users.Where(x => x.Person.PersonId == m.PersonId);
                             var recipients = new List<string>();
                             foreach (var u in pmUsers)

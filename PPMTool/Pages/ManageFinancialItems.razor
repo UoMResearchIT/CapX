@@ -18,7 +18,7 @@
             <div class="row align-items-center">
                 <div class="col mr-auto">
                     <h1>Manage Finance Items</h1>
-                    <RadzenText Text="@(selectedProject?.GetFullName() ?? "All Projects")" TextStyle="TextStyle.Subtitle1" />
+                    <RadzenText Text="@(selectedProject != null ? ProjectService.GetFullName(selectedProject) : "All Projects")" TextStyle="TextStyle.Subtitle1" />
                 </div>
                 <div class="col-auto">
                     <RadzenButton Click="@(args => GoToFinanceSummary())" Text="Summary" Icon="list" />
@@ -48,7 +48,7 @@
                                         class="radzen-dropdown"
                                         LoadData="LoadProjectDropdownWithFilter">
                             <Template>
-                                @((context as Project)?.GetFullName())
+                                @((context as Project) != null ? ProjectService.GetFullName(context as Project) : "Nothing")
                             </Template>
                         </RadzenDropDown>
                     </div>

@@ -129,7 +129,7 @@ namespace PPMTool.Pages
 
             Loading = false;
             StateHasChanged();
-            LogInformation(projectModel.ProjectId > 0 ? $"Editing project {projectModel?.GetFullName()}" : $"Adding new project");
+            LogInformation(projectModel.ProjectId > 0 ? $"Editing project {projectModel?.GetSensibleObjectName()}" : $"Adding new project");
         }
 
         /// <summary>
@@ -252,7 +252,7 @@ namespace PPMTool.Pages
                             projectModel.ActualsLastUpdated = DateTime.Now.ToString("R");
                         }
 
-                        LogInformation($"Saving project {projectModel?.GetFullName()}...");
+                        LogInformation($"Saving project {projectModel?.GetSensibleObjectName()}...");
                         var res = ProjectService.Update(Context, projectModel);
                         CheckResultOfAddOrUpdate(res);
                     }
@@ -379,7 +379,7 @@ namespace PPMTool.Pages
             if (ProjectId > 0)
             {
                 // Prompt
-                bool confirmed = await DialogService.Confirm($"You are about to delete project {projectModel.GetFullName()}. " +
+                bool confirmed = await DialogService.Confirm($"You are about to delete project {ProjectService.GetFullName(projectModel)}. " +
                     $"If this project was cancelled or didn't get funded then do not delete it but change its status instead so we can keep a record of unfunded projects.",
                     "Delete Project") ?? false;
                 if (confirmed)
@@ -396,7 +396,7 @@ namespace PPMTool.Pages
                         }
                     }
 
-                    LogInformation($"Deleting project {projectModel.GetFullName()}, ID {projectModel.ProjectId}");
+                    LogInformation($"Deleting project {projectModel.GetSensibleObjectName()}, ID {projectModel.ProjectId}");
 
                     // Delete the project from the database
                     ProjectService.Delete(Context, projectModel);

@@ -84,7 +84,7 @@ namespace PPMTool.Shared
 
             public string Name { get; }
 
-            public string DisplayName { get; }
+            public string DisplayName { get; set; }
 
             public Type ItemType { get; }
 
@@ -100,7 +100,6 @@ namespace PPMTool.Shared
             {
                 EntityId = project.ProjectId;
                 Name = project.Name;
-                DisplayName = $"{project.GetFullName()} ({project.PI})";
                 ItemType = typeof(Project);
             }
         }
@@ -239,7 +238,7 @@ namespace PPMTool.Shared
                 );
                 var matchingProjects = ProjectService.GetAllShallow(context)
                 .Where(x =>
-                    x.GetFullName().ToLower().Contains(searchTerm.Clean()) ||
+                    ProjectService.GetFullName(x).ToLower().Contains(searchTerm.Clean()) ||
                     x.PI.ToLower().Contains(searchTerm.Clean())
                 );
 
@@ -251,7 +250,10 @@ namespace PPMTool.Shared
                 }
                 foreach (var project in matchingProjects)
                 {
-                    sourceData.Add(new MagicBarItem(project));
+                    sourceData.Add(new MagicBarItem(project)
+                    {
+                        DisplayName = $"{ProjectService.GetFullName(project)} ({project.PI})"
+                    });
                 }
                 sourceData.OrderBy(x => x.DisplayName);
 
