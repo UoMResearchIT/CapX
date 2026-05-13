@@ -112,6 +112,7 @@ namespace PPMTool.Pages
         private RadzenHtmlEditor htmlEditor;
         private bool bound;
         private bool suppressNextInput;
+        private string abbrev;
 
         // Loading parameter cache
         private int? lastRTP;
@@ -162,6 +163,7 @@ namespace PPMTool.Pages
             financeEnabled = FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance);
             timesheetsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Timesheets);
             skillsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Skills);
+            abbrev = GetSetting(SettingType.ProjectAbbreviation);
             LogInformation("Viewing project details");
         }
 
@@ -321,7 +323,7 @@ namespace PPMTool.Pages
                     LoadBurnUpChart();
                 }
 
-                LogInformation($"Viewing project details for RTP-{project?.RTP}");
+                LogInformation($"Viewing project details for {abbrev}-{project?.RTP}");
             }
             finally
             {
@@ -1187,7 +1189,8 @@ namespace PPMTool.Pages
 
             // Get list of all new RTP-XXX references in the note content
             var newRtpRefs = new List<string>();
-            matches = Regex.Matches(noteModel.HtmlContent, @"(>|^|\s)#RTP-\w+(\s|$)", RegexOptions.IgnoreCase);
+            var pattern = $@"(&gt;|^|\s)#{Regex.Escape(abbrev)}-\w+(\s|$)";
+            matches = Regex.Matches(noteModel.HtmlContent, pattern, RegexOptions.IgnoreCase);
             newRtpRefs.AddRange(matches.Select(x => x.Value.Trim()).Distinct());
 
             // For each reference, attempt to resolve it and replace in the HTMl content
@@ -1205,7 +1208,7 @@ namespace PPMTool.Pages
                     // Warning if the reference cannot be resolved
                     ShowNotification(new CapXNotificationMessage
                     {
-                        Summary = "RTP Reference Failure",
+                        Summary = $"{abbrev} Reference Failure",
                         Detail = $"The reference {trimmedMatch} could not be resolved! Please edit your note to correct."
                     });
                 }

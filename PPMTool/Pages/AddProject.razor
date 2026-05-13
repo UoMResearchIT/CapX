@@ -56,7 +56,7 @@
                     </div>
                     <div class="row">
                         <div class="col-4">
-                            <RadzenLabel class="radzen-form-label" Text="RTP Number" /><br />
+                            <RadzenLabel class="radzen-form-label" Text="@($"{GetSetting(SettingType.ProjectAbbreviation)} Number")" /><br />
                             <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Step="1" @bind-Value="projectModel.RTP" />
                         </div>
                         <div class="col-4">

@@ -158,7 +158,7 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project is active but has no currently running tasks!", StatusMessage.MessageType.Error, () => ActiveButNoRunningTask()),
                 new StatusMessage("This project has no project manager set!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoPM()),
                 new StatusMessage("This project has no timesheet activity set and project has started or will start soon!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoInnateCodeAndUpcoming(), FeatureType.Timesheets), // Timesheets
-                new StatusMessage("This project has no RTP number specified!", StatusMessage.MessageType.Error, () => RTP == 0),
+                new StatusMessage("This project has no project ID specified!", StatusMessage.MessageType.Error, () => RTP == 0),
                 new StatusMessage("This project has no link to a request document!", StatusMessage.MessageType.Error, () => HasNoRequestDocLink()),
                 new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, () => HasNoDescription()),
                 new StatusMessage("This project has no tasks!", StatusMessage.MessageType.Error, () => SubTasks == null || SubTasks.Count == 0),
@@ -438,7 +438,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public string GetSensibleObjectName()
         {
-            return GetFullName();
+            return $"Project {RTP} | {Name}";
         }
 
         /// <summary>

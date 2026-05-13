@@ -313,14 +313,14 @@ namespace PPMTool.Pages
             if (res < 0)
             {
                 // Duplicate found so show error message
-                LogWarning($"Duplicate project found with {(res == -1 ? $"name {projectModel?.Name}" : $"RTP-{projectModel?.RTP}")}!");
+                LogWarning($"Duplicate project found with {(res == -1 ? $"name {projectModel?.Name}" : $"{GetSetting(SettingType.ProjectAbbreviation)}-{projectModel?.RTP}")}!");
                 if (res == -1)
                 {
                     messageStore.Add(() => projectModel.Name, "Duplicate project name found!");
                 }
                 else
                 {
-                    messageStore.Add(() => projectModel.RTP, "Duplicate RTP number found!");
+                    messageStore.Add(() => projectModel.RTP, $"Duplicate {GetSetting(SettingType.ProjectAbbreviation)} number found!");
                 }
                 return false;
             }

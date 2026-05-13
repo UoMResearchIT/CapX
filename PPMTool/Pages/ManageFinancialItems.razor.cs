@@ -297,7 +297,7 @@ namespace PPMTool.Pages
 
                 try
                 {
-                    var filename = $"CapX-Finance-Item-Export{(selectedProject == null ? "" : $"-RTP{selectedProject.RTP}")}-{DateTime.Now.ToString("yyyyMMdd-HHmmss")}.xlsx";
+                    var filename = $"CapX-Finance-Item-Export{(selectedProject == null ? "" : $"-{GetSetting(SettingType.ProjectAbbreviation)}{selectedProject.RTP}")}-{DateTime.Now.ToString("yyyyMMdd-HHmmss")}.xlsx";
                     var path = FileHelper.GetLocalApplicationFilePath(filename);
 
                     var workbook = new XLWorkbook();

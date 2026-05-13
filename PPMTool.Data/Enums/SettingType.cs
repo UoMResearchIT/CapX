@@ -38,6 +38,10 @@ namespace PPMTool.Data.Enums
 
         [Description("The default \"indirect\" rate for assignments. This represents the proportion of an assignment that should be billed over and above the value of the assignment. Another way of thinking about it is the amount of budget that should be skimmed off the top to cover BAU activities.")]
         [DefaultSettingValue("0.125")]
-        BAUTopSliceFractionDefault = 7
+        BAUTopSliceFractionDefault = 7,
+
+        [Description("The abbreviation using to refer to projects.")]
+        [DefaultSettingValue("RTP")]
+        ProjectAbbreviation = 8
     }
 }

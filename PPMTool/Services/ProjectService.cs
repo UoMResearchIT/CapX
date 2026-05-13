@@ -64,7 +64,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="projectModel"></param>
         /// <param name="commitChanges"></param>
-        /// <returns>-1 if a duplicate name, -2 if duplciate RTP</returns>
+        /// <returns>-1 if a duplicate name, -2 if duplicate abbreviation</returns>
         public override int Update(PPMToolContext context, Project projectModel, bool commitChanges = true)
         {
             if (DuplicateDetected(context, projectModel))
