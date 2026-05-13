@@ -414,3 +414,7 @@ span.mention {
     justify-self: end;
     min-width: fit-content;
 }
+
+.components-reconnect-dialog {
+    background-color: var(--rz-card-background-color) !important;
+}
