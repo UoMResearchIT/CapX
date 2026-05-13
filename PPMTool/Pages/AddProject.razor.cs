@@ -54,6 +54,7 @@ namespace PPMTool.Pages
         private Project projectModel = new Project();
         private bool gotoDetails = false;
         private bool discardChanges = true;
+        private bool showOrgUnitsRequiredWarning = false;
         private IEnumerable<InnateCode> innateActivities = new List<InnateCode>();
         private IQueryable<InnateCode> innateActivityQuery;
         private IEnumerable<Person> projectManagers = new List<Person>();
@@ -101,6 +102,14 @@ namespace PPMTool.Pages
 
                 // Set the active user as the PM by default
                 projectModel.ProjectManager = ActiveUser?.Person;
+
+                // Specific check for when Finance feature has not been enabled and a new
+                // project is being added, as Faculties/Schools are required
+                if (!FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance))
+                {
+                    // If we have any active Schools then it means we have active Faculties too
+                    showOrgUnitsRequiredWarning = !SchoolService.GetAllActive(Context).Any();
+                }
             }
 
             // Add default buttons with handlers
