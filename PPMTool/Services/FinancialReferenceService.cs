@@ -23,21 +23,31 @@ namespace PPMTool.Services
             if (commitChanges) CommitChanges(context);
         }
 
-        /// <summary>
-        /// Returns the Financial References from the db. If none have been added then the app will
-        /// crash in certain places if the Finance Feature is not enabled. The check in the method
-        /// helps avoid this exception by passing back a non-null, non-zero IEnumerable to satisfy
-        /// the requesting call. This was primarily added to bypass the crash when a new Project
-        /// was added without the Finance Feature being enabled.
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
         public override IEnumerable<FinancialReference> GetAll(PPMToolContext context)
         {
-            if (!context.FinancialReferences.Any())
+            return GetAll(context, true);
+        }
+
+        /// <summary>
+        /// Returns the Financial References from the db. If none have been added then the app will
+        /// crash in certain places if the Finance Feature is not enabled. The check in this method
+        /// helps avoid this exception by passing back a non-null, non-zero IEnumerable to satisfy
+        /// the requesting call. This was added to allow bypassing of the  the crash when a new Project
+        /// was added without the Finance Feature being enabled (so no Financial References exist).
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="allowNullOrEmptyReturns"></param>
+        /// <returns></returns>
+        public IEnumerable<FinancialReference> GetAll(PPMToolContext context, bool allowNullOrEmptyReturns)
+        {
+            if (!allowNullOrEmptyReturns)
             {
-                return new List<FinancialReference> { new FinancialReference() };
+                if (!context.FinancialReferences.Any())
+                {
+                    return new List<FinancialReference> { new FinancialReference() };
+                }
             }
+
             return context.FinancialReferences;
         }
 
