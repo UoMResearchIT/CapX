@@ -13,7 +13,24 @@ namespace PPMTool.Services
     {
         // The state of the settings should be cached in memory as well as the DB for performance
         private IDictionary<SettingType, string> SettingStates { get; set; } = new Dictionary<SettingType, string>();
+        private ILogger<SettingsService> logger;
 
+        /// <summary>
+        /// Constructor for the settings service. Takes a logger as a dependency for logging any important information or errors.
+        /// </summary>
+        /// <param name="logger"></param>
+        public SettingsService(ILogger<SettingsService> logger)
+        {
+            this.logger = logger;
+        }
+
+        /// <summary>
+        /// Resets the settings table in the specified context to contain the default settings for all setting types.
+        /// </summary>
+        /// <remarks>This method removes all existing settings and repopulates the table with default
+        /// values for each setting type. Changes are saved asynchronously to the database.</remarks>
+        /// <param name="context">The database context in which to reset and initialize the settings table. Cannot be null.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
         private async Task SetDefaultSettings(PPMToolContext context)
         {
             // Clear the table and re-initialise
@@ -32,15 +49,41 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Method to initialise the cache from the database
+        /// Method to initialise the cache from the database.
+        /// If there are no settings in the database then it will set the defaults and then populate the cache.
+        /// It also checks that the settings in the DB are in sync with the enum and adds any new ones or removes any old ones as necessary.
         /// </summary>
-        /// <returns></returns>
+        /// <param name="context">The database context to use for initialising the cache. Cannot be null.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
         public async Task IntialiseServiceCacheAsync(PPMToolContext context)
         {
             // If we have no settings in the DB then we need to set the defaults before populating the cache
             if (!context.Settings.Any())
             {
                 await SetDefaultSettings(context);
+            }
+
+            // Resync the DB with the enum in case of any changes
+            var allSettingTypes = Enum.GetValues<SettingType>().ToList();
+            foreach (var setting in allSettingTypes)
+            {
+                // New setting added to the enum - add to the DB with the default value and description
+                if (!context.Settings.Any(s => s.SettingType == setting))
+                {
+                    context.Settings.Add(new Setting
+                    {
+                        SettingType = setting,
+                        SettingValue = setting.GetDefaultSettingValue(),
+                        Description = setting.GetDescription()
+                    });
+                }
+
+                // Setting removed from the enum - remove from the DB
+                else if (!allSettingTypes.Contains(setting))
+                {
+                    context.Settings.RemoveRange(context.Settings.Where(s => s.SettingType == setting));
+                    await context.SaveChangesAsync();
+                }
             }
 
             // Pull the settings out of the DB and populate the cache
