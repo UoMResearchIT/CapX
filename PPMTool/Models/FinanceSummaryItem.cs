@@ -98,10 +98,16 @@ namespace PPMTool.Models
         /// Ctor
         /// </summary>
         /// <param name="project">A shallow copy of the project entity</param>
+        /// <param name="school"></param>
         /// <param name="projectManager"></param>
         /// <param name="actuals">Actuals summed across all resources and tasks for this project</param>
         /// <param name="transactionBreakdown"></param>
-        public FinanceSummaryItem(Project project, Person projectManager, double actuals, TransactionBreakdown transactionBreakdown)
+        public FinanceSummaryItem(
+            Project project,
+            School school,
+            Person projectManager,
+            double actuals,
+            TransactionBreakdown transactionBreakdown)
         {
             if (project == null)
             {
@@ -114,8 +120,8 @@ namespace PPMTool.Models
             ProjectRTP = project.RTP;
             ProjectName = project.Name;
             ProjectPI = project.PI;
-            School = project.School;
-            Faculty = project.School.Faculty;
+            School = school;
+            Faculty = school.Faculty;
             ProjectPM = projectManager?.Name ?? "Not Set";
             ProjectStatus = project.ProjectStatus;
             CostModel = project.CostModel;

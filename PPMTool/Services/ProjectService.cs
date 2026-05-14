@@ -192,5 +192,23 @@ namespace PPMTool.Services
             abbreviation ??= string.Empty;
             return $"{abbreviation}-{project?.RTP} {project?.Name}";
         }
+
+        /// <summary>
+        /// Retrieves the school and its associated faculty for the specified project.
+        /// </summary>
+        /// <remarks>The returned <see cref="School"/> entity includes its related <see cref="Faculty"/>
+        /// entity if available. This method performs eager loading of related entities to ensure all necessary data is
+        /// retrieved in a single query.</remarks>
+        /// <param name="context">The database context used to access project, school, and faculty data. Cannot be null.</param>
+        /// <param name="projectId">The unique identifier of the project whose school and faculty information is to be retrieved.</param>
+        /// <returns>The <see cref="School"/> entity associated with the specified project, including its faculty information, or
+        /// <see langword="null"/> if no matching project is found.</returns>
+        internal School GetSchoolAndFaculty(PPMToolContext context, int projectId)
+        {
+            return context.Projects
+                .Include(x => x.School)
+                .ThenInclude(x => x.Faculty)
+                .FirstOrDefault(x => x.ProjectId == projectId)?.School;
+        }
     }
 }

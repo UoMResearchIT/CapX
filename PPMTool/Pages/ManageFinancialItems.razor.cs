@@ -97,7 +97,7 @@ namespace PPMTool.Pages
             // Load invoices and payments for the selected project
             LoadData();
 
-            LogInformation($"Viewing project finance for {selectedProject.GetSensibleObjectName()}");
+            LogInformation($"Viewing project finance for {selectedProject?.GetSensibleObjectName()}");
 
             Debug.WriteLine($"** {(value as Project)?.GetSensibleObjectName() ?? "Nothing"}");
         }
@@ -175,6 +175,7 @@ namespace PPMTool.Pages
 
                 financeSummaryItem = new FinanceSummaryItem(
                     selectedProject,
+                    ProjectService.GetSchoolAndFaculty(Context, selectedProject.ProjectId),
                     ProjectService.GetProjectManager(Context, selectedProject.ProjectId),
                     SubTaskService.GetActuals(Context, selectedProject.ProjectId),
                     transactions
