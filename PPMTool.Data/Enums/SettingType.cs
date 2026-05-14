@@ -36,7 +36,7 @@ namespace PPMTool.Data.Enums
         [DefaultSettingValue("300")]
         DayRateDefault = 6,
 
-        [Description("The default \"indirect\" rate for assignments. This represents the proportion of an assignment that should be billed over and above the value of the assignment. Another way of thinking about it is the amount of budget that should be skimmed off the top to cover BAU activities.")]
+        [Description("Default \"indirect\" rate for assignments where cost model allows it. This represents a \"tax\" that applies to the computed cost of an assignment to provide core funding for activities linked to team BAU such as training or maintenance.")]
         [DefaultSettingValue("0.125")]
         BAUTopSliceFractionDefault = 7,
 
