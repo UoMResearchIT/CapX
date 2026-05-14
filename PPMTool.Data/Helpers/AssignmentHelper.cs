@@ -89,7 +89,7 @@ namespace PPMTool.Data.Helpers
             {
                 // Get project
                 var project = projectsInWindow.First(x => x.ProjectId == task.OwningProject?.ProjectId);
-                Debug.WriteLine($"** {project.GetFullName()} => {task.Name} being examined...");
+                Debug.WriteLine($"** Project {project.RTP} => {task.Name} being examined...");
 
                 // Get resource that matches the person
                 var resource = task.AssignedResources.First(x => x.Person.PersonId == person.PersonId);
@@ -127,10 +127,11 @@ namespace PPMTool.Data.Helpers
                     Grade = defaultWLM.Grade,
                     FTE = resource.AssignmentFTE,
                     BilledFTE = resource.BilledFTE,
-                    ProjectName = project.GetFullName(),
+                    ProjectId = project.RTP,
+                    ProjectName = project.Name,
                     LeadRSE = project.ProjectManager?.Name ?? "Unknown",
-                    Faculty = project.School.Faculty.Name,
-                    School = project.School.Name,
+                    UpperOrgUnit = project.School.Faculty.Name,
+                    LowerOrgUnit = project.School.Name,
                     PI = project.PI,
                     TaskName = task.Name,
                     StartDate = adjustedTaskStart,
@@ -222,7 +223,7 @@ namespace PPMTool.Data.Helpers
                     if (tempChunks.Count > 0) taskChunks = tempChunks;
                 }
 
-                Debug.WriteLine($"** {project.GetFullName()} => {task.Name} | {taskChunks.Count} chunks after Grade splitting");
+                Debug.WriteLine($"** Project {project.RTP} => {task.Name} | {taskChunks.Count} chunks after Grade splitting");
 
                 // Are there any financial year changes within the window
                 if (changesInFinancialYear)
@@ -286,12 +287,12 @@ namespace PPMTool.Data.Helpers
                     if (tempChunks.Count > 0) taskChunks = tempChunks;
                 }
 
-                Debug.WriteLine($"** {project.GetFullName()} => {task.Name} | {taskChunks.Count} chunks after FY splitting");
+                Debug.WriteLine($"** Project {project.RTP} => {task.Name} | {taskChunks.Count} chunks after FY splitting");
 
                 // Filter task chunk list to just those that intersect the window
                 taskChunks = taskChunks.Where(x => x.StartDate <= endDate && x.EndDate >= startDate).ToList();
 
-                Debug.WriteLine($"** {project.GetFullName()} => {task.Name} | {taskChunks.Count} chunks run during the window");
+                Debug.WriteLine($"** Project {project.RTP} => {task.Name} | {taskChunks.Count} chunks run during the window");
 
                 // Add task to master list
                 data.AddRange(taskChunks);

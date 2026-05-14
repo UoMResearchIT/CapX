@@ -298,7 +298,7 @@ namespace PPMTool.Pages
             // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser
             EditAuthorised = ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager && ProjectModel.ProjectManager.PersonId == ActiveUser?.Person.PersonId);
 
-            LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy} | Split = {IsSplit}" : $"Adding new task to {ProjectModel?.GetFullName()}");
+            LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetSensibleObjectName()} | Copy = {IsCopy} | Split = {IsSplit}" : $"Adding new task to {ProjectModel?.GetSensibleObjectName()}");
 
             // Finished
             Loading = false;
@@ -555,12 +555,11 @@ namespace PPMTool.Pages
         {
             if (TaskId != null && TaskId > 0)
             {
-                bool confirmed = await DialogService.Confirm($"You are about to delete task {TaskModel.Name} from project {ProjectModel?.GetFullName()}",
+                bool confirmed = await DialogService.Confirm($"You are about to delete task {TaskModel.Name} from project {ProjectService.GetFullName(ProjectModel)}",
                     "Delete Task") ?? false;
                 if (confirmed)
                 {
-                    LogWarning($"Task {TaskModel?.SubTaskId}: Deleting task {TaskModel?.Name} on {ProjectModel?.GetFullName()}");
-
+                    LogWarning($"Task {TaskModel?.SubTaskId}: Deleting task {TaskModel?.Name} on {ProjectModel.GetSensibleObjectName()}");
                     // Call delete on the subtask service and let it remove the resources
                     SubTaskService.Delete(Context, TaskModel);
 
@@ -569,10 +568,11 @@ namespace PPMTool.Pages
 
                     // Update the project summary values
                     var finrefs = FinancialReferenceService.GetAll(Context);
-                    ProjectModel.UpdateProjectMetaData(false, finrefs);
+                    var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+                    ProjectModel.UpdateProjectMetaData(false, finrefs, bauTopSlicePercentage);
 
                     // Update the project in the database
-                    LogInformation($"Saving project {ProjectModel?.GetFullName()}...");
+                    LogInformation($"Saving project {ProjectModel?.GetSensibleObjectName()}...");
                     ProjectService.Update(Context, ProjectModel);
 
                     // Return to the project details page
@@ -691,7 +691,8 @@ namespace PPMTool.Pages
             }
 
             // Update the billed FTE
-            entity.UpdateBilledFTE(projectModel.CostModel);
+            var indirectsPercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+            entity.UpdateBilledFTE(projectModel.CostModel, indirectsPercentage);
 
             // Save the row to the DB
             await base.SaveRow(entity);
@@ -814,7 +815,8 @@ namespace PPMTool.Pages
             // Update planned and actual costs from the resources now scheduling has completed
             var projectDayRate = ProjectModel.DayRate;
             var finrefs = FinancialReferenceService.GetAll(Context);
-            TaskModel.UpdateSubTaskCosts(ProjectModel, finrefs);
+            var indirectsPercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+            TaskModel.UpdateSubTaskCosts(ProjectModel, finrefs, indirectsPercentage);
 
             // Set validity based on scheduler result
             IsValid = error == null;
@@ -958,10 +960,11 @@ namespace PPMTool.Pages
                     if (!IsSplit)
                     {
                         var finrefs = FinancialReferenceService.GetAll(Context);
-                        ProjectModel.UpdateProjectMetaData(false, finrefs);
+                        var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+                        ProjectModel.UpdateProjectMetaData(false, finrefs, bauTopSlicePercentage);
 
                         // Update the project in the database
-                        LogInformation($"Task {TaskModel?.SubTaskId}: Saving project {ProjectModel?.GetFullName()}...");
+                        LogInformation($"Task {TaskModel?.SubTaskId}: Saving project {ProjectModel?.GetSensibleObjectName()}...");
                         ProjectService.Update(Context, ProjectModel);
 
                         // Return to the project details page if not triggered from a split task page

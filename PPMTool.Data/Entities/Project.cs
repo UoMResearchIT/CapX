@@ -148,7 +148,7 @@ namespace PPMTool.Data.Entities
                 // Warning
                 new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => SubTasks?.Any(x => x.HasProvisionalResources()) ?? false),
                 new StatusMessage("A current or future task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemandInWindow()),
-                new StatusMessage("This project has started but has no link to a Scrum project!", StatusMessage.MessageType.Warning, () => HasStartedButHasNoScrumProjectLink()),
+                new StatusMessage("This project has started but has no link to a project board!", StatusMessage.MessageType.Warning, () => HasStartedButHasNoScrumProjectLink()),
                 new StatusMessage("Task has resource(s) with zero FTE assignment!", StatusMessage.MessageType.Warning, () => HasResourceWithZeroFTE()),
 
                 // Error
@@ -158,7 +158,7 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project is active but has no currently running tasks!", StatusMessage.MessageType.Error, () => ActiveButNoRunningTask()),
                 new StatusMessage("This project has no project manager set!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoPM()),
                 new StatusMessage("This project has no timesheet activity set and project has started or will start soon!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoInnateCodeAndUpcoming(), FeatureType.Timesheets), // Timesheets
-                new StatusMessage("This project has no RTP number specified!", StatusMessage.MessageType.Error, () => RTP == 0),
+                new StatusMessage("This project has no project ID specified!", StatusMessage.MessageType.Error, () => RTP == 0),
                 new StatusMessage("This project has no link to a request document!", StatusMessage.MessageType.Error, () => HasNoRequestDocLink()),
                 new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, () => HasNoDescription()),
                 new StatusMessage("This project has no tasks!", StatusMessage.MessageType.Error, () => SubTasks == null || SubTasks.Count == 0),
@@ -320,7 +320,8 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="recomputeSubTaskCosts">Whether to update the subtask costs and save to database</param>
         /// <param name="financialReferences">If necessary a set of financial references</param>
-        public void UpdateProjectMetaData(bool recomputeSubTaskCosts, IEnumerable<FinancialReference> financialReferences)
+        /// <param name="indirectsPercentage">The percentage of top slice to apply from the settings</param>
+        public void UpdateProjectMetaData(bool recomputeSubTaskCosts, IEnumerable<FinancialReference> financialReferences, float indirectsPercentage)
         {
             // Check conditions for cost update
             if (CostModel != CostModel.DayRate && (financialReferences == null || financialReferences.Count() == 0))
@@ -354,7 +355,7 @@ namespace PPMTool.Data.Entities
                     if (recomputeSubTaskCosts)
                     {
                         // Update the cost of the tasks (and resources)
-                        task.UpdateSubTaskCosts(this, financialReferences);
+                        task.UpdateSubTaskCosts(this, financialReferences, indirectsPercentage);
                     }
 
                     // Read subtask costs and hours and accumulate inot the relevant categories
@@ -377,15 +378,15 @@ namespace PPMTool.Data.Entities
             // Compute the budgeted indirects
             if (FundingSources != null && FundingSources.Count > 0)
             {
-                budgetIndirects = GlobalDefaults.BAUTopSliceFractionDefault * FundingSources.Sum(x => x.AmountAvailable);
+                budgetIndirects = indirectsPercentage * FundingSources.Sum(x => x.AmountAvailable);
             }
             BudgetedIndirects = Math.Round(100 * budgetIndirects) / 100;
 
             // If we are using indirects then they will be included for tech so remove
             if (CostModel.HasIndirects())
             {
-                plannedTech /= (1d + GlobalDefaults.BAUTopSliceFractionDefault);
-                actualTech /= (1d + GlobalDefaults.BAUTopSliceFractionDefault);
+                plannedTech /= (1d + indirectsPercentage);
+                actualTech /= (1d + indirectsPercentage);
             }
 
             // Update project dates
@@ -411,15 +412,6 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method which returns the project name prefixed by the RTP code
-        /// </summary>
-        /// <returns></returns>
-        public string GetFullName()
-        {
-            return $"RTP-{RTP} {Name}";
-        }
-
-        /// <summary>
         /// Method to return the dates in which there is unmet demand.
         /// </summary>
         /// <param name="windowStart">The start of the unmet demand window</param>
@@ -437,7 +429,7 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public string GetSensibleObjectName()
         {
-            return GetFullName();
+            return $"Project {RTP} | {Name}";
         }
 
         /// <summary>

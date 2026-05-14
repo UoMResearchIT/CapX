@@ -17,6 +17,11 @@
                 <RadzenButton class="float-right" Text="Add" Icon="add" Click="@AddCode" />
             </div>
         </div>
+        <div class="row">
+            <div class="col py-2">
+                <RadzenText Text="Manage the timesheet codes available in the system." />
+            </div>
+        </div>
         @if (ErrorMessage != null)
         {
             <StatusMessageComponent Message="ErrorMessage" />
@@ -48,7 +53,7 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="CodeToDeactivate" Title="Projects" MinWidth="10px" Filterable="false" Sortable="false">
                         <Template Context="code">
-                            @(code.GetRTPAsMarkup(Configuration))
+                            @(code.GetRTPAsMarkup(Configuration, GetSetting(SettingType.ProjectAbbreviation)))
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TItem="CodeToDeactivate" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">

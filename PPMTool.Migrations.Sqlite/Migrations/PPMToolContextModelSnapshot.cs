@@ -15,7 +15,7 @@ namespace PPMTool.Migrations.Sqlite.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.5");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.7");
 
             modelBuilder.Entity("PPMTool.Data.Entities.Absence", b =>
                 {
@@ -683,6 +683,28 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                     b.HasIndex("FacultyId");
 
                     b.ToTable("Schools");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.Setting", b =>
+                {
+                    b.Property<int>("SettingId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SettingType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SettingValue")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("SettingId");
+
+                    b.ToTable("Settings");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.SkillTag", b =>

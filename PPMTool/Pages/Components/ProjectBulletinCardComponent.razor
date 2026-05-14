@@ -8,7 +8,7 @@
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
         <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
             <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0rem">
-                <RadzenText TextStyle="TextStyle.H5" Text="@Project.GetFullName()" />
+                <RadzenText TextStyle="TextStyle.H5" Text="@ProjectService.GetFullName(Project)" />
                 <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
             </RadzenStack>
             <RadzenStack Orientation="Radzen.Orientation.Horizontal">
@@ -74,6 +74,9 @@
     [Inject]
     private FeatureService FeatureService { get; set; }
 
+    [Inject]
+    private ProjectService ProjectService { get; set; }
+
     [Parameter]
     public Project Project { get; set; }
 
@@ -120,7 +123,7 @@
         maxDemand = Math.Round(1000 * subtasks.Max(x => x.GetUnmetDemandInWindow(FilterStartDate, FilterEndDate))) / 1000;
         minDemand = Math.Round(1000 * subtasks.Min(x => x.GetUnmetDemandInWindow(FilterStartDate, FilterEndDate))) / 1000;
 
-        Debug.WriteLine($"** {Project.GetFullName()}: {windowDatesFormatted}: {minDemand} - {maxDemand}");
+        Debug.WriteLine($"** {Project.GetSensibleObjectName()}: {windowDatesFormatted}: {minDemand} - {maxDemand}");
     }
 
     /// <summary>

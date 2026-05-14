@@ -13,6 +13,14 @@ namespace PPMTool.Pages
     [Authorize(Roles = "Manager,Superuser,Reader")]
     public partial class ManagementCapacity : BaseCapacityPage
     {
+        private double projectManDefaultFte;
+
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+            projectManDefaultFte = GetSetting(SettingType.ProjectManagementDefaultFTE, 0.0);
+        }
+
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
@@ -114,7 +122,7 @@ namespace PPMTool.Pages
                     return isTotalRow ?
                         ChartItem.GetColourStringFTE(value1, value2) :
                         (
-                            value1 > GlobalDefaults.ProjectManagementDefaultFTE ?
+                            value1 > projectManDefaultFte ?
                                 "#FF9800" :
                                 "#609"
                         );
@@ -153,12 +161,13 @@ namespace PPMTool.Pages
             messages = base.GenerateTooltipMessages(assignmentsWithinBlock, personOfInterest, messages);
 
             // Check for leadership load greater than the standard
-            if (assignmentsWithinBlock.Any(x => x.SubTask.GetAssignmentValueForPerson(personOfInterest) > GlobalDefaults.ProjectManagementDefaultFTE))
+            if (assignmentsWithinBlock.Any(x => x.SubTask.GetAssignmentValueForPerson(personOfInterest) > projectManDefaultFte))
             {
-                var amount = assignmentsWithinBlock.RoundedSum(x => x.SubTask.GetAssignmentValueForPerson(personOfInterest) > GlobalDefaults.ProjectManagementDefaultFTE ?
-                    x.SubTask.GetAssignmentValueForPerson(personOfInterest) :
-                    0
-                );
+                var amount = assignmentsWithinBlock
+                    .RoundedSum(x => x.SubTask.GetAssignmentValueForPerson(personOfInterest) > projectManDefaultFte ?
+                        x.SubTask.GetAssignmentValueForPerson(personOfInterest) :
+                        0
+                    );
                 messages += $"<h3 class=\"me-1 text-warning\"> &#x26A0; [INCREASED LEADERSHIP ({amount} FTE)]</h3>";
             }
             return messages;

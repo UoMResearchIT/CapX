@@ -26,7 +26,7 @@
                 </div>
                 <div class="row">
                     <div class="col">
-                        <p>Add new task to <b>@ProjectModel?.GetFullName()</b>@(IsSplit ? " by splitting an existing task." : IsCopy ? " by copying an existing task." : "")</p>
+                        <p>Add new task to <b>@ProjectService.GetFullName(ProjectModel)</b>@(IsSplit ? " by splitting an existing task." : IsCopy ? " by copying an existing task." : "")</p>
                     </div>
                 </div>
             }
@@ -48,7 +48,7 @@
                 </div>
                 <div class="row">
                     <div class="col">
-                        <p>Edit existing task in <b>@ProjectModel?.GetFullName()</b>.</p>
+                        <p>Edit existing task in <b>@ProjectService.GetFullName(ProjectModel)</b>.</p>
                     </div>
                 </div>
             }

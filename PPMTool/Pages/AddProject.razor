@@ -24,7 +24,7 @@
             {
                 <div class="row">
                     <div class="col">
-                        <h1>Edit <i>@projectModel.GetFullName()</i></h1>
+                        <h1>Edit <i>@ProjectService.GetFullName(projectModel)</i></h1>
                     </div>
                     <div class="col-auto" style="align-content: center">
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteProject" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
@@ -56,16 +56,16 @@
                     </div>
                     <div class="row">
                         <div class="col-4">
-                            <RadzenLabel class="radzen-form-label" Text="RTP Number" /><br />
+                            <RadzenLabel class="radzen-form-label" Text="@($"{GetSetting(SettingType.ProjectAbbreviation)} Number")" /><br />
                             <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Step="1" @bind-Value="projectModel.RTP" />
                         </div>
                         <div class="col-4">
-                            <RadzenLabel class="radzen-form-label" Text="Faculty" /><br />
+                            <RadzenLabel class="radzen-form-label" Text="@($"{GetSetting(SettingType.OrgUnitUpper)}")" /><br />
                             <RadzenDropDown class="radzen-dropdown"
                                             TValue="Faculty"
                                             Data="@faculties"
                                             Change="OnFacultyChosen"
-                                            Placeholder="Select a faculty"
+                                            Placeholder="@($"Select a {GetSetting(SettingType.OrgUnitUpper)}")"
                                             Value="@chosenFaculty">
                                 <Template Context="x">
                                     @x.GetSensibleObjectName()
@@ -73,12 +73,12 @@
                             </RadzenDropDown>
                         </div>
                         <div class="col-4">
-                            <RadzenLabel class="radzen-form-label" Text="School" /><br />
+                            <RadzenLabel class="radzen-form-label" Text="@($"{GetSetting(SettingType.OrgUnitLower)}")" /><br />
                             <RadzenDropDown class="radzen-dropdown"
                                             TValue="School"
                                             @bind-Value="projectModel.School"
                                             Data="@schools"
-                                            Placeholder="Select a school">
+                                            Placeholder="@($"Select a {GetSetting(SettingType.OrgUnitLower)}")">
                                 <Template Context="x">
                                     @x.GetSensibleObjectName()
                                 </Template>
@@ -122,7 +122,7 @@
                             <RadzenTextBox class="radzen-text-box" @bind-Value="projectModel.RequestDocLink" Placeholder="https://..."  />
                         </div>
                         <div class="col-6">
-                            <RadzenLabel class="radzen-form-label" Text="Link to Scrum Project" /><br />
+                            <RadzenLabel class="radzen-form-label" Text="@($"Link to {GetSetting(SettingType.ProjectBoardName)}")" /><br />
                             <RadzenTextBox class="radzen-text-box" @bind-Value="projectModel.ScrumProjectLink" Placeholder="https://..." />
                         </div>
                     </div>
