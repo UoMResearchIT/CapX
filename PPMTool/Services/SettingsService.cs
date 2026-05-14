@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
+using Radzen;
 
 namespace PPMTool.Services
 {
@@ -14,14 +15,20 @@ namespace PPMTool.Services
         // The state of the settings should be cached in memory as well as the DB for performance
         private IDictionary<SettingType, string> SettingStates { get; set; } = new Dictionary<SettingType, string>();
         private ILogger<SettingsService> logger;
+        private ThemeService themeService;
+        private CssVariableService cssVariableService;
 
         /// <summary>
         /// Constructor for the settings service. Takes a logger as a dependency for logging any important information or errors.
         /// </summary>
         /// <param name="logger"></param>
-        public SettingsService(ILogger<SettingsService> logger)
+        /// <param name="themeService"></param>
+        /// <param name="cssVariableService"></param>
+        public SettingsService(ILogger<SettingsService> logger, ThemeService themeService, CssVariableService cssVariableService)
         {
             this.logger = logger;
+            this.themeService = themeService;
+            this.cssVariableService = cssVariableService;
         }
 
         /// <summary>
@@ -108,13 +115,28 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="setting"></param>
         /// <param name="commitChanges"></param>
-        internal void UpdateSettingValue(PPMToolContext context, Setting setting, bool commitChanges = true)
+        internal async void UpdateSettingValue(PPMToolContext context, Setting setting, bool commitChanges = true)
         {
-            SettingStates[setting.SettingType] = setting.SettingValue.Trim();
+            // Strip the whitespace
+            setting.SettingValue = setting.SettingValue.Trim();
+
+            // Set in the cache
+            SettingStates[setting.SettingType] = setting.SettingValue;
+
+            // Update the DB
             context.Settings.Update(setting);
             if (commitChanges)
             {
                 context.SaveChanges();
+            }
+
+            // If this is a colour variable then we need to refresh the theme
+            // Take a gamble that all values startign with # are colours
+            if (setting.SettingValue.StartsWith("#"))
+            {
+                logger.LogInformation("Colour setting updated. Refreshing theme...");
+                var darkMode = themeService.IsDarkTheme();
+                await themeService.SetDarkLightAsync(darkMode, this, cssVariableService);
             }
         }
 
@@ -233,6 +255,7 @@ namespace PPMTool.Services
         {
             // Update the local cache and the DB
             UpdateSettingValue(context, entity, commitChanges);
+
             return entity.SettingId;
         }
 

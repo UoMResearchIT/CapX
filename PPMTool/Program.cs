@@ -86,6 +86,7 @@ builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<FundingSourceService>();
 builder.Services.AddScoped<FacultyService>();
 builder.Services.AddScoped<SchoolService>();
+builder.Services.AddScoped<CssVariableService>();
 builder.Services.AddSingleton<APIAuthService>();
 builder.Services.AddSingleton<FeatureService>();
 builder.Services.AddSingleton<SettingsService>();

@@ -48,6 +48,9 @@ namespace PPMTool.Shared
         [Inject]
         private ThemeService ThemeService { get; set; }
 
+        [Inject]
+        private CssVariableService CssVariableService { get; set; }
+
         /// <summary>
         /// Whether there are any buttons or error messages to show in the action bar.
         /// </summary>
@@ -153,7 +156,7 @@ namespace PPMTool.Shared
                 // Set the theme
                 var useDarkMode = await LocalStorage.GetItemAsync<bool>("useDarkMode");
                 Debug.WriteLine($"** Stored local value for darkmode = {useDarkMode}");
-                ThemeService.SetDarkLight(useDarkMode);
+                await ThemeService.SetDarkLightAsync(useDarkMode, SettingsService, CssVariableService);
             }
 
             // Set the user id to show the skills tab

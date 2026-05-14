@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using PPMTool.Data.Enums;
+using PPMTool.Services;
 using Radzen;
 
 namespace PPMTool
@@ -10,9 +12,16 @@ namespace PPMTool
         /// </summary>
         /// <param name="themeService"></param>
         /// <param name="darkMode"></param>
-        public static void SetDarkLight(this ThemeService themeService, bool darkMode)
+        /// <param name="settingsService"></param>
+        /// <param name="cssVarService"></param>
+        public static async Task SetDarkLightAsync(
+            this ThemeService themeService,
+            bool darkMode,
+            SettingsService settingsService,
+            CssVariableService cssVarService
+        )
         {
-            // Conditional setting
+            // Check if we need to do anything
             if (themeService.IsDarkTheme() != darkMode)
             {
                 Debug.WriteLine($"** Setting theme. Dark mode = {darkMode}");
@@ -23,7 +32,18 @@ namespace PPMTool
                     TriggerChange = true,
                     RightToLeft = false
                 });
+
+                // Small delay to give the theme a chance to apply
+                await Task.Yield();
             }
+
+            // Get the appropriate colour from the settings
+            var colour = darkMode
+                ? settingsService.GetSetting(SettingType.AppPrimaryColourDark)
+                : settingsService.GetSetting(SettingType.AppPrimaryColourLight);
+
+            // Set the colour in the DOM
+            await cssVarService.SetPrimaryColor(colour);
         }
 
         /// <summary>

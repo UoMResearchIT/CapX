@@ -51,5 +51,13 @@ namespace PPMTool.Data.Enums
         [Description("The term used for the lower level organisational unit e.g. School or Department.")]
         [DefaultSettingValue("School")]
         OrgUnitLower = 10,
+
+        [Description("The hex code used as the primary colour in the app in light mode e.g. #660099 or #609.")]
+        [DefaultSettingValue("#609")]
+        AppPrimaryColourLight = 11,
+
+        [Description("The hex code used as the primary colour in the app in dark mode e.g. #660099 or #609.")]
+        [DefaultSettingValue("#bb86fc")]
+        AppPrimaryColourDark = 12
     }
 }
