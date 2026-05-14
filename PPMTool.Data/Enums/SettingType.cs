@@ -42,6 +42,14 @@ namespace PPMTool.Data.Enums
 
         [Description("The abbreviation using to refer to projects.")]
         [DefaultSettingValue("RTP")]
-        ProjectAbbreviation = 8
+        ProjectAbbreviation = 8,
+
+        [Description("The term used for the upper level organisational unit e.g. Faculty or Institute.")]
+        [DefaultSettingValue("Faculty")]
+        OrgUnitUpper = 9,
+
+        [Description("The term used for the lower level organisational unit e.g. School or Department.")]
+        [DefaultSettingValue("School")]
+        OrgUnitLower = 10,
     }
 }
