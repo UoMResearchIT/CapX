@@ -79,6 +79,26 @@ namespace PPMTool.Shared
         private RoleType activeUserRoleType;
 
         /// <summary>
+        /// Determines the CSS color variable to use for the banner based on the current environment and settings.
+        /// </summary>
+        /// <remarks>This method selects a different banner color in development environments when the
+        /// corresponding setting is enabled, which can help visually distinguish development from production
+        /// environments.</remarks>
+        /// <returns>A string containing the CSS variable name for the banner color. Returns "var(--rz-danger)" if development
+        /// banner colors are enabled and the environment is development; otherwise, returns "var(--rz-primary)".</returns>
+        private string GetBannerColour()
+        {
+            if (SettingsService.GetSetting<bool>(SettingType.UseDevelopmentBannerColours, true))
+            {
+                if (Environment.IsDevelopment())
+                {
+                    return "var(--rz-danger)";
+                }
+            }
+            return "var(--rz-primary)";
+        }
+
+        /// <summary>
         /// Specific object for populating the magic bar popup
         /// </summary>
         private class MagicBarItem

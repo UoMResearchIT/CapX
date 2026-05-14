@@ -58,6 +58,10 @@ namespace PPMTool.Data.Enums
 
         [Description("The hex code used as the primary colour in the app in dark mode e.g. #660099 or #609.")]
         [DefaultSettingValue("#bb86fc")]
-        AppPrimaryColourDark = 12
+        AppPrimaryColourDark = 12,
+
+        [Description("Whether the header and footer of the app should be coloured as danger for development deployments of the system. Accepts \"true\" and \"false\".")]
+        [DefaultSettingValue("true")]
+        UseDevelopmentBannerColours = 13
     }
 }

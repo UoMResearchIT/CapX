@@ -53,6 +53,7 @@ namespace PPMTool.Pages
                     await ThemeService.SetDarkLightAsync(darkMode, SettingsService, CssVariableService);
                 }
             }
+            StateHasChanged();
         }
     }
 }

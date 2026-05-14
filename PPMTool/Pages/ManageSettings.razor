@@ -43,13 +43,13 @@
                             RowUpdate="@OnUpdateRow"
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                 <Columns>
-                    <RadzenDataGridColumn TItem="Setting" Property="SettingTypeAsText" Title="Name" MinWidth="10px" Width="10rem" />
+                    <RadzenDataGridColumn TItem="Setting" Property="SettingTypeAsText" Title="Name" MinWidth="10px" Width="15rem" />
                     <RadzenDataGridColumn TItem="Setting" Property="SettingValue" Title="Value" MinWidth="10px" Width="20rem">
                         <EditTemplate Context="setting">
                             <RadzenTextBox class="no-margin" @bind-Value="setting.SettingValue" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Setting" Property="Description" Title="Description" MinWidth="10px" Width="30rem" />
+                    <RadzenDataGridColumn TItem="Setting" Property="Description" Title="Description" MinWidth="10px" Width="35rem" />
                     <RadzenDataGridColumn TItem="Setting" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
                         <Template Context="setting">
                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(setting))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
