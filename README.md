@@ -42,7 +42,7 @@ The app will run migrations every time it starts. If the connection string permi
 > This feature overwrites all data in the tables as soon as the app starts!
 
 ### Database Migrations
-As CapX supports multiple DB providers, the migrations required to set up the database and its tables are specific to the provider. Each supported provider has its own `.Migrations` project containing the relevant migrations for ensuring the DB is aligned to the models in the code. To add a new migration for a particular provider, the following command can be used from the root directory to invoke the EF Core Tools e.g. for `DB_PROVIDER=sqlite` (change paths if running from somewhere else):
+As CapX supports multiple DB providers, the migrations required to set up the database and its tables are specific to the provider. Each supported provider has its own `.Migrations` project containing the relevant migrations for ensuring the DB is aligned to the models in the code. To add a new migration for a particular provider, set the `DB_PROVIDER` variable in the environment appropraitely then run following command from the root directory to invoke the EF Core Tools. For example, to add a migration for SQLite, set `DB_PROVIDER=sqlite` (typically using User Secrets if developing with Visual Studio or VS Code):
 
 ```
 dotnet ef migrations add NameOfMigrationHere --context PPMToolContext --project PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj --startup-project PPMTool/PPMTool.csproj
@@ -53,6 +53,9 @@ The database can be updated manually with the following command but the web app 
 ```
 dotnet ef database update --context PPMToolContext --project PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj --startup-project PPMTool/PPMTool.csproj
 ```
+
+> [!WARNING] 
+> If you are adding a migration for one provider due to a DB schema change, it is expected that you would add migrations for all the others that replicate the same change. Otherwise different DB providers will end up with DB schemas that differ from each other!
 
 ### Solution/Build and Launch Configurations
 The Visual Studio solution no-longer has _launch_ configurations since the web app and the API are now integrated into one application. However, there are two _solution_ configurations: `Local` and `Release` that combine project-level _build_ configurations.
