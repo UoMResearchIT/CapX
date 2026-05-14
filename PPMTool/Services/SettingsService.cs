@@ -14,22 +14,6 @@ namespace PPMTool.Services
     {
         // The state of the settings should be cached in memory as well as the DB for performance
         private IDictionary<SettingType, string> SettingStates { get; set; } = new Dictionary<SettingType, string>();
-        private ILogger<SettingsService> logger;
-        private ThemeService themeService;
-        private CssVariableService cssVariableService;
-
-        /// <summary>
-        /// Constructor for the settings service. Takes a logger as a dependency for logging any important information or errors.
-        /// </summary>
-        /// <param name="logger"></param>
-        /// <param name="themeService"></param>
-        /// <param name="cssVariableService"></param>
-        public SettingsService(ILogger<SettingsService> logger, ThemeService themeService, CssVariableService cssVariableService)
-        {
-            this.logger = logger;
-            this.themeService = themeService;
-            this.cssVariableService = cssVariableService;
-        }
 
         /// <summary>
         /// Resets the settings table in the specified context to contain the default settings for all setting types.
@@ -128,15 +112,6 @@ namespace PPMTool.Services
             if (commitChanges)
             {
                 context.SaveChanges();
-            }
-
-            // If this is a colour variable then we need to refresh the theme
-            // Take a gamble that all values startign with # are colours
-            if (setting.SettingValue.StartsWith("#"))
-            {
-                logger.LogInformation("Colour setting updated. Refreshing theme...");
-                var darkMode = themeService.IsDarkTheme();
-                await themeService.SetDarkLightAsync(darkMode, this, cssVariableService);
             }
         }
 
