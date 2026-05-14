@@ -16,6 +16,12 @@
             <RadzenButton Icon="add" Text="@($"Add {GetSetting(SettingType.OrgUnitUpper)}")" Click="@(() => StartAddingFaculty())" Style="float: right;"/>
         </div>
     </div>
+    <div class="row">
+        <div class="col py-2">
+            <RadzenText Text="@($"Manage {GetSetting(SettingType.OrgUnitUpper)} and {GetSetting(SettingType.OrgUnitLower)} options.")" />
+        </div>
+    </div>
+    <hr />
 
     <div class="orgunits-accordion">
         @if (isAddingFaculty)
