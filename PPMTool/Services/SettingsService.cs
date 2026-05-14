@@ -76,6 +76,7 @@ namespace PPMTool.Services
                         SettingValue = setting.GetDefaultSettingValue(),
                         Description = setting.GetDescription()
                     });
+                    await context.SaveChangesAsync();
                 }
 
                 // Setting removed from the enum - remove from the DB
