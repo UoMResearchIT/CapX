@@ -1,8 +1,10 @@
-﻿using PPMTool.Data.Entities;
+﻿using Microsoft.AspNetCore.Authorization;
+using PPMTool.Data.Entities;
 using Radzen;
 
 namespace PPMTool.Pages
 {
+    [Authorize(Roles = "Superuser")]
     public partial class ManageSettings : DataGridPage<Setting>
     {
         protected override async Task OnInitializedAsync()
