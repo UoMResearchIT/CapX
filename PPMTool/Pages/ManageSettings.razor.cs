@@ -31,9 +31,9 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Handles updates to a setting entity and refreshes the application theme if a color setting is changed.
+        /// Handles updates to a setting entity and refreshes the application theme if a colour setting is changed.
         /// </summary>
-        /// <remarks>If the updated setting represents a color value (identified by a value starting with
+        /// <remarks>If the updated setting represents a colour value (identified by a value starting with
         /// '#'), the application theme is refreshed to reflect the change. This ensures that theme-related settings are
         /// applied immediately after an update.</remarks>
         /// <param name="entity">The setting entity that has been updated. Must not be null.</param>
