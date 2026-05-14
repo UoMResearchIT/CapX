@@ -17,7 +17,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.5")
+                .HasAnnotation("ProductVersion", "10.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -724,6 +724,30 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                     b.HasIndex("FacultyId");
 
                     b.ToTable("Schools");
+                });
+
+            modelBuilder.Entity("PPMTool.Data.Entities.Setting", b =>
+                {
+                    b.Property<int>("SettingId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SettingId"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("SettingType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SettingValue")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("SettingId");
+
+                    b.ToTable("Settings");
                 });
 
             modelBuilder.Entity("PPMTool.Data.Entities.SkillTag", b =>
