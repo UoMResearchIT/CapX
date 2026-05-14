@@ -36,9 +36,9 @@ namespace PPMTool.Data
 
         public string PI { get; set; } = null!;
 
-        public string Faculty { get; set; } = null!;
+        public string UpperOrgUnit { get; set; } = null!;
 
-        public string School { get; set; } = null!;
+        public string LowerOrgUnit { get; set; } = null!;
 
         /// <summary>
         /// This is the estimated salary cost of the individual resource based on their grade and FTE -- essentially the cost to the department
@@ -108,8 +108,8 @@ namespace PPMTool.Data
             ProjectId = taskToCopy.ProjectId;
             ProjectName = taskToCopy.ProjectName;
             LeadRSE = taskToCopy.LeadRSE;
-            Faculty = taskToCopy.Faculty;
-            School = taskToCopy.School;
+            UpperOrgUnit = taskToCopy.UpperOrgUnit;
+            LowerOrgUnit = taskToCopy.LowerOrgUnit;
             PI = taskToCopy.PI;
             TaskName = taskToCopy.TaskName;
             StartDate = new DateTime(taskToCopy.StartDate.Ticks);

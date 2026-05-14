@@ -350,7 +350,7 @@ namespace PPMTool.Pages
             // Not faculty or school objects or placeholder objects
             if (projectModel.School == null || projectModel.School?.Faculty == null || projectModel.School?.SchoolId == 0 || projectModel.School?.Faculty?.FacultyId == 0)
             {
-                messageStore.Add(() => projectModel.School, "Project must have a faculty and school set!");
+                messageStore.Add(() => projectModel.School, $"Project must have a {GetSetting(SettingType.OrgUnitUpper)} and {GetSetting(SettingType.OrgUnitLower)} set!");
                 return false;
             }
             return true;

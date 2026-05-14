@@ -65,12 +65,12 @@
                             @p.ProjectStatus.ToNiceString()
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="Faculty" Title="Faculty" MinWidth="10px" FilterMode="FilterMode.Simple">
+                    <RadzenDataGridColumn TItem="Project" Property="Faculty" Title="@($"{GetSetting(SettingType.OrgUnitUpper)}")" MinWidth="10px" FilterMode="FilterMode.Simple">
                         <Template Context="p">
                             <span title="@p.School.Faculty.Name">@p.School.Faculty.Code</span>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="School" Title="School" MinWidth="10px" FilterMode="FilterMode.Simple">
+                    <RadzenDataGridColumn TItem="Project" Property="School" Title="@($"{GetSetting(SettingType.OrgUnitLower)}")" MinWidth="10px" FilterMode="FilterMode.Simple">
                         <Template Context="p">
                              <span title="@p.School.Name">@p.School.Code</span>
                         </Template>

@@ -45,12 +45,12 @@
                         @item.ProjectStatus.ToNiceString()
                     </Template>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="Faculty" Title="Faculty" MinWidth="10px">
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="Faculty" Title="@($"{GetSetting(SettingType.OrgUnitUpper)}")" MinWidth="10px">
                     <Template Context="item">
                         @item.Faculty.Name
                     </Template>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="School" Title="School" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="School" Title="@($"{GetSetting(SettingType.OrgUnitLower)}")" MinWidth="10px">
                     <Template Context="item">
                         @item.School.Name
                     </Template>

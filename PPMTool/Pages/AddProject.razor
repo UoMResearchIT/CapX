@@ -60,12 +60,12 @@
                             <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Step="1" @bind-Value="projectModel.RTP" />
                         </div>
                         <div class="col-4">
-                            <RadzenLabel class="radzen-form-label" Text="Faculty" /><br />
+                            <RadzenLabel class="radzen-form-label" Text="@($"{GetSetting(SettingType.OrgUnitUpper)}")" /><br />
                             <RadzenDropDown class="radzen-dropdown"
                                             TValue="Faculty"
                                             Data="@faculties"
                                             Change="OnFacultyChosen"
-                                            Placeholder="Select a faculty"
+                                            Placeholder="@($"Select a {GetSetting(SettingType.OrgUnitUpper)}")"
                                             Value="@chosenFaculty">
                                 <Template Context="x">
                                     @x.GetSensibleObjectName()
@@ -73,12 +73,12 @@
                             </RadzenDropDown>
                         </div>
                         <div class="col-4">
-                            <RadzenLabel class="radzen-form-label" Text="School" /><br />
+                            <RadzenLabel class="radzen-form-label" Text="@($"{GetSetting(SettingType.OrgUnitLower)}")" /><br />
                             <RadzenDropDown class="radzen-dropdown"
                                             TValue="School"
                                             @bind-Value="projectModel.School"
                                             Data="@schools"
-                                            Placeholder="Select a school">
+                                            Placeholder="@($"Select a {GetSetting(SettingType.OrgUnitLower)}")">
                                 <Template Context="x">
                                     @x.GetSensibleObjectName()
                                 </Template>

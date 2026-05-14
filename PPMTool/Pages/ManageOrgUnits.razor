@@ -1,6 +1,7 @@
 ﻿@page "/manageorgunits"
 @inherits BasePage
 @using PPMTool.Data.Entities
+@using PPMTool.Data.Enums
 @using PPMTool.Pages.Components
 @using Radzen
 
@@ -12,7 +13,7 @@
             <h2>Manage Organisational Units</h2>
         </div>
         <div class="col py-2">
-            <RadzenButton Icon="add" Text="Add Faculty" Click="@(() => StartAddingFaculty())" Style="float: right;"/>
+            <RadzenButton Icon="add" Text="@($"Add {GetSetting(SettingType.OrgUnitUpper)}")" Click="@(() => StartAddingFaculty())" Style="float: right;"/>
         </div>
     </div>
 
@@ -86,7 +87,7 @@
                             }
 
                             <div class="accordion-orgsubunit" style="text-align: right; background-color: unset;">
-                                <RadzenButton Icon="add" Text="Add School" Click="@(() => StartAddingSchool(faculty))" />
+                                <RadzenButton Icon="add" Text="@($"Add {GetSetting(SettingType.OrgUnitLower)}")" Click="@(() => StartAddingSchool(faculty))" />
                             </div> 
                         </ChildContent>
                 </RadzenAccordionItem>
