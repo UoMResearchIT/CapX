@@ -11,7 +11,7 @@ using PPMTool.Data.Context;
 namespace PPMTool.Migrations.Sqlite.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    [Migration("20260514200943_InitialCreate")]
+    [Migration("20260515120206_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -695,7 +695,6 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SettingType")

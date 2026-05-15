@@ -133,7 +133,7 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     SettingType = table.Column<int>(type: "int", nullable: false),
                     SettingValue = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {

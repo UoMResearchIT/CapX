@@ -32,7 +32,7 @@ namespace PPMTool.Services
             var defaultSettings = allSettingTypes.Select(setting => new Setting
             {
                 SettingType = setting,
-                SettingValue = setting.GetDefaultSettingValue(),
+                SettingValue = setting.GetDefaultSettingValue() ?? string.Empty,
                 Description = setting.GetDescription()
             }).ToList();
             context.Settings.AddRange(defaultSettings);
@@ -64,7 +64,7 @@ namespace PPMTool.Services
                     context.Settings.Add(new Setting
                     {
                         SettingType = setting,
-                        SettingValue = setting.GetDefaultSettingValue(),
+                        SettingValue = setting.GetDefaultSettingValue() ?? string.Empty,
                         Description = setting.GetDescription()
                     });
                     await context.SaveChangesAsync();
@@ -102,7 +102,7 @@ namespace PPMTool.Services
         internal async void UpdateSettingValue(PPMToolContext context, Setting setting, bool commitChanges = true)
         {
             // Strip the whitespace
-            setting.SettingValue = setting.SettingValue.Trim();
+            setting.SettingValue = setting.SettingValue?.Trim() ?? string.Empty;
 
             // Set in the cache
             SettingStates[setting.SettingType] = setting.SettingValue;

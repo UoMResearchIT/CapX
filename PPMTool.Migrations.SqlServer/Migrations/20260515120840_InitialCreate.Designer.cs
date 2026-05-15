@@ -2,17 +2,17 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PPMTool.Data.Context;
 
 #nullable disable
 
-namespace PPMTool.Migrations.PostgreSql.Migrations
+namespace PPMTool.Migrations.SqlServer.Migrations
 {
     [DbContext(typeof(PPMToolContext))]
-    [Migration("20260514201732_InitialCreate")]
+    [Migration("20260515120840_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -21,26 +21,26 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "10.0.7")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("PPMTool.Data.Entities.Absence", b =>
                 {
                     b.Property<int>("AbsenceId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AbsenceId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AbsenceId"));
 
                     b.Property<DateTime?>("EndDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("PersonId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.HasKey("AbsenceId");
 
@@ -53,26 +53,26 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("ApiKeyId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ApiKeyId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ApiKeyId"));
 
                     b.Property<bool>("Active")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Key")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("OwnerUserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("ApiKeyId");
 
@@ -85,43 +85,43 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("CompetencyId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CompetencyId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CompetencyId"));
 
                     b.Property<int>("Category")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("CreatedDate")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Grade")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<string>("LegacyId")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Number")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("Objective")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Revision")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("RevisionDate")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("CompetencyId");
 
@@ -132,36 +132,36 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("CompetencyAssessmentId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CompetencyAssessmentId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CompetencyAssessmentId"));
 
                     b.Property<string>("CompetencyDescription")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("CompetencyId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("CompetencyObjective")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("CompetencyRevision")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("DateCreated")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Evidence")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PersonId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("CompetencyAssessmentId");
 
@@ -176,20 +176,20 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("FacultyId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("FacultyId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FacultyId"));
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("FacultyId");
 
@@ -200,26 +200,26 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("FeatureId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("FeatureId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FeatureId"));
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("Enabled")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<int>("FeatureType")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<bool>("MustAlwaysBeEnabled")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("FeatureId");
 
@@ -230,12 +230,12 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("FinancialReferenceId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("FinancialReferenceId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FinancialReferenceId"));
 
                     b.Property<int>("FinancialYear")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<float>("Grade41Costs")
                         .HasColumnType("real");
@@ -267,27 +267,27 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("FundingSourceId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("FundingSourceId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FundingSourceId"));
 
                     b.Property<string>("AccountCode")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("AmountAvailable")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("FundingSourceType")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<bool>("HasAccountCode")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<int>("ProjectId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("FundingSourceId");
 
@@ -300,23 +300,23 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("InnateCodeId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("InnateCodeId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InnateCodeId"));
 
                     b.Property<string>("ActivityCode")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ActivityName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsSensitive")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.HasKey("InnateCodeId");
 
@@ -327,19 +327,19 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("InnateCodeTaskId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("InnateCodeTaskId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InnateCodeTaskId"));
 
                     b.Property<int>("Duty")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("InnateCodeId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("TaskName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("InnateCodeTaskId");
 
@@ -352,32 +352,32 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("InvoiceId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("InvoiceId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InvoiceId"));
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("InvoiceReference")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("InvoiceUrl")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("KeyDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("ProjectId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<double>("Value")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.HasKey("InvoiceId");
 
@@ -390,37 +390,37 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("NoteId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("NoteId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NoteId"));
 
                     b.Property<int>("AuthorUserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("CompletedDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("DueDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("EditedDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("EditorUserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("HtmlContent")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsFinanceInfo")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<int>("ProjectId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("NoteId");
 
@@ -437,24 +437,24 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("OwnedSkillId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("OwnedSkillId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OwnedSkillId"));
 
                     b.Property<bool>("FavouriteSkill")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("LastUsed")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("OwnerPersonId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("Proficiency")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("SkillTagId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("OwnedSkillId");
 
@@ -469,28 +469,28 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("PaymentId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PaymentId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PaymentId"));
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("InvoiceId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("KeyDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("ProjectId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("SourceFundingSourceId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<double>("Value")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.HasKey("PaymentId");
 
@@ -507,32 +507,32 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("PersonId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PersonId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PersonId"));
 
                     b.Property<DateTime?>("EndDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<double>("FTE")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<int?>("LineManagerPersonId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ShortName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("TimesheetTemplateData")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("PersonId");
 
@@ -545,88 +545,88 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("ProjectId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ProjectId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProjectId"));
 
                     b.Property<double>("ActualCost")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("ActualIndirectCost")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("ActualLeadershipCosts")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("ActualWorkHours")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<string>("ActualsLastUpdated")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("Budget")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("BudgetedIndirects")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<int>("CostModel")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<double>("DayRate")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("InnateActivityInnateCodeId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PI")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("PlannedCost")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("PlannedIndirectCost")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("PlannedLeadershipCosts")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("PlannedWorkHours")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<int?>("ProjectManagerPersonId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("ProjectStatus")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("RTP")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("RequestDocLink")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("SchoolId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("ScrumProjectLink")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.HasKey("ProjectId");
 
@@ -643,51 +643,51 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("ResourceId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ResourceId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ResourceId"));
 
                     b.Property<double>("ActualCost")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("ActualIndirectCost")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("ActualWorkHours")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("AssignmentFTE")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("BilledFTE")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double?>("DayRate")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<int?>("FundedFromFundingSourceId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsProvisional")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<int>("PersonId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<double>("PlannedCost")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("PlannedIndirectCost")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("PlannedWorkHours")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<int>("SubTaskId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<bool>("UseProjectDayRate")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.HasKey("ResourceId");
 
@@ -704,23 +704,23 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("SchoolId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SchoolId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SchoolId"));
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("FacultyId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("SchoolId");
 
@@ -733,20 +733,19 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("SettingId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SettingId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SettingId"));
 
                     b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("SettingType")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("SettingValue")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("SettingId");
 
@@ -757,26 +756,26 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("SkillTagId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SkillTagId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SkillTagId"));
 
                     b.Property<string>("ControlledName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("HasValidWikiLink")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Rareness")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("RarenessCount")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("SkillTagId");
 
@@ -787,73 +786,73 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("SubTaskId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SubTaskId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SubTaskId"));
 
                     b.Property<double>("ActualCost")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("ActualIndirectCost")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("ActualWorkHours")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("Demand")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<int>("DurationBillableDays")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("DurationDays")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("HasFixedEndDate")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<bool>("HasFixedStart")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsLeadershipTask")
-                        .HasColumnType("boolean");
+                        .HasColumnType("bit");
 
                     b.Property<int>("Lag")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("OriginalDemand")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<int>("OwningProjectProjectId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<double>("PlannedCost")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("PlannedIndirectCost")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("PlannedWorkHours")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<int?>("PredecessorSubTaskId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("TaskType")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<double>("UnmetDemand")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.HasKey("SubTaskId");
 
@@ -868,30 +867,30 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("TimesheetId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TimesheetId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TimesheetId"));
 
                     b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("DateStatusChanged")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Info")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("OwnerId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int?>("StatusChangedByPersonId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("TimesheetId");
 
@@ -906,36 +905,36 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("TimesheetEntryId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TimesheetEntryId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TimesheetEntryId"));
 
                     b.Property<double>("FridayHours")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<int>("InnateCodeTaskId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<double>("MondayHours")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("SaturdayHours")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("SundayHours")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("ThursdayHours")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<int>("TimesheetId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<double>("TuesdayHours")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("WednesdayHours")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.HasKey("TimesheetEntryId");
 
@@ -950,30 +949,30 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("UserId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("UserId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
 
                     b.Property<string>("CASUserName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("EmailAddress")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastLoggedIn")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("PersonId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("RoleType")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("UserId");
 
@@ -986,45 +985,45 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 {
                     b.Property<int>("WorkloadModelChangeId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("WorkloadModelChangeId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("WorkloadModelChangeId"));
 
                     b.Property<double>("ArchitectureFTE")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("BusinessAsUsualFTE")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<DateTime>("ChangeDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("Grade")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<string>("Notes")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PersonId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<double>("PersonalDevelopmentFTE")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("ProjectAndServiceManagementFTE")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("ProjectManagementFTE")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("ProjectWorkFTE")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("ServiceManagementFTE")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.Property<double>("StaffManagementFTE")
-                        .HasColumnType("double precision");
+                        .HasColumnType("float");
 
                     b.HasKey("WorkloadModelChangeId");
 
@@ -1036,10 +1035,10 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
             modelBuilder.Entity("PersonProject", b =>
                 {
                     b.Property<int>("FollowedProjectsProjectId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("FollowersPersonId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("FollowedProjectsProjectId", "FollowersPersonId");
 
@@ -1051,10 +1050,10 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
             modelBuilder.Entity("SkillTagSubTask", b =>
                 {
                     b.Property<int>("SkillsRequiredSkillTagId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.Property<int>("TasksNeedingThisSkillSubTaskId")
-                        .HasColumnType("integer");
+                        .HasColumnType("int");
 
                     b.HasKey("SkillsRequiredSkillTagId", "TasksNeedingThisSkillSubTaskId");
 
