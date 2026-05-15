@@ -336,6 +336,15 @@ def main():
         migrate_resources(old, new)
         migrate_skill_tag_subtask(old, new)
 
+        fk_violations = new.execute("PRAGMA foreign_key_check").fetchall()
+        if fk_violations:
+            violation = fk_violations[0]
+            raise RuntimeError(
+                "Foreign key violations detected after migration, "
+                f"first violation: table={violation[0]}, rowid={violation[1]}, "
+                f"parent={violation[2]}, fk_index={violation[3]}"
+            )
+
         new.commit()
         print("✅ FULL migration completed successfully")
 
