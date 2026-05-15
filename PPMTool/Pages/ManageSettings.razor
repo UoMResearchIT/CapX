@@ -65,10 +65,12 @@
                                 <RadzenFileInput Title="Organisation Logo"
                                                  Placeholder="Upload your logo..."
                                                  Accept="image/png"
+                                                 MaxFileSize="@(1024 * 1024)"
                                                  @bind-Value=@logo
                                                  TValue="string"
                                                  Style="width: 100%"
-                                                 InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})" />
+                                                 InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})"
+                                                 Error="@(args => OnLogoUploadError(args))"/>
                             }
                             else
                             {

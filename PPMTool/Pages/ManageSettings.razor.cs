@@ -78,5 +78,16 @@ namespace PPMTool.Pages
 
             return base.SaveRow(entity);
         }
+
+        /// <summary>
+        /// Handles an error that occurs during the logo upload process.
+        /// </summary>
+        /// <remarks>Call this method to log or respond to errors encountered when uploading a logo. The
+        /// error details are provided in the event arguments.</remarks>
+        /// <param name="args">The event data containing details about the upload error. Cannot be null.</param>
+        private void OnLogoUploadError(UploadErrorEventArgs args)
+        {
+            LogError($"Logo failed to upload! {args.Message}");
+        }
     }
 }
