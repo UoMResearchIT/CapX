@@ -566,8 +566,9 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <param name="project"></param>
         /// <param name="finrefs"></param>
+        /// <param name="indirectsPercentage"></param>
         /// <returns>Assignment chunk representation of the resources on the task</returns>
-        public IEnumerable<AssignmentChunk> UpdateSubTaskCosts(Project project, IEnumerable<FinancialReference> finrefs)
+        public IEnumerable<AssignmentChunk> UpdateSubTaskCosts(Project project, IEnumerable<FinancialReference> finrefs, float indirectsPercentage)
         {
             // Reset the totals for this sub task
             ActualCost = 0;
@@ -579,7 +580,7 @@ namespace PPMTool.Data.Entities
             // For each resource assigned, update the costs by generating a chunk from the resource
             foreach (var res in AssignedResources)
             {
-                chunks.AddRange(res.UpdateResourceCosts(project, this, finrefs));
+                chunks.AddRange(res.UpdateResourceCosts(project, this, finrefs, indirectsPercentage));
 
                 // Sum up the result post-update
                 ActualIndirectCost += res.ActualIndirectCost;

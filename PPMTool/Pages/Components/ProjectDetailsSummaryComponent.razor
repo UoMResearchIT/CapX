@@ -5,6 +5,7 @@
 @using System.ComponentModel.DataAnnotations
 @using PPMTool.Services
 @inject FeatureService FeatureService
+@inject SettingsService SettingsService
 
 <h2>Project Summary</h2>
 @if (FinanceSummaryItem == null)
@@ -21,7 +22,7 @@ else
                 <tr>
                     <th>Dates</th>
                     <th>PI</th>
-                    <th>School (Faculty)</th>
+                    <th>@($"{SettingsService.GetSetting(SettingType.OrgUnitLower)} ({SettingsService.GetSetting(SettingType.OrgUnitUpper)})")</th>
                     <th>PM</th>
                     @if (FinanceEnabled)
                     {

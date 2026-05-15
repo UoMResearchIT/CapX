@@ -149,7 +149,7 @@ namespace PPMTool.Pages
                 Debug.WriteLine($"** Selected {projectName}. Navigating to details page...");
 
                 // Use the title of the task to find its projectID then navigate to the details page
-                var project = ProjectService.GetAll(Context).FirstOrDefault(x => x.GetFullName() == projectName);
+                var project = ProjectService.GetAll(Context).FirstOrDefault(x => ProjectService.GetFullName(x) == projectName);
                 if (project != null)
                 {
                     Navigation.NavigateTo($"projects/projectdetails/{project.ProjectId}");
@@ -399,7 +399,7 @@ namespace PPMTool.Pages
                             foreach (var group in groupedAssignments)
                             {
                                 // Compute chart items from the grouped assignments
-                                var seriesName = (group.Key as Project).GetFullName();
+                                var seriesName = ProjectService.GetFullName(group.Key as Project);
                                 chartSourceTemp.AddRange(
                                     GetProjectModeChartItemsFromAssignments(
                                         seriesName,

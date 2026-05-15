@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -225,7 +226,7 @@ namespace PPMTool.Pages
             ShowNotification(new CapXNotificationMessage
             {
                 Summary = "Duplicate Detected!",
-                Detail = $"The {(unit is School ? "school" : "faculty")} name and code must be unique!"
+                Detail = $"The {GetSetting((unit is School ? SettingType.OrgUnitLower : SettingType.OrgUnitUpper))} name and code must be unique!"
             });
         }
     }

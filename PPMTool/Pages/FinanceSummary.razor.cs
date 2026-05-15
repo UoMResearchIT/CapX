@@ -75,11 +75,13 @@ namespace PPMTool.Pages
                     );
 
                     var pm = ProjectService.GetProjectManager(Context, project.ProjectId);
+                    var school = ProjectService.GetSchoolAndFaculty(Context, project.ProjectId);
                     var actuals = SubTaskService.GetActuals(Context, project.ProjectId);
 
                     items.Add(
                         new FinanceSummaryItem(
                             project,
+                            school,
                             pm,
                             actuals,
                             transactions

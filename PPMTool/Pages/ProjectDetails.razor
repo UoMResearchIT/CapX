@@ -33,7 +33,7 @@
                     else
                     {
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                            <h1>@project.GetFullName()</h1>
+                            <h1>@ProjectService.GetFullName(project)</h1>
                             <ProjectBadgeComponent ProjectStatus="@project.ProjectStatus" />
                         </RadzenStack>
                     }
@@ -402,9 +402,9 @@
                                 <span class="badge badge-primary">
                                     Anja Le Blanc
                                 </span>.
-                                They will receive an email notification when the note is saved or updated. Use the # symbol followed by the RTP reference to link to a project e.g. #rtp-24 or #RTP-24 to link to
+                                @((MarkupString)($"They will receive an email notification when the note is saved or updated. Use the # symbol followed by the {abbrev} reference to link to a project e.g. #{abbrev.ToLower()}-24 or #{abbrev}-24 to link to"))
                                 <span class="badge badge-success">
-                                    RTP-24 Project Name
+                                    @((MarkupString)($"{abbrev}-24 Project Name"))
                                 </span>.
                                 Failed linking, if either the person or project does not exist, will leave the text unchanged.
                                 <b>Currently there must be a space before and after the reference for the link to be detected.</b>

@@ -30,6 +30,7 @@ namespace PPMTool.Data.Context
         public DbSet<School> Schools { get; set; }
         public DbSet<Faculty> Faculties { get; set; }
         public DbSet<Feature> Features { get; set; }
+        public DbSet<Setting> Settings { get; set; }
 
         /// <summary>
         /// Inject options.

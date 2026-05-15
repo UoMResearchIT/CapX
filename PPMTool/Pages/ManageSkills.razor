@@ -17,6 +17,11 @@
                 <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled="@(entityToInsert != null || Loading || !EditAuthorised)" />
             </div>
         </div>
+        <div class="row">
+            <div class="col py-2">
+                <RadzenText Text="Manage what skill tags are available in the system to associate with people and tasks." />
+            </div>
+        </div>
         @if (ErrorMessage != null)
         {
             <StatusMessageComponent Message="ErrorMessage" />

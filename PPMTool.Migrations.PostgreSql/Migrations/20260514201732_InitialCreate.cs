@@ -1,9 +1,10 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace PPMTool.Migrations.Sqlite.Migrations
+namespace PPMTool.Migrations.PostgreSql.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -15,18 +16,18 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "Competencies",
                 columns: table => new
                 {
-                    CompetencyId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Description = table.Column<string>(type: "TEXT", nullable: false),
-                    Objective = table.Column<string>(type: "TEXT", nullable: false),
-                    Grade = table.Column<int>(type: "INTEGER", nullable: false),
-                    Category = table.Column<int>(type: "INTEGER", nullable: false),
-                    Revision = table.Column<int>(type: "INTEGER", nullable: false),
-                    CreatedDate = table.Column<string>(type: "TEXT", nullable: false),
-                    RevisionDate = table.Column<string>(type: "TEXT", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    LegacyId = table.Column<string>(type: "TEXT", nullable: true),
-                    Number = table.Column<int>(type: "INTEGER", nullable: false)
+                    CompetencyId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    Objective = table.Column<string>(type: "text", nullable: false),
+                    Grade = table.Column<int>(type: "integer", nullable: false),
+                    Category = table.Column<int>(type: "integer", nullable: false),
+                    Revision = table.Column<int>(type: "integer", nullable: false),
+                    CreatedDate = table.Column<string>(type: "text", nullable: false),
+                    RevisionDate = table.Column<string>(type: "text", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    LegacyId = table.Column<string>(type: "text", nullable: true),
+                    Number = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -37,11 +38,11 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "Faculties",
                 columns: table => new
                 {
-                    FacultyId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Code = table.Column<string>(type: "TEXT", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
+                    FacultyId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Code = table.Column<string>(type: "text", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -52,13 +53,13 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "Features",
                 columns: table => new
                 {
-                    FeatureId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    FeatureType = table.Column<int>(type: "INTEGER", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: false),
-                    Enabled = table.Column<bool>(type: "INTEGER", nullable: false),
-                    MustAlwaysBeEnabled = table.Column<bool>(type: "INTEGER", nullable: false)
+                    FeatureId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    FeatureType = table.Column<int>(type: "integer", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    Enabled = table.Column<bool>(type: "boolean", nullable: false),
+                    MustAlwaysBeEnabled = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -69,16 +70,16 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "FinancialReferences",
                 columns: table => new
                 {
-                    FinancialReferenceId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    FinancialYear = table.Column<int>(type: "INTEGER", nullable: false),
-                    Grade41Costs = table.Column<float>(type: "REAL", nullable: false),
-                    Grade51Costs = table.Column<float>(type: "REAL", nullable: false),
-                    Grade55Costs = table.Column<float>(type: "REAL", nullable: false),
-                    Grade65Costs = table.Column<float>(type: "REAL", nullable: false),
-                    Grade71Costs = table.Column<float>(type: "REAL", nullable: false),
-                    Grade75Costs = table.Column<float>(type: "REAL", nullable: false),
-                    RecoveryTarget = table.Column<float>(type: "REAL", nullable: false)
+                    FinancialReferenceId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    FinancialYear = table.Column<int>(type: "integer", nullable: false),
+                    Grade41Costs = table.Column<float>(type: "real", nullable: false),
+                    Grade51Costs = table.Column<float>(type: "real", nullable: false),
+                    Grade55Costs = table.Column<float>(type: "real", nullable: false),
+                    Grade65Costs = table.Column<float>(type: "real", nullable: false),
+                    Grade71Costs = table.Column<float>(type: "real", nullable: false),
+                    Grade75Costs = table.Column<float>(type: "real", nullable: false),
+                    RecoveryTarget = table.Column<float>(type: "real", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -89,12 +90,12 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "InnateCodes",
                 columns: table => new
                 {
-                    InnateCodeId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ActivityCode = table.Column<string>(type: "TEXT", nullable: false),
-                    ActivityName = table.Column<string>(type: "TEXT", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    IsSensitive = table.Column<bool>(type: "INTEGER", nullable: false)
+                    InnateCodeId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ActivityCode = table.Column<string>(type: "text", nullable: false),
+                    ActivityName = table.Column<string>(type: "text", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    IsSensitive = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -105,15 +106,15 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "People",
                 columns: table => new
                 {
-                    PersonId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    ShortName = table.Column<string>(type: "TEXT", nullable: false),
-                    StartDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    EndDate = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    FTE = table.Column<double>(type: "REAL", nullable: false),
-                    LineManagerPersonId = table.Column<int>(type: "INTEGER", nullable: true),
-                    TimesheetTemplateData = table.Column<string>(type: "TEXT", nullable: true)
+                    PersonId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    ShortName = table.Column<string>(type: "text", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    FTE = table.Column<double>(type: "double precision", nullable: false),
+                    LineManagerPersonId = table.Column<int>(type: "integer", nullable: true),
+                    TimesheetTemplateData = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -126,16 +127,31 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Settings",
+                columns: table => new
+                {
+                    SettingId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SettingType = table.Column<int>(type: "integer", nullable: false),
+                    SettingValue = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Settings", x => x.SettingId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "SkillTags",
                 columns: table => new
                 {
-                    SkillTagId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    ControlledName = table.Column<string>(type: "TEXT", nullable: false),
-                    HasValidWikiLink = table.Column<int>(type: "INTEGER", nullable: false),
-                    Rareness = table.Column<int>(type: "INTEGER", nullable: false),
-                    RarenessCount = table.Column<int>(type: "INTEGER", nullable: false)
+                    SkillTagId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    ControlledName = table.Column<string>(type: "text", nullable: false),
+                    HasValidWikiLink = table.Column<int>(type: "integer", nullable: false),
+                    Rareness = table.Column<int>(type: "integer", nullable: false),
+                    RarenessCount = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -146,12 +162,12 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "Schools",
                 columns: table => new
                 {
-                    SchoolId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    FacultyId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Code = table.Column<string>(type: "TEXT", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
+                    SchoolId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    FacultyId = table.Column<int>(type: "integer", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Code = table.Column<string>(type: "text", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -168,11 +184,11 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "InnateCodeTasks",
                 columns: table => new
                 {
-                    InnateCodeTaskId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    TaskName = table.Column<string>(type: "TEXT", nullable: false),
-                    Duty = table.Column<int>(type: "INTEGER", nullable: false),
-                    InnateCodeId = table.Column<int>(type: "INTEGER", nullable: false)
+                    InnateCodeTaskId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TaskName = table.Column<string>(type: "text", nullable: false),
+                    Duty = table.Column<int>(type: "integer", nullable: false),
+                    InnateCodeId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -189,11 +205,11 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "Absence",
                 columns: table => new
                 {
-                    AbsenceId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    StartDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    EndDate = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    PersonId = table.Column<int>(type: "INTEGER", nullable: false)
+                    AbsenceId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    PersonId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -210,16 +226,16 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "CompetencyAssessments",
                 columns: table => new
                 {
-                    CompetencyAssessmentId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Evidence = table.Column<string>(type: "TEXT", nullable: true),
-                    DateCreated = table.Column<string>(type: "TEXT", nullable: false),
-                    Status = table.Column<int>(type: "INTEGER", nullable: false),
-                    CompetencyRevision = table.Column<int>(type: "INTEGER", nullable: false),
-                    CompetencyDescription = table.Column<string>(type: "TEXT", nullable: false),
-                    CompetencyObjective = table.Column<string>(type: "TEXT", nullable: false),
-                    CompetencyId = table.Column<int>(type: "INTEGER", nullable: false),
-                    PersonId = table.Column<int>(type: "INTEGER", nullable: false)
+                    CompetencyAssessmentId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Evidence = table.Column<string>(type: "text", nullable: true),
+                    DateCreated = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    CompetencyRevision = table.Column<int>(type: "integer", nullable: false),
+                    CompetencyDescription = table.Column<string>(type: "text", nullable: false),
+                    CompetencyObjective = table.Column<string>(type: "text", nullable: false),
+                    CompetencyId = table.Column<int>(type: "integer", nullable: false),
+                    PersonId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -242,15 +258,15 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "Timesheets",
                 columns: table => new
                 {
-                    TimesheetId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    OwnerId = table.Column<int>(type: "INTEGER", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    StartDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Info = table.Column<string>(type: "TEXT", nullable: true),
-                    Status = table.Column<int>(type: "INTEGER", nullable: false),
-                    DateStatusChanged = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    StatusChangedByPersonId = table.Column<int>(type: "INTEGER", nullable: true)
+                    TimesheetId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    OwnerId = table.Column<int>(type: "integer", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Info = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    DateStatusChanged = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    StatusChangedByPersonId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -272,14 +288,14 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    UserId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    RoleType = table.Column<int>(type: "INTEGER", nullable: false),
-                    CASUserName = table.Column<string>(type: "TEXT", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    PersonId = table.Column<int>(type: "INTEGER", nullable: true),
-                    LastLoggedIn = table.Column<string>(type: "TEXT", nullable: true),
-                    EmailAddress = table.Column<string>(type: "TEXT", nullable: false)
+                    UserId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RoleType = table.Column<int>(type: "integer", nullable: false),
+                    CASUserName = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    PersonId = table.Column<int>(type: "integer", nullable: true),
+                    LastLoggedIn = table.Column<string>(type: "text", nullable: true),
+                    EmailAddress = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -295,20 +311,20 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "WorkloadModelChanges",
                 columns: table => new
                 {
-                    WorkloadModelChangeId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Grade = table.Column<int>(type: "INTEGER", nullable: false),
-                    ChangeDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ProjectWorkFTE = table.Column<double>(type: "REAL", nullable: false),
-                    BusinessAsUsualFTE = table.Column<double>(type: "REAL", nullable: false),
-                    PersonalDevelopmentFTE = table.Column<double>(type: "REAL", nullable: false),
-                    StaffManagementFTE = table.Column<double>(type: "REAL", nullable: false),
-                    ProjectAndServiceManagementFTE = table.Column<double>(type: "REAL", nullable: false),
-                    ArchitectureFTE = table.Column<double>(type: "REAL", nullable: false),
-                    ServiceManagementFTE = table.Column<double>(type: "REAL", nullable: false),
-                    ProjectManagementFTE = table.Column<double>(type: "REAL", nullable: false),
-                    Notes = table.Column<string>(type: "TEXT", nullable: true),
-                    PersonId = table.Column<int>(type: "INTEGER", nullable: false)
+                    WorkloadModelChangeId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Grade = table.Column<int>(type: "integer", nullable: false),
+                    ChangeDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ProjectWorkFTE = table.Column<double>(type: "double precision", nullable: false),
+                    BusinessAsUsualFTE = table.Column<double>(type: "double precision", nullable: false),
+                    PersonalDevelopmentFTE = table.Column<double>(type: "double precision", nullable: false),
+                    StaffManagementFTE = table.Column<double>(type: "double precision", nullable: false),
+                    ProjectAndServiceManagementFTE = table.Column<double>(type: "double precision", nullable: false),
+                    ArchitectureFTE = table.Column<double>(type: "double precision", nullable: false),
+                    ServiceManagementFTE = table.Column<double>(type: "double precision", nullable: false),
+                    ProjectManagementFTE = table.Column<double>(type: "double precision", nullable: false),
+                    Notes = table.Column<string>(type: "text", nullable: true),
+                    PersonId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -325,13 +341,13 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "OwnedSkills",
                 columns: table => new
                 {
-                    OwnedSkillId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    OwnerPersonId = table.Column<int>(type: "INTEGER", nullable: false),
-                    SkillTagId = table.Column<int>(type: "INTEGER", nullable: false),
-                    LastUsed = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Proficiency = table.Column<int>(type: "INTEGER", nullable: false),
-                    FavouriteSkill = table.Column<bool>(type: "INTEGER", nullable: false)
+                    OwnedSkillId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    OwnerPersonId = table.Column<int>(type: "integer", nullable: false),
+                    SkillTagId = table.Column<int>(type: "integer", nullable: false),
+                    LastUsed = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Proficiency = table.Column<int>(type: "integer", nullable: false),
+                    FavouriteSkill = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -354,33 +370,33 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "Projects",
                 columns: table => new
                 {
-                    ProjectId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    RTP = table.Column<int>(type: "INTEGER", nullable: false),
-                    PI = table.Column<string>(type: "TEXT", nullable: false),
-                    SchoolId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ProjectManagerPersonId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Budget = table.Column<double>(type: "REAL", nullable: false),
-                    DayRate = table.Column<double>(type: "REAL", nullable: false),
-                    CostModel = table.Column<int>(type: "INTEGER", nullable: false),
-                    ProjectStatus = table.Column<int>(type: "INTEGER", nullable: false),
-                    InnateActivityInnateCodeId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Description = table.Column<string>(type: "TEXT", nullable: false),
-                    ScrumProjectLink = table.Column<string>(type: "TEXT", nullable: true),
-                    RequestDocLink = table.Column<string>(type: "TEXT", nullable: false),
-                    PlannedLeadershipCosts = table.Column<double>(type: "REAL", nullable: false),
-                    ActualLeadershipCosts = table.Column<double>(type: "REAL", nullable: false),
-                    BudgetedIndirects = table.Column<double>(type: "REAL", nullable: false),
-                    ActualsLastUpdated = table.Column<string>(type: "TEXT", nullable: true),
-                    PlannedWorkHours = table.Column<double>(type: "REAL", nullable: false),
-                    ActualWorkHours = table.Column<double>(type: "REAL", nullable: false),
-                    PlannedCost = table.Column<double>(type: "REAL", nullable: false),
-                    ActualCost = table.Column<double>(type: "REAL", nullable: false),
-                    PlannedIndirectCost = table.Column<double>(type: "REAL", nullable: false),
-                    ActualIndirectCost = table.Column<double>(type: "REAL", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    StartDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    EndDate = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    ProjectId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RTP = table.Column<int>(type: "integer", nullable: false),
+                    PI = table.Column<string>(type: "text", nullable: false),
+                    SchoolId = table.Column<int>(type: "integer", nullable: false),
+                    ProjectManagerPersonId = table.Column<int>(type: "integer", nullable: true),
+                    Budget = table.Column<double>(type: "double precision", nullable: false),
+                    DayRate = table.Column<double>(type: "double precision", nullable: false),
+                    CostModel = table.Column<int>(type: "integer", nullable: false),
+                    ProjectStatus = table.Column<int>(type: "integer", nullable: false),
+                    InnateActivityInnateCodeId = table.Column<int>(type: "integer", nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    ScrumProjectLink = table.Column<string>(type: "text", nullable: true),
+                    RequestDocLink = table.Column<string>(type: "text", nullable: false),
+                    PlannedLeadershipCosts = table.Column<double>(type: "double precision", nullable: false),
+                    ActualLeadershipCosts = table.Column<double>(type: "double precision", nullable: false),
+                    BudgetedIndirects = table.Column<double>(type: "double precision", nullable: false),
+                    ActualsLastUpdated = table.Column<string>(type: "text", nullable: true),
+                    PlannedWorkHours = table.Column<double>(type: "double precision", nullable: false),
+                    ActualWorkHours = table.Column<double>(type: "double precision", nullable: false),
+                    PlannedCost = table.Column<double>(type: "double precision", nullable: false),
+                    ActualCost = table.Column<double>(type: "double precision", nullable: false),
+                    PlannedIndirectCost = table.Column<double>(type: "double precision", nullable: false),
+                    ActualIndirectCost = table.Column<double>(type: "double precision", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -407,17 +423,17 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "TimesheetEntries",
                 columns: table => new
                 {
-                    TimesheetEntryId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    TimesheetId = table.Column<int>(type: "INTEGER", nullable: false),
-                    InnateCodeTaskId = table.Column<int>(type: "INTEGER", nullable: false),
-                    MondayHours = table.Column<double>(type: "REAL", nullable: false),
-                    TuesdayHours = table.Column<double>(type: "REAL", nullable: false),
-                    WednesdayHours = table.Column<double>(type: "REAL", nullable: false),
-                    ThursdayHours = table.Column<double>(type: "REAL", nullable: false),
-                    FridayHours = table.Column<double>(type: "REAL", nullable: false),
-                    SaturdayHours = table.Column<double>(type: "REAL", nullable: false),
-                    SundayHours = table.Column<double>(type: "REAL", nullable: false)
+                    TimesheetEntryId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TimesheetId = table.Column<int>(type: "integer", nullable: false),
+                    InnateCodeTaskId = table.Column<int>(type: "integer", nullable: false),
+                    MondayHours = table.Column<double>(type: "double precision", nullable: false),
+                    TuesdayHours = table.Column<double>(type: "double precision", nullable: false),
+                    WednesdayHours = table.Column<double>(type: "double precision", nullable: false),
+                    ThursdayHours = table.Column<double>(type: "double precision", nullable: false),
+                    FridayHours = table.Column<double>(type: "double precision", nullable: false),
+                    SaturdayHours = table.Column<double>(type: "double precision", nullable: false),
+                    SundayHours = table.Column<double>(type: "double precision", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -440,13 +456,13 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "ApiKeys",
                 columns: table => new
                 {
-                    ApiKeyId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    OwnerUserId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Key = table.Column<string>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: false),
-                    Active = table.Column<bool>(type: "INTEGER", nullable: false),
-                    ExpiresAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    ApiKeyId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    OwnerUserId = table.Column<int>(type: "integer", nullable: false),
+                    Key = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    Active = table.Column<bool>(type: "boolean", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -463,14 +479,14 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "FundingSources",
                 columns: table => new
                 {
-                    FundingSourceId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    FundingSourceType = table.Column<int>(type: "INTEGER", nullable: false),
-                    HasAccountCode = table.Column<bool>(type: "INTEGER", nullable: false),
-                    AccountCode = table.Column<string>(type: "TEXT", nullable: true),
-                    Description = table.Column<string>(type: "TEXT", nullable: true),
-                    AmountAvailable = table.Column<double>(type: "REAL", nullable: false),
-                    ProjectId = table.Column<int>(type: "INTEGER", nullable: false)
+                    FundingSourceId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    FundingSourceType = table.Column<int>(type: "integer", nullable: false),
+                    HasAccountCode = table.Column<bool>(type: "boolean", nullable: false),
+                    AccountCode = table.Column<string>(type: "text", nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    AmountAvailable = table.Column<double>(type: "double precision", nullable: false),
+                    ProjectId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -487,15 +503,15 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "Invoices",
                 columns: table => new
                 {
-                    InvoiceId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    InvoiceReference = table.Column<string>(type: "TEXT", nullable: true),
-                    Status = table.Column<int>(type: "INTEGER", nullable: false),
-                    InvoiceUrl = table.Column<string>(type: "TEXT", nullable: false),
-                    ProjectId = table.Column<int>(type: "INTEGER", nullable: false),
-                    KeyDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Value = table.Column<double>(type: "REAL", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: false)
+                    InvoiceId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    InvoiceReference = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    InvoiceUrl = table.Column<string>(type: "text", nullable: false),
+                    ProjectId = table.Column<int>(type: "integer", nullable: false),
+                    KeyDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Value = table.Column<double>(type: "double precision", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -512,17 +528,17 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "Notes",
                 columns: table => new
                 {
-                    NoteId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    HtmlContent = table.Column<string>(type: "TEXT", nullable: false),
-                    AuthorUserId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ProjectId = table.Column<int>(type: "INTEGER", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    EditedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    EditorUserId = table.Column<int>(type: "INTEGER", nullable: true),
-                    IsFinanceInfo = table.Column<bool>(type: "INTEGER", nullable: false),
-                    DueDate = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    CompletedDate = table.Column<DateTime>(type: "TEXT", nullable: true)
+                    NoteId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    HtmlContent = table.Column<string>(type: "text", nullable: false),
+                    AuthorUserId = table.Column<int>(type: "integer", nullable: false),
+                    ProjectId = table.Column<int>(type: "integer", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EditedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EditorUserId = table.Column<int>(type: "integer", nullable: true),
+                    IsFinanceInfo = table.Column<bool>(type: "boolean", nullable: false),
+                    DueDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CompletedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -550,8 +566,8 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "PersonProject",
                 columns: table => new
                 {
-                    FollowedProjectsProjectId = table.Column<int>(type: "INTEGER", nullable: false),
-                    FollowersPersonId = table.Column<int>(type: "INTEGER", nullable: false)
+                    FollowedProjectsProjectId = table.Column<int>(type: "integer", nullable: false),
+                    FollowersPersonId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -574,29 +590,29 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "SubTasks",
                 columns: table => new
                 {
-                    SubTaskId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    TaskType = table.Column<int>(type: "INTEGER", nullable: false),
-                    PredecessorSubTaskId = table.Column<int>(type: "INTEGER", nullable: true),
-                    HasFixedStart = table.Column<bool>(type: "INTEGER", nullable: false),
-                    HasFixedEndDate = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Demand = table.Column<double>(type: "REAL", nullable: false),
-                    OriginalDemand = table.Column<double>(type: "REAL", nullable: false),
-                    UnmetDemand = table.Column<double>(type: "REAL", nullable: false),
-                    Lag = table.Column<int>(type: "INTEGER", nullable: false),
-                    OwningProjectProjectId = table.Column<int>(type: "INTEGER", nullable: false),
-                    IsLeadershipTask = table.Column<bool>(type: "INTEGER", nullable: false),
-                    PlannedWorkHours = table.Column<double>(type: "REAL", nullable: false),
-                    ActualWorkHours = table.Column<double>(type: "REAL", nullable: false),
-                    PlannedCost = table.Column<double>(type: "REAL", nullable: false),
-                    ActualCost = table.Column<double>(type: "REAL", nullable: false),
-                    PlannedIndirectCost = table.Column<double>(type: "REAL", nullable: false),
-                    ActualIndirectCost = table.Column<double>(type: "REAL", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    StartDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    EndDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    DurationDays = table.Column<int>(type: "INTEGER", nullable: false),
-                    DurationBillableDays = table.Column<int>(type: "INTEGER", nullable: false)
+                    SubTaskId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TaskType = table.Column<int>(type: "integer", nullable: false),
+                    PredecessorSubTaskId = table.Column<int>(type: "integer", nullable: true),
+                    HasFixedStart = table.Column<bool>(type: "boolean", nullable: false),
+                    HasFixedEndDate = table.Column<bool>(type: "boolean", nullable: false),
+                    Demand = table.Column<double>(type: "double precision", nullable: false),
+                    OriginalDemand = table.Column<double>(type: "double precision", nullable: false),
+                    UnmetDemand = table.Column<double>(type: "double precision", nullable: false),
+                    Lag = table.Column<int>(type: "integer", nullable: false),
+                    OwningProjectProjectId = table.Column<int>(type: "integer", nullable: false),
+                    IsLeadershipTask = table.Column<bool>(type: "boolean", nullable: false),
+                    PlannedWorkHours = table.Column<double>(type: "double precision", nullable: false),
+                    ActualWorkHours = table.Column<double>(type: "double precision", nullable: false),
+                    PlannedCost = table.Column<double>(type: "double precision", nullable: false),
+                    ActualCost = table.Column<double>(type: "double precision", nullable: false),
+                    PlannedIndirectCost = table.Column<double>(type: "double precision", nullable: false),
+                    ActualIndirectCost = table.Column<double>(type: "double precision", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DurationDays = table.Column<int>(type: "integer", nullable: false),
+                    DurationBillableDays = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -618,14 +634,14 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "Payments",
                 columns: table => new
                 {
-                    PaymentId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    InvoiceId = table.Column<int>(type: "INTEGER", nullable: true),
-                    SourceFundingSourceId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ProjectId = table.Column<int>(type: "INTEGER", nullable: false),
-                    KeyDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Value = table.Column<double>(type: "REAL", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: false)
+                    PaymentId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    InvoiceId = table.Column<int>(type: "integer", nullable: true),
+                    SourceFundingSourceId = table.Column<int>(type: "integer", nullable: false),
+                    ProjectId = table.Column<int>(type: "integer", nullable: false),
+                    KeyDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Value = table.Column<double>(type: "double precision", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -653,22 +669,22 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "Resources",
                 columns: table => new
                 {
-                    ResourceId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    PersonId = table.Column<int>(type: "INTEGER", nullable: false),
-                    DayRate = table.Column<double>(type: "REAL", nullable: true),
-                    AssignmentFTE = table.Column<double>(type: "REAL", nullable: false),
-                    BilledFTE = table.Column<double>(type: "REAL", nullable: false),
-                    IsProvisional = table.Column<bool>(type: "INTEGER", nullable: false),
-                    UseProjectDayRate = table.Column<bool>(type: "INTEGER", nullable: false),
-                    FundedFromFundingSourceId = table.Column<int>(type: "INTEGER", nullable: true),
-                    SubTaskId = table.Column<int>(type: "INTEGER", nullable: false),
-                    PlannedWorkHours = table.Column<double>(type: "REAL", nullable: false),
-                    ActualWorkHours = table.Column<double>(type: "REAL", nullable: false),
-                    PlannedCost = table.Column<double>(type: "REAL", nullable: false),
-                    ActualCost = table.Column<double>(type: "REAL", nullable: false),
-                    PlannedIndirectCost = table.Column<double>(type: "REAL", nullable: false),
-                    ActualIndirectCost = table.Column<double>(type: "REAL", nullable: false)
+                    ResourceId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PersonId = table.Column<int>(type: "integer", nullable: false),
+                    DayRate = table.Column<double>(type: "double precision", nullable: true),
+                    AssignmentFTE = table.Column<double>(type: "double precision", nullable: false),
+                    BilledFTE = table.Column<double>(type: "double precision", nullable: false),
+                    IsProvisional = table.Column<bool>(type: "boolean", nullable: false),
+                    UseProjectDayRate = table.Column<bool>(type: "boolean", nullable: false),
+                    FundedFromFundingSourceId = table.Column<int>(type: "integer", nullable: true),
+                    SubTaskId = table.Column<int>(type: "integer", nullable: false),
+                    PlannedWorkHours = table.Column<double>(type: "double precision", nullable: false),
+                    ActualWorkHours = table.Column<double>(type: "double precision", nullable: false),
+                    PlannedCost = table.Column<double>(type: "double precision", nullable: false),
+                    ActualCost = table.Column<double>(type: "double precision", nullable: false),
+                    PlannedIndirectCost = table.Column<double>(type: "double precision", nullable: false),
+                    ActualIndirectCost = table.Column<double>(type: "double precision", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -696,8 +712,8 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "SkillTagSubTask",
                 columns: table => new
                 {
-                    SkillsRequiredSkillTagId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TasksNeedingThisSkillSubTaskId = table.Column<int>(type: "INTEGER", nullable: false)
+                    SkillsRequiredSkillTagId = table.Column<int>(type: "integer", nullable: false),
+                    TasksNeedingThisSkillSubTaskId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -914,6 +930,9 @@ namespace PPMTool.Migrations.Sqlite.Migrations
 
             migrationBuilder.DropTable(
                 name: "Resources");
+
+            migrationBuilder.DropTable(
+                name: "Settings");
 
             migrationBuilder.DropTable(
                 name: "SkillTagSubTask");

@@ -28,6 +28,26 @@ namespace PPMTool.Data.Enums
         }
 
         /// <summary>
+        /// Extension method to get the default setting value attribute of a setting type enum value.
+        /// If it doesn't have the attribute, returns the name of the enum value.
+        /// </summary>
+        /// <param name="settingType"></param>
+        /// <returns></returns>
+        public static string GetDefaultSettingValue(this SettingType settingType)
+        {
+            MemberInfo[] memberInfo = settingType.GetType().GetMember(settingType.ToString());
+            if ((memberInfo != null && memberInfo.Length > 0))
+            {
+                var _Attribs = memberInfo[0].GetCustomAttributes(typeof(DefaultSettingValueAttribute), false);
+                if ((_Attribs != null && _Attribs.Count() > 0))
+                {
+                    return ((DefaultSettingValueAttribute)_Attribs.ElementAt(0)).Value;
+                }
+            }
+            return settingType.ToString();
+        }
+
+        /// <summary>
         /// Whether a cost model is one which carries indirects
         /// </summary>
         /// <param name="model"></param>

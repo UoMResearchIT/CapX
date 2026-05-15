@@ -1,5 +1,7 @@
-﻿@using PPMTool.Data.Context
+﻿@inject SettingsService SettingsService
+@using PPMTool.Data.Context
 @using PPMTool.Data.Entities
+@using PPMTool.Data.Enums
 @using PPMTool.Services
 @typeparam TOrg where TOrg : BaseOrgUnit
 
@@ -53,7 +55,7 @@
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal">
                     @if (OrgUnit is Faculty && (OrgUnit as Faculty).Schools.Where(x => x.IsActive).Count() == 0 && OrgUnit.IsActive)
                     {
-                        <StatusMessageComponent Message="@(new Data.StatusMessage("This faculty has no active schools! It must have at least one active school!", Data.StatusMessage.MessageType.Error))" />
+                        <StatusMessageComponent Message="@(new Data.StatusMessage($"This {SettingsService.GetSetting(SettingType.OrgUnitUpper)} has no active {SettingsService.GetSetting(SettingType.OrgUnitLower)}! It must have at least one active {SettingsService.GetSetting(SettingType.OrgUnitLower)}!", Data.StatusMessage.MessageType.Error))" />
                     }
                     <RadzenText Text="ACTIVE" />
                     <RadzenSwitch @bind-Value="OrgUnit.IsActive"

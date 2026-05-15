@@ -458,6 +458,8 @@ namespace PPMTool.Helpers
         /// </summary>
         internal class ProjectBudgetSummary
         {
+            public string ProjectId { get; set; }
+
             public string ProjectName { get; set; }
 
             public double PlannedCosts { get; set; }

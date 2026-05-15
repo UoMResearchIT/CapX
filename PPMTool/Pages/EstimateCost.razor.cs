@@ -31,19 +31,23 @@ namespace PPMTool.Pages
         private Dictionary<string, TaskConfigModel> models;
         private TaskConfigModel summaryModel;
         private bool isUsable = true;
+        private double defaultDayRate;
+        private double indirectsPercentage;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            defaultDayRate = GetSetting(SettingType.DayRateDefault, 0.0);
+            indirectsPercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0.0);
 
             try
             {
                 FinancialReferenceService.GetFinancialReferenceForDate(Context, DateTime.Today);
-                summaryModel = new TaskConfigModel(FinancialReferenceService, Context, false);
+                summaryModel = new TaskConfigModel(FinancialReferenceService, Context, false, defaultDayRate, indirectsPercentage);
                 models = new Dictionary<string, TaskConfigModel>
                 {
-                    { "Leadership", new TaskConfigModel(FinancialReferenceService, Context, true) },
-                    { "RSE 1", new TaskConfigModel(FinancialReferenceService, Context, false) }
+                    { "Leadership", new TaskConfigModel(FinancialReferenceService, Context, true, defaultDayRate, indirectsPercentage) },
+                    { "RSE 1", new TaskConfigModel(FinancialReferenceService, Context, false, defaultDayRate, indirectsPercentage) }
                 };
                 CostModel = CostModel.TechAndLeadershipWithIndirects;
             }
@@ -113,7 +117,7 @@ namespace PPMTool.Pages
         private void AddResource()
         {
             var numRes = models.Where(x => x.Key != "Leadership").Count() + 1;
-            var res = new TaskConfigModel(FinancialReferenceService, Context, false);
+            var res = new TaskConfigModel(FinancialReferenceService, Context, false, defaultDayRate, indirectsPercentage);
             models.Add($"RSE {numRes}", res);
             res.SetCostModel(CostModel);
             UpdateSummaryComponent("Self: Add Resource");

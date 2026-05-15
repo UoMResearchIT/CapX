@@ -95,7 +95,7 @@ namespace PPMTool.Pages
             }
             else
             {
-                projectModel.DayRate = GlobalDefaults.DayRateDefault;
+                projectModel.DayRate = GetSetting(SettingType.DayRateDefault, 0f);
 
                 // Auto generate the RTP number based on the highest in the DB
                 projectModel.RTP = ProjectService.GetAll(Context).Select(x => x.RTP).DefaultIfEmpty(0).Max() + 1;
@@ -138,7 +138,7 @@ namespace PPMTool.Pages
 
             Loading = false;
             StateHasChanged();
-            LogInformation(projectModel.ProjectId > 0 ? $"Editing project {projectModel?.GetFullName()}" : $"Adding new project");
+            LogInformation(projectModel.ProjectId > 0 ? $"Editing project {projectModel?.GetSensibleObjectName()}" : $"Adding new project");
         }
 
         /// <summary>
@@ -225,9 +225,10 @@ namespace PPMTool.Pages
                         return;
                     }
 
-                    // Update the project summary values. Don't allow null/zero count returns here.
-                    var finrefs = FinancialReferenceService.GetAll(Context, false);
-                    projectModel.UpdateProjectMetaData(true, finrefs);
+                    // Update the project summary values
+                    var finrefs = FinancialReferenceService.GetAll(Context);
+                    var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+                    projectModel.UpdateProjectMetaData(true, finrefs, bauTopSlicePercentage);
 
                     if (ProjectId > 0)
                     {
@@ -260,7 +261,7 @@ namespace PPMTool.Pages
                             projectModel.ActualsLastUpdated = DateTime.Now.ToString("R");
                         }
 
-                        LogInformation($"Saving project {projectModel?.GetFullName()}...");
+                        LogInformation($"Saving project {projectModel?.GetSensibleObjectName()}...");
                         var res = ProjectService.Update(Context, projectModel);
                         CheckResultOfAddOrUpdate(res);
                     }
@@ -321,14 +322,14 @@ namespace PPMTool.Pages
             if (res < 0)
             {
                 // Duplicate found so show error message
-                LogWarning($"Duplicate project found with {(res == -1 ? $"name {projectModel?.Name}" : $"RTP-{projectModel?.RTP}")}!");
+                LogWarning($"Duplicate project found with {(res == -1 ? $"name {projectModel?.Name}" : $"{GetSetting(SettingType.ProjectAbbreviation)}-{projectModel?.RTP}")}!");
                 if (res == -1)
                 {
                     messageStore.Add(() => projectModel.Name, "Duplicate project name found!");
                 }
                 else
                 {
-                    messageStore.Add(() => projectModel.RTP, "Duplicate RTP number found!");
+                    messageStore.Add(() => projectModel.RTP, $"Duplicate {GetSetting(SettingType.ProjectAbbreviation)} number found!");
                 }
                 return false;
             }
@@ -358,7 +359,7 @@ namespace PPMTool.Pages
             // Not faculty or school objects or placeholder objects
             if (projectModel.School == null || projectModel.School?.Faculty == null || projectModel.School?.SchoolId == 0 || projectModel.School?.Faculty?.FacultyId == 0)
             {
-                messageStore.Add(() => projectModel.School, "Project must have a faculty and school set!");
+                messageStore.Add(() => projectModel.School, $"Project must have a {GetSetting(SettingType.OrgUnitUpper)} and {GetSetting(SettingType.OrgUnitLower)} set!");
                 return false;
             }
             return true;
@@ -387,7 +388,7 @@ namespace PPMTool.Pages
             if (ProjectId > 0)
             {
                 // Prompt
-                bool confirmed = await DialogService.Confirm($"You are about to delete project {projectModel.GetFullName()}. " +
+                bool confirmed = await DialogService.Confirm($"You are about to delete project {ProjectService.GetFullName(projectModel)}. " +
                     $"If this project was cancelled or didn't get funded then do not delete it but change its status instead so we can keep a record of unfunded projects.",
                     "Delete Project") ?? false;
                 if (confirmed)
@@ -404,7 +405,7 @@ namespace PPMTool.Pages
                         }
                     }
 
-                    LogInformation($"Deleting project {projectModel.GetFullName()}, ID {projectModel.ProjectId}");
+                    LogInformation($"Deleting project {projectModel.GetSensibleObjectName()}, ID {projectModel.ProjectId}");
 
                     // Delete the project from the database
                     ProjectService.Delete(Context, projectModel);
