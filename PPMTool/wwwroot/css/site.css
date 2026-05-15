@@ -417,5 +417,7 @@ span.mention {
 
 .header-logo {
     max-height: 2.5rem;
+    max-width: 10rem;
+    object-fit: contain;
     margin-right: 1rem;
 }
