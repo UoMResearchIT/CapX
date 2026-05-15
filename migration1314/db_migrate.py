@@ -231,18 +231,24 @@ def migrate_competency_assessments(old, new):
          "CompetencyId", "PersonId"])
 
 def migrate_resources(old, new):
+    valid_subtask_ids = {
+        row["SubTaskId"]
+        for row in new.execute("SELECT SubTaskId FROM SubTasks")
+    }
+
     rows = []
     for r in old.execute("SELECT * FROM Resources"):
-        rows.append((
-            r["ResourceId"], r["PersonId"], r["DayRate"],
-            r["AssignmentFTE"], r["BilledFTE"] or 0,
-            r["IsProvisional"], r["UseProjectDayRate"],
-            r["FundedFromFundingSourceId"],
-            r["SubTaskId"],
-            r["PlannedWorkHours"], r["ActualWorkHours"],
-            r["PlannedCost"], r["ActualCost"],
-            r["PlannedIndirectCost"], r["ActualIndirectCost"]
-        ))
+        if r["SubTaskId"] in valid_subtask_ids:
+            rows.append((
+                r["ResourceId"], r["PersonId"], r["DayRate"],
+                r["AssignmentFTE"], r["BilledFTE"] or 0,
+                r["IsProvisional"], r["UseProjectDayRate"],
+                r["FundedFromFundingSourceId"],
+                r["SubTaskId"],
+                r["PlannedWorkHours"], r["ActualWorkHours"],
+                r["PlannedCost"], r["ActualCost"],
+                r["PlannedIndirectCost"], r["ActualIndirectCost"]
+            ))
     new.executemany("""
         INSERT INTO Resources (
             ResourceId, PersonId, DayRate,
@@ -255,7 +261,10 @@ def migrate_resources(old, new):
             PlannedIndirectCost, ActualIndirectCost
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, rows)
-    assert_count(old, new, "Resources")
+    new_count = new.execute("SELECT COUNT(*) FROM Resources").fetchone()[0]
+    assert len(rows) == new_count, (
+        f"Resources count mismatch: expected {len(rows)}, got {new_count}"
+    )
 
 def migrate_skill_tag_subtask(old, new):
     valid_subtask_ids = {
