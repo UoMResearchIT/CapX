@@ -40,7 +40,7 @@
             <hr />
             @if (showOrgUnitsRequiredWarning)
             {
-                <StatusMessageComponent Message="@(new Data.StatusMessage("Projects cannot be added without a suitable organisational structure being set up. Add at least one active Faculty and School (or equivalent)", Data.StatusMessage.MessageType.Error))" />
+                <StatusMessageComponent Message="@(new Data.StatusMessage($"Projects cannot be added without a suitable organisational structure being set up. Add at least one active {SettingsService.GetSetting(SettingType.OrgUnitUpper)} and {SettingsService.GetSetting(SettingType.OrgUnitLower)}.", Data.StatusMessage.MessageType.Error))" />
             }
             else
             {
