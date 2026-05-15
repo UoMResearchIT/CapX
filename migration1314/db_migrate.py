@@ -1,7 +1,7 @@
 import sqlite3
 
 OLD_DB = "PPMTool-v13.9.2.db"
-NEW_DB = "PPMTool-v14.0.db"
+NEW_DB = "PPMTool.db"
 
 def connect(path):
     conn = sqlite3.connect(path)
