@@ -34,15 +34,28 @@ def assert_count(old, new, table, where_old=None, where_new=None):
 def migrate_simple(old, new, table, columns, where=None):
     cols = ", ".join(columns)
     w = f" WHERE {where}" if where else ""
-    
+
+    # Count source rows first
+    c_old = old.execute(f"SELECT COUNT(*) FROM {table}{w}").fetchone()[0]
+
+    # If old has data → clear target first
+    if c_old > 0:
+        print(f"🧹 Clearing {table} in new DB (old has {c_old} rows)")
+        new.execute(f"DELETE FROM {table}")
+    else:
+        print(f"ℹ️  Skipping {table} (no rows in old DB)")
+        return  # nothing to migrate, preserve seeded data
+
     sql = f"""
         INSERT INTO {table} ({cols})
         SELECT {cols}
         FROM olddb.{table}{w}
     """
     print(sql.strip())
-    
+
     new.execute(sql)
+
+    # safe: assert_count already skips when old == 0
     assert_count(old, new, table, where_old=where)
 
 
