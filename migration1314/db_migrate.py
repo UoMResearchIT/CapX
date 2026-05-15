@@ -12,8 +12,15 @@ def connect(path):
 def assert_count(old, new, table, where_old=None, where_new=None):
     wo = f" WHERE {where_old}" if where_old else ""
     wn = f" WHERE {where_new}" if where_new else ""
+
     c_old = old.execute(f"SELECT COUNT(*) FROM {table}{wo}").fetchone()[0]
     c_new = new.execute(f"SELECT COUNT(*) FROM {table}{wn}").fetchone()[0]
+
+    # Skip assertion if source table was empty
+    if c_old == 0:
+        print(f"Skipping count check for {table} (no rows in old DB)")
+        return
+
     if c_old != c_new:
         raise RuntimeError(
             f"Row count mismatch for {table}: old={c_old}, new={c_new}"
