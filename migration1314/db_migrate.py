@@ -258,8 +258,32 @@ def migrate_resources(old, new):
     assert_count(old, new, "Resources")
 
 def migrate_skill_tag_subtask(old, new):
-    migrate_simple(old, new, "SkillTagSubTask",
-        ["SkillsRequiredSkillTagId", "TasksNeedingThisSkillSubTaskId"])
+    valid_subtask_ids = {
+        row["SubTaskId"]
+        for row in new.execute("SELECT SubTaskId FROM SubTasks")
+    }
+
+    rows = []
+    for r in old.execute("""
+        SELECT SkillsRequiredSkillTagId, TasksNeedingThisSkillSubTaskId
+        FROM SkillTagSubTask
+    """):
+        if r["TasksNeedingThisSkillSubTaskId"] in valid_subtask_ids:
+            rows.append((
+                r["SkillsRequiredSkillTagId"],
+                r["TasksNeedingThisSkillSubTaskId"]
+            ))
+
+    new.executemany("""
+        INSERT INTO SkillTagSubTask (
+            SkillsRequiredSkillTagId, TasksNeedingThisSkillSubTaskId
+        ) VALUES (?, ?)
+    """, rows)
+
+    new_count = new.execute("SELECT COUNT(*) FROM SkillTagSubTask").fetchone()[0]
+    assert len(rows) == new_count, (
+        f"SkillTagSubTask count mismatch: expected {len(rows)}, got {new_count}"
+    )
         
 
 def old_table_exists(old, table_name):
