@@ -26,6 +26,18 @@ def assert_count(old, new, table, where_old=None, where_new=None):
             f"Row count mismatch for {table}: old={c_old}, new={c_new}"
         )
 
+def clear_table_if_needed(old, new, table, where=None):
+    w = f" WHERE {where}" if where else ""
+
+    c_old = old.execute(f"SELECT COUNT(*) FROM {table}{w}").fetchone()[0]
+
+    if c_old > 0:
+        print(f"🧹 Clearing {table} in new DB (old has {c_old} rows)")
+        new.execute(f"DELETE FROM {table}")
+        return True
+    else:
+        print(f"Skipping {table} (no rows in old DB)")
+        return False
 
 # ─────────────────────────
 # SIMPLE 1:1 TABLES
@@ -34,17 +46,9 @@ def assert_count(old, new, table, where_old=None, where_new=None):
 def migrate_simple(old, new, table, columns, where=None):
     cols = ", ".join(columns)
     w = f" WHERE {where}" if where else ""
-
-    # Count source rows first
-    c_old = old.execute(f"SELECT COUNT(*) FROM {table}{w}").fetchone()[0]
-
-    # If old has data → clear target first
-    if c_old > 0:
-        print(f"🧹 Clearing {table} in new DB (old has {c_old} rows)")
-        new.execute(f"DELETE FROM {table}")
-    else:
-        print(f"ℹ️  Skipping {table} (no rows in old DB)")
-        return  # nothing to migrate, preserve seeded data
+    
+    if not clear_table_if_needed(old, new, table, where):
+        return
 
     sql = f"""
         INSERT INTO {table} ({cols})
@@ -56,7 +60,7 @@ def migrate_simple(old, new, table, columns, where=None):
     new.execute(sql)
 
     # safe: assert_count already skips when old == 0
-    assert_count(old, new, table, where_old=where)
+    assert_count(old, new, table, where_old=where, where_new=where)
 
 
 # ─────────────────────────
@@ -100,6 +104,10 @@ def migrate_skill_tags(old, new):
          "HasValidWikiLink", "Rareness", "RarenessCount"])
 
 def migrate_people(old, new):
+    
+    if not clear_table_if_needed(old, new, "People"):
+        return
+
     rows = []
     for r in old.execute("SELECT * FROM People"):
         short = r["ShortName"] or r["Name"].split()[0]
@@ -119,6 +127,10 @@ def migrate_people(old, new):
     assert_count(old, new, "People")
 
 def migrate_users(old, new):
+    
+    if not clear_table_if_needed(old, new, "Users"):
+        return
+
     rows = []
     for r in old.execute("SELECT * FROM Users"):
         email = r["EmailAddress"] or f"{r['CASUserName']}@invalid.local"
@@ -194,6 +206,10 @@ def migrate_workload(old, new):
         where="PersonId IS NOT NULL")
 
 def migrate_owned_skills(old, new):
+    
+    if not clear_table_if_needed(old, new, "OwnedSkills"):
+        return
+    
     rows = []
     for r in old.execute("SELECT * FROM OwnedSkills"):
         rows.append((
@@ -255,6 +271,9 @@ def migrate_resources(old, new):
         row["SubTaskId"]
         for row in new.execute("SELECT SubTaskId FROM SubTasks")
     }
+    
+    if not clear_table_if_needed(old, new, "Resources"):
+        return
 
     rows = []
     for r in old.execute("SELECT * FROM Resources"):
@@ -291,6 +310,9 @@ def migrate_skill_tag_subtask(old, new):
         row["SubTaskId"]
         for row in new.execute("SELECT SubTaskId FROM SubTasks")
     }
+    
+    if not clear_table_if_needed(old, new, "SkillTagSubTask"):
+        return
 
     rows = []
     for r in old.execute("""
