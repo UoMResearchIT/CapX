@@ -263,6 +263,7 @@ def migrate_skill_tag_subtask(old, new):
         
 
 def old_table_exists(old, table_name):
+    """Return True when the source database contains the specified table."""
     row = old.execute("""
         SELECT 1
         FROM sqlite_master
