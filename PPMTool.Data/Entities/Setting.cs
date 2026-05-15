@@ -33,7 +33,7 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Optional description of the setting to be used in the UI to explain the setting to users.
         /// </summary>
-        public string Description { get; set; } = null!;
+        public string? Description { get; set; }
 
         /// <summary>
         /// Override of the method from ILoggableObject to provide a sensible name for the setting when it is logged in the logs.

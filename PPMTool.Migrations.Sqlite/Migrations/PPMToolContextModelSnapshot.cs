@@ -692,7 +692,6 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SettingType")
