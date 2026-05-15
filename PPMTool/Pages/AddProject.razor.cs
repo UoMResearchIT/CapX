@@ -110,6 +110,9 @@ namespace PPMTool.Pages
                     // If we have any active Schools then it means we have active Faculties too
                     showOrgUnitsRequiredWarning = !SchoolService.GetAllActive(Context).Any();
                 }
+
+                // Set the selected school to null or the dropdown placeholder won't work
+                projectModel.School = null;
             }
 
             // Add default buttons with handlers
@@ -181,8 +184,8 @@ namespace PPMTool.Pages
             {
                 schools = SchoolService.GetSchoolsForFaculty(Context, faculty.FacultyId);
 
-                // Reset the school
-                projectModel.School = new School();
+                // Reset the school so the placeholder shows again
+                projectModel.School = null;
             }
         }
 
@@ -226,7 +229,7 @@ namespace PPMTool.Pages
                     }
 
                     // Update the project summary values
-                    var finrefs = FinancialReferenceService.GetAll(Context);
+                    var finrefs = FinancialReferenceService.GetAll(Context, false);
                     var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
                     projectModel.UpdateProjectMetaData(true, finrefs, bauTopSlicePercentage);
 
