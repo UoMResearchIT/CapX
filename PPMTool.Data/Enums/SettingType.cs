@@ -62,6 +62,10 @@ namespace PPMTool.Data.Enums
 
         [Description("Whether the header and footer of the app should be coloured as danger for development deployments of the system. Accepts \"true\" and \"false\".")]
         [DefaultSettingValue("true")]
-        UseDevelopmentBannerColours = 13
+        UseDevelopmentBannerColours = 13,
+
+        [Description("Optional logo that is displayed in the header.")]
+        [DefaultSettingValue("")]
+        OrganisationLogo = 14
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -11,6 +12,10 @@ namespace PPMTool.Pages
     {
         [Inject]
         private CssVariableService CssVariableService { get; set; }
+
+        private string logo;
+        private string logoFileName;
+        private long? logoFileSize;
 
         protected override async Task OnInitializedAsync()
         {
@@ -41,7 +46,7 @@ namespace PPMTool.Pages
         {
             base.OnUpdateRow(entity);
 
-            // If successful update then refresh the theme
+            // If successful update then do further processing
             if (ErrorMessage == null)
             {
                 // If this is a colour variable then we need to refresh the theme
@@ -54,6 +59,26 @@ namespace PPMTool.Pages
                 }
             }
             StateHasChanged();
+        }
+
+        /// <summary>
+        /// Saves the specified setting entity to the data store, updating the value if the setting type is an
+        /// organisation logo explicitly.
+        /// </summary>
+        /// <remarks>If the setting type is <see cref="SettingType.OrganisationLogo"/>, the setting value
+        /// is updated before saving. This method overrides the base implementation to handle special logic for
+        /// organisation logo settings.</remarks>
+        /// <param name="entity">The setting entity to save. Must not be null.</param>
+        /// <returns>A task that represents the asynchronous save operation.</returns>
+        protected override Task SaveRow(Setting entity)
+        {
+            // If it is the logo then we can update the field before saving to ensure the cached image is saved and the value isn't null
+            if (entity.SettingType == SettingType.OrganisationLogo)
+            {
+                entity.SettingValue = logo ?? string.Empty;
+            }
+
+            return base.SaveRow(entity);
         }
     }
 }

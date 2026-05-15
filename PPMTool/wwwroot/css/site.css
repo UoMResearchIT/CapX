@@ -414,3 +414,8 @@ span.mention {
 .components-reconnect-dialog {
     background-color: var(--rz-card-background-color) !important;
 }
+
+.header-logo {
+    max-height: 2.5rem;
+    margin-right: 1rem;
+}
