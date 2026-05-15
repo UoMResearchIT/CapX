@@ -50,7 +50,10 @@
                         <Template Context="settingView">
                             @if (settingView.SettingType == SettingType.OrganisationLogo)
                             {
-                                <img src="@settingView.SettingValue" alt-text="Organisational Logo" style="max-width: 20rem; max-height: 10rem;" />
+                                @if (!string.IsNullOrWhiteSpace(settingView.SettingValue))
+                                {
+                                    <img src="@settingView.SettingValue" alt="Organisational Logo" style="max-width: 20rem; max-height: 10rem;" />
+                                }
                             }
                             else
                             {
