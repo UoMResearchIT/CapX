@@ -14,8 +14,6 @@ namespace PPMTool.Pages
         private CssVariableService CssVariableService { get; set; }
 
         private string logo;
-        private string logoFileName;
-        private long? logoFileSize;
 
         protected override async Task OnInitializedAsync()
         {
