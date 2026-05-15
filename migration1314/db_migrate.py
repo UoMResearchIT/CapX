@@ -262,36 +262,15 @@ def migrate_skill_tag_subtask(old, new):
         ["SkillsRequiredSkillTagId", "TasksNeedingThisSkillSubTaskId"])
         
 
-def ensure_features_table_exists(old):
-    """
-    Ensure the Features table exists in the OLD database.
-    This is required so migrate_features() can run safely.
-    """
+def old_table_exists(old, table_name):
     row = old.execute("""
         SELECT 1
         FROM sqlite_master
         WHERE type = 'table'
-          AND name = 'Features'
-    """).fetchone()
+          AND name = ?
+    """, (table_name,)).fetchone()
 
-    if row is not None:
-        # Table already exists – nothing to do
-        return
-
-    print("⚠️  Features table missing in old DB – creating it")
-
-    old.execute("""
-        CREATE TABLE "Features" (
-            "FeatureId" INTEGER NOT NULL CONSTRAINT "PK_Features" PRIMARY KEY AUTOINCREMENT,
-            "FeatureType" INTEGER NOT NULL,
-            "Name" TEXT NOT NULL,
-            "Description" TEXT NOT NULL,
-            "Enabled" INTEGER NOT NULL,
-            "MustAlwaysBeEnabled" INTEGER NOT NULL
-        )
-    """)
-
-    old.commit()
+    return row is not None
 
 
 # ─────────────────────────
@@ -303,15 +282,16 @@ def main():
     new = connect(NEW_DB)
 
     try:
-        ensure_features_table_exists(old)
-        
         new.execute("PRAGMA foreign_keys = OFF")
         new.execute("ATTACH DATABASE ? AS olddb", (OLD_DB,))
         new.execute("BEGIN")
 
         migrate_faculties(old, new)
         migrate_schools(old, new)
-        migrate_features(old, new)
+        if old_table_exists(old, "Features"):
+            migrate_features(old, new)
+        else:
+            print("⚠️  Features table missing in old DB – skipping features migration")
         migrate_financial_references(old, new)
         migrate_innate_codes(old, new)
         migrate_competencies(old, new)
