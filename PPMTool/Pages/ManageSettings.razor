@@ -51,7 +51,14 @@
                             {
                                 @if (!string.IsNullOrWhiteSpace(settingView.SettingValue))
                                 {
-                                    <img src="@settingView.SettingValue" alt="Organisational Logo" style="max-width: 20rem; max-height: 10rem;" />
+                                    
+                                    var backgroundColour = SettingsService.GetSetting(
+                                        settingView.SettingType == SettingType.OrganisationLogoLight ?
+                                        SettingType.AppPrimaryColourLight :
+                                        SettingType.AppPrimaryColourDark,
+                                        "unset"
+                                    );
+                                    <img src="@settingView.SettingValue" alt="Organisational Logo" style="max-width: 20rem; max-height: 10rem; padding: 1rem; background-color: @backgroundColour" />
                                 }
                             }
                             else
