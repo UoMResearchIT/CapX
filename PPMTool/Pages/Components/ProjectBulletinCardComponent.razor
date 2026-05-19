@@ -54,15 +54,15 @@
     <div style="border: 1px solid #ddd; padding: 15px 10px; border-radius: 5px; margin-bottom: 1rem;">
         <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="2rem">
 
-            <div style="padding: 15px 10px 25px 10px; background-color: #eee; margin: -15px -10px -10px -10px;">
-                <RadzenText TextStyle="TextStyle.H3" Style="font-size: 2rem; margin-bottom: -1rem;" Text="@Project.GetFullName()" />
+            <div style="padding: 15px 10px 25px 10px; margin: -15px -10px -10px -10px; border-bottom: 1px solid #ddd;">
+                <RadzenText TextStyle="TextStyle.H3" Style="font-size: 2rem; margin-bottom: -1rem;" Text="@ProjectService.GetFullName(Project)" />
             </div>
 
             <!-- PM / DATES -->
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="2rem">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem">
 
                 <!-- Project Manager -->
-                <div style="padding: 5px 0px;">
+                <div style="padding: 0px;">
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
                         <RadzenIcon Icon="article_person" title="Project Manager" />
                         <RadzenText TextStyle="TextStyle.Body1">
@@ -72,7 +72,7 @@
                 </div>
 
                 <!-- Dates -->
-                <div style="padding: 5px 0px;">
+                <div style="padding: 0px;">
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
                         <RadzenIcon Icon="calendar_month" title="Dates" />
                         <RadzenText TextStyle="TextStyle.Body1">@windowDatesFormatted</RadzenText>
@@ -90,7 +90,10 @@
     </div>
 
     <!-- BOTTOM ROW -->
-    <SkillsAsBadgesComponent SkillsList="@SkillsList" />
+    @if (FeatureService.IsFeatureEnabled(FeatureType.Skills))
+    {
+        <SkillsAsBadgesComponent SkillsList="@SkillsList" />
+    }
 
 </RadzenCard>
 

@@ -2,7 +2,7 @@
 @using PPMTool.Data.Enums
 
 <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="0.3rem" AlignItems="AlignItems.Center">
-    <RadzenText Text="Required skills : " TextStyle="TextStyle.Body1"/>
+    <RadzenText Text="Required Skills : " TextStyle="TextStyle.Body1" Style="font-weight: bold;"/>
     @if (SkillsList == null || SkillsList.Count() == 0)
     {
         <RadzenText Text="@(string.IsNullOrWhiteSpace(EmptyMessage) ? "No skill tags associated with the tasks in this project" : EmptyMessage)" />
