@@ -47,7 +47,7 @@
                     <RadzenDataGridColumn TItem="Setting" Property="SettingTypeAsText" Title="Name" MinWidth="10px" Width="15rem" />
                     <RadzenDataGridColumn TItem="Setting" Property="SettingValue" Title="Value" MinWidth="10px" Width="20rem">
                         <Template Context="settingView">
-                            @if (settingView.SettingType == SettingType.OrganisationLogo)
+                            @if (settingView.SettingType.IsOrganisationLogo())
                             {
                                 @if (!string.IsNullOrWhiteSpace(settingView.SettingValue))
                                 {
@@ -60,7 +60,7 @@
                             }
                         </Template>
                         <EditTemplate Context="setting">
-                            @if (setting.SettingType == SettingType.OrganisationLogo)
+                            @if (setting.SettingType.IsOrganisationLogo())
                             {
                                 <RadzenFileInput Title="Organisation Logo"
                                                  Placeholder="Upload your logo..."

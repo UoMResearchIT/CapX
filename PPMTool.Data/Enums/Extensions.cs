@@ -247,5 +247,15 @@ namespace PPMTool.Data.Enums
         {
             return !string.IsNullOrWhiteSpace(test) && test.StartsWith("http") && test.Length >= 12 && Uri.TryCreate(test, UriKind.Absolute, out _);
         }
+
+        /// <summary>
+        /// Whether a setting type is one of the organisation logo types
+        /// </summary>
+        /// <param name="settingType"></param>
+        /// <returns></returns>
+        public static bool IsOrganisationLogo(this SettingType settingType)
+        {
+            return settingType == SettingType.OrganisationLogoLight || settingType == SettingType.OrganisationLogoDark;
+        }
     }
 }
