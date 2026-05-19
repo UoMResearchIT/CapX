@@ -3,10 +3,12 @@
 @using PPMTool.Data.Enums
 @using PPMTool.Services
 
-<RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
-    <SkillTagRarenessEmblemComponent SkillTag="SkillTag" />
-    <RadzenText TextStyle="TextStyle.Body2" Text="@SkillTag.Rareness.ToString()" Style="@($"color: {SkillTag.Rareness.GetTextColourCode()}; margin-bottom: 0;")" />
-</RadzenStack>
+<div class="emblem-background">
+    <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
+        <SkillTagRarenessEmblemComponent SkillTag="SkillTag" />
+        <RadzenText TextStyle="TextStyle.Body2" Text="@SkillTag.Rareness.ToString()" Style="@($"color: {SkillTag.Rareness.GetTextColourCode()}; margin-bottom: 0;")" />
+    </RadzenStack>
+</div>
 
 @code {
 
