@@ -67,7 +67,16 @@ else
             </thead>
             <tbody>
                 <tr>
-                    <td>@($"{FinanceSummaryItem.StartDate.ToShortDateString()} - {FinanceSummaryItem.EndDate.ToShortDateString()}")</td>
+                    <td>
+                        @if (FinanceSummaryItem.StartDate == @DateTime.MaxValue)
+                        {
+                            @("[Add Tasks]");
+                        }
+                        else
+                        {
+                            @($"{FinanceSummaryItem.StartDate.ToShortDateString()} - {FinanceSummaryItem.EndDate.ToShortDateString()}")
+                        }
+                    </td>
                     <td>@FinanceSummaryItem.ProjectPI</td>
                     <td>@($"{FinanceSummaryItem.School.Name} ({FinanceSummaryItem.Faculty.Name})")</td>
                     <td>@FinanceSummaryItem.ProjectPM</td>
