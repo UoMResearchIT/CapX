@@ -2,6 +2,7 @@
 @using PPMTool.Data.Enums
 
 <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="0.3rem" AlignItems="AlignItems.Center">
+    <RadzenText Text="Required skills : " TextStyle="TextStyle.Body1"/>
     @if (SkillsList == null || SkillsList.Count() == 0)
     {
         <RadzenText Text="@(string.IsNullOrWhiteSpace(EmptyMessage) ? "No skill tags associated with the tasks in this project" : EmptyMessage)" />
@@ -10,9 +11,9 @@
     {
         @foreach (var skill in SkillsList)
         {
-            <RadzenBadge Style="@($"background-color: {skill.Rareness.GetTextColourCode()}; padding: 0.3rem")" title="@($"{skill.RarenessCount} RSE(s) with this tag")">
+            <RadzenBadge Style="@($"background-color: {skill.Rareness.GetTextColourCode()};")" title="@($"{skill.RarenessCount} RSE(s) with this tag")">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.4rem">
-                    <SkillTagRarenessEmblemComponent SkillTag="skill" SizeInRem="1" />
+                    <div style="background-color: white; border-radius: 5px; padding: 1px;"><SkillTagRarenessEmblemComponent SkillTag="skill" SizeInRem="1" /></div>
                     <RadzenText Text="@skill.Name" Style="color: white; margin-bottom: 0;" />
                     @if (RemoveSkill != null)
                     {
