@@ -133,7 +133,7 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     SettingType = table.Column<int>(type: "INTEGER", nullable: false),
                     SettingValue = table.Column<string>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: false)
+                    Description = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {

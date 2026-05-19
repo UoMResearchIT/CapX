@@ -134,7 +134,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     SettingType = table.Column<int>(type: "integer", nullable: false),
                     SettingValue = table.Column<string>(type: "text", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: false)
+                    Description = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {

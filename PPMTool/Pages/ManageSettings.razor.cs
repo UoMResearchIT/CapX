@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -11,6 +12,8 @@ namespace PPMTool.Pages
     {
         [Inject]
         private CssVariableService CssVariableService { get; set; }
+
+        private string logo;
 
         protected override async Task OnInitializedAsync()
         {
@@ -41,7 +44,7 @@ namespace PPMTool.Pages
         {
             base.OnUpdateRow(entity);
 
-            // If successful update then refresh the theme
+            // If successful update then do further processing
             if (ErrorMessage == null)
             {
                 // If this is a colour variable then we need to refresh the theme
@@ -54,6 +57,37 @@ namespace PPMTool.Pages
                 }
             }
             StateHasChanged();
+        }
+
+        /// <summary>
+        /// Saves the specified setting entity to the data store, updating the value if the setting type is an
+        /// organisation logo explicitly.
+        /// </summary>
+        /// <remarks>If the setting type is <see cref="SettingType.OrganisationLogo"/>, the setting value
+        /// is updated before saving. This method overrides the base implementation to handle special logic for
+        /// organisation logo settings.</remarks>
+        /// <param name="entity">The setting entity to save. Must not be null.</param>
+        /// <returns>A task that represents the asynchronous save operation.</returns>
+        protected override Task SaveRow(Setting entity)
+        {
+            // If it is the logo then we can update the field before saving to ensure the cached image is saved and the value isn't null
+            if (entity.SettingType == SettingType.OrganisationLogo)
+            {
+                entity.SettingValue = logo ?? string.Empty;
+            }
+
+            return base.SaveRow(entity);
+        }
+
+        /// <summary>
+        /// Handles an error that occurs during the logo upload process.
+        /// </summary>
+        /// <remarks>Call this method to log or respond to errors encountered when uploading a logo. The
+        /// error details are provided in the event arguments.</remarks>
+        /// <param name="args">The event data containing details about the upload error. Cannot be null.</param>
+        private void OnLogoUploadError(UploadErrorEventArgs args)
+        {
+            LogError($"Logo failed to upload! {args.Message}");
         }
     }
 }

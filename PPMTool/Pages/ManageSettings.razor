@@ -1,6 +1,7 @@
 ﻿@page "/managesettings"
 @inherits DataGridPage<Setting>
 @using PPMTool.Data.Entities
+@using PPMTool.Data.Enums
 @using PPMTool.Pages.Components
 @using Radzen
 
@@ -45,8 +46,36 @@
                 <Columns>
                     <RadzenDataGridColumn TItem="Setting" Property="SettingTypeAsText" Title="Name" MinWidth="10px" Width="15rem" />
                     <RadzenDataGridColumn TItem="Setting" Property="SettingValue" Title="Value" MinWidth="10px" Width="20rem">
+                        <Template Context="settingView">
+                            @if (settingView.SettingType == SettingType.OrganisationLogo)
+                            {
+                                @if (!string.IsNullOrWhiteSpace(settingView.SettingValue))
+                                {
+                                    <img src="@settingView.SettingValue" alt="Organisational Logo" style="max-width: 20rem; max-height: 10rem;" />
+                                }
+                            }
+                            else
+                            {
+                                @settingView.SettingValue
+                            }
+                        </Template>
                         <EditTemplate Context="setting">
-                            <RadzenTextBox class="no-margin" @bind-Value="setting.SettingValue" />
+                            @if (setting.SettingType == SettingType.OrganisationLogo)
+                            {
+                                <RadzenFileInput Title="Organisation Logo"
+                                                 Placeholder="Upload your logo..."
+                                                 Accept="image/png"
+                                                 MaxFileSize="@(1024 * 1024)"
+                                                 @bind-Value=@logo
+                                                 TValue="string"
+                                                 Style="width: 100%"
+                                                 InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})"
+                                                 Error="@(args => OnLogoUploadError(args))"/>
+                            }
+                            else
+                            {
+                                <RadzenTextBox class="no-margin" @bind-Value="setting.SettingValue" />
+                            }
                         </EditTemplate>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="Setting" Property="Description" Title="Description" MinWidth="10px" Width="35rem" />
