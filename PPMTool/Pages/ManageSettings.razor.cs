@@ -63,7 +63,7 @@ namespace PPMTool.Pages
         /// Saves the specified setting entity to the data store, updating the value if the setting type is an
         /// organisation logo explicitly.
         /// </summary>
-        /// <remarks>If the setting type is <see cref="SettingType.OrganisationLogo"/>, the setting value
+        /// <remarks>If the setting type is an organisation logo, the setting value
         /// is updated before saving. This method overrides the base implementation to handle special logic for
         /// organisation logo settings.</remarks>
         /// <param name="entity">The setting entity to save. Must not be null.</param>
@@ -71,7 +71,7 @@ namespace PPMTool.Pages
         protected override Task SaveRow(Setting entity)
         {
             // If it is the logo then we can update the field before saving to ensure the cached image is saved and the value isn't null
-            if (entity.SettingType == SettingType.OrganisationLogo)
+            if (entity.SettingType.IsOrganisationLogo())
             {
                 entity.SettingValue = logo ?? string.Empty;
             }

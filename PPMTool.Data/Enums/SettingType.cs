@@ -64,8 +64,12 @@ namespace PPMTool.Data.Enums
         [DefaultSettingValue("true")]
         UseDevelopmentBannerColours = 13,
 
-        [Description("Optional logo that is displayed in the header.")]
+        [Description("Optional logo that is displayed in the header in light mode.")]
         [DefaultSettingValue("")]
-        OrganisationLogo = 14
+        OrganisationLogoLight = 14,
+
+        [Description("Optional logo that is displayed in the header in dark mode.")]
+        [DefaultSettingValue("")]
+        OrganisationLogoDark = 15,
     }
 }
