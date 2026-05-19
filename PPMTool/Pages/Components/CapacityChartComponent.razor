@@ -48,8 +48,8 @@ else
 
                         <span class="me-1">
                             @((point.Y?.Min() is decimal d1 && d1 > 0 && d1 < DateTimeOffset.MaxValue.ToUnixTimeMilliseconds()
-                                ? DateTimeOffset.FromUnixTimeMilliseconds((long)d1).ToString("dd MMM yyyy")
-                                : "Add tasks to define dates")) -
+                                ? $"{DateTimeOffset.FromUnixTimeMilliseconds((long)d1).ToString("dd MMM yyyy")} - "
+                                : "Add tasks to define dates"))
                         </span>
                         <span class="me-1">
                             @((point.Y?.Max() is decimal d2 && d2 > 0 && d2 < DateTimeOffset.MaxValue.ToUnixTimeMilliseconds()
