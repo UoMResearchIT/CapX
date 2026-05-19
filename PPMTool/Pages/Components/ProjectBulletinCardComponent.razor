@@ -92,7 +92,10 @@
     <!-- BOTTOM ROW -->
     @if (FeatureService.IsFeatureEnabled(FeatureType.Skills))
     {
-        <SkillsAsBadgesComponent SkillsList="@SkillsList" />
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+            <RadzenText Text="Required Skills : " TextStyle="TextStyle.Body1" Style="font-weight: bold;" />
+            <SkillsAsBadgesComponent SkillsList="@SkillsList" />
+        </RadzenStack>
     }
 
 </RadzenCard>
