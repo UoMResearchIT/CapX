@@ -365,7 +365,7 @@ using (var context = dbContextFactory.CreateDbContext())
     }
 
     // Run migrations
-    context.Database.Migrate();
+    // context.Database.Migrate();
 }
 
 // Seed the default superuser from the settings if it doesn't already exist
