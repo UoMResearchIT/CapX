@@ -386,7 +386,7 @@ namespace PPMTool.Pages
                 Debug.WriteLine($"** {owningProject?.SubTasks.Count} subtasks found! IDs: {string.Join("|", owningProject?.SubTasks.Select(x => x.SubTaskId))}");
 
                 // Update the project summary values
-                var finrefs = FinancialReferenceService.GetAll(Context, true);
+                var finrefs = FinancialReferenceService.GetAllOrDefault(Context);
                 var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
                 owningProject.UpdateProjectMetaData(false, finrefs, bauTopSlicePercentage);
 

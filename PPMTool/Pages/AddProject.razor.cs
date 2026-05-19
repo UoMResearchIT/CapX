@@ -229,7 +229,7 @@ namespace PPMTool.Pages
                     }
 
                     // Update the project summary values
-                    var finrefs = FinancialReferenceService.GetAll(Context, false);
+                    var finrefs = FinancialReferenceService.GetAllOrDefault(Context);
                     var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
                     projectModel.UpdateProjectMetaData(true, finrefs, bauTopSlicePercentage);
 

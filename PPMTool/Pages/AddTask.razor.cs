@@ -567,7 +567,7 @@ namespace PPMTool.Pages
                     ProjectModel.SubTasks.Remove(TaskModel);
 
                     // Update the project summary values
-                    var finrefs = FinancialReferenceService.GetAll(Context, false);
+                    var finrefs = FinancialReferenceService.GetAllOrDefault(Context);
                     var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
                     ProjectModel.UpdateProjectMetaData(false, finrefs, bauTopSlicePercentage);
 
@@ -959,7 +959,7 @@ namespace PPMTool.Pages
                     // Update the project summary values if not splitting as that is taken care of on the split task page
                     if (!IsSplit)
                     {
-                        var finrefs = FinancialReferenceService.GetAll(Context, false);
+                        var finrefs = FinancialReferenceService.GetAllOrDefault(Context);
                         var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
                         ProjectModel.UpdateProjectMetaData(false, finrefs, bauTopSlicePercentage);
 
