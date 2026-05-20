@@ -42,7 +42,7 @@ else
             <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Start">
                 <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
                 @{
-                    var logo = SettingsService.GetSetting(SettingType.OrganisationLogo);
+                    var logo = ThemeService.IsDarkTheme() ? SettingsService.GetSetting(SettingType.OrganisationLogoDark) : SettingsService.GetSetting(SettingType.OrganisationLogoLight);
                     if (!string.IsNullOrWhiteSpace(logo))
                     {
                         <img class="header-logo" src="@logo" alt="Organisation Logo" />
