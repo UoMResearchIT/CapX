@@ -136,6 +136,11 @@ namespace PPMTool.Pages
                     break;
 
                 case School school:
+                    // Reactivate the parent Faculty if the School is made active
+                    if (newValue == true)
+                    {
+                        await ToggleFacultyActiveAsync(school.Faculty, true);
+                    }
                     ToggleSchoolActive(school, newValue);
                     break;
 

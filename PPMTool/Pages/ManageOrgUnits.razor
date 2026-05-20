@@ -67,7 +67,7 @@
                             {
                                 @foreach (var school in faculty.Schools.OrderBy(x =>x.Name))
                                 {
-                                        <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="padding-left: 10px;">
+                                        <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="padding: 8px 15px; padding-left: 30px;">
                                             <EditOrgUnitEntityComponent OrgUnit="@school"
                                                                         OnSaveSucceeded="OrgUnitSuccessfulAdd"
                                                                         OnCancel="OrgUnitAddCancelled"

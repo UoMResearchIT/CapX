@@ -45,8 +45,18 @@ else
                         }
                         @Value1TooltipFormatter(point.Items.FirstOrDefault())
                         @Value2TooltipFormatter(point.Items.FirstOrDefault())
-                        <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
-                        <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
+
+                        <span class="me-1">
+                            @((point.Y?.Min() is decimal d1 && d1 > 0 && d1 < DateTimeOffset.MaxValue.ToUnixTimeMilliseconds()
+                                ? $"{DateTimeOffset.FromUnixTimeMilliseconds((long)d1).ToString("dd MMM yyyy")} - "
+                                : "Add tasks to define dates"))
+                        </span>
+                        <span class="me-1">
+                            @((point.Y?.Max() is decimal d2 && d2 > 0 && d2 < DateTimeOffset.MaxValue.ToUnixTimeMilliseconds()
+                                ? DateTimeOffset.FromUnixTimeMilliseconds((long)d2).ToString("dd MMM yyyy")
+                                : ""))
+                        </span>
+
                     </div>
                 }
             </div>

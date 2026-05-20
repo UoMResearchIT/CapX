@@ -54,6 +54,7 @@ namespace PPMTool.Pages
         private Project projectModel = new Project();
         private bool gotoDetails = false;
         private bool discardChanges = true;
+        private bool showOrgUnitsRequiredWarning = false;
         private IEnumerable<InnateCode> innateActivities = new List<InnateCode>();
         private IQueryable<InnateCode> innateActivityQuery;
         private IEnumerable<Person> projectManagers = new List<Person>();
@@ -101,6 +102,17 @@ namespace PPMTool.Pages
 
                 // Set the active user as the PM by default
                 projectModel.ProjectManager = ActiveUser?.Person;
+
+                // Specific check for when Finance feature has not been enabled and a new
+                // project is being added, as Faculties/Schools are required
+                if (!FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance))
+                {
+                    // If we have any active Schools then it means we have active Faculties too
+                    showOrgUnitsRequiredWarning = !SchoolService.GetAllActive(Context).Any();
+                }
+
+                // Set the selected school to null or the dropdown placeholder won't work
+                projectModel.School = null;
             }
 
             // Add default buttons with handlers
@@ -172,8 +184,8 @@ namespace PPMTool.Pages
             {
                 schools = SchoolService.GetSchoolsForFaculty(Context, faculty.FacultyId);
 
-                // Reset the school
-                projectModel.School = new School();
+                // Reset the school so the placeholder shows again
+                projectModel.School = null;
             }
         }
 
@@ -217,7 +229,7 @@ namespace PPMTool.Pages
                     }
 
                     // Update the project summary values
-                    var finrefs = FinancialReferenceService.GetAll(Context);
+                    var finrefs = FinancialReferenceService.GetAllOrDefault(Context);
                     var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
                     projectModel.UpdateProjectMetaData(true, finrefs, bauTopSlicePercentage);
 

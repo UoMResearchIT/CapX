@@ -376,7 +376,6 @@ span.mention {
     border: var(--rz-card-border);
     padding: 0px;
     background-color: var(--rz-card-background-color);
-    margin-bottom: 15px;
 }
 
 .orgunits-accordion .accordion-orgsubunit {
@@ -420,4 +419,12 @@ span.mention {
     max-width: 10rem;
     object-fit: contain;
     margin-right: 1rem;
+}
+
+.emblem-background {
+    background-color: #eee;
+    border-radius: 5px;
+    padding: 1px;
+    width: 5rem;
+    justify-self: center;
 }

@@ -43,9 +43,14 @@
                                                   Disabled="@(ActiveUserRoleType != RoleType.Manager && !IsSuperuserOrLineManagerOrPerson(personModel))" />
                                 </div>
                             }
-                            <div class="col-auto">
-                                <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="@ViewCapacity" Text="View Capacity" Icon="lists" />
-                            </div>
+
+                            @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
+                            {
+                                <div class="col-auto">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="@ViewCapacity" Text="View Capacity" Icon="lists" />
+                                </div>
+                            }
+
                             <div class="col-auto">
                                 <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeletePersonAsync" Text="Delete" Icon="delete" Disabled=!isSuperUser />
                             </div>

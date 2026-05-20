@@ -75,8 +75,31 @@
                              <span title="@p.School.Name">@p.School.Code</span>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="StartDate" Title="Start Date" FormatString="{0:d}" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Project" Property="EndDate" Title="End Date" FormatString="{0:d}" MinWidth="10px" />
+                    <!-- Default datetimes added when creating a Project are Max and Min to be shaped when tasks are added -->
+                    <RadzenDataGridColumn TItem="Project" Property="StartDate" Title="Start Date" MinWidth="10px">
+                        <Template Context="p">
+                            @if (p.StartDate == DateTime.MaxValue)
+                            {
+                                <StatusMessageComponent Message="@(new StatusMessage("No tasks!", StatusMessage.MessageType.Error))" />
+                            }
+                            else
+                            {
+                                p.StartDate.ToString("d");
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Project" Property="EndDate" Title="End Date" MinWidth="10px">
+                        <Template Context="p">
+                            @if (p.EndDate == DateTime.MinValue)
+                            {
+                                <StatusMessageComponent Message="@(new StatusMessage("No tasks!", StatusMessage.MessageType.Error))" />
+                            }
+                            else
+                            {
+                                p.EndDate.ToString("d");
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
                     @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance))
                     {
                         <RadzenDataGridColumn TItem="Project" Property="CostModel" Title="Cost Model" Width="14rem" MinWidth="10px">
