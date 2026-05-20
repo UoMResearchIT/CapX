@@ -565,7 +565,7 @@ namespace PPMTool.Pages
                 var groups = new List<CompetencyGroup>();
                 var newGroup = new CompetencyGroup(
                     5,
-                    "Junior Grade",
+                    "Foundation Skills",
                     "counter_1",
                     competencies
                         .Where(x => x.Grade == 5)
@@ -581,7 +581,7 @@ namespace PPMTool.Pages
 
                 newGroup = new CompetencyGroup(
                     6,
-                    "Standard Grade",
+                    "Advanced Skills",
                     "counter_2",
                     competencies
                         .Where(x => x.Grade == 6)
@@ -597,7 +597,7 @@ namespace PPMTool.Pages
 
                 newGroup = new CompetencyGroup(
                     7,
-                    "Leadership Grade",
+                    "Leadership Skills",
                     "counter_3",
                     competencies
                         .Where(x => x.Grade == 7)

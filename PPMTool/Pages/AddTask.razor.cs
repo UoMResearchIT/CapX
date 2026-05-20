@@ -907,11 +907,13 @@ namespace PPMTool.Pages
                     // Set error if they do not want to continue
                     if (!confirmed)
                     {
-                        if (TaskModel.AssignedResources.Count == 0)
+                        if (TaskModel.AssignedResources.Count != 0)
                         {
                             IsValid = false;
                             error = "Task has zero demand but has resources assigned!";
                         }
+
+                        return;
                     }
 
                     // Fail if demand, original demand or assigned resources are assigned less than 3 DP
