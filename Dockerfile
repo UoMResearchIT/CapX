@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 University of Manchester
+#
+# SPDX-License-Identifier: apache-2.0
+
 # Based on https://github.com/abmdev86/blazor-server-docker/tree/bb8e4fe2ce95863f9bfa257f4aa56217830b76a2
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base

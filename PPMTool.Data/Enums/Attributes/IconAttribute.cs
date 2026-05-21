@@ -1,4 +1,8 @@
-﻿namespace PPMTool.Data.Enums.Attributes
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+namespace PPMTool.Data.Enums.Attributes
 {
     /// <summary>
     /// Reference an icon by its name as a string

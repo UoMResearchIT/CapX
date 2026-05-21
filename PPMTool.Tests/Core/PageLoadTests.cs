@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
 namespace PPMTool.Tests.Core
 {
     [Parallelizable(ParallelScope.Self)]

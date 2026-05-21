@@ -1,4 +1,8 @@
-﻿namespace PPMTool.Models
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+namespace PPMTool.Models
 {
     public class DemandChartItem : BaseDemandChartItem
     {

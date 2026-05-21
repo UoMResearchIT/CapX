@@ -1,4 +1,8 @@
-﻿// Setup the reference to the dotnet object
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+// Setup the reference to the dotnet object
 function setDotNetReference(dotNetHelper) {
     window.dotNetHelper = dotNetHelper;
 }

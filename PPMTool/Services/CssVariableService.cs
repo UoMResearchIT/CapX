@@ -1,4 +1,8 @@
-﻿using Microsoft.JSInterop;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.JSInterop;
 
 namespace PPMTool.Services
 {

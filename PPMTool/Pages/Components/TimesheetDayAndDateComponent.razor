@@ -1,4 +1,10 @@
-﻿<RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="-0.25rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center">
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+<RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="-0.25rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center">
     <div>@Day.ToString().Substring(0, 3)</div>
     <div style="font-size: 0.8rem;">@dateForDay</div>
 </RadzenStack>

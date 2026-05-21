@@ -1,4 +1,8 @@
-﻿namespace PPMTool.Data.Entities
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+namespace PPMTool.Data.Entities
 {
     /// <summary>
     /// Represents an item that has planned and actual hours and costs
