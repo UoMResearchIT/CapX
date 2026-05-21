@@ -8,11 +8,11 @@ namespace PPMTool.Data.Enums
     /// </summary>
     public enum Rate
     {
-        [Description("Grade 7.1")]
+        [Description("Senior Bottom")]
         Standard,
-        [Description("Grade 5.1")]
+        [Description("Junior Bottom")]
         Junior,
-        [Description("Grade 7.5")]
+        [Description("Senior Mid")]
         Senior
     }
 }
