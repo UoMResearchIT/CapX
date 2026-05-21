@@ -1,4 +1,8 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.Extensions.Configuration;
 using PPMTool.Data.Context;
 
 namespace PPMTool.Data.Helpers

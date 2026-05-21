@@ -1,4 +1,8 @@
-﻿namespace PPMTool.Data.Interfaces
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+namespace PPMTool.Data.Interfaces
 {
     public interface IWithin
     {

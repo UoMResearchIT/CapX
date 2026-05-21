@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 University of Manchester
+#
+# SPDX-License-Identifier: apache-2.0
+
 import sqlite3
 
 OLD_DB = "PPMTool-v13.9.2.db"

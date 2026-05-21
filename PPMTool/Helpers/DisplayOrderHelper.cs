@@ -1,4 +1,8 @@
-﻿using System.Linq.Expressions;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Linq.Expressions;
 using System.Reflection;
 using PPMTool.Data.Enums;
 using PPMTool.Enums.Attributes;

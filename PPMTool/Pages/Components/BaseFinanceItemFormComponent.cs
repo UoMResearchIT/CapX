@@ -1,4 +1,8 @@
-﻿using System.ComponentModel;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.ComponentModel;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;

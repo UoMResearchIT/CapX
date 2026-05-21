@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 
 namespace PPMTool.Data.Helpers

@@ -1,4 +1,8 @@
-﻿namespace PPMTool.API.DTOs
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+namespace PPMTool.API.DTOs
 {
     /// <summary>
     /// DTO simplifying the representation of a skill tag.
