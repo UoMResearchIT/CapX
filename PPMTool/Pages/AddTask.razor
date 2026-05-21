@@ -1,487 +1,515 @@
 ﻿@page "/projects/addtask/{projectID:int}/{taskId:int}"
 @inherits DataGridPage<Resource>
 @using PPMTool.Data
-@using PPMTool.Enums
+@using PPMTool.Data.Enums
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
 @using System.Diagnostics
 @using static PPMTool.Data.Entities.Project
 <PageTitle>Add Task - CapX</PageTitle>
 
-@if (Loading)
-{
-    <LoadingComponent />
-}
-else
-{
-    <div class="container">
-        @if ((TaskId != null && TaskId <= 0) || IsCopy)
-        {
-            <div class="row">
-                <div class="col-auto">
-                    <h1>@(IsSplit ? "Add" : IsCopy ? "Copy" : "Add") Task</h1>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col">
-                    <p>Add new task to <b>@ProjectModel?.GetFullName()</b>@(IsSplit ? " by splitting an existing task." : IsCopy ? " by copying an existing task." : "")</p>
-                </div>
-            </div>
-        }
-        else
-        {
-            <div class="row">
-                <div class="col">
-                    <h1>Edit <i>@(TaskModel.Name)</i></h1>
-                </div>
-                @if (!IsSplit)
-                {
-                    <div class="col-auto" style="align-content: center">
-                        <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="SplitSubTask" Text="Split" Icon="settings_ethernet" Disabled=!EditAuthorised />
-                    </div>
-                    <div class="col-auto" style="align-content: center">
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DeleteSubTask" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
-                    </div>
-                }
-            </div>
-            <div class="row">
-                <div class="col">
-                    <p>Edit existing task in <b>@ProjectModel?.GetFullName()</b>.</p>
-                </div>
-            </div>
-        }
-        <hr />
-        <StatusMessageSummaryComponent Messages="TaskModel.GetLatestStatusMessages()" />
-        @if (!EditAuthorised)
-        {
-            <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.1rem">
-                <ProjectManagerOnlyComponent />
-            </RadzenStack>
-        }
-        <hr />
-        <RadzenCard>
-            <h2>Details</h2>
-            <EditForm EditContext=@editContext OnSubmit="@HandleSubmit">
-                <div class="row">
-                    <div class="col-4">
-                        <RadzenLabel class="radzen-form-label" Text="Name" /><br />
-                        <RadzenTextBox TValue="string" @bind-Value="TaskModel.Name" />
-                    </div>
-                    <div class="col-3">
-                        <RadzenLabel class="radzen-form-label" Text="Original Demand (FTE)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Minimum required units for this task when originally planned" /><br />
-                        <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.001)" Step="0.001" Placeholder="0.00" @bind-Value="TaskModel.OriginalDemand" />
-                    </div>
-                    <div class="col-3">
-                        <RadzenLabel class="radzen-form-label" Text="Current Demand (FTE)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Minimum required units for this task at present" /><br />
-                        <RadzenNumeric class="radzen-numeric" TValue="double" Min="0" Step="0.001" Placeholder="0.00" @bind-Value="TaskModel.Demand" />
-                    </div>
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Text="Planned Cost" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Cost computed from resource day rates and assignment FTE" /><br />
-                        <RadzenText Text="@TaskModel.PlannedCost.ToString("C2")" Style="margin-bottom: 0;" />
-                    </div>
-                </div>
+<FeatureCheckComponent Feature="FeatureType.ProjectsAndCapacity">
 
+    @if (Loading)
+    {
+        <LoadingComponent />
+    }
+    else
+    {
+        <div class="container">
+            @if ((TaskId != null && TaskId <= 0) || IsCopy)
+            {
                 <div class="row">
-                    <!-- Choice of task type affects options -->
-                    <div class="col-4">
-                        <RadzenLabel class="radzen-form-label" Text="Task Type" /><br />
-                        <RadzenDropDown class="radzen-dropdown" TValue="TaskType" @bind-Value="TaskModel.TaskType" Data="@taskTypes">
-                            <Template Context="x">
-                                @GetNiceString(x)
-                            </Template>
-                        </RadzenDropDown>
+                    <div class="col-auto">
+                        <h1>@(IsSplit ? "Add" : IsCopy ? "Copy" : "Add") Task</h1>
                     </div>
-
-                    <div class="col-3">
-                        @if (ProjectModel?.SubTasks?.Count > 0)
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <p>Add new task to <b>@ProjectService.GetFullName(ProjectModel)</b>@(IsSplit ? " by splitting an existing task." : IsCopy ? " by copying an existing task." : "")</p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    <div class="col">
+                        <h1>Edit <i>@(TaskModel.Name)</i></h1>
+                    </div>
+                    @if (!IsSplit)
+                    {
+                        <div class="col-auto" style="align-content: center">
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="SplitSubTask" Text="Split" Icon="settings_ethernet" Disabled=!EditAuthorised />
+                        </div>
+                        <div class="col-auto" style="align-content: center">
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DeleteSubTask" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
+                        </div>
+                    }
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <p>Edit existing task in <b>@ProjectService.GetFullName(ProjectModel)</b>.</p>
+                    </div>
+                </div>
+            }
+            <hr />
+            <StatusMessageSummaryComponent Messages="TaskModel.GetLatestStatusMessages()" />
+            @if (!EditAuthorised)
+            {
+                <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.1rem">
+                    <ProjectManagerOnlyComponent />
+                </RadzenStack>
+            }
+            <hr />
+            <RadzenCard>
+                <h2>Details</h2>
+                <EditForm EditContext=@editContext OnSubmit="@HandleSubmit">
+                    <div class="row">
+                        <div class="col-4">
+                            <RadzenLabel class="radzen-form-label" Text="Name" /><br />
+                            <RadzenTextBox class="radzen-text-box" @bind-Value="TaskModel.Name" />
+                        </div>
+                        <div class="col-3">
+                            <RadzenLabel class="radzen-form-label" Text="Original Demand (FTE)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Minimum required units for this task when originally planned" /><br />
+                            <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.001)" Step="0.001" Placeholder="0.00" @bind-Value="TaskModel.OriginalDemand" />
+                        </div>
+                        <div class="col-3">
+                            <RadzenLabel class="radzen-form-label" Text="Current Demand (FTE)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Minimum required units for this task at present" /><br />
+                            <RadzenNumeric class="radzen-numeric" TValue="double" Min="0" Step="0.001" Placeholder="0.00" @bind-Value="TaskModel.Demand" />
+                        </div>
+                        @if (financeEnabled)
                         {
-                            <RadzenLabel class="radzen-form-label" Text="Predecessor" />
-
-                            <RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Cannot choose a predecessor if start is fixed" Visible="@TaskModel.HasFixedStart" />
-
-                            <br />
-                            <RadzenDropDown class="radzen-dropdown" @bind-Value="@selectedPredecessorId" Data="@predecessorTasks" ValueProperty="SubTaskId" AllowClear="true" Disabled="@TaskModel.HasFixedStart">
-                                <Template Context="x">
-                                    @($"{x.Name} ({x.StartDate.ToShortDateString()} - {x.EndDate.ToShortDateString()})")
-                                </Template>
-                            </RadzenDropDown>
+                            <div class="col-2">
+                                <RadzenLabel class="radzen-form-label" Text="Planned Cost" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Cost computed from resource day rates and assignment FTE. Will be zero if a leadership task and the cost model does not recharge leadership." /><br />
+                                <RadzenText Text="@TaskModel.PlannedCost.ToString("C2")" Style="margin-bottom: 0;" />
+                            </div>
                         }
                     </div>
 
-                    <div class="col-3">
-                        <RadzenLabel class="radzen-form-label" Text="Lag" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Only available when a predecessor is set" Visible="@(selectedPredecessorId == null)" /><br />
-                        <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Step="1" Placeholder="0" @bind-Value="TaskModel.Lag" Disabled="@(selectedPredecessorId == null)" />
-                    </div>
-
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Component="RequiresLeadership" Text="Requires Leadership" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Switch this off if the task does not require leadership (affects PM demand and leadership costs if support by the cost model)" /><br />
-                        <div class="align-items-center p-1">
-                            <div style="display: flex">
-                                <RadzenSwitch @bind-value="TaskModel.RequiresLeadership" Name="RequiresLeadership" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Component="HasFixedStart" Text="Fixed Start Date" /><br />
-                        <div class="align-items-center p-1">
-                            <div style="display: flex">
-                                <RadzenSwitch @bind-value="TaskModel.HasFixedStart" Name="HasFixedStart" Change=@(_ => UpdateUIState(TaskModel, null)) />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Start date is required if fixed start otherwise driven from predecesors -->
-                    <div class="col-3">
-                        <RadzenLabel class="radzen-form-label" Text="Start Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Start date is not fixed so is determined by predecessor or defaults to date task created" Visible="@(startDateDisabled)" /><br />
-                        <RadzenDatePicker class="radzen-datepicker" @bind-Value="TaskModel.StartDate" Disabled="@(startDateDisabled)" ShowTime="false" DateFormat="dd/MM/yyyy" Change="@OnStartDateChange" />
-                    </div>
-
-                    <!-- Choice of whether the end drive should be picked or driven -->
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Component="HasFixedEnd" Text="Fixed End Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Cannot fix end date if task is not fixed duration" Visible="@(TaskModel.TaskType != TaskType.FixedDuration)" /><br />
-                        <div class="align-items-center p-1">
-                            <div style="display: flex">
-                                <RadzenSwitch @bind-value="TaskModel.HasFixedEndDate" Disabled="@(TaskModel.TaskType != TaskType.FixedDuration)" Name="HasFixedEnd"/>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-2">
-                        <RadzenLabel class="radzen-form-label" Component="DefineByEndDate" Text="Specify End Date" /><br />
-                        <div class="align-items-center p-1">
-                            <div style="display: flex">
-                                <RadzenSwitch @bind-value="defineByEndDate" Name="DefineByEndDate" Change=@(_ => UpdateUIState(TaskModel, null)) Disabled="specifyEndDateDisabled" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- End date is can be driven by duration or chosen which will then drive the duration -->
-                    <div class="col-3">
-                        <RadzenLabel class="radzen-form-label" Text="End Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="End date is determined by work/duration and resources (or demand if no resources) and can only be fixed for a fixed duration task" Visible="@(endDateDisabled)" /><br />
-                        <RadzenDatePicker class="radzen-datepicker" @bind-Value="TaskModel.EndDate" Disabled="@(endDateDisabled)" ShowTime="false" DateFormat="dd/MM/yyyy" />
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-6">
-                        <RadzenLabel class="radzen-form-label" Text="Work (Hours)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Task work is computed from duration and resources (or demand if no resources)" Visible="@workDisabled" /><br />
-                        <RadzenNumeric class="radzen-numeric" TValue="double" Min="0" Step="0.5" Placeholder="0" @bind-Value="TaskModel.PlannedWorkHours" Disabled="@workDisabled" />
-                    </div>
-
-                    <div class="col-6">
-                        <RadzenLabel class="radzen-form-label" Text="Duration (Days)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Task duration is computed from work and resources (or demand if no resources)" Visible="@(durationDisabled)" /><br />
-                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
-                            <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" @bind-Value="TaskModel.DurationDays" Disabled="@(durationDisabled)" />
-                            <RadzenText Text="@($"({TaskModel.DurationBillableDays} Billable Days)")" />
-                        </RadzenStack>
-                    </div>
-                </div>
-
-                <hr />
-                <h2>Skills</h2>
-                <div class="row">
-                    <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Skills Required" />
-                        <RadzenAutoComplete @bind-Value=@autoCompleteText
-                                            Placeholder="Search for Skill Tags to Add"
-                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                            Data=@availableTags
-                                            TextProperty="Name"
-                                            Change=@OnChange
-                                            Style="width:100%; margin-bottom: 0.5rem;" />
-                        <SkillsAsBadgesComponent SkillsList="TaskModel.SkillsRequired"
-                                                 RemoveSkill="RemoveSkill" />
-                    </div>
-                </div>
-
-                @if (TaskId != null && TaskId > 0)
-                {
-                    <hr />
-                    <h2>Actuals</h2>
                     <div class="row">
-                        <div class="col">
-                            <RadzenLabel class="radzen-form-label" Text="Actual Hours" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Hours are sum of resource actuals" /><br />
-                            <RadzenText Text="@TaskModel.ActualWorkHours.ToString("F1")" />
+                        <!-- Choice of task type affects options -->
+                        <div class="col-4">
+                            <RadzenLabel class="radzen-form-label" Text="Task Type" /><br />
+                            <RadzenDropDown class="radzen-dropdown" TValue="TaskType" @bind-Value="TaskModel.TaskType" Data="@taskTypes">
+                                <Template Context="x">
+                                    @GetNiceString(x)
+                                </Template>
+                            </RadzenDropDown>
                         </div>
-                        <div class="col">
-                            <RadzenLabel class="radzen-form-label" Text="Actual Cost" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Cost computed from resource day rates and actual hours" /><br />
-                            <RadzenText Text="@TaskModel.ActualCost.ToString("C2")" />
+
+                        <div class="col-3">
+                            @if (ProjectModel?.SubTasks?.Count > 0)
+                            {
+                                <RadzenLabel class="radzen-form-label" Text="Predecessor" />
+
+                                <RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Cannot choose a predecessor if start is fixed" Visible="@TaskModel.HasFixedStart" />
+
+                                <br />
+                                <RadzenDropDown class="radzen-dropdown" @bind-Value="@selectedPredecessorId" Data="@predecessorTasks" ValueProperty="SubTaskId" AllowClear="true" Disabled="@TaskModel.HasFixedStart">
+                                    <Template Context="x">
+                                        @($"{x.Name} ({x.StartDate.ToShortDateString()} - {x.EndDate.ToShortDateString()})")
+                                    </Template>
+                                </RadzenDropDown>
+                            }
                         </div>
-                        <div class="col">
+
+                        <div class="col-3">
+                            <RadzenLabel class="radzen-form-label" Text="Lag" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Only available when a predecessor is set" Visible="@(selectedPredecessorId == null)" /><br />
+                            <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Step="1" Placeholder="0" @bind-Value="TaskModel.Lag" Disabled="@(selectedPredecessorId == null)" />
+                        </div>
+
+                        <div class="col-2">
+                            <RadzenLabel class="radzen-form-label" Component="LeadershipTask" Text="Is Leadership Task" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Turn this on if the task is a leadership task (affects PM demand and leadership costs if support by the cost model)" /><br />
+                            <div class="align-items-center p-1">
+                                <div style="display: flex">
+                                    <RadzenSwitch @bind-value="TaskModel.IsLeadershipTask" Name="LeadershipTask" Change="@(_ => UpdatePeopleDropdownSource(new LoadDataArgs()))" />
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    @if (!IsCopy && !IsSplit)
-                    {
-                        <div class="row">
-                            <div class="col">
-                                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center" class="my-2">
-                                    <RadzenLabel class="radzen-form-label" Text="Actuals Report" />
-                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
-                                        <RadzenLabel Text="Date Range" class="rz-ms-2" />
-                                        <RadzenDatePicker @bind-Value="actualsStartDate" ShowTime="false" DateFormat="dd/MM/yyyy" AllowClear="true" Change="@(() => Task.Run(LoadActualsAsync))" Disabled="actualsLoading" />
-                                        <RadzenLabel Text="to" class="rz-ms-2" />
-                                        <RadzenDatePicker @bind-Value="actualsEndDate" ShowTime="false" DateFormat="dd/MM/yyyy" AllowClear="true" Change="@(() => Task.Run(LoadActualsAsync))" Disabled="actualsLoading" />
-                                        <RadzenLabel Text="Hide Empty Weeks" Component="CheckBox1" class="rz-ms-2" />
-                                        <RadzenCheckBox TValue="bool" Value=@hideEmptyWeeks Name="CheckBox1" Change=@(args => { hideEmptyWeeks = args; Task.Run(LoadActualsAsync); }) Disabled="actualsLoading" />
-                                    </RadzenStack>
-                                </RadzenStack>
+                    <div class="row">
+                        <div class="col-2">
+                            <RadzenLabel class="radzen-form-label" Component="HasFixedStart" Text="Fixed Start Date" /><br />
+                            <div class="align-items-center p-1">
+                                <div style="display: flex">
+                                    <RadzenSwitch @bind-value="TaskModel.HasFixedStart" Name="HasFixedStart" Change=@(_ => UpdateUIState(TaskModel, null)) />
+                                </div>
                             </div>
                         </div>
 
+                        <!-- Start date is required if fixed start otherwise driven from predecesors -->
+                        <div class="col-3">
+                            <RadzenLabel class="radzen-form-label" Text="Start Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Start date is not fixed so is determined by predecessor or defaults to date task created" Visible="@(startDateDisabled)" /><br />
+                            <RadzenDatePicker class="radzen-datepicker" @bind-Value="TaskModel.StartDate" Disabled="@(startDateDisabled)" ShowTime="false" DateFormat="dd/MM/yyyy" Change="@OnStartDateChange" />
+                        </div>
+
+                        <!-- Choice of whether the end drive should be picked or driven -->
+                        <div class="col-2">
+                            <RadzenLabel class="radzen-form-label" Component="HasFixedEnd" Text="Fixed End Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Cannot fix end date if task is not fixed duration" Visible="@(TaskModel.TaskType != TaskType.FixedDuration)" /><br />
+                            <div class="align-items-center p-1">
+                                <div style="display: flex">
+                                    <RadzenSwitch @bind-value="TaskModel.HasFixedEndDate" Disabled="@(TaskModel.TaskType != TaskType.FixedDuration)" Name="HasFixedEnd"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-2">
+                            <RadzenLabel class="radzen-form-label" Component="DefineByEndDate" Text="Specify End Date" /><br />
+                            <div class="align-items-center p-1">
+                                <div style="display: flex">
+                                    <RadzenSwitch @bind-value="defineByEndDate" Name="DefineByEndDate" Change=@(_ => UpdateUIState(TaskModel, null)) Disabled="specifyEndDateDisabled" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- End date is can be driven by duration or chosen which will then drive the duration -->
+                        <div class="col-3">
+                            <RadzenLabel class="radzen-form-label" Text="End Date" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="End date is determined by work/duration and resources (or demand if no resources) and can only be fixed for a fixed duration task" Visible="@(endDateDisabled)" /><br />
+                            <RadzenDatePicker class="radzen-datepicker" @bind-Value="TaskModel.EndDate" Disabled="@(endDateDisabled)" ShowTime="false" DateFormat="dd/MM/yyyy" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <RadzenLabel class="radzen-form-label" Text="Work (Hours)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Task work is computed from duration and resources (or demand if no resources)" Visible="@workDisabled" /><br />
+                            <RadzenNumeric class="radzen-numeric" TValue="double" Min="0" Step="0.5" Placeholder="0" @bind-Value="TaskModel.PlannedWorkHours" Disabled="@workDisabled" />
+                        </div>
+
+                        <div class="col-6">
+                            <RadzenLabel class="radzen-form-label" Text="Duration (Days)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Task duration is computed from work and resources (or demand if no resources)" Visible="@(durationDisabled)" /><br />
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
+                                <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" @bind-Value="TaskModel.DurationDays" Disabled="@(durationDisabled)" />
+                                <RadzenText Text="@($"({TaskModel.DurationBillableDays} Billable Days)")" />
+                            </RadzenStack>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    @if (skillsEnabled)
+                    {
+                        <h2>Skills</h2>
                         <div class="row">
                             <div class="col">
-                                @if (actualsLoading)
-                                {
-                                    <LoadingComponent />
-                                }
-                                else if (actualsReportRows == null || actualsReportRows?.Count == 0)
-                                {
-                                    <RadzenText Text="@($"No actuals to show for the timesheet activity code {projectModel?.InnateActivity?.GetCodeAsString()}")" />
-                                }
-                                else
-                                {
-                                    <RadzenDataGrid AllowAlternatingRows="true"
-                                                    AllowFiltering="true"
-                                                    AllowPaging="false"
-                                                    AllowSorting="true"
-                                                    FilterMode="FilterMode.CheckBoxList"
-                                                    AllowColumnResize="true"
-                                                    Data="@actualsReportRows"
-                                                    TItem="ActualsReportRow"
-                                                    Density="Density.Compact"
-                                                    ColumnWidth="10rem"
-                                                    Filter="ActualsReportFiltered"
-                                                    FilterCleared="ActualsReportFiltered"
-                                                    @ref=@ActualsGrid>
-                                        <Columns>
-                                            <RadzenDataGridColumn TItem="ActualsReportRow" Property="Task.TaskName" Title="Task" Frozen="true" MinWidth="10px" Width="12rem" />
-                                            <RadzenDataGridColumn TItem="ActualsReportRow" Property="Resource.Name" Title="Person" Frozen="true" MinWidth="10px" />
-                                            @foreach (var week in actualsColumnSums.Keys.OrderBy(x => x))
-                                            {
-                                                <RadzenDataGridColumn TItem="ActualsReportRow" Title="@week.ToString("dd/MM/yy")" Filterable="false" Sortable="false" MinWidth="10px" Width="6rem">
-                                                    <Template Context="row">
-                                                        @if (row.Hours.ContainsKey(week))
-                                                        {
-                                                            @(row.Hours[week] == 0 ? "" : row.Hours[week].ToString("F2"))
-                                                        }
-                                                    </Template>
-                                                    <FooterTemplate>
-                                                        <RadzenText TextStyle="TextStyle.Subtitle2">
-                                                            @if (actualsColumnSums.ContainsKey(week))
-                                                            {
-                                                                @(actualsColumnSums[week] == 0 ? "" : actualsColumnSums[week].ToString("F2"))
-                                                            }
-                                                        </RadzenText>
-                                                    </FooterTemplate>
-                                                </RadzenDataGridColumn>
-                                            }
-                                            <RadzenDataGridColumn TItem="ActualsReportRow" Property="RowTotal" Title="Total" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" MinWidth="10px">
-                                                <Template Context="row">
-                                                    <RadzenText TextStyle="TextStyle.Subtitle2" TextAlign="TextAlign.Right">
-                                                        @row.RowTotal.ToString("F2")
-                                                    </RadzenText>
-                                                </Template>
-                                                <FooterTemplate>
-                                                    <RadzenText TextStyle="TextStyle.Subtitle2" TextAlign="TextAlign.Right">
-                                                        @(actualsColumnSums.Sum(x => x.Value) == 0 ? "" : actualsColumnSums.Sum(x => x.Value).ToString("F2"))
-                                                    </RadzenText>
-                                                </FooterTemplate>
-                                            </RadzenDataGridColumn>
-                                        </Columns>
-                                    </RadzenDataGrid>
-                                }
+                                <RadzenLabel class="radzen-form-label" Text="Skills Required" />
+                                <RadzenAutoComplete @bind-Value=@autoCompleteText
+                                Placeholder="Search for Skill Tags to Add"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                Data=@availableTags
+                                TextProperty="Name"
+                                Change=@OnChange
+                                Style="width:100%; margin-bottom: 0.5rem;" />
+                                <SkillsAsBadgesComponent SkillsList="TaskModel.SkillsRequired"
+                                RemoveSkill="RemoveSkill" />
                             </div>
                         </div>
                     }
-                }
 
-                <hr />
-                <div class="row">
-                    <div class="col">
-                        <h2>Resources</h2>
-                    </div>
-                    <div class="col-auto" style="align-content: center">
-                        <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null) />
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Unmet Demand (FTE)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="The difference between the minimum demand required and the sum of the resources assigned" />
-                        @if(TaskModel.UnmetDemand > 0)
+                    @if(timesheetsEnabled)
+                    {
+                        @if (TaskId != null && TaskId > 0)
                         {
-                            <RadzenIcon class="centre-align" IconStyle=IconStyle.Warning Icon="warning" title="This task is under-resourced!" />
-                        }
-                        <br />
-                        <RadzenText Text="@TaskModel.UnmetDemand.ToString()" />
-                    </div>
-                    <div class="col">
-                    </div>
-                </div>
-                <br />
-                <div class="row">
-                    <div class="col">
-                        <RadzenDataGrid @ref="dataGrid"
-                                        AllowAlternatingRows="false"
-                                        AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
-                                        AllowPaging="IsSplit"
-                                        PageSize="5"
-                                        AllowSorting="true"
-                                        EditMode="DataGridEditMode.Single"
-                                        Data="@dataGridEntities"
-                                        TItem="Resource"
-                                        RowUpdate="@OnUpdateRow"
-                                        RowCreate="@OnCreateRow"
-                                        Sort="@Reset"
-                                        Page="@Reset"
-                                        Filter="@Reset"
-                                        ColumnWidth="100px">
-                            <Columns>
-                                <RadzenDataGridColumn TItem="Resource" Property="Person.Name" Title="Person" Width="250px" MinWidth="10px">
-                                    <Template Context="res">
-                                        <RadzenText Style="margin-bottom: 0rem;" Text="@res.Person.Name" />
-                                    </Template>
-                                    <EditTemplate Context="res">
-                                        <RadzenDropDown @bind-Value="res.Person"
-                                                        Data="@filteredPeople"
-                                                        Style="width:100%; display: block;"
-                                                        Change="@OnResourcePersonChange"
-                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                        FilterOperator="StringFilterOperator.Contains"
-                                                        AllowFiltering="true"
-                                                        LoadData="@UpdatePeopleDropdownSource">
-                                            <Template Context="person">
-                                                <RadzenText Style="margin-bottom: 0rem;"  Text="@person.Name" />
-                                            </Template>
-                                        </RadzenDropDown>
-                                    </EditTemplate>
-                                </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="Resource" Property="AssignmentFTE" Title="FTE" Width="120px" MinWidth="10px">
-                                    <Template Context="res">
-                                        <RadzenText Style="margin-bottom: 0rem;" Text="@($"{res.AssignmentFTE}{(ProjectModel.CostModel.HasIndirects() ? $" ({Math.Round(res.BilledFTE, 3)})" : "")}")" />
-                                    </Template>
-                                    <EditTemplate Context="res">
-                                        <RadzenNumeric TValue="double" Width="80px" Step="0.001" Min="0" Max="@Convert.ToDecimal(1.0)" @bind-Value="@res.AssignmentFTE" />
-                                    </EditTemplate>
-                                </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="Resource" Property="IsProvisional" Title="Provisional?" MinWidth="10px">
-                                    <Template Context="res">
-                                        <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
-                                            <RadzenSwitch @bind-Value="@res.IsProvisional" Disabled=true Name="IsProvisional" />
-                                            <RadzenLabel Style="visibility: hidden" Component="IsProvisional" Text="Provisional?" />
-                                        </RadzenStack>
-                                    </Template>
-                                    <EditTemplate Context="res">
-                                        <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
-                                            <RadzenSwitch @bind-Value="@res.IsProvisional" Name="IsProvisional"/>
-                                            <RadzenLabel Style="visibility: hidden" Component="IsProvisional" Text="Provisional?" />
-                                        </RadzenStack>
-                                    </EditTemplate>
-                                </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="Resource" Property="ActualWorkHours" Title="Actual Hours" MinWidth="10px">
-                                    <Template Context="res">
-                                        <RadzenText Style="margin-bottom: 0rem;" Text="@res.ActualWorkHours.ToString("F1")" />
-                                    </Template>
-                                    <EditTemplate Context="res">
-                                        <RadzenNumeric TValue="double" Step=".5" Min="0" @bind-Value="@res.ActualWorkHours" />
-                                    </EditTemplate>
-                                </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="Resource" Property="ActualCost" Title="Actual Cost" MinWidth="10px">
-                                    <Template Context="res">
-                                        <RadzenText Style="margin-bottom: 0rem;" Text="@res.ActualCost.ToString("C2")" />
-                                    </Template>
-                                </RadzenDataGridColumn>
-
-                                @if (ProjectModel.CostModel == CostModel.DayRate)
+                            <hr />
+                            <h2>Actuals</h2>
+                            <div class="row">
+                                <div class="col">
+                                    <RadzenLabel class="radzen-form-label" Text="Actual Hours" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Hours are sum of resource actuals" /><br />
+                                    <RadzenText Text="@TaskModel.ActualWorkHours.ToString("F1")" />
+                                </div>
+                                @if (financeEnabled)
                                 {
-                                    <RadzenDataGridColumn TItem="Resource" Property="UseProjectDayRate" Width="120px" Title="Project Day Rate?" MinWidth="10px">
-                                        <Template Context="res">
-                                            <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
-                                                <RadzenSwitch @bind-Value="@res.UseProjectDayRate" Disabled=true Name="UseProjectDayRate" />
-                                                <RadzenText Style="margin-bottom: 0rem;" Text="@($"({ProjectModel.DayRate.ToString("C0")})")" />
-                                                <RadzenLabel Style="visibility: hidden" Component="UseProjectDayRate" Text="Use Project Day Rate?" />
-                                            </RadzenStack>
-                                        </Template>
-                                        <EditTemplate Context="res">
-                                            <RadzenStack AlignItems="AlignItems.Center" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
-                                                <RadzenSwitch @bind-Value="@res.UseProjectDayRate" Name="UseProjectDayRate" />
-                                                <RadzenText Text="@($"({ProjectModel.DayRate.ToString("C0")})")" />
-                                                <RadzenLabel Style="visibility: hidden" Component="UseProjectDayRate" Text="Use Project Day Rate?" />
-                                            </RadzenStack>
-                                        </EditTemplate>
-                                    </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="Resource" Property="DayRate" Title="Day Rate" MinWidth="10px">
-                                        <Template Context="res">
-                                            <RadzenText Style="margin-bottom: 0rem;" Text="@(res.DayRate?.ToString("C0") ?? "N/A")" />
-                                        </Template>
-                                        <EditTemplate Context="res">
-                                            <RadzenNumeric TValue="double?" Step=".01" Min="0" @bind-Value="@res.DayRate" Disabled="@(res.UseProjectDayRate)" />
-                                        </EditTemplate>
-                                    </RadzenDataGridColumn>
+                                    <div class="col">
+                                        <RadzenLabel class="radzen-form-label" Text="Actual Cost" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Cost computed from resource day rates and actual hours" /><br />
+                                        <RadzenText Text="@TaskModel.ActualCost.ToString("C2")" />
+                                    </div>
                                 }
-                                <RadzenDataGridColumn TItem="Resource" Property="FundingSource" Width="180px" Title="Funding Source" MinWidth="10px">
-                                    <Template Context="res">
-                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" class="my-1">
-                                            @if (res.FundedFrom == null)
-                                            {
-                                                <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title="No funding source for this resource!" />
-                                            }
-                                            <RadzenText Style="@($"margin-bottom: 0rem; {(res.FundedFrom == null ? "color: red;" : "")}")" Text="@(res.FundedFrom?.GetSensibleObjectName() ?? "None")" />
+                                <div class="col">
+                                </div>
+                            </div>
+
+                            @if (!IsCopy && !IsSplit)
+                            {
+                                <div class="row">
+                                    <div class="col">
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center" class="my-2">
+                                            <RadzenLabel class="radzen-form-label" Text="Actuals Report" />
+                                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+                                                <RadzenLabel Text="Date Range" class="rz-ms-2" />
+                                                <RadzenDatePicker @bind-Value="actualsStartDate" ShowTime="false" DateFormat="dd/MM/yyyy" AllowClear="true" Change="@(() => Task.Run(LoadActualsAsync))" Disabled="actualsLoading" />
+                                                <RadzenLabel Text="to" class="rz-ms-2" />
+                                                <RadzenDatePicker @bind-Value="actualsEndDate" ShowTime="false" DateFormat="dd/MM/yyyy" AllowClear="true" Change="@(() => Task.Run(LoadActualsAsync))" Disabled="actualsLoading" />
+                                                <RadzenLabel Text="Hide Empty Weeks" Component="CheckBox1" class="rz-ms-2" />
+                                                <RadzenCheckBox TValue="bool" Value=@hideEmptyWeeks Name="CheckBox1" Change=@(args => { hideEmptyWeeks = args; Task.Run(LoadActualsAsync); }) Disabled="actualsLoading" />
+                                            </RadzenStack>
                                         </RadzenStack>
-                                    </Template>
-                                    <EditTemplate Context="res">
-                                        <RadzenDropDown @bind-Value="res.FundedFrom"
-                                                        Data="@availableSources"
-                                                        Style="width:100%; display: block;"
-                                                        AllowClear="true">
-                                            <Template Context="source">
-                                                <RadzenText Text="@source.GetSensibleObjectName()" />
-                                            </Template>
-                                        </RadzenDropDown>
-                                    </EditTemplate>
-                                </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="Resource" Context="res" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" MinWidth="10px" Title="Actions">
-                                    <Template Context="res">
-                                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(res))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))"/>
-                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(res))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))"/>
-                                    </Template>
-                                    <EditTemplate Context="res">
-                                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(res))" MouseEnter="@(args => ShowTooltip(args, "Save"))"/>
-                                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@((args) => CancelEdit(res))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))"/>
-                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(res))" MouseEnter="@(args => ShowTooltip(args, "Delete"))"/>
-                                    </EditTemplate>
-                                </RadzenDataGridColumn>
-                            </Columns>
-                        </RadzenDataGrid>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col">
+                                        @if (actualsLoading)
+                                        {
+                                            <LoadingComponent />
+                                        }
+                                        else if (actualsReportRows == null || actualsReportRows?.Count == 0)
+                                        {
+                                            <RadzenText Text="@($"No actuals to show for the timesheet activity code {projectModel?.InnateActivity?.GetCodeAsString()}")" />
+                                        }
+                                        else
+                                        {
+                                            <RadzenDataGrid AllowAlternatingRows="true"
+                                                            AllowFiltering="true"
+                                                            AllowPaging="false"
+                                                            AllowSorting="true"
+                                                            FilterMode="FilterMode.CheckBoxList"
+                                                            AllowColumnResize="true"
+                                                            Data="@actualsReportRows"
+                                                            TItem="ActualsReportRow"
+                                                            Density="Density.Compact"
+                                                            ColumnWidth="10rem"
+                                                            Filter="ActualsReportFiltered"
+                                                            FilterCleared="ActualsReportFiltered"
+                                                            @ref=@ActualsGrid>
+                                                <Columns>
+                                                    <RadzenDataGridColumn TItem="ActualsReportRow" Property="Task.TaskName" Title="Task" Frozen="true" MinWidth="10px" Width="12rem" />
+                                                    <RadzenDataGridColumn TItem="ActualsReportRow" Property="Resource.Name" Title="Person" Frozen="true" MinWidth="10px" />
+                                                    @foreach (var week in actualsColumnSums.Keys.OrderBy(x => x))
+                                                    {
+                                                        <RadzenDataGridColumn TItem="ActualsReportRow" Title="@week.ToString("dd/MM/yy")" Filterable="false" Sortable="false" MinWidth="10px" Width="6rem">
+                                                            <Template Context="row">
+                                                                @if (row.Hours.ContainsKey(week))
+                                                                {
+                                                                    @(row.Hours[week] == 0 ? "" : row.Hours[week].ToString("F2"))
+                                                                }
+                                                            </Template>
+                                                            <FooterTemplate>
+                                                                <RadzenText TextStyle="TextStyle.Subtitle2">
+                                                                    @if (actualsColumnSums.ContainsKey(week))
+                                                                    {
+                                                                        @(actualsColumnSums[week] == 0 ? "" : actualsColumnSums[week].ToString("F2"))
+                                                                    }
+                                                                </RadzenText>
+                                                            </FooterTemplate>
+                                                        </RadzenDataGridColumn>
+                                                    }
+                                                    <RadzenDataGridColumn TItem="ActualsReportRow" Property="RowTotal" Title="Total" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" MinWidth="10px">
+                                                        <Template Context="row">
+                                                            <RadzenText TextStyle="TextStyle.Subtitle2" TextAlign="TextAlign.Right">
+                                                                @row.RowTotal.ToString("F2")
+                                                            </RadzenText>
+                                                        </Template>
+                                                        <FooterTemplate>
+                                                            <RadzenText TextStyle="TextStyle.Subtitle2" TextAlign="TextAlign.Right">
+                                                                @(actualsColumnSums.Sum(x => x.Value) == 0 ? "" : actualsColumnSums.Sum(x => x.Value).ToString("F2"))
+                                                            </RadzenText>
+                                                        </FooterTemplate>
+                                                    </RadzenDataGridColumn>
+                                                </Columns>
+                                            </RadzenDataGrid>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                    }
+
+                    <hr />
+
+                    <div class="row">
+                        <div class="col">
+                            <h2>Resources</h2>
+                        </div>
+                        <div class="col-auto" style="align-content: center">
+                            <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null) />
+                        </div>
                     </div>
-                </div>
-                @if (TaskModel.UnmetDemand > 0)
-                {
+                    <div class="row">
+                        <div class="col">
+                            <RadzenLabel class="radzen-form-label" Text="Unmet Demand (FTE)" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="The difference between the minimum demand required and the sum of the resources assigned" />
+                            @if(TaskModel.UnmetDemand > 0)
+                            {
+                                <RadzenIcon class="centre-align" IconStyle=IconStyle.Warning Icon="warning" title="This task is under-resourced!" />
+                            }
+                            <br />
+                            <RadzenText Text="@TaskModel.UnmetDemand.ToString()" />
+                        </div>
+                        <div class="col">
+                        </div>
+                    </div>
                     <br />
                     <div class="row">
                         <div class="col">
-                            <SuggestResourcesComponent TaskModel="@taskModel" CurrentResources="@dataGridEntities"/>
+                            <RadzenDataGrid @ref="dataGrid"
+                                            AllowAlternatingRows="false"
+                                            AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
+                                            AllowPaging="IsSplit"
+                                            PageSize="5"
+                                            AllowSorting="true"
+                                            EditMode="DataGridEditMode.Single"
+                                            Data="@dataGridEntities"
+                                            TItem="Resource"
+                                            RowUpdate="@OnUpdateRow"
+                                            RowCreate="@OnCreateRow"
+                                            Sort="@Reset"
+                                            Page="@Reset"
+                                            Filter="@Reset"
+                                            ColumnWidth="100px">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="Resource" Property="Person.Name" Title="Person" Width="250px" MinWidth="10px">
+                                        <Template Context="res">
+                                            <RadzenText Style="margin-bottom: 0rem;" Text="@res.Person.Name" />
+                                        </Template>
+                                        <EditTemplate Context="res">
+                                            <RadzenDropDown @bind-Value="res.Person"
+                                                            Data="@filteredPeople"
+                                                            Style="width:100%; display: block;"
+                                                            Change="@OnResourcePersonChange"
+                                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                            FilterOperator="StringFilterOperator.Contains"
+                                                            AllowFiltering="true"
+                                                            LoadData="@UpdatePeopleDropdownSource">
+                                                <Template Context="person">
+                                                    <RadzenText Style="margin-bottom: 0rem;"  Text="@person.Name" />
+                                                </Template>
+                                            </RadzenDropDown>
+                                        </EditTemplate>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="Resource" Property="AssignmentFTE" Title="FTE" Width="120px" MinWidth="10px">
+                                        <Template Context="res">
+                                            <RadzenText Style="margin-bottom: 0rem;" Text="@($"{res.AssignmentFTE}{(ProjectModel.CostModel.HasIndirects() ? $" ({Math.Round(res.BilledFTE, 3)})" : "")}")" />
+                                        </Template>
+                                        <EditTemplate Context="res">
+                                            <RadzenNumeric TValue="double" Width="80px" Step="0.001" Min="0" Max="@Convert.ToDecimal(1.0)" @bind-Value="@res.AssignmentFTE" />
+                                        </EditTemplate>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="Resource" Property="IsProvisional" Title="Provisional?" MinWidth="10px">
+                                        <Template Context="res">
+                                            <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
+                                                <RadzenSwitch @bind-Value="@res.IsProvisional" Disabled=true Name="IsProvisional" />
+                                                <RadzenLabel Style="visibility: hidden" Component="IsProvisional" Text="Provisional?" />
+                                            </RadzenStack>
+                                        </Template>
+                                        <EditTemplate Context="res">
+                                            <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
+                                                <RadzenSwitch @bind-Value="@res.IsProvisional" Name="IsProvisional"/>
+                                                <RadzenLabel Style="visibility: hidden" Component="IsProvisional" Text="Provisional?" />
+                                            </RadzenStack>
+                                        </EditTemplate>
+                                    </RadzenDataGridColumn>
+
+                                    @if (timesheetsEnabled)
+                                    {
+                                        <RadzenDataGridColumn TItem="Resource" Property="ActualWorkHours" Title="Actual Hours" MinWidth="10px">
+                                            <Template Context="res">
+                                                <RadzenText Style="margin-bottom: 0rem;" Text="@res.ActualWorkHours.ToString("F1")" />
+                                            </Template>
+                                            <EditTemplate Context="res">
+                                                <RadzenNumeric TValue="double" Step=".5" Min="0" @bind-Value="@res.ActualWorkHours" />
+                                            </EditTemplate>
+                                        </RadzenDataGridColumn>
+                                        @if (financeEnabled)
+                                        {
+                                            <RadzenDataGridColumn TItem="Resource" Property="ActualCost" Title="Actual Cost" MinWidth="10px">
+                                                <Template Context="res">
+                                                    <RadzenText Style="margin-bottom: 0rem;" Text="@res.ActualCost.ToString("C2")" />
+                                                </Template>
+                                            </RadzenDataGridColumn>
+                                        }
+                                    }
+                                    
+                                    @if (financeEnabled)
+                                    {
+                                        @if (ProjectModel.CostModel == CostModel.DayRate)
+                                        {
+                                            <RadzenDataGridColumn TItem="Resource" Property="UseProjectDayRate" Width="120px" Title="Project Day Rate?" MinWidth="10px">
+                                                <Template Context="res">
+                                                    <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
+                                                        <RadzenSwitch @bind-Value="@res.UseProjectDayRate" Disabled=true Name="UseProjectDayRate" />
+                                                        <RadzenText Style="margin-bottom: 0rem;" Text="@($"({ProjectModel.DayRate.ToString("C0")})")" />
+                                                        <RadzenLabel Style="visibility: hidden" Component="UseProjectDayRate" Text="Use Project Day Rate?" />
+                                                    </RadzenStack>
+                                                </Template>
+                                                <EditTemplate Context="res">
+                                                    <RadzenStack AlignItems="AlignItems.Center" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
+                                                        <RadzenSwitch @bind-Value="@res.UseProjectDayRate" Name="UseProjectDayRate" />
+                                                        <RadzenText Text="@($"({ProjectModel.DayRate.ToString("C0")})")" />
+                                                        <RadzenLabel Style="visibility: hidden" Component="UseProjectDayRate" Text="Use Project Day Rate?" />
+                                                    </RadzenStack>
+                                                </EditTemplate>
+                                            </RadzenDataGridColumn>
+                                            <RadzenDataGridColumn TItem="Resource" Property="DayRate" Title="Day Rate" MinWidth="10px">
+                                                <Template Context="res">
+                                                    <RadzenText Style="margin-bottom: 0rem;" Text="@(res.DayRate?.ToString("C0") ?? "N/A")" />
+                                                </Template>
+                                                <EditTemplate Context="res">
+                                                    <RadzenNumeric TValue="double?" Step=".01" Min="0" @bind-Value="@res.DayRate" Disabled="@(res.UseProjectDayRate)" />
+                                                </EditTemplate>
+                                            </RadzenDataGridColumn>
+                                        }
+                                        <RadzenDataGridColumn TItem="Resource" Property="FundingSource" Width="180px" Title="Funding Source" MinWidth="10px">
+                                            <Template Context="res">
+                                                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" class="my-1">
+                                                    @if (res.FundedFrom == null)
+                                                    {
+                                                        <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title="No funding source for this resource!" />
+                                                    }
+                                                    <RadzenText Style="@($"margin-bottom: 0rem; {(res.FundedFrom == null ? "color: red;" : "")}")" Text="@(res.FundedFrom?.GetSensibleObjectName() ?? "None")" />
+                                                </RadzenStack>
+                                            </Template>
+                                            <EditTemplate Context="res">
+                                                <RadzenDropDown @bind-Value="res.FundedFrom"
+                                                                Data="@availableSources"
+                                                                Style="width:100%; display: block;"
+                                                                AllowClear="true">
+                                                    <Template Context="source">
+                                                        <RadzenText Text="@source.GetSensibleObjectName()" />
+                                                    </Template>
+                                                </RadzenDropDown>
+                                            </EditTemplate>
+                                        </RadzenDataGridColumn>
+                                    }
+                                    <RadzenDataGridColumn TItem="Resource" Context="res" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" MinWidth="10px" Title="Actions">
+                                        <Template Context="res">
+                                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(res))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))"/>
+                                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(res))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))"/>
+                                        </Template>
+                                        <EditTemplate Context="res">
+                                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(res))" MouseEnter="@(args => ShowTooltip(args, "Save"))"/>
+                                            <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@((args) => CancelEdit(res))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))"/>
+                                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(res))" MouseEnter="@(args => ShowTooltip(args, "Delete"))"/>
+                                        </EditTemplate>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
                         </div>
                     </div>
-                }
+                    @if (TaskModel.UnmetDemand > 0)
+                    {
+                        <br />
+                        <div class="row">
+                            <div class="col">
+                                <SuggestResourcesComponent TaskModel="@taskModel" CurrentResources="@dataGridEntities"/>
+                            </div>
+                        </div>
+                    }
 
-                <hr />
-                <DataAnnotationsValidator />
+                    <hr />
+                    <DataAnnotationsValidator />
 
-                @if (IsSplit)
-                {
-                    <ValidationSummary />                    
-                }
+                    @if (IsSplit)
+                    {
+                        <ValidationSummary />                    
+                    }
 
-                @if (IsSplit && !IsValid)
-                {
-                    <StatusMessageComponent Message=@ErrorMessage />
-                }
+                    @if (IsSplit && !IsValid)
+                    {
+                        <StatusMessageComponent Message=@ErrorMessage />
+                    }
             
-            </EditForm>
-        </RadzenCard>
-    </div>
-}
+                </EditForm>
+            </RadzenCard>
+        </div>
+    }
+
+</FeatureCheckComponent>

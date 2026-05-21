@@ -1,46 +1,53 @@
 # Based on https://github.com/abmdev86/blazor-server-docker/tree/bb8e4fe2ce95863f9bfa257f4aa56217830b76a2
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 EXPOSE 8080
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIG=Local
 WORKDIR /src
 COPY nuget.config nuget.config
 
-COPY PPMTool.API/PPMTool.API.csproj PPMTool.API/PPMTool.API.csproj
-COPY PPMTool/PPMTool.csproj PPMTool/PPMTool.csproj
 COPY PPMTool/PPMTool.sln PPMTool/PPMTool.sln
+COPY PPMTool/PPMTool.csproj PPMTool/PPMTool.csproj
 COPY PPMTool.Tests/PPMTool.Tests.csproj PPMTool.Tests/PPMTool.Tests.csproj
-COPY PPMTool.API.Tests/PPMTool.API.Tests.csproj PPMTool.API.Tests/PPMTool.API.Tests.csproj
+COPY PPMTool.Data/PPMTool.Data.csproj PPMTool.Data/PPMTool.Data.csproj
+COPY PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj
+COPY PPMTool.Migrations.SqlServer/PPMTool.Migrations.SqlServer.csproj PPMTool.Migrations.SqlServer/PPMTool.Migrations.SqlServer.csproj
+COPY PPMTool.Migrations.PostgreSql/PPMTool.Migrations.PostgreSql.csproj PPMTool.Migrations.PostgreSql/PPMTool.Migrations.PostgreSql.csproj
 
-RUN dotnet restore "PPMTool/PPMTool.sln"
+# Restore packages
+RUN dotnet nuget locals all --clear \
+ && dotnet restore "PPMTool/PPMTool.sln" -p:Configuration=${BUILD_CONFIG}
 
-COPY .config .config
-RUN dotnet tool restore
-
+# Copy full sources (inc. git for GitInfo library)
 COPY PPMTool PPMTool
-COPY PPMTool.API PPMTool.API
+COPY PPMTool.Data PPMTool.Data
+COPY PPMTool.Migrations.Sqlite PPMTool.Migrations.Sqlite
+COPY PPMTool.Migrations.SqlServer PPMTool.Migrations.SqlServer
+COPY PPMTool.Migrations.PostgreSql PPMTool.Migrations.PostgreSql
 COPY .git .git
 
-# Create the database by running migrations
-# The CONNECTION_STRING env var is required by the DesignTimeDbContextFactory
-ENV CONNECTION_STRING="Data Source=/src/PPMTool/PPMTool.db"
-RUN dotnet ef database update -p "PPMTool/PPMTool.csproj"
+# Second restore needed for .NET 10 EF tools but don't know why
+RUN dotnet restore "PPMTool/PPMTool.csproj" -p:Configuration=${BUILD_CONFIG}
 
+# Build app
+RUN dotnet build "PPMTool/PPMTool.csproj" -c ${BUILD_CONFIG} --no-restore
+
+# Publish
 FROM build AS publish
 ARG BUILD_CONFIG=Local
+
 # Publish only the main projects (not the test projects) to avoid assembly conflicts
-RUN dotnet publish -c ${BUILD_CONFIG} -o /app/publish -f net8.0 "PPMTool/PPMTool.csproj"
-RUN dotnet publish -c ${BUILD_CONFIG} -o /app/publish -f net8.0 "PPMTool.API/PPMTool.API.csproj"
-RUN mkdir /app/publish/state
-RUN cp PPMTool/PPMTool.db /app/publish/state
-VOLUME /app/publish/state
+RUN dotnet publish -c ${BUILD_CONFIG} -o /app/publish -f net10.0 "PPMTool/PPMTool.csproj"
+
+# Runtime state directory volume mount
+RUN mkdir -p /app/publish/state
+
+# App expects DB at /app/PPMTool.db so create symlink
 RUN ln -s state/PPMTool.db /app/publish/PPMTool.db
-# Copy migration data files needed for runtime seeding (SEED_DUMMY_DATA=TRUE)
-RUN mkdir -p /app/publish/Migrations && cp -r PPMTool/Migrations/Data /app/publish/Migrations/
 
 FROM base AS final
 WORKDIR /app

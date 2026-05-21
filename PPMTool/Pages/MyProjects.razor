@@ -2,48 +2,57 @@
 @page "/"
 @inherits PPMTool.Pages.BaseProjectPage
 @using PPMTool.Data.Context
-@using PPMTool.Enums
+@using PPMTool.Data.Enums
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
 @using System.ComponentModel.DataAnnotations
 <PageTitle>My Projects - CapX</PageTitle>
 
-<div class="container">
-    <div class="row">
-        <div class="col">
-            <h1>My Projects</h1>
+<FeatureCheckComponent Feature="FeatureType.ProjectsAndCapacity">
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>My Projects</h1>
+            </div>
+            <div class="col-auto">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <RadzenLabel Text="Include Finished" Style="margin-bottom: 0.1rem" Component="IncludeFinished" />
+                    <RadzenSwitch Name="IncludeFinished" @bind-Value="@IncludeFinished" />
+                </RadzenStack>
+            </div>
         </div>
-        <div class="col-auto">
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
-                <RadzenLabel Text="Include Finished" Style="margin-bottom: 0.1rem" Component="IncludeFinished" />
-                <RadzenSwitch Name="IncludeFinished" @bind-Value="@IncludeFinished" />
+        <div class="row">
+            <div class="col py-2">
+                <RadzenText Text="The status of all the projects you manage." />
+            </div>
+        </div>
+        <hr />
+        @if (Loading)
+        {
+            <LoadingComponent />            
+        }
+        else if (ownedProjectsAndDueNotes == null || ownedProjectsAndDueNotes.Count() == 0)
+        {
+            <RadzenText Text="You don't have any projects to manage!" />
+        }
+        else
+        {
+            <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.3rem">
+                @foreach (var projectAndNotes in ownedProjectsAndDueNotes.OrderBy(x => x.Key.ProjectStatus))
+                {
+                    <MyProjectSummaryComponent Project="projectAndNotes.Key"
+                                               EditAuthorised="EditAuthorised"
+                                               DetailsButtonClicked="DetailsButtonClicked"
+                                               OverDueNoteCount="@(projectAndNotes.Value.Where(x => x.IsOverDue()).Count())"
+                                               DueNoteCount="@(projectAndNotes.Value.Where(x => x.IsDue()).Count())"
+                                               NextDueDate="@(projectAndNotes.Value.Where(x => x.DueDate != null && !x.IsCompleted()).OrderBy(x => x.DueDate).FirstOrDefault()?.DueDate)"
+                                               DueButtonClicked="DueButtonClicked"
+                                               ShowTooltip="@((elem, text) => ShowTooltip(elem, text))" />
+                }
             </RadzenStack>
-        </div>
+        }
     </div>
-    <hr />
-    @if (Loading)
-    {
-        <LoadingComponent />            
-    }
-    else if (ownedProjectsAndDueNotes == null || ownedProjectsAndDueNotes.Count() == 0)
-    {
-        <RadzenText Text="You don't have any projects to manage!" />
-    }
-    else
-    {
-        <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.3rem">
-            @foreach (var projectAndNotes in ownedProjectsAndDueNotes.OrderBy(x => x.Key.ProjectStatus))
-            {
-                <ProjectSummaryComponent Project="projectAndNotes.Key"
-                                         EditAuthorised="EditAuthorised"
-                                         DetailsButtonClicked="DetailsButtonClicked"
-                                         OverDueNoteCount="@(projectAndNotes.Value.Where(x => x.IsOverDue()).Count())"
-                                         DueNoteCount="@(projectAndNotes.Value.Where(x => x.IsDue()).Count())"
-                                         NextDueDate="@(projectAndNotes.Value.Where(x => x.DueDate != null && !x.IsCompleted()).OrderBy(x => x.DueDate).FirstOrDefault()?.DueDate)"
-                                         DueButtonClicked="DueButtonClicked"
-                                         ShowTooltip="@((elem, text) => ShowTooltip(elem, text))" />
-            }
-        </RadzenStack>
-    }
-</div>
-<br/>
+    <br/>
+
+</FeatureCheckComponent>

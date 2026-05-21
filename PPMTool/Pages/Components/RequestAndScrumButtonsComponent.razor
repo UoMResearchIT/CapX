@@ -1,7 +1,11 @@
-﻿@using System.Diagnostics
+﻿@inject SettingsService SettingsService
+@using System.Diagnostics
 @using PPMTool.Data
 @using PPMTool.Data.Entities
+@using PPMTool.Data.Enums
 @using PPMTool.Data.Helpers
+@using PPMTool.Helpers
+@using PPMTool.Services
 
 <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.3rem" AlignItems="AlignItems.End">
     <RadzenButton Click=@(args => ViewRequestDocClickedAsync(Project)) Text=@(ShowTooltip == null ? requestText : null) Icon="description" MouseEnter="@(args => ShowTooltip?.Invoke(args, requestText))" Disabled="@(!hasRequestDoc)" Size="@ButtonSize" />
@@ -45,9 +49,9 @@
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
-        hasScrumLink = HtmlHelper.IsValidLink(Project?.ScrumProjectLink);
+        hasScrumLink = Project?.ScrumProjectLink?.IsValidURL() ?? false;
         hasRequestDoc = !Project?.HasNoRequestDocLink() ?? false;
-        scrumText = hasScrumLink ? "Scrum Project" : "No Scrum Project";
+        scrumText = hasScrumLink ? $"{SettingsService.GetSetting(SettingType.ProjectBoardName)}" : $"No {SettingsService.GetSetting(SettingType.ProjectBoardName)}";
         requestText = hasRequestDoc ? "Request Doc" : "No Request Doc";
     }
 }

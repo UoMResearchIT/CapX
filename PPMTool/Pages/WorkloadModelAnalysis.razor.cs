@@ -2,10 +2,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Data.Helpers;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
+using PPMTool.Helpers;
+using PPMTool.Models;
 using PPMTool.Services;
 using Radzen;
 using Radzen.Blazor.Rendering;
@@ -29,8 +29,8 @@ namespace PPMTool.Pages
         private bool compareToWLM = true;
         private bool normalisedByTotalHours = false;
         private bool useStackedBars = true;
-        private DateTime? startDate = DateTime.Today.StartOfMonth().StartOfWeek();
-        private DateTime? endDate = DateTime.Today.StartOfWeek().AddDays(7);
+        private DateTime? startDate = DateTime.Today.StartOfWeek().AddMonths(-3);
+        private DateTime? endDate = DateTime.Today.StartOfWeek();
         private IEnumerable<Person> availablePeople;
         private IEnumerable<Person> selectedPeople;
         private string loadingMessage;
@@ -65,7 +65,7 @@ namespace PPMTool.Pages
         /// Method fired when a block is selected
         /// </summary>
         /// <param name="args"></param>
-        /// <param name="name"
+        /// <param name="name"></param>
         private async void OnDataPointSelection(SelectedData<WLMWeeklyDataChartItem> args, string name)
         {
             // Nvaigate to the timesheet page with the selected week and person
@@ -106,6 +106,15 @@ namespace PPMTool.Pages
         private void SetEndDate(int numberOfMonths)
         {
             endDate = startDate.Value.AddMonths(numberOfMonths);
+        }
+
+        /// <summary>
+        /// Method to set the start date to so many months before the end date
+        /// </summary>
+        /// <param name="numberOfMonths"></param>
+        private void SetStartDate(int numberOfMonths)
+        {
+            startDate = endDate.Value.AddMonths(-numberOfMonths);
         }
 
         /// <summary>

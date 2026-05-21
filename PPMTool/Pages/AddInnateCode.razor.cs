@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 
 namespace PPMTool.Pages
@@ -16,6 +17,16 @@ namespace PPMTool.Pages
         private InnateCodeService InnateCodeService { get; set; }
 
         private InnateCode innateCode;
+
+        /// <summary>
+        /// Represents a duty and its text string representation for dropdown sources.
+        /// Probably can make this avialable elsewhere too.
+        /// </summary>
+        /// <param name="Value"></param>
+        /// <param name="Text"></param>
+        public record DutyOption(Duty Value, string Text);
+        private IEnumerable<DutyOption> duties =
+            Enum.GetValues<Duty>().Select(d => new DutyOption(d, d.GetDescription()));
 
         protected override void OnInitialized()
         {
@@ -127,19 +138,19 @@ namespace PPMTool.Pages
             {
                 TaskName = "Management",
                 InnateCode = innateCode,
-                Duty = Enums.Duty.ProjectAndServiceMgmt
+                Duty = Duty.ProjectAndServiceMgmt
             });
             dataGridEntities.Add(new InnateCodeTask
             {
                 TaskName = "Development",
                 InnateCode = innateCode,
-                Duty = Enums.Duty.ProjectWork
+                Duty = Duty.ProjectWork
             });
             dataGridEntities.Add(new InnateCodeTask
             {
                 TaskName = "Maintenance",
                 InnateCode = innateCode,
-                Duty = Enums.Duty.ProjectWork
+                Duty = Duty.ProjectWork
             });
             await dataGrid.Reload();
         }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -126,7 +127,7 @@ namespace PPMTool.Pages.Components
         /// Post a note on the project attached to the finance item to record the change
         /// </summary>
         /// <param name="type"></param>
-        /// <param name="isInvoice"></param>
+        /// <param name="item"></param>
         protected void PostNoteToProject(FinanceItemChangeType type, BaseFinanceItem item)
         {
             // Select options

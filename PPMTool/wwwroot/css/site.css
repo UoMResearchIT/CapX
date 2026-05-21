@@ -1,9 +1,5 @@
 @import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
 
-.rz-material {
-    --rz-primary: #609;
-}
-
 html, body {   
 }
 
@@ -92,7 +88,7 @@ select {
 
 .radzen-numeric {
     margin: 4pt;
-    width: 100%
+    width: 100%;
 }
 
 .radzen-form-label {
@@ -109,6 +105,12 @@ select {
 }
 
 .radzen-datepicker {
+    margin: 4pt;
+    width: 100%;
+}
+
+.radzen-text-box {
+    text-indent: 0 !important;
     margin: 4pt;
     width: 100%;
 }
@@ -183,11 +185,6 @@ mark {
     display: inline-block;
 }
 
-.rz-textbox {
-    text-indent: 0 !important;
-    margin: 4pt;
-}
-
 .rz-text-subtitle1 {
     font-weight: 500
 }
@@ -195,6 +192,7 @@ mark {
 .center-text {
     margin-bottom: 0rem !important;
 }
+
 .rz-switch {
     margin: 0.3rem
 }
@@ -306,7 +304,7 @@ th, tr, td {
 .apexcharts-tooltip {
     background-color: var(--rz-card-background-color) !important;
     color: var(--rz-text-body1-color) !important;
-    border: 1px solid var(--rz-border-color);
+    border: 1px solid #ccc;
 }
 
 /* For donut/pie totals and labels inside the chart (SVG text again) */
@@ -316,7 +314,7 @@ th, tr, td {
 }
 
 hr {
-    border-top: 2px solid var(--rz-border-color);
+    border-top: 1px solid #ccc;
 }
 
 .header-footer-text {
@@ -358,4 +356,75 @@ span.mention {
     background: rgba(0,123,255,.08);
     border-radius: 4px;
     padding: 0 .2rem;
+}
+
+.orgunits-accordion .rz-accordion .rz-accordion-header {
+    padding: 0px;
+    border: var(--rz-card-border);
+}
+
+.orgunits-accordion .rz-accordion .rz-accordion-header .rzi {
+    margin-inline: 0px;
+    }
+
+.orgunits-accordion .rz-accordion-header a[role="tab"] {
+    padding: 0px;
+    background-color: var(--rz-card-background-color);
+}
+
+.orgunits-accordion .rz-accordion-content {
+    border: var(--rz-card-border);
+    padding: 0px;
+    background-color: var(--rz-card-background-color);
+}
+
+.orgunits-accordion .accordion-orgsubunit {
+    border: var(--rz-card-border);
+    padding: 10px;
+    padding-left: 30px;
+    margin: 0px;
+}
+
+.orgunits-accordion .rz-accordion-toggle-icon {
+    display: none !important;
+}
+
+.orgunits-accordion .rz-text-display-h2 {
+    font-weight: normal;
+    font-size: 1rem;
+    margin: 0px;
+}
+
+.inactive {
+    background-color: var(--rz-switch-checked);
+}
+
+.rz-accordion-header > button {
+    display: block;
+    width: 100%;
+}
+
+.capacity-gen-button {
+    align-self: end;
+    justify-self: end;
+    min-width: fit-content;
+}
+
+.components-reconnect-dialog {
+    background-color: var(--rz-card-background-color) !important;
+}
+
+.header-logo {
+    max-height: 2.5rem;
+    max-width: 10rem;
+    object-fit: contain;
+    margin-right: 1rem;
+}
+
+.emblem-background {
+    background-color: #eee;
+    border-radius: 5px;
+    padding: 1px;
+    width: 5rem;
+    justify-self: center;
 }

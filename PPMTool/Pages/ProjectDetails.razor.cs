@@ -9,8 +9,9 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Data.Helpers;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
+using PPMTool.Helpers;
+using PPMTool.Models;
 using PPMTool.Pages.Components;
 using PPMTool.Services;
 using Radzen;
@@ -111,6 +112,7 @@ namespace PPMTool.Pages
         private RadzenHtmlEditor htmlEditor;
         private bool bound;
         private bool suppressNextInput;
+        private string abbrev;
 
         // Loading parameter cache
         private int? lastRTP;
@@ -118,6 +120,11 @@ namespace PPMTool.Pages
         private int? lastNote;
         private bool lastDue;
         private CancellationTokenSource loadCts;
+
+        // Feature statuses for ease of showing/hiding aspects of the page
+        private bool financeEnabled;
+        private bool timesheetsEnabled;
+        private bool skillsEnabled;
 
         /// <summary>
         /// Mention state
@@ -147,6 +154,18 @@ namespace PPMTool.Pages
             public double ClientHeight { get; set; }
         }
 
+        /// <summary>
+        /// Fired when the component is first created - used here to check feature flags and log the page view
+        /// </summary>
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+            financeEnabled = FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance);
+            timesheetsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Timesheets);
+            skillsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Skills);
+            abbrev = GetSetting(SettingType.ProjectAbbreviation);
+            LogInformation("Viewing project details");
+        }
 
         /// <summary>
         /// Fired when the paramters are changed
@@ -206,6 +225,7 @@ namespace PPMTool.Pages
         private async Task LoadDataAsync(CancellationToken ct)
         {
             Debug.WriteLine("** [Project Details] Loading Data...");
+
             try
             {
                 Loading = true;
@@ -252,9 +272,8 @@ namespace PPMTool.Pages
                     // Generate the funds requested and received
                     var transactions = FinanceHelper.ComputeTransactionBreakdown(
                         Context,
-                        project.LeadershipFundingSource?.FundingSourceId ?? 0,
-                        project.PlannedLeadershipCosts,
-                        project.SubTasks.SelectMany(x => x.AssignedResources),
+                        project.CostModel,
+                        project.SubTasks,
                         sources,
                         InvoiceService.GetFundsRequested(Context, project.ProjectId),
                         PaymentService.GetFundsReceived(Context, project.ProjectId)
@@ -263,6 +282,7 @@ namespace PPMTool.Pages
                     // Generate the finance item for the project
                     financeSummaryItem = new FinanceSummaryItem(
                         project,
+                        project.School,
                         project.ProjectManager,
                         project.SubTasks?.RoundedSum(x => x.ActualWorkHours) ?? 0,
                         transactions
@@ -304,7 +324,7 @@ namespace PPMTool.Pages
                     LoadBurnUpChart();
                 }
 
-                LogInformation($"Viewing project details for RTP-{project?.RTP}");
+                LogInformation($"Viewing project details for {abbrev}-{project?.RTP}");
             }
             finally
             {
@@ -411,7 +431,7 @@ namespace PPMTool.Pages
                     filteredNotes = allNotes.Where(x =>
                     {
                         var plainText = HtmlHelper.ConvertToPlainText(x.HtmlContent);
-                        return plainText.ToLower().Contains(noteSearchTerms.Trim().ToLower());
+                        return plainText.ToLower().Contains(noteSearchTerms.Clean());
                     }).ToList();
 
                     Debug.WriteLine($"** Filtered based on \"{noteSearchTerms}\" giving {filteredNotes.Count} notes.");
@@ -465,16 +485,14 @@ namespace PPMTool.Pages
                 }
 
                 // Add to the list of blocks
-                allBlocks.Add(new GanttBlock(t, groupName));
+                allBlocks.Add(new GanttBlock(t, groupName, isLeadershipTask: t.IsLeadershipTask));
             }
 
-            // Add a gantt block representing the management task
-            var managementTasks = project.GenerateLeadershipTasks();
-            foreach (var task in managementTasks)
-            {
-                var leadershipName = "(Leadership)";
-                allBlocks.Insert(0, new GanttBlock(task, leadershipName, isLeadershipTask: true));
-            }
+            // leadership first (true before false), each group by StartDate ascending
+            allBlocks = allBlocks
+                .OrderByDescending(x => x.IsLeadershipTask)
+                .ThenBy(x => x.Task.StartDate)
+                .ToList();
 
             // Fill in the data
             ChartHelper.CompleteChartSeries(
@@ -693,14 +711,14 @@ namespace PPMTool.Pages
                 project.Followers.Remove(ActiveUser?.Person);
                 ProjectService.Update(Context, project);
                 isCurrentUserFollowing = false;
-                LogInformation($"Stopped following project {project.GetFullName()}");
+                LogInformation($"Stopped following project {project.GetSensibleObjectName()}");
             }
             else
             {
                 project.Followers.Add(ActiveUser?.Person);
                 ProjectService.Update(Context, project);
                 isCurrentUserFollowing = true;
-                LogInformation($"Now following project {project.GetFullName()}");
+                LogInformation($"Now following project {project.GetSensibleObjectName()}");
             }
             StateHasChanged();
         }
@@ -994,7 +1012,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void DiscardClicked()
         {
-            LogInformation($"Discarding changes to note {noteModel?.NoteId} on {project.GetFullName()}");
+            LogInformation($"Discarding changes to note {noteModel?.NoteId} on {project.GetSensibleObjectName()}");
             if (isEditExistingNote)
             {
                 NoteService.RestoreModel(Context, ref noteModel);
@@ -1025,7 +1043,7 @@ namespace PPMTool.Pages
             noteModel.CreatedDate = DateTime.Now;
             ResolveMentionsInCurrentNoteModel();
             NoteService.Add(Context, noteModel);
-            LogInformation($"Added note for {project.GetFullName()}");
+            LogInformation($"Added note for {project.GetSensibleObjectName()}");
             noteSearchTerms = string.Empty;
             LoadNotesFromDB();
             InvokeAsync(async () => await FilterHighlightScrollNotesAsync());
@@ -1045,7 +1063,7 @@ namespace PPMTool.Pages
             NoteService.Update(Context, noteModel, false);
             var listOfNoteChanges = NoteService.GetDiffList<Note>(Context);
             NoteService.Update(Context, noteModel, true);
-            LogInformation($"Updated note {noteModel.NoteId} for {project.GetFullName()}");
+            LogInformation($"Updated note {noteModel.NoteId} for {project.GetSensibleObjectName()}");
             LoadNotesFromDB();
             InvokeAsync(async () => await FilterHighlightScrollNotesAsync());
             ShowOrHideEditor(false);
@@ -1063,7 +1081,7 @@ namespace PPMTool.Pages
 
             // Set state
             ShowOrHideEditor(true);
-            LogInformation($"Editing note {noteModel.NoteId} for {project.GetFullName()}");
+            LogInformation($"Editing note {noteModel.NoteId} for {project.GetSensibleObjectName()}");
             noteModel = noteToEdit;
             isEditExistingNote = true;
         }
@@ -1074,7 +1092,7 @@ namespace PPMTool.Pages
         /// <param name="noteToDelete"></param>
         private async void DeleteNote(Note noteToDelete)
         {
-            bool confirmed = await DialogService.Confirm($"You are about to delete a note from {project.GetFullName()}!", "Delete Note") ?? false;
+            bool confirmed = await DialogService.Confirm($"You are about to delete a note from {ProjectService.GetFullName(project)}!", "Delete Note") ?? false;
             if (confirmed)
             {
                 LogInformation($"Deleting note {noteToDelete.NoteId} | {noteToDelete.HtmlContent} | {noteToDelete.GetNoteAuthorText()}");
@@ -1100,7 +1118,7 @@ namespace PPMTool.Pages
         /// <param name="note"></param>
         private void MarkComplete(Note note)
         {
-            LogInformation($"Completing note {note.NoteId} for {project.GetFullName()}");
+            LogInformation($"Completing note {note.NoteId} for {project.GetSensibleObjectName()}");
             note.CompletedDate = DateTime.Now;
             NoteService.Update(Context, note);
             StateHasChanged();
@@ -1172,7 +1190,8 @@ namespace PPMTool.Pages
 
             // Get list of all new RTP-XXX references in the note content
             var newRtpRefs = new List<string>();
-            matches = Regex.Matches(noteModel.HtmlContent, @"(>|^|\s)#RTP-\w+(\s|$)", RegexOptions.IgnoreCase);
+            var pattern = $@"(&gt;|^|\s)#{Regex.Escape(abbrev)}-\w+(\s|$)";
+            matches = Regex.Matches(noteModel.HtmlContent, pattern, RegexOptions.IgnoreCase);
             newRtpRefs.AddRange(matches.Select(x => x.Value.Trim()).Distinct());
 
             // For each reference, attempt to resolve it and replace in the HTMl content
@@ -1183,14 +1202,15 @@ namespace PPMTool.Pages
                     .FirstOrDefault(x => x.RTP.ToString().Equals(trimmedMatch.Substring(5), StringComparison.OrdinalIgnoreCase));
                 if (match != null)
                 {
-                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(trimmedMatch, $"&nbsp;<a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{match.GetFullName()}</a>&nbsp;");
+                    var fullName = ProjectService.GetFullName(match);
+                    noteModel.HtmlContent = noteModel.HtmlContent.Replace(trimmedMatch, $"&nbsp;<a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails/{match.ProjectId}\" class=\"badge badge-success\">{fullName}</a>&nbsp;");
                 }
                 else
                 {
                     // Warning if the reference cannot be resolved
                     ShowNotification(new CapXNotificationMessage
                     {
-                        Summary = "RTP Reference Failure",
+                        Summary = $"{abbrev} Reference Failure",
                         Detail = $"The reference {trimmedMatch} could not be resolved! Please edit your note to correct."
                     });
                 }
@@ -1201,6 +1221,7 @@ namespace PPMTool.Pages
         /// Method to trim the matches to remove their preceding characters if necessary
         /// </summary>
         /// <param name="match"></param>
+        /// <param name="delimiter"></param>
         /// <returns></returns>
         private string TrimMatch(string match, char delimiter)
         {
@@ -1221,7 +1242,7 @@ namespace PPMTool.Pages
         /// <param name="dataPoint"></param>
         private void TaskSelected(SelectedData<GanttBlock> dataPoint)
         {
-            if (!EditAuthorised || (dataPoint.DataPoint.Items.FirstOrDefault()?.IsLeadershipTask ?? true)) return;
+            if (!EditAuthorised) return;
 
             // Only so the navigation when in project view mode
             if (dataPoint.IsSelected)
@@ -1321,7 +1342,7 @@ namespace PPMTool.Pages
         /// </summary>
         private async Task ViewDescription()
         {
-            await DialogService.OpenAsync<ProjectDescriptionPopupComponent>(project?.GetFullName(), new Dictionary<string, object>() { { "Project", project } });
+            await DialogService.OpenAsync<ProjectDescriptionPopupComponent>(ProjectService.GetFullName(project), new Dictionary<string, object>() { { "Project", project } });
         }
 
         /// <summary>
@@ -1334,7 +1355,7 @@ namespace PPMTool.Pages
                 "Have you checked the actuals?") ?? false;
             if (confirmed)
             {
-                LogInformation($"Silencing actuals warning for {project?.GetFullName()}");
+                LogInformation($"Silencing actuals warning for {project.GetSensibleObjectName()}");
 
                 // Set timestamp and save to DB
                 project.ActualsLastUpdated = DateTime.Now.ToString("R");

@@ -1,0 +1,170 @@
+﻿@inject SettingsService SettingsService
+@using PPMTool.Data.Context
+@using PPMTool.Data.Entities
+@using PPMTool.Data.Enums
+@using PPMTool.Services
+@typeparam TOrg where TOrg : BaseOrgUnit
+
+    @if (InEditMode)
+    {
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="width: 100%; padding: 10px" @onclick:stopPropagation="true">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" @onclick:stopPropagation="true"
+                         AlignItems="AlignItems.Center"
+                         class="col">
+                <RadzenText Text="Name" Style="margin-bottom: 0;" />
+                <RadzenTextBox @bind-Value="@OrgUnit.Name" Style="padding: 10px;" />
+            </RadzenStack>
+
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                         AlignItems="AlignItems.Center"
+                         class="col">
+                <RadzenText Text="Code" Style="margin-bottom: 0;" />
+                <RadzenTextBox @bind-Value="OrgUnit.Code" Style="padding: 10px;" />
+            </RadzenStack>
+
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                         AlignItems="AlignItems.Center"
+                         class="col-auto">
+                <RadzenButton Icon="save"
+                              ButtonStyle=ButtonStyle.Success
+                              Click="@(async () => await SaveEditAsync())"
+                              Disabled="@(!OrgUnit.Validate())" />
+
+                <RadzenButton Icon="cancel"
+                              ButtonStyle=ButtonStyle.Danger
+                              Style="margin-left:5px"
+                              Click="@(async () => await CancelEditAsync())" />
+            </RadzenStack>
+        </RadzenRow>
+    }
+    else
+    {
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="width: 100%; padding: 10px">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%;">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <RadzenButton Icon="edit"
+                                  Size="ButtonSize.Small"
+                                  ButtonStyle=ButtonStyle.Primary
+                                  Click="@EditUnitClicked"
+                                  Disabled="@(!OrgUnit.IsActive)"
+                                  @onclick:stopPropagation="true" />
+
+                    <RadzenText Text="@OrgUnit.GetSensibleObjectName()" TextStyle="TextStyle.DisplayH2" />
+                    
+                </RadzenStack>
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                    @if (OrgUnit is Faculty && (OrgUnit as Faculty).Schools.Where(x => x.IsActive).Count() == 0 && OrgUnit.IsActive)
+                    {
+                        <StatusMessageComponent Message="@(new Data.StatusMessage($"This {SettingsService.GetSetting(SettingType.OrgUnitUpper)} has no active {SettingsService.GetSetting(SettingType.OrgUnitLower)}! It must have at least one active {SettingsService.GetSetting(SettingType.OrgUnitLower)}!", Data.StatusMessage.MessageType.Error))" />
+                    }
+                    <RadzenText Text="ACTIVE" />
+                    <RadzenSwitch @bind-Value="OrgUnit.IsActive"
+                                  Name="IsActive"
+                                  Change="OnSwitchChanged"
+                                  @onclick:stopPropagation="true" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenRow>
+    }
+
+@code {
+    [Parameter]
+    public TOrg OrgUnit { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<BaseOrgUnit> OnSaveSucceeded { get; set; }
+
+    [Parameter]
+    public EventCallback<BaseOrgUnit> OnCancel { get; set; }
+
+    [Parameter]
+    public EventCallback<(BaseOrgUnit OrgUnit, bool NewValue)> OnToggleActive { get; set; }
+
+    [Parameter]
+    public EventCallback<BaseOrgUnit> OnEditFailed { get; set; }
+
+    [Parameter]
+    public PPMToolContext Context { get; set; }
+
+    [Parameter]
+    public BaseEntityService<TOrg> OrgUnitService { get; set; }
+
+    /// <summary>
+    /// Whether or not the component should be rendered in edit mode
+    /// </summary>
+    [Parameter]
+    public bool InEditMode { get; set; }
+
+    /// <summary>
+    /// Method fired when the switch is toggled
+    /// </summary>
+    /// <param name="newValue"></param>
+    /// <returns></returns>
+    private async Task OnSwitchChanged(bool newValue)
+    {
+        OrgUnit.IsActive = newValue;
+
+        if (OnToggleActive.HasDelegate)
+        {
+            await OnToggleActive.InvokeAsync((OrgUnit, newValue));
+        }
+    }
+
+    /// <summary>
+    /// Handle edit button click to update component state
+    /// </summary>
+    /// <returns></returns>
+    private void EditUnitClicked()
+    {
+        InEditMode = true;
+    }
+
+    /// <summary>
+    /// Handle cancel button click to update component state and restore model
+    /// </summary>
+    /// <returns></returns>
+    private async Task CancelEditAsync()
+    {
+        InEditMode = false;
+        var unit = OrgUnit;
+
+        // Restore model
+        OrgUnitService.RestoreModel(Context, ref unit);
+        if (OnCancel.HasDelegate)
+            await OnCancel.InvokeAsync(OrgUnit);
+    }
+
+    /// <summary>
+    /// Handle save button click to update component state
+    /// </summary>
+    /// <returns></returns>
+    private async Task SaveEditAsync()
+    {
+        int res = 0;
+        if (OrgUnit.GetId() == 0)
+        {
+            res = OrgUnitService.Add(Context, OrgUnit);
+        }
+        else
+        {
+            res = OrgUnitService.Update(Context, OrgUnit);
+        }
+
+        // Check add/update result for duplicate
+        if (res < 0)
+        {
+            if (OnEditFailed.HasDelegate)
+            {
+                await OnEditFailed.InvokeAsync(OrgUnit);
+            }
+            return;
+        }
+
+        // Successful save
+        InEditMode = false;
+        if (OnSaveSucceeded.HasDelegate)
+        {
+            await OnSaveSucceeded.InvokeAsync(OrgUnit);
+        }
+    }
+}

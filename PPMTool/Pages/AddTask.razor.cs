@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Components.Forms;
 using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 using Radzen.Blazor;
@@ -142,10 +142,18 @@ namespace PPMTool.Pages
         private IEnumerable<SkillTag> availableTags;
         private string autoCompleteText;
         private bool actualsLoading = false;
+        bool timesheetsEnabled;
+        bool financeEnabled;
+        bool skillsEnabled;
 
         protected override async Task OnInitializedAsync()
         {
             await base.OnInitializedAsync();
+
+            // Set the feature flags for the page based on the features enabled
+            timesheetsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Timesheets);
+            financeEnabled = FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance);
+            skillsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Skills);
 
             // Initialise the component if not expecting manual initialisation
             if (!IsSplit)
@@ -290,7 +298,7 @@ namespace PPMTool.Pages
             // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser
             EditAuthorised = ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager && ProjectModel.ProjectManager.PersonId == ActiveUser?.Person.PersonId);
 
-            LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetFullName()} | Copy = {IsCopy} | Split = {IsSplit}" : $"Adding new task to {ProjectModel?.GetFullName()}");
+            LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetSensibleObjectName()} | Copy = {IsCopy} | Split = {IsSplit}" : $"Adding new task to {ProjectModel?.GetSensibleObjectName()}");
 
             // Finished
             Loading = false;
@@ -547,12 +555,11 @@ namespace PPMTool.Pages
         {
             if (TaskId != null && TaskId > 0)
             {
-                bool confirmed = await DialogService.Confirm($"You are about to delete task {TaskModel.Name} from project {ProjectModel?.GetFullName()}",
+                bool confirmed = await DialogService.Confirm($"You are about to delete task {TaskModel.Name} from project {ProjectService.GetFullName(ProjectModel)}",
                     "Delete Task") ?? false;
                 if (confirmed)
                 {
-                    LogWarning($"Task {TaskModel?.SubTaskId}: Deleting task {TaskModel?.Name} on {ProjectModel?.GetFullName()}");
-
+                    LogWarning($"Task {TaskModel?.SubTaskId}: Deleting task {TaskModel?.Name} on {ProjectModel.GetSensibleObjectName()}");
                     // Call delete on the subtask service and let it remove the resources
                     SubTaskService.Delete(Context, TaskModel);
 
@@ -560,11 +567,12 @@ namespace PPMTool.Pages
                     ProjectModel.SubTasks.Remove(TaskModel);
 
                     // Update the project summary values
-                    var finrefs = FinancialReferenceService.GetAll(Context);
-                    ProjectModel.UpdateProjectMetaData(false, finrefs);
+                    var finrefs = FinancialReferenceService.GetAllOrDefault(Context);
+                    var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+                    ProjectModel.UpdateProjectMetaData(false, finrefs, bauTopSlicePercentage);
 
                     // Update the project in the database
-                    LogInformation($"Saving project {ProjectModel?.GetFullName()}...");
+                    LogInformation($"Saving project {ProjectModel?.GetSensibleObjectName()}...");
                     ProjectService.Update(Context, ProjectModel);
 
                     // Return to the project details page
@@ -630,9 +638,6 @@ namespace PPMTool.Pages
         {
             LogInformation($"Task {TaskModel?.SubTaskId}: Created new row for {resource.GetSensibleObjectName()}");
 
-            // Add task explicitly as needed for cost calculation
-            resource.SubTask = taskModel;
-
             // Add to the data grid
             dataGridEntities.Add(resource);
 
@@ -679,8 +684,15 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override async Task SaveRow(Resource entity)
         {
+            // Ensure the resource has the subtask set to allow following calculations
+            if (entity.SubTask == null)
+            {
+                entity.SubTask = TaskModel;
+            }
+
             // Update the billed FTE
-            entity.UpdateBilledFTE(projectModel.CostModel);
+            var indirectsPercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+            entity.UpdateBilledFTE(projectModel.CostModel, indirectsPercentage);
 
             // Save the row to the DB
             await base.SaveRow(entity);
@@ -771,9 +783,14 @@ namespace PPMTool.Pages
 
             Debug.WriteLine($"** Task {TaskModel?.SubTaskId}: Scheduling task...");
 
-            // Before we schedule, we need to ensure the duration and end date are consistent with the input method
+            // Before we schedule, ensure the duration uses the predecessor-driven start date if needed.
             if (defineByEndDate)
             {
+                if (TaskModel.Predecessor != null && !TaskModel.HasFixedStart)
+                {
+                    TaskModel.StartDate = TaskModel.Predecessor.EndDate.Date.AddDays(TaskModel.Lag + 1);
+                }
+
                 TaskModel.RecalculateDurationFromDates();
             }
             else
@@ -798,7 +815,8 @@ namespace PPMTool.Pages
             // Update planned and actual costs from the resources now scheduling has completed
             var projectDayRate = ProjectModel.DayRate;
             var finrefs = FinancialReferenceService.GetAll(Context);
-            TaskModel.UpdateSubTaskCosts(ProjectModel, finrefs);
+            var indirectsPercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+            TaskModel.UpdateSubTaskCosts(ProjectModel, finrefs, indirectsPercentage);
 
             // Set validity based on scheduler result
             IsValid = error == null;
@@ -811,9 +829,20 @@ namespace PPMTool.Pages
                 IsValid = false;
             }
 
+            // Check that assigned resources are managers
+            if (TaskModel.IsLeadershipTask)
+            {
+                var managerIds = UserService.GetAllManagerPersonId(Context);
+                if (TaskModel.AssignedResources.Any(x => !managerIds.Contains(x.Person.PersonId)))
+                {
+                    error = "Only managers can be assigned to leadership tasks";
+                    IsValid = false;
+                }
+            }
+
             if (!SubTaskService.IsUniqueTaskNameInProject(ProjectModel, TaskModel))
             {
-                error = "Task name must be unique within the project";
+                error = "Non-leadership task names must be unique within the project";
                 IsValid = false;
             }
 
@@ -883,6 +912,8 @@ namespace PPMTool.Pages
                             IsValid = false;
                             error = "Task has zero demand but has resources assigned!";
                         }
+
+                        return;
                     }
 
                     // Fail if demand, original demand or assigned resources are assigned less than 3 DP
@@ -930,11 +961,12 @@ namespace PPMTool.Pages
                     // Update the project summary values if not splitting as that is taken care of on the split task page
                     if (!IsSplit)
                     {
-                        var finrefs = FinancialReferenceService.GetAll(Context);
-                        ProjectModel.UpdateProjectMetaData(false, finrefs);
+                        var finrefs = FinancialReferenceService.GetAllOrDefault(Context);
+                        var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+                        ProjectModel.UpdateProjectMetaData(false, finrefs, bauTopSlicePercentage);
 
                         // Update the project in the database
-                        LogInformation($"Task {TaskModel?.SubTaskId}: Saving project {ProjectModel?.GetFullName()}...");
+                        LogInformation($"Task {TaskModel?.SubTaskId}: Saving project {ProjectModel?.GetSensibleObjectName()}...");
                         ProjectService.Update(Context, ProjectModel);
 
                         // Return to the project details page if not triggered from a split task page
@@ -967,6 +999,12 @@ namespace PPMTool.Pages
         private void UpdatePeopleDropdownSource(LoadDataArgs args)
         {
             var temp = people.AsQueryable();
+            if (taskModel.IsLeadershipTask)
+            {
+                var managerId = UserService.GetAllManagerPersonId(Context);
+                temp = temp.Where(x => managerId.Contains(x.PersonId));
+            }
+
             if (!string.IsNullOrEmpty(args.Filter))
             {
                 temp = temp.Where(p => p.Name.ToLower().Contains(args.Filter.ToLower()));

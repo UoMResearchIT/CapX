@@ -7,7 +7,50 @@
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(Program).Assembly">
         <Found Context="routeData">
-            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    @* I want to override the style of the content container but only for this message -- feels dirty but works *@
+                    <style>
+                        .content-area {
+                            justify-items: center;
+                            display: grid;
+                            align-content: start;
+                        }
+
+                        /* Message card */
+                        .auth-message {
+                            max-width: 560px;
+                            width: calc(100% - 3rem);
+                            text-align: center;
+                            background: var(--rz-card-background);
+                            border: var(--rz-card-border);
+                            border-radius: 14px;
+                            padding: 2rem 1.75rem;
+                            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+                        }
+
+                            .auth-message h1 {
+                                font-size: 1.5rem;
+                                line-height: 1.25;
+                                margin: 0 0 0.5rem;
+                                font-weight: 700;
+                                letter-spacing: -0.01em;
+                            }
+
+                            .auth-message p {
+                                margin: 0 0 1.25rem;
+                                color: #4b5563;
+                            }
+                    </style>
+                    <div class="auth-message" role="alert" aria-live="polite">
+                        <h1>You Are Not Authorised</h1>
+                        <p>Are you signed in? If you are, you do not have the appropriate privileges to access this page. If not, then please log in using the button at the top of the screen...</p>
+                    </div>
+                </NotAuthorized>
+                <Authorizing>
+                    <p>Authenticating...</p>
+                </Authorizing>
+            </AuthorizeRouteView>
         </Found>
         <NotFound>
             <LayoutView Layout="@typeof(MainLayout)">

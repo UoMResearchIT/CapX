@@ -1,5 +1,5 @@
 ﻿@using PPMTool.Data.Entities
-@using PPMTool.Enums
+@using PPMTool.Data.Enums
 @using PPMTool.Services
 
 <RadzenCard Style="min-height:1rem; border: var(--rz-card-border);">
@@ -33,7 +33,12 @@
                         <RadzenButton Icon="clear" Text="Discard" ButtonStyle="ButtonStyle.Danger" Click="@DiscardAssessment" />
                     </RadzenStack>
                 </RadzenStack>
-                <RadzenHtmlEditor @bind-Value="assessmentToEdit.Evidence" Style="min-height: 10rem" Placeholder="Add some evidence here to support your assessment" />
+                <RadzenText Text="Evidence" TextStyle="TextStyle.Subtitle1" />
+                @if (assessmentToEdit.Status != AssessmentStatus.Unmet)
+                {
+                    <HintComponent Message="Assessment must include evidence before you can save it." />
+                }
+                <RadzenHtmlEditor @bind-Value="assessmentToEdit.Evidence" Style="min-height: 10rem" Placeholder="Add evidence here to support your assessment" />
             </RadzenStack>
         }
         @if (Competency?.Assessments != null && Competency.Assessments.Where(x => x.PersonId == SelectedPerson?.PersonId).Count() > 0)
@@ -84,16 +89,19 @@
     public Action<Competency> EditCompetencyAction { get; set; }
 
     [Parameter]
-    public Action<CompetencyAssessment> AddAssessmentAction { get; set; }
+    public Func<CompetencyAssessment, string> AddAssessmentAction { get; set; }
 
     [Parameter]
-    public Action<CompetencyAssessment> UpdateAssessmentAction { get; set; }
+    public Func<CompetencyAssessment, string> UpdateAssessmentAction { get; set; }
 
     [Parameter]
     public Action<ElementReference, string> ShowTooltip { get; set; }
 
     private CompetencyAssessment assessmentToEdit = null;
 
+    /// <summary>
+    /// Create an assessment entity for the selected competency and person. This will be edited in the form and then passed to the AddAssessmentAction when saved.
+    /// </summary>
     private void AddAssessment()
     {
         assessmentToEdit = new CompetencyAssessment
@@ -106,23 +114,42 @@
         };
     }
 
+    /// <summary>
+    /// Assign the selected assessment to the editable model.
+    /// </summary>
+    /// <param name="assessment"></param>
     private void EditAssessment(CompetencyAssessment assessment)
     {
         assessmentToEdit = assessment;
     }
 
+    /// <summary>
+    /// Save the assessment to the DB by invoking the AddAssessmentAction with the assessmentToEdit model, then reset the model to hide the form if the save was successful (indicated by an empty message).
+    /// </summary>
     private void SaveAssessment()
     {
-        AddAssessmentAction?.Invoke(assessmentToEdit);
-        assessmentToEdit = null;
+        var message = AddAssessmentAction?.Invoke(assessmentToEdit) ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            assessmentToEdit = null;
+        }
     }
 
+    /// <summary>
+    /// Save the assessment to the DB by invoking the UpdateAssessmentAction with the assessmentToEdit model, then reset the model to hide the form if the save was successful (indicated by an empty message).
+    /// </summary>
     private void UpdateAssessment()
     {
-        UpdateAssessmentAction?.Invoke(assessmentToEdit);
-        assessmentToEdit = null;
+        var message = UpdateAssessmentAction?.Invoke(assessmentToEdit) ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            assessmentToEdit = null;
+        }
     }
 
+    /// <summary>
+    /// Reset the model used for editing/creating an assessment, which will hide the form and discard any unsaved changes.
+    /// </summary>
     private void DiscardAssessment()
     {
         assessmentToEdit = null;

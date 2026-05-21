@@ -2,10 +2,12 @@
 @inherits DataGridPage<InnateCodeTask>
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
-@using PPMTool.Enums
+@using PPMTool.Data.Enums
 <PageTitle>Add Timesheet Code - CapX</PageTitle>
 
-<div class="container">
+<FeatureCheckComponent Feature="FeatureType.Timesheets">
+
+    <div class="container">
     @if (innateCode != null)
     {
         @if (InnateCodeId <= 0)
@@ -24,11 +26,11 @@
                 <div class="row">
                     <div class="col-3">
                         <RadzenLabel class="radzen-form-label" Text="Activity Code" /><br />
-                        <RadzenTextBox TValue="string" @bind-Value="innateCode.ActivityCode" />
+                        <RadzenTextBox class="radzen-text-box" @bind-Value="innateCode.ActivityCode" />
                     </div>
                     <div class="col">
                         <RadzenLabel class="radzen-form-label" Text="Activity Name" /><br />
-                        <RadzenTextBox TValue="string" @bind-Value="innateCode.ActivityName" />
+                        <RadzenTextBox class="radzen-text-box" @bind-Value="innateCode.ActivityName" />
                     </div>
                     <div class="col-2">
                         <RadzenLabel class="radzen-form-label" Text="Active" Component="IsActive" /><br />
@@ -73,10 +75,13 @@
                                 @(task.Duty.GetDescription())
                             </Template>
                             <EditTemplate Context="task">
-                                <RadzenDropDown @bind-Value="task.Duty" Data="@Enum.GetValues(typeof(Duty))" />
+                                <RadzenDropDown TValue="Duty"
+                                                @bind-Value="task.Duty"
+                                                Data="duties"
+                                                ValueProperty="Value"
+                                                TextProperty="Text" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-
                         <RadzenDataGridColumn TItem="InnateCodeTask" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
                             <Template Context="c">
                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
@@ -93,3 +98,5 @@
         </RadzenCard>
     }
 </div>
+
+</FeatureCheckComponent>

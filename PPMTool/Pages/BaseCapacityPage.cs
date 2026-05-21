@@ -5,8 +5,10 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Data.Helpers;
+using PPMTool.Data.Enums;
 using PPMTool.Enums;
+using PPMTool.Helpers;
+using PPMTool.Models;
 using PPMTool.Services;
 using Radzen;
 
@@ -46,7 +48,7 @@ namespace PPMTool.Pages
         protected IList<ChartModel> chartModels = new List<ChartModel>();
         protected IEnumerable<Project> cachedProjects;
         protected IEnumerable<Person> cachedPeople;
-        protected IDictionary<object, IEnumerable<BaseAssignment>> groupedAssignments;
+        protected IDictionary<object, IEnumerable<Assignment>> groupedAssignments;
         protected List<Person> people;
         protected List<Person> filteredPeople;
         protected IEnumerable<string> chosenPeople = new List<string>();
@@ -61,7 +63,6 @@ namespace PPMTool.Pages
         {
             includeUnFunded = value;
             await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-unfunded", value);
-            await ConfigureChartSource();
         }
 
         /// <summary>
@@ -72,7 +73,6 @@ namespace PPMTool.Pages
             includeLeavers = value;
             await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-leavers", value);
             await ReloadDropDownSourcesAsync();
-            await ConfigureChartSource();
         }
 
         /// <summary>
@@ -82,7 +82,6 @@ namespace PPMTool.Pages
         {
             includeFinished = value;
             await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished", value);
-            await ConfigureChartSource();
         }
 
         /// <summary>
@@ -101,9 +100,6 @@ namespace PPMTool.Pages
 
             // Save the new state
             await SavePeopleStateAsync();
-
-            // Regenerate the chart data
-            await ConfigureChartSource();
         }
 
         /// <summary>
@@ -116,7 +112,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected abstract IEnumerable<ChartItem> GetPersonModeChartItemsFromAssignments(
             Person person,
-            IEnumerable<BaseAssignment> assignments,
+            IEnumerable<Assignment> assignments,
             DateTime startDate,
             DateTime endDate
         );
@@ -133,7 +129,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected abstract IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
             string seriesName,
-            KeyValuePair<object, IEnumerable<BaseAssignment>> groupedAssignments,
+            KeyValuePair<object, IEnumerable<Assignment>> groupedAssignments,
             DateTime startDate,
             DateTime endDate,
             Person person,
@@ -153,7 +149,7 @@ namespace PPMTool.Pages
                 Debug.WriteLine($"** Selected {projectName}. Navigating to details page...");
 
                 // Use the title of the task to find its projectID then navigate to the details page
-                var project = ProjectService.GetAll(Context).FirstOrDefault(x => x.GetFullName() == projectName);
+                var project = ProjectService.GetAll(Context).FirstOrDefault(x => ProjectService.GetFullName(x) == projectName);
                 if (project != null)
                 {
                     Navigation.NavigateTo($"projects/projectdetails/{project.ProjectId}");
@@ -174,6 +170,7 @@ namespace PPMTool.Pages
                     await PeopleSelectionChangedAsync(chosenPeople);
                 }
             }
+            await ConfigureChartSourceAsync();
         }
 
         /// <summary>
@@ -183,7 +180,7 @@ namespace PPMTool.Pages
         /// <param name="personOfInterest">Person used to decide whether condition relevancy</param>
         /// <param name="messages">Messages to add to</param>
         /// <returns></returns>
-        protected virtual string GenerateTooltipMessages(IEnumerable<BaseAssignment> assignmentsWithinBlock, Person personOfInterest, string messages)
+        protected virtual string GenerateTooltipMessages(IEnumerable<Assignment> assignmentsWithinBlock, Person personOfInterest, string messages)
         {
             // Add the project unconfirmed warning to the tooltip if project is unconfirmed
             if (assignmentsWithinBlock.Any(x => x.ProjectStatus.IsUnconfirmed()))
@@ -200,10 +197,15 @@ namespace PPMTool.Pages
         /// <param name="projects"></param>
         /// <param name="people"></param>
         /// <param name="isPersonMode"></param>
-        protected virtual void PopulateGroupedAssignmentsForPeople(IEnumerable<Project> projects, IEnumerable<Person> people, bool isPersonMode)
+        /// <param name="taskSet">What subset of the tasks should be used to populate the dictionary</param>
+        protected virtual void PopulateGroupedAssignmentsForPeople(
+            IEnumerable<Project> projects,
+            IEnumerable<Person> people,
+            bool isPersonMode,
+            TaskSubset taskSet = TaskSubset.TechOnly)
         {
             // Reset existing dictionary
-            groupedAssignments = new Dictionary<object, IEnumerable<BaseAssignment>>();
+            groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
 
             // Return early if no data
             if (people.Count() == 0 || projects.Count() == 0)
@@ -220,12 +222,12 @@ namespace PPMTool.Pages
                     var assignments = new List<Assignment>();
                     foreach (var project in projects)
                     {
-                        foreach (var subTask in project.SubTasks)
+                        var subTasks = GetFilteredSubTasks(project, person, taskSet);
+
+                        // Build assignments
+                        foreach (var subTask in subTasks)
                         {
-                            if (subTask.AssignedResources.Any(z => z.Person.PersonId == person.PersonId))
-                            {
-                                assignments.Add(new Assignment(subTask, project.ProjectStatus));
-                            }
+                            assignments.Add(new Assignment(subTask, project.ProjectStatus));
                         }
                     }
 
@@ -242,19 +244,44 @@ namespace PPMTool.Pages
                 foreach (var project in projects)
                 {
                     var assignments = new List<Assignment>();
-                    foreach (var subTask in project.SubTasks)
+                    var subTasks = GetFilteredSubTasks(project, person, taskSet);
+
+                    foreach (var subTask in subTasks)
                     {
-                        // Only include subtasks with this person assigned as a resource
-                        if (subTask.AssignedResources.Any(x => person.PersonId == x.Person.PersonId))
-                        {
-                            assignments.Add(new Assignment(subTask, project.ProjectStatus));
-                        }
+                        assignments.Add(new Assignment(subTask, project.ProjectStatus));
                     }
 
                     // Add dictionary entry with project name as key
                     if (assignments.Count > 0) groupedAssignments.Add(project, assignments);
                 }
             }
+        }
+
+        /// <summary>
+        /// Local helper to return a list of subtasks based on appropriate filtering
+        /// </summary>
+        /// <param name="project"></param>
+        /// <param name="person"></param>
+        /// <param name="taskSet"></param>
+        /// <returns></returns>
+        private IEnumerable<SubTask> GetFilteredSubTasks(Project project, Person person, TaskSubset taskSet)
+        {
+            // Filter list
+            var subTasks = project.SubTasks
+                .Where(x => x.AssignedResources
+                    .Any(z => z.Person.PersonId == person.PersonId)
+                );
+
+            // Filter again
+            if (taskSet == TaskSubset.TechOnly)
+            {
+                subTasks = subTasks.Where(x => !x.IsLeadershipTask);
+            }
+            else if (taskSet == TaskSubset.LeadershipOnly)
+            {
+                subTasks = subTasks.Where(x => x.IsLeadershipTask);
+            }
+            return subTasks;
         }
 
         /// <summary>
@@ -265,7 +292,12 @@ namespace PPMTool.Pages
         /// <param name="manualEndDate">Overrides the end window for things like axis limits</param>
         /// <param name="customChartTitleGenerator">Generates the title for the charts - takes the name of the person if in project mode</param>
         /// <param name="projectModeCondition">Optional OR condition for deciding whether in project mode</param>
-        protected async Task ConfigureChartSource(Action afterConfigureTask = null, DateTime? manualStartDate = null, DateTime? manualEndDate = null, Func<string, string> customChartTitleGenerator = null, Func<bool> projectModeCondition = null)
+        protected async Task ConfigureChartSourceAsync(
+            Action afterConfigureTask = null,
+            DateTime? manualStartDate = null,
+            DateTime? manualEndDate = null,
+            Func<string, string> customChartTitleGenerator = null,
+            Func<bool> projectModeCondition = null)
         {
             Debug.WriteLine("** Configuring Chart Source...");
             Loading = true;
@@ -275,155 +307,164 @@ namespace PPMTool.Pages
             // Run the data loading
             await Task.Run(() =>
             {
-                Debug.WriteLine("** Running new configure task...");
-
-                // Initialise the dictionaries
-                chartModels.Clear();
-                IEnumerable<Project> validProjects = cachedProjects;
-
-                // Need some people for this to work
-                if (people.Count() == 0)
+                try
                 {
-                    LogError("People database is empty!");
-                    Debug.WriteLine("** No people registered in the database!");
-                    return Task.CompletedTask;
-                }
+                    Debug.WriteLine("** Running new configure task...");
 
-                // Update the valid projects
-                validProjects = GetValidProjects();
+                    // Initialise the dictionaries
+                    chartModels.Clear();
+                    IEnumerable<Project> validProjects = cachedProjects;
 
-                // Get the window from the start and end dates of the projects included in the source
-                // Avoids including malformed projects without a proper start date
-                validProjects = validProjects.Where(x => x.StartDate.Year > 2000);
-                if (validProjects.Count() == 0)
-                {
-                    Debug.WriteLine("** No projects found that match the chosen options!");
-                    return Task.CompletedTask;
-                }
-                var startDate = validProjects.Min(x => x.StartDate);
-                var endDate = validProjects.Max(x => x.EndDate);
-
-                // -------------- PERSON MODE -------------- //
-
-                // Flatten subtasks and group by person if "All" chosen
-                if (!PeopleChosen())
-                {
-                    Debug.WriteLine("** Chart in PERSON MODE.");
-
-                    // Create temporary list of chart items
-                    var chartSourceTemp = new List<ChartItem>();
-
-                    // Build assignments dictionary for each person
-                    PopulateGroupedAssignmentsForPeople(validProjects, people, true);
-
-                    // Build chart source from the grouped data
-                    foreach (var group in groupedAssignments)
+                    // Need some people for this to work
+                    if (people.Count() == 0)
                     {
-                        // Add the range for this person
-                        chartSourceTemp.AddRange(
-                            GetPersonModeChartItemsFromAssignments(
-                                group.Key as Person,
-                                group.Value,
-                                manualStartDate ?? startDate,
-                                manualEndDate ?? endDate
-                            )
-                        );
+                        LogError("People database is empty!");
+                        Debug.WriteLine("** No people registered in the database!");
+                        return Task.CompletedTask;
                     }
 
-                    // Add data
-                    chartModels.Add(new ChartModel
+                    // Update the valid projects
+                    validProjects = GetValidProjects();
+
+                    // Get the window from the start and end dates of the projects included in the source
+                    // Avoids including malformed projects without a proper start date
+                    validProjects = validProjects.Where(x => x.StartDate.Year > 2000);
+                    if (validProjects.Count() == 0)
                     {
-                        ChartTitle = customChartTitleGenerator?.Invoke(null) ?? "Load for All",
-                        ChartOptions = BuildNewChartOptionsObject(),
-                        ConfirmedChartItems = chartSourceTemp.Where(x => !x.IsHatched()).ToList(),
-                        ProvisionalChartItems = chartSourceTemp.Where(x => x.IsHatched()).ToList()
-                    });
-                }
+                        Debug.WriteLine("** No projects found that match the chosen options!");
+                        return Task.CompletedTask;
+                    }
+                    var startDate = validProjects.Min(x => x.StartDate);
+                    var endDate = validProjects.Max(x => x.EndDate);
 
-                // -------------- PROJECT MODE -------------- //
+                    // -------------- PERSON MODE -------------- //
 
-                // Filter by people chosen, flatten and group by project if in project mode
-                else if (PeopleChosen() || (projectModeCondition?.Invoke() ?? false))
-                {
-                    Debug.WriteLine("** Chart in PROJECT MODE.");
-
-                    // For each person selected
-                    foreach (var name in chosenPeople)
+                    // Flatten subtasks and group by person if "All" chosen
+                    if (!PeopleChosen())
                     {
+                        Debug.WriteLine("** Chart in PERSON MODE.");
+
                         // Create temporary list of chart items
                         var chartSourceTemp = new List<ChartItem>();
 
-                        // Get person object
-                        var person = people.First(x => x.Name == name);
-
-                        // Build assignments dictionary for each project
-                        PopulateGroupedAssignmentsForPeople(validProjects, new List<Person> { person }, false);
+                        // Build assignments dictionary for each person
+                        PopulateGroupedAssignmentsForPeople(validProjects, people, true);
 
                         // Build chart source from the grouped data
-                        Debug.WriteLine($"** {person.Name} has {groupedAssignments.Count} projects");
                         foreach (var group in groupedAssignments)
                         {
-                            // Compute chart items from the grouped assignments
-                            var seriesName = (group.Key as Project).GetFullName();
+                            // Add the range for this person
                             chartSourceTemp.AddRange(
-                                GetProjectModeChartItemsFromAssignments(
-                                    seriesName,
-                                    group,
-                                    startDate,
-                                    endDate,
-                                    person
+                                GetPersonModeChartItemsFromAssignments(
+                                    group.Key as Person,
+                                    group.Value,
+                                    manualStartDate ?? startDate,
+                                    manualEndDate ?? endDate
                                 )
                             );
                         }
 
-                        // Total row needs to repeat the above logic but on the flattened set of subtasks
-                        var allProjectAssignments = groupedAssignments.SelectMany(x => x.Value);
-                        var rowName = "Total";
-                        groupedAssignments = new Dictionary<object, IEnumerable<BaseAssignment>>();
-                        chartSourceTemp.AddRange(
-                            GetProjectModeChartItemsFromAssignments(
-                                rowName,
-                                new KeyValuePair<object, IEnumerable<BaseAssignment>>(rowName, allProjectAssignments),
-                                startDate,
-                                endDate,
-                                person,
-                                isTotalRow: true
-                            )
-                        );
-
-                        // Hack to complete the entries
-                        ChartHelper.CompleteChartSeries(
-                            chartSourceTemp,
-                            c => new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched(), isFake: true),
-                            out var confirmedChartItemsComplete,
-                            out var provisionalChartItemsComplete
-                        );
-
                         // Add data
+                        var numberRows = chartSourceTemp.DistinctBy(x => x.Label).Count();
                         chartModels.Add(new ChartModel
                         {
-                            ChartTitle = customChartTitleGenerator?.Invoke(name) ?? $"Load for {name}",
-                            ChartOptions = BuildNewChartOptionsObject(),
-                            ConfirmedChartItems = confirmedChartItemsComplete,
-                            ProvisionalChartItems = provisionalChartItemsComplete
+                            ChartTitle = customChartTitleGenerator?.Invoke(null) ?? "Load for All",
+                            ChartOptions = BuildNewChartOptionsObject(numberRows),
+                            ConfirmedChartItems = chartSourceTemp.Where(x => !x.IsHatched()).ToList(),
+                            ProvisionalChartItems = chartSourceTemp.Where(x => x.IsHatched()).ToList()
                         });
                     }
+
+                    // -------------- PROJECT MODE -------------- //
+
+                    // Filter by people chosen, flatten and group by project if in project mode
+                    else if (PeopleChosen() || (projectModeCondition?.Invoke() ?? false))
+                    {
+                        Debug.WriteLine("** Chart in PROJECT MODE.");
+
+                        // For each person selected
+                        foreach (var name in chosenPeople)
+                        {
+                            // Create temporary list of chart items
+                            var chartSourceTemp = new List<ChartItem>();
+
+                            // Get person object
+                            var person = people.First(x => x.Name == name);
+
+                            // Build assignments dictionary for each project
+                            PopulateGroupedAssignmentsForPeople(validProjects, new List<Person> { person }, false);
+
+                            // Build chart source from the grouped data
+                            Debug.WriteLine($"** {person.Name} has {groupedAssignments.Count} projects");
+                            foreach (var group in groupedAssignments)
+                            {
+                                // Compute chart items from the grouped assignments
+                                var seriesName = ProjectService.GetFullName(group.Key as Project);
+                                chartSourceTemp.AddRange(
+                                    GetProjectModeChartItemsFromAssignments(
+                                        seriesName,
+                                        group,
+                                        startDate,
+                                        endDate,
+                                        person
+                                    )
+                                );
+                            }
+
+                            // Total row needs to repeat the above logic but on the flattened set of subtasks
+                            var allProjectAssignments = groupedAssignments.SelectMany(x => x.Value);
+                            var rowName = "Total";
+                            groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
+                            chartSourceTemp.AddRange(
+                                GetProjectModeChartItemsFromAssignments(
+                                    rowName,
+                                    new KeyValuePair<object, IEnumerable<Assignment>>(rowName, allProjectAssignments),
+                                    startDate,
+                                    endDate,
+                                    person,
+                                    isTotalRow: true
+                                )
+                            );
+
+                            // Hack to complete the entries
+                            ChartHelper.CompleteChartSeries(
+                                chartSourceTemp,
+                                c => new ChartItem(c.Colour, c.Label, DateTime.Today, DateTime.Today, 0, 0, c.IsHatched(), isFake: true),
+                                out var confirmedChartItemsComplete,
+                                out var provisionalChartItemsComplete
+                            );
+
+                            // Add data
+                            var numberRows = confirmedChartItemsComplete.Concat(provisionalChartItemsComplete).DistinctBy(x => x.Label).Count();
+                            chartModels.Add(new ChartModel
+                            {
+                                ChartTitle = customChartTitleGenerator?.Invoke(name) ?? $"Load for {name}",
+                                ChartOptions = BuildNewChartOptionsObject(numberRows),
+                                ConfirmedChartItems = confirmedChartItemsComplete,
+                                ProvisionalChartItems = provisionalChartItemsComplete
+                            });
+                        }
+                    }
+
+                    Debug.WriteLine($"** Done. Unfunded = {includeUnFunded} | Leavers = {includeLeavers} | Finished = {includeFinished}.");
+
+                    // Format X Axis range based on last end date of real assignments (i.e. not padding assignments)
+                    var allItems = chartModels.SelectMany(x => x.ConfirmedChartItems.Concat(x.ProvisionalChartItems)).Where(x => x.Value1 != 0);
+                    long? endDateForAxisRange = allItems.Count() > 0 ? DateTime.Today.AddYears(1).ToUnixTimeMilliseconds() : null;
+                    foreach (var opt in chartModels.Select(x => x.ChartOptions))
+                    {
+                        opt.Xaxis.Min = manualStartDate == null ? DateTime.Today.AddDays(-14).ToUnixTimeMilliseconds() : manualStartDate.Value.ToUnixTimeMilliseconds();
+                        opt.Xaxis.Max = manualEndDate == null ? endDateForAxisRange : manualEndDate.Value.ToUnixTimeMilliseconds();
+                    }
+                    Debug.WriteLine($"** Reconfguring the chart on XAxis range {chartModels.FirstOrDefault()?.ChartOptions.Xaxis?.Min} to {chartModels.FirstOrDefault()?.ChartOptions.Xaxis?.Max}");
+
+                    return Task.CompletedTask;
                 }
-
-                Debug.WriteLine($"** Done. Unfunded = {includeUnFunded} | Leavers = {includeLeavers} | Finished = {includeFinished}.");
-
-                // Format X Axis range based on last end date of real assignments (i.e. not padding assignments)
-                var allItems = chartModels.SelectMany(x => x.ConfirmedChartItems.Concat(x.ProvisionalChartItems)).Where(x => x.Value1 != 0);
-                long? endDateForAxisRange = allItems.Count() > 0 ? DateTime.Today.AddYears(1).ToUnixTimeMilliseconds() : null;
-                foreach (var opt in chartModels.Select(x => x.ChartOptions))
+                catch (Exception e)
                 {
-                    opt.Xaxis.Min = manualStartDate == null ? DateTime.Today.AddDays(-14).ToUnixTimeMilliseconds() : manualStartDate.Value.ToUnixTimeMilliseconds();
-                    opt.Xaxis.Max = manualEndDate == null ? endDateForAxisRange : manualEndDate.Value.ToUnixTimeMilliseconds();
+                    LogError(e.Message);
+                    throw new Exception("Task Faulted: See inner exception.", e);
                 }
-                Debug.WriteLine($"** Reconfguring the chart on XAxis range {chartModels.FirstOrDefault()?.ChartOptions.Xaxis?.Min} to {chartModels.FirstOrDefault()?.ChartOptions.Xaxis?.Max}");
-
-                return Task.CompletedTask;
-
             })
             .ContinueWith(task =>
             {
@@ -433,6 +474,16 @@ namespace PPMTool.Pages
 
                 InvokeAsync(() =>
                 {
+                    if (task.IsFaulted)
+                    {
+                        ShowNotification(new CapXNotificationMessage
+                        {
+                            Severity = NotificationSeverity.Error,
+                            Summary = "Chart Generation Failed",
+                            Detail = "Chart generation has unexpectedly failed. Please report this as a bug!"
+                        });
+                    }
+
                     // Reset the state
                     Debug.WriteLine($"** Continue with task complete!");
                     Loading = false;
@@ -660,8 +711,9 @@ namespace PPMTool.Pages
         /// <summary>
         /// Creates a standard chart options object to be pass to all chart instances -- they cannot share the same object
         /// </summary>
+        /// <param name="totalRowsOnChart"></param>
         /// <returns></returns>
-        protected virtual ApexChartOptions<ChartItem> BuildNewChartOptionsObject()
+        protected virtual ApexChartOptions<ChartItem> BuildNewChartOptionsObject(int totalRowsOnChart)
         {
             return new ApexChartOptions<ChartItem>
             {
@@ -690,6 +742,7 @@ namespace PPMTool.Pages
                 },
                 Chart = new Chart
                 {
+                    Height = $"{(totalRowsOnChart * 30) + 100}px",
                     Zoom = new Zoom
                     {
                         AllowMouseWheelZoom = false

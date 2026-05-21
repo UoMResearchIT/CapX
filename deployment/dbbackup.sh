@@ -2,7 +2,7 @@
 set -eu
 
 # Define source and destination paths
-SRC_DIR="/var/www/capx"
+SRC_DIR="/var/www/capx/capx-state"
 DEST_DIR="$HOME/Database_Hourlies"
 
 # Create destination directory if it doesn't exist

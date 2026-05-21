@@ -5,10 +5,11 @@ using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Data.Helpers;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
+using PPMTool.Data.Interfaces;
+using PPMTool.Helpers;
+using PPMTool.Models;
 using PPMTool.Pages.Components;
 using PPMTool.Services;
 using Radzen;
@@ -96,9 +97,9 @@ namespace PPMTool.Pages
             // Load invoices and payments for the selected project
             LoadData();
 
-            LogInformation($"Viewing project finance for {selectedProject?.GetFullName()}");
+            LogInformation($"Viewing project finance for {selectedProject?.GetSensibleObjectName()}");
 
-            Debug.WriteLine($"** {(value as Project)?.GetFullName() ?? "Nothing"}");
+            Debug.WriteLine($"** {(value as Project)?.GetSensibleObjectName() ?? "Nothing"}");
         }
 
         /// <summary>
@@ -153,7 +154,7 @@ namespace PPMTool.Pages
             Loading = false;
             StateHasChanged();
 
-            Debug.WriteLine($"** Selected Project = {selectedProject?.GetFullName()}. {invoices?.Count()} Invoices. {payments?.Count()} Payments. {sources?.Count()} Sources");
+            Debug.WriteLine($"** Selected Project = {selectedProject?.GetSensibleObjectName()}. {invoices?.Count()} Invoices. {payments?.Count()} Payments. {sources?.Count()} Sources");
         }
 
         /// <summary>
@@ -165,9 +166,8 @@ namespace PPMTool.Pages
             {
                 var transactions = FinanceHelper.ComputeTransactionBreakdown(
                     Context,
-                    selectedProject.LeadershipFundingSource?.FundingSourceId ?? 0,
-                    selectedProject.PlannedLeadershipCosts,
-                    resources,
+                    selectedProject.CostModel,
+                    selectedProject.SubTasks,
                     FundingSourceService.GetFundingSources(Context, selectedProject.ProjectId),
                     InvoiceService.GetFundsRequested(Context, selectedProject.ProjectId),
                     PaymentService.GetFundsReceived(Context, selectedProject.ProjectId)
@@ -175,6 +175,7 @@ namespace PPMTool.Pages
 
                 financeSummaryItem = new FinanceSummaryItem(
                     selectedProject,
+                    ProjectService.GetSchoolAndFaculty(Context, selectedProject.ProjectId),
                     ProjectService.GetProjectManager(Context, selectedProject.ProjectId),
                     SubTaskService.GetActuals(Context, selectedProject.ProjectId),
                     transactions
@@ -192,7 +193,7 @@ namespace PPMTool.Pages
             if (!string.IsNullOrEmpty(args?.Filter))
             {
                 Debug.WriteLine($"** Filter projects on: {args?.Filter}");
-                temp = temp.Where(x => x.GetFullName().ToLower().Contains(args.Filter.ToLower()));
+                temp = temp.Where(x => ProjectService.GetFullName(x).ToLower().Contains(args.Filter.ToLower()));
                 Debug.WriteLine($"** {temp.Count()} matched.");
             }
             projects = temp.ToList();
@@ -208,7 +209,7 @@ namespace PPMTool.Pages
             if ((item == null && selectedTab == 0) || item is Invoice invoice)
             {
                 DialogService.Open<InvoiceFormComponent>(
-                    $"{(item == null ? "Add" : "Edit")} Invoice ({(selectedProject == null ? item.Project.GetFullName() : selectedProject.GetFullName())})",
+                    $"{(item == null ? "Add" : "Edit")} Invoice ({(selectedProject == null ? ProjectService.GetFullName(item.Project) : ProjectService.GetFullName(selectedProject))})",
                     new Dictionary<string, object>
                     {
                         { nameof(InvoiceFormComponent.Invoice), item },
@@ -228,7 +229,7 @@ namespace PPMTool.Pages
             else if ((item == null && selectedTab == 1) || item is Payment)
             {
                 DialogService.Open<PaymentFormComponent>(
-                    $"{(item == null ? "Add" : "Edit")} Payment ({(selectedProject == null ? item.Project.GetFullName() : selectedProject.GetFullName())})",
+                    $"{(item == null ? "Add" : "Edit")} Payment ({(selectedProject == null ? ProjectService.GetFullName(item.Project) : ProjectService.GetFullName(selectedProject))})",
                     new Dictionary<string, object>
                     {
                         { nameof(PaymentFormComponent.Payment), item },
@@ -248,7 +249,7 @@ namespace PPMTool.Pages
             else if ((item == null && selectedTab == 2) || item is FundingSource)
             {
                 DialogService.Open<FundingSourceFormComponent>(
-                    $"{(item == null ? "Add" : "Edit")} Funding Source ({(selectedProject == null ? item.Project.GetFullName() : selectedProject.GetFullName())})",
+                    $"{(item == null ? "Add" : "Edit")} Funding Source ({(selectedProject == null ? ProjectService.GetFullName(item.Project) : ProjectService.GetFullName(selectedProject))})",
                     new Dictionary<string, object>
                     {
                         { nameof(FundingSourceFormComponent.Source), item },
@@ -297,7 +298,7 @@ namespace PPMTool.Pages
 
                 try
                 {
-                    var filename = $"CapX-Finance-Item-Export{(selectedProject == null ? "" : $"-RTP{selectedProject.RTP}")}-{DateTime.Now.ToString("yyyyMMdd-HHmmss")}.xlsx";
+                    var filename = $"CapX-Finance-Item-Export{(selectedProject == null ? "" : $"-{GetSetting(SettingType.ProjectAbbreviation)}{selectedProject.RTP}")}-{DateTime.Now.ToString("yyyyMMdd-HHmmss")}.xlsx";
                     var path = FileHelper.GetLocalApplicationFilePath(filename);
 
                     var workbook = new XLWorkbook();
@@ -365,13 +366,13 @@ namespace PPMTool.Pages
                 for (int j = 0; j < properties.Length; j++)
                 {
                     var value = properties[j].GetValue(item);
-                    string textValue = value is ILoggableClass ? (value as ILoggableClass)?.GetSensibleObjectName() : value?.ToString();
+                    string textValue = value is ILoggableObject ? (value as ILoggableObject)?.GetSensibleObjectName() : value?.ToString();
                     if (value is IEnumerable && value is not string)
                     {
                         textValue = "[";
                         foreach (var colItem in (value as IEnumerable))
                         {
-                            textValue += colItem is ILoggableClass ? (colItem as ILoggableClass)?.GetSensibleObjectName() : colItem?.ToString();
+                            textValue += colItem is ILoggableObject ? (colItem as ILoggableObject)?.GetSensibleObjectName() : colItem?.ToString();
                         }
                         textValue += "]";
                     }

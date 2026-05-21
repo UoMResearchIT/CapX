@@ -2,7 +2,7 @@
 @inherits BasePage
 @using PPMTool.Data
 @using PPMTool.Data.Entities
-@using PPMTool.Enums
+@using PPMTool.Data.Enums
 @using PPMTool.Pages.Components
 <PageTitle>Add Person - CapX</PageTitle>
 
@@ -11,7 +11,7 @@
     {
         <LoadingComponent />
     }
-    else if (!ViewAuthorised)
+    else if (!viewAuthorised)
     {
         <StatusMessageComponent Message="@(new StatusMessage("You are not permitted to view this page!", StatusMessage.MessageType.Error))" />
     }
@@ -32,17 +32,25 @@
                         </div>
                         @if (PersonId > 0)
                         {
-                            <div class="col-auto">
-                                <RadzenButton ButtonStyle="ButtonStyle.Primary"
-                                              ButtonType="ButtonType.Button"
-                                              Click="@EditSkills"
-                                              Text="@($"{(IsSuperuserOrLineManagerOrPerson(personModel) ? "Edit" : "View")} Skills")"
-                                              Icon="@(IsSuperuserOrLineManagerOrPerson(personModel) ? "edit" : "visibility")"
-                                              Disabled="@(ActiveUserRoleType != RoleType.Manager && !IsSuperuserOrLineManagerOrPerson(personModel))" />
-                            </div>
-                            <div class="col-auto">
-                                <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="@ViewCapacity" Text="View Capacity" Icon="lists" />
-                            </div>
+                            @if (FeatureService.IsFeatureEnabled(FeatureType.Skills))
+                            {
+                                <div class="col-auto">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                                  ButtonType="ButtonType.Button"
+                                                  Click="@EditSkills"
+                                                  Text="@($"{(IsSuperuserOrLineManagerOrPerson(personModel) ? "Edit" : "View")} Skills")"
+                                                  Icon="@(IsSuperuserOrLineManagerOrPerson(personModel) ? "edit" : "visibility")"
+                                                  Disabled="@(ActiveUserRoleType != RoleType.Manager && !IsSuperuserOrLineManagerOrPerson(personModel))" />
+                                </div>
+                            }
+
+                            @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
+                            {
+                                <div class="col-auto">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="@ViewCapacity" Text="View Capacity" Icon="lists" />
+                                </div>
+                            }
+
                             <div class="col-auto">
                                 <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeletePersonAsync" Text="Delete" Icon="delete" Disabled=!isSuperUser />
                             </div>
@@ -58,11 +66,11 @@
                 <div class="row">
                     <div class="col">
                         <RadzenLabel class="radzen-form-label" Text="Name" Component="Name" /><br>
-                        <RadzenTextBox Name="Name" TValue="string" @bind-Value="personModel.Name" Disabled="!EditAuthorised" />
+                        <RadzenTextBox class="radzen-text-box" Name="Name" @bind-Value="personModel.Name" Disabled="!EditAuthorised" />
                     </div>
                     <div class="col">
                         <RadzenLabel class="radzen-form-label" Text="Initials" Component="Initials" /><br>
-                        <RadzenTextBox Name="Initials" TValue="string" @bind-Value="personModel.ShortName" Disabled=!EditAuthorised />
+                        <RadzenTextBox class="radzen-text-box" Name="Initials" @bind-Value="personModel.ShortName" Disabled=!EditAuthorised />
                     </div>
                     <div class="col">
                         <RadzenLabel class="radzen-form-label" Text="Line Manager" Component="LM" /><br>
@@ -130,7 +138,7 @@
                                             <RadzenStack Orientation="Radzen.Orientation.Vertical">
                                                 <RadzenText Text="Staff" TextStyle="TextStyle.Subtitle1" />
                                                 <RadzenText Text="Project / Service" TextStyle="TextStyle.Subtitle1" />
-                                                <RadzenText Text="Architecture" TextStyle="TextStyle.Subtitle1" />
+                                                <RadzenText Text="Tech Lead" TextStyle="TextStyle.Subtitle1" />
                                             </RadzenStack>
                                             <RadzenStack Orientation="Radzen.Orientation.Vertical">
                                                 <RadzenText Text="@d.StaffManagementFTE.ToString()" />
@@ -143,37 +151,40 @@
                             </Template>
                         </RadzenDataList>
                     </div>
-                    <div class="col mt-2" style="min-width: 500px">
-                        <div class="row align-items-center">
-                            <div class="col-auto mr-auto py-2">
-                                <h3>Absence</h3>
-                            </div>
-                            <div class="col-auto">
-                                <RadzenButton Text="Edit" Icon="edit" ButtonType="ButtonType.Button" Click="@(args => EditAbsence())" Disabled=!EditAuthorised />
-                            </div>
-                        </div>
-                        <hr />
-                        <RadzenDataList AllowVirtualization=true
-                                        WrapItems="false"
-                                        AllowPaging="true"
-                                        PageSize="9"
-                                        Data="@personModel.Absences.OrderByDescending(x => x.StartDate)"
-                                        TItem="Absence">
-                            <Template Context="a">
-                                <div class="row flexbox p-0">
-                                    <div class="col-3">
-                                        @a.StartDate.ToShortDateString()
-                                    </div>
-                                    <div class="col-3">
-                                        to
-                                    </div>
-                                    <div class="col-3">
-                                        @(a.EndDate?.ToShortDateString() ?? "Not Set")
-                                    </div>
+                    @if (FeatureService.IsFeatureEnabled(FeatureType.Absences))
+                    {
+                        <div class="col mt-2" style="min-width: 500px">
+                            <div class="row align-items-center">
+                                <div class="col-auto mr-auto py-2">
+                                    <h3>Absence</h3>
                                 </div>
-                            </Template>
-                        </RadzenDataList>
-                    </div>
+                                <div class="col-auto">
+                                    <RadzenButton Text="Edit" Icon="edit" ButtonType="ButtonType.Button" Click="@(args => EditAbsence())" Disabled=!EditAuthorised />
+                                </div>
+                            </div>
+                            <hr />
+                            <RadzenDataList AllowVirtualization=true
+                                            WrapItems="false"
+                                            AllowPaging="true"
+                                            PageSize="9"
+                                            Data="@personModel.Absences.OrderByDescending(x => x.StartDate)"
+                                            TItem="Absence">
+                                <Template Context="a">
+                                    <div class="row flexbox p-0">
+                                        <div class="col-3">
+                                            @a.StartDate.ToShortDateString()
+                                        </div>
+                                        <div class="col-3">
+                                            to
+                                        </div>
+                                        <div class="col-3">
+                                            @(a.EndDate?.ToShortDateString() ?? "Not Set")
+                                        </div>
+                                    </div>
+                                </Template>
+                            </RadzenDataList>
+                        </div>
+                    }
                 </div>
                 <hr />
                 <DataAnnotationsValidator />

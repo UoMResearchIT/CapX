@@ -2,8 +2,9 @@
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Data.Helpers;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
+using PPMTool.Helpers;
+using PPMTool.Models;
 using PPMTool.Services;
 using Radzen;
 
@@ -673,7 +674,7 @@ namespace PPMTool.Pages
                     }
                     else
                     {
-                        string theDay = args.Column.Title.ToLower().Trim();
+                        string theDay = args.Column.Title.Clean();
                         if (dayColours.ContainsKey(theDay))
                         {
                             args.Attributes.Add("style", $"background-color : {dayColours[theDay]}");

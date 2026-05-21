@@ -4,52 +4,46 @@ services:
       context: .
       target: final
       args:
-        BUILD_CONFIG: ${BUILD_CONFIGURATION:?}
+        BUILD_CONFIG: ${BUILD_CONFIGURATION:-Local}
     volumes:
-      - state:/app/state
+      - ${CAPX_STATE_DIR:?}:/app/state
     environment:
-      - API_KEY_SECRET=${API_KEY_SECRET:?}
-      - CONNECTION_STRING=${CONNECTION_STRING:?}
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?}
+      - API_KEY_SECRET=${API_KEY_SECRET:?}
+      - CONNECTION_STRING=${CONNECTION_STRING:?}      
+      - LEAVEBOOKINGS_CONNECTION_STRING=${LEAVEBOOKINGS_CONNECTION_STRING:?}
       - SEED_DUMMY_DATA=${SEED_DUMMY_DATA:-FALSE}
-      - SUPERUSER_NAME=${SUPERUSER_NAME:-}
-      - SUPERUSER_USERNAME=${SUPERUSER_USERNAME:-}
-      - SUPERUSER_EMAIL=${SUPERUSER_EMAIL:-}
+      - SUPERUSER_NAME=${SUPERUSER_NAME:?}
+      - SUPERUSER_USERNAME=${SUPERUSER_USERNAME:?}
+      - SUPERUSER_EMAIL=${SUPERUSER_EMAIL:?}
+      - DB_PROVIDER=${DB_PROVIDER:-sqlite}
+      - DP_KEY_PATH=${DP_KEY_PATH:-}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:-}
+      - MAIL_SMTP_SERVER=${MAIL_SMTP_SERVER:-}
+      - CAS_PROTOCOL=${CAS_PROTOCOL:-}
+      - CAS_BASE_URL=${CAS_BASE_URL:-}
+      - AUTH_TYPE=${AUTH_TYPE:-}
+      - AUTH_HOST_URL=${AUTH_HOST_URL:-}
+      - ENTRA_INSTANCE=${ENTRA_INSTANCE:-}
+      - ENTRA_DOMAIN=${ENTRA_DOMAIN:-}
+      - ENTRA_TENANT_ID=${ENTRA_TENANT_ID:-}
+      - ENTRA_CLIENT_ID=${ENTRA_CLIENT_ID:-}
+      - ENTRA_CLIENT_SECRET=${ENTRA_CLIENT_SECRET:-}
+      - ENTRA_CALLBACK_PATH=${ENTRA_CALLBACK_PATH:-/signin-oidc}
     ports:
       - ${CAPX_HTTP_PORT:?}:8080
     command: ["dotnet", "PPMTool.dll"]
-
+    restart: always
+    
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -f http://localhost:8080/ &&
+           curl -f http://localhost:8080/swagger/index.html"
+        ]
       interval: 5s
       timeout: 5s
-      start_period: 1s
+      start_period: 5s
       retries: 5
-
-  api:
-    depends_on:
-      - capx
-    build:
-      context: .
-      target: final
-      args:
-        BUILD_CONFIG: ${BUILD_CONFIGURATION:?}
-    volumes:
-      - state:/app/state
-    environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?}
-      - CONNECTION_STRING=${CONNECTION_STRING:?}
-      - LEAVEBOOKINGS_CONNECTION_STRING=${LEAVEBOOKINGS_CONNECTION_STRING:?}
-    ports:
-      - ${CAPX_API_PORT:?}:8080
-    command: ["dotnet", "PPMTool.API.dll"]
-
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/swagger/index.html"]
-      interval: 5s
-      timeout: 5s
-      start_period: 1s
-      retries: 5
-
-volumes:
-  state:

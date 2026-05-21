@@ -21,6 +21,9 @@ namespace PPMTool.Shared
         [Inject]
         private ILocalStorageService LocalStorage { get; set; }
 
+        [Inject]
+        private CssVariableService CssVariableService { get; set; }
+
         private string displayName;
         private IEnumerable<User> users;
         private IEnumerable<string> filteredUsers;
@@ -74,7 +77,7 @@ namespace PPMTool.Shared
                 int count = Regex.Matches(loginLink, "returnUrl").Count;
                 if (notLoggedIn && count == 1)
                 {
-#if !LOCAL
+#if RELEASE
                     Logger.LogInformation($"User not logged in -- auto-redirecting to {loginLink}...");
                     Navigation.NavigateTo(loginLink, true);
 #endif
@@ -92,7 +95,7 @@ namespace PPMTool.Shared
             Logger.LogInformation($"Dark mode currently set to {isCurrentlyDark}");
 
             // Toggle
-            ThemeService.SetDarkLight(!isCurrentlyDark);
+            await ThemeService.SetDarkLightAsync(!isCurrentlyDark, SettingsService, CssVariableService);
 
             // Stash the setting in local storatge
             var storageValue = await LocalStorage.GetItemAsync<bool>("useDarkMode");

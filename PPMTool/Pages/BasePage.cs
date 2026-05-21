@@ -2,7 +2,8 @@
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
+using PPMTool.Services;
 using PPMTool.Shared;
 using Radzen;
 using static PPMTool.Shared.MainLayout;
@@ -32,10 +33,13 @@ namespace PPMTool.Pages
         protected NavigationManager Navigation { get; set; }
 
         [Inject]
-        protected TooltipService TooltipService { get; set; }
+        private TooltipService TooltipService { get; set; }
 
         [Inject]
-        protected NotificationService NotificationService { get; set; }
+        private NotificationService NotificationService { get; set; }
+
+        [Inject]
+        protected FeatureService FeatureService { get; set; }
 
         private bool loading = true;
         [CascadingParameter]
@@ -151,7 +155,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected bool IsSuperuserOrLineManagerOfThisPerson(Person person)
         {
-            var lm = (person?.LineManager.PersonId ?? 0) == (ActiveUser?.Person?.PersonId ?? -1);
+            var lm = (person?.LineManager?.PersonId ?? 0) == (ActiveUser?.Person?.PersonId ?? -1);
             var su = ActiveUserRoleType == RoleType.Superuser;
             return lm || su;
         }
@@ -173,6 +177,7 @@ namespace PPMTool.Pages
         /// </summary>
         /// <param name="message"></param>
         /// <param name="sentryLevel"></param>
+        /// <param name="exception"></param>
         private void LogToSentry(string message, SentryLevel sentryLevel = SentryLevel.Info, Exception exception = null)
         {
             if (exception != null)

@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Linq.Dynamic.Core;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -24,6 +21,7 @@ namespace PPMTool.Pages
         private IEnumerable<Person> people;
         private int count;
         private int pageCount = 10;
+        private bool skillsEnabled;
 
         private bool includeLeavers;
         public bool IncludeLeavers
@@ -43,6 +41,8 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            skillsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Skills);
+
             Loading = true;
             EnqueueLoadData(GetLoadTask);
 
@@ -105,46 +105,72 @@ namespace PPMTool.Pages
             if (!EditAuthorised)
             {
                 // Only show the person themselves if in developer view
-                query = query.Where(x => x.PersonId == ActiveUser.Person.PersonId);
+                query = query.Where(x => ActiveUser.Person != null && x.PersonId == ActiveUser.Person!.PersonId);
             }
 
-            // Apply filter
-            if (!string.IsNullOrEmpty(args.Filter))
+            // Now apply the custom filters (pattern matching syntax for non-null object)
+            if (args.Filters is { } filters && filters.Any())
             {
-                // Filter via the Where method
-                query = query.Where(args.Filter);
-            }
-
-            // Now apply the skills tag filter
-            if (args.Filters != null && args.Filters.Count() > 0)
-            {
+                // Filter on Skill Tags
                 var filter = args.Filters.FirstOrDefault(x => x.Property == "SkillTags");
                 var filterValue = filter?.FilterValue as string;
                 if (filter != null && filterValue != null)
                 {
                     query = query.Where(x => x.OwnedSkills.Any(x => x.SkillTag.Name.Trim().ToLower().Contains(filterValue.Trim().ToLower())));
                 }
+
+                // Add filter on Line Manager
+                filter = filters.FirstOrDefault(f => f.Property == "LineManager");
+                filterValue = (filter?.FilterValue as string)?.Trim();
+                if (!string.IsNullOrEmpty(filterValue))
+                {
+                    var filterValueLower = filterValue.ToLower();
+                    query = query.Where(x =>
+                        x.LineManager != null &&
+                        (x.LineManager.Name ?? "").Trim().ToLower().Contains(filterValueLower));
+                }
+
+                // Add any filters than are none of the special ones
+                var stdFilters = args.Filters.Where(x => x.Property != "SkillTags" && x.Property != "LineManager");
+                if (stdFilters.Any())
+                {
+                    // Filter via the Where method
+                    query = query.Where(args.Filter);
+                }
             }
 
-            // Apply the ordering process on skills count manually
+            // Sorting needed
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                var order = args.OrderBy.Split(" ");
-                if (order.Length > 0 && order[0] == "SkillsCount")
+                // Check details of the sort
+                if (args.Sorts is { } sorts && sorts.Any())
                 {
-                    if (order.Length > 1 && order[1] == "asc")
+                    var sort = args.Sorts?.First();
+                    if (sort.Property == "SkillsCount")
                     {
-                        query = query.OrderBy(x => TagService.GetCountForPerson(Context, x.PersonId));
+                        // Apply the ordering process on skills count manually
+                        if (sort.SortOrder == SortOrder.Ascending)
+                        {
+                            query = query.OrderBy(x => TagService.GetCountForPerson(Context, x.PersonId));
+                        }
+                        else
+                        {
+                            query = query.OrderByDescending(x => TagService.GetCountForPerson(Context, x.PersonId));
+                        }
                     }
+                    else if (sort.Property == "LineManager")
+                    {
+                        query = sort.SortOrder == SortOrder.Ascending ?
+                            query.OrderBy(x => x.LineManager != null ? x.LineManager.Name : "") :
+                            query.OrderByDescending(x => x.LineManager != null ? x.LineManager.Name : "");
+                    }
+
+                    // No special handling required
                     else
                     {
-                        query = query.OrderByDescending(x => TagService.GetCountForPerson(Context, x.PersonId));
+                        // Sort via the OrderBy method
+                        query = query.OrderBy(args.OrderBy);
                     }
-                }
-                else
-                {
-                    // Sort via the OrderBy method
-                    query = query.OrderBy(args.OrderBy);
                 }
             }
 

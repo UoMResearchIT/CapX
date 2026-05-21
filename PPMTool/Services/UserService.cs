@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Services
 {
@@ -114,6 +114,19 @@ namespace PPMTool.Services
         {
             return GetAll(context)
                 .FirstOrDefault(x => x.MatchesClaim(normalisedUsernameOrEmail));
+        }
+
+        /// <summary>
+        /// Get a list of primary keys of the person objects associated with managers or superusers
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        internal IEnumerable<int> GetAllManagerPersonId(PPMToolContext context)
+        {
+            return context.Users
+                .Include(x => x.Person)
+                .Where(x => (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser) && x.Person != null)
+                .Select(x => x.Person.PersonId);
         }
     }
 }

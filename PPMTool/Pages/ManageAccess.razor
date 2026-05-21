@@ -13,6 +13,11 @@
             <RadzenButton class="float-right" Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null) />
         </div>
     </div>
+    <div class="row">
+        <div class="col py-2">
+            <RadzenText Text="Manage what users can access the app, what role they have when doing so and whether they are linked to a team member." />
+        </div>
+    </div>
     @if (ErrorMessage != null)
     {
         <StatusMessageComponent Message="ErrorMessage" />

@@ -1,19 +1,15 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Services
 {
     public class InnateCodeService : BaseEntityService<InnateCode>
     {
-        /// <summary>
-        /// Will not add a duplicate but return -1 instead. If successfully added, will return new ID of saved entity.
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="entity"></param>
-        /// <returns></returns>
+        /// <inheritdoc />
         public override int Add(PPMToolContext context, InnateCode entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
@@ -46,6 +42,7 @@ namespace PPMTool.Services
             return duplicatesNameOfAnother || duplicatesTasks;
         }
 
+        /// <inheritdoc />
         public override void Delete(PPMToolContext context, InnateCode entity, bool commitChanges = true)
         {
             // Remove tasks so they are not orphaned
@@ -55,6 +52,7 @@ namespace PPMTool.Services
             if (commitChanges) CommitChanges(context);
         }
 
+        /// <inheritdoc />
         public override IEnumerable<InnateCode> GetAll(PPMToolContext context)
         {
             return context.InnateCodes
@@ -62,6 +60,7 @@ namespace PPMTool.Services
                 .Include(x => x.Tasks);
         }
 
+        /// <inheritdoc />
         public override int Update(PPMToolContext context, InnateCode entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
@@ -88,8 +87,8 @@ namespace PPMTool.Services
         /// <returns>Duty as int or -1 if not match found</returns>
         internal int FindDutyForTask(PPMToolContext context, string activity, string task)
         {
-            var activityToMatch = activity.Trim().ToLower();
-            var taskToMatch = task.Trim().ToLower();
+            var activityToMatch = activity.Clean();
+            var taskToMatch = task.Clean();
             var splitActivityParams = activityToMatch.Split(" - ", 2);
             if (splitActivityParams.Length < 2) return -1;
             var matchAct = context.InnateCodes.FirstOrDefault(x => x.ActivityCode.Trim().ToLower() == splitActivityParams[0].Trim().ToLower() && x.ActivityName.Trim().ToLower() == splitActivityParams[1].Trim().ToLower());
@@ -194,15 +193,16 @@ namespace PPMTool.Services
             /// Method to return the strings as links to the projects
             /// </summary>
             /// <param name="configuration"></param>
+            /// <param name="abbrev"></param>
             /// <returns></returns>
-            public MarkupString GetRTPAsMarkup(IConfiguration configuration)
+            public MarkupString GetRTPAsMarkup(IConfiguration configuration, string abbrev)
             {
                 if (ProjectRTP != null && ProjectRTP.Count() > 0)
                 {
                     var temp = new List<string>();
                     foreach (var rtp in ProjectRTP)
                     {
-                        temp.Add($"<a href=\"{configuration["Authentication:HostUrl"]}/projects/projectdetails?rtp={rtp}\">RTP-{rtp}</a>");
+                        temp.Add($"<a href=\"{configuration["Authentication:HostUrl"]}/projects/projectdetails?rtp={rtp}\">{abbrev}-{rtp}</a>");
                     }
                     return (MarkupString)string.Join("<br />", temp);
                 }

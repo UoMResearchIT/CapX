@@ -6,11 +6,13 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Data.Helpers;
-using PPMTool.Enums;
+using PPMTool.Helpers;
+using PPMTool.Models;
 using PPMTool.Services;
 using Radzen;
-using static PPMTool.Data.Helpers.ExportHelper;
+using static PPMTool.Helpers.ExportHelper;
 using Fill = ApexCharts.Fill;
 
 namespace PPMTool.Pages
@@ -345,14 +347,19 @@ namespace PPMTool.Pages
                     var projectsInDatabaseThisWeek = projects.Where(x => x.StartDate != default && x.IsWithin(currentWeekStart));
 
 
-                    /// Cancelled ///
+                    // Cancelled //
 
                     // Get tasks for cancelled projects running at the start of the week
-                    var tasksOnCancelledProjectsThisWeek = projectsInDatabaseThisWeek.Where(x => x.ProjectStatus.IsCancelled()).SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart)));
+                    var tasksOnCancelledProjectsThisWeek = projectsInDatabaseThisWeek
+                        .Where(x => x.ProjectStatus.IsCancelled())
+                            .SelectMany(x => x.SubTasks
+                                .Where(x => !x.IsLeadershipTask && x.IsWithin(currentWeekStart)
+                            )
+                        );
                     var cancelledDemand = (float)tasksOnCancelledProjectsThisWeek.RoundedSum(x => x.Demand);
 
 
-                    /// All Projects (not cancelled) ///
+                    // All Projects (not cancelled) //
 
                     // Get projects not cancelled
                     var projectsThisWeekNotCancelled = projectsInDatabaseThisWeek.Where(x => !x.ProjectStatus.IsCancelled());
@@ -361,16 +368,27 @@ namespace PPMTool.Pages
                     var numberUnconfirmed = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus.IsUnconfirmed()).Count();
                     var numberConfirmed = projectsThisWeekNotCancelled.Count() - numberUnconfirmed;
 
-                    // Get all tasks that run at the start of the week
-                    var tasksOnActiveProjectsThisWeek = projectsThisWeekNotCancelled.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart)));
+                    // Get all (technical only) tasks that run at the start of the week
+                    var tasksOnActiveProjectsThisWeek = projectsThisWeekNotCancelled
+                        .SelectMany(x => x.SubTasks
+                            .Where(x => !x.IsLeadershipTask && x.IsWithin(currentWeekStart))
+                        );
 
                     // Get demand totals from tasks
                     var unmetDemand = (float)tasksOnActiveProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
                     var totalDemand = (float)tasksOnActiveProjectsThisWeek.RoundedSum(x => x.Demand);
                     var metDemand = (float)Math.Round(totalDemand - unmetDemand);
 
+                    // Get all (leadership only) tasks that run at the start of the week
+                    var leadershipTasksOnActiveProjectsThisWeek = projectsThisWeekNotCancelled
+                        .SelectMany(x => x.SubTasks
+                            .Where(x => x.IsLeadershipTask && x.IsWithin(currentWeekStart))
+                        );
 
-                    /// Finished ///
+                    // Get demand for leadership
+                    var leadershipDemand = (float)leadershipTasksOnActiveProjectsThisWeek.RoundedSum(x => x.Demand);
+
+                    // Finished //
 
                     // Get just total FTE of finished projects
                     var projectsThisWeekThatAreFinished = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus == ProjectStatus.Finished);
@@ -380,7 +398,7 @@ namespace PPMTool.Pages
                     var metDemandFinished = (float)Math.Round(totalDemandFinished - unmetDemandFinished);
 
 
-                    /// Confirmed ///
+                    // Confirmed //
 
                     // Get just confirmed projects
                     var projectsThisWeekConfirmed = projectsThisWeekNotCancelled.Where(x => !x.ProjectStatus.IsUnconfirmed());
@@ -391,8 +409,11 @@ namespace PPMTool.Pages
                         projectsThisWeekConfirmed = projectsThisWeekConfirmed.Where(x => x.ProjectStatus != ProjectStatus.Finished);
                     }
 
-                    // Get tasks
-                    var tasksOnConfirmedProjectsThisWeek = projectsThisWeekConfirmed.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart)));
+                    // Get tasks (excluding leadership tasks)
+                    var tasksOnConfirmedProjectsThisWeek = projectsThisWeekConfirmed
+                        .SelectMany(x => x.SubTasks
+                            .Where(x => !x.IsLeadershipTask && x.IsWithin(currentWeekStart))
+                        );
 
                     // Get met and unmet demand for this subset
                     var unmetDemandConfirmed = (float)tasksOnConfirmedProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
@@ -400,7 +421,7 @@ namespace PPMTool.Pages
                     var metDemandConfirmed = (float)Math.Round(totalDemandConfirmed - unmetDemandConfirmed);
 
 
-                    /// Unconfirmed ///
+                    // Unconfirmed //
 
                     // Get just unconfirmed projects
                     var projectsThisWeekUnconfirmed = projectsThisWeekNotCancelled.Where(x => x.ProjectStatus.IsUnconfirmed());
@@ -411,8 +432,11 @@ namespace PPMTool.Pages
                         projectsThisWeekUnconfirmed = projectsThisWeekUnconfirmed.Where(x => x.ProjectStatus != ProjectStatus.Finished);
                     }
 
-                    // Get tasks
-                    var tasksOnUnconfirmedProjectsThisWeek = projectsThisWeekUnconfirmed.SelectMany(x => x.SubTasks.Where(x => x.IsWithin(currentWeekStart)));
+                    // Get tasks (excluding leadership tasks)
+                    var tasksOnUnconfirmedProjectsThisWeek = projectsThisWeekUnconfirmed
+                        .SelectMany(x => x.SubTasks
+                            .Where(x => !x.IsLeadershipTask && x.IsWithin(currentWeekStart))
+                        );
 
                     // Calculate the unconfirmed totals
                     var unmetDemandUnconfirmed = (float)tasksOnUnconfirmedProjectsThisWeek.RoundedSum(x => x.UnmetDemand);
@@ -420,7 +444,7 @@ namespace PPMTool.Pages
                     var metDemandUnconfirmed = (float)Math.Round(totalDemandUnconfirmed - unmetDemandUnconfirmed);
 
 
-                    /// Costs ///
+                    // Costs //
 
                     // Get the budget for all confirmed projects this week
                     var budgetYTD = (float)projectsThisWeekConfirmed.Sum(x =>
@@ -452,7 +476,7 @@ namespace PPMTool.Pages
                         return InvoiceService.GetFundsRequested(context, x.ProjectId) / (x.EndDate.Subtract(x.StartDate).TotalDays / 7f);
                     });
 
-                    /// People ///
+                    // People //
 
                     // Get the people who are employed at the beginning of the week
                     var peopleEmployedThisWeek = people.Where(x => x.StartDate <= currentWeekStart && (x.EndDate == null || x.EndDate >= currentWeekStart));
@@ -481,8 +505,11 @@ namespace PPMTool.Pages
                         }
                         numStaff++;
 
-                        // Get assignments for this person and sum for the week
-                        var assignmentsThisWeek = tasksOnActiveProjectsThisWeek.SelectMany(x => x.AssignedResources.Where(x => x.Person.PersonId == person.PersonId));
+                        // Get (technical only) assignments for this person and sum for the week
+                        var assignmentsThisWeek = tasksOnActiveProjectsThisWeek
+                            .SelectMany(x => x.AssignedResources
+                                .Where(x => x.Person.PersonId == person.PersonId)
+                            );
                         var totalAssignmentFTE = assignmentsThisWeek.RoundedSum(x => x.AssignmentFTE);
 
                         // Increment the totals of under and overallocation
@@ -521,7 +548,7 @@ namespace PPMTool.Pages
                         StaffManFTE = wlmStaff,
                         RSAFTE = wlmRSA,
                         NumberOfStaff = numStaff,
-                        NumberStaffRequiringLineManagement = numStaff - GlobalDefaults.NumberOfStaffManagedByHeadDefault,
+                        NumberStaffRequiringLineManagement = numStaff - GetSetting(SettingType.NumberOfStaffManagedByHeadDefault, 0),
                         NumberOfConfirmedProjects = numberConfirmed,
                         NumberOfUnconfirmedProjects = numberUnconfirmed,
                         UnmetDemandFTE = unmetDemand,
@@ -540,6 +567,7 @@ namespace PPMTool.Pages
                         CancelledDemand = cancelledDemand,
                         FinishedMetDemand = metDemandFinished,
                         FinishedUnmetDemand = unmetDemandFinished,
+                        LeadershipDemand = leadershipDemand,
                         RecoveryTargetYTD = recoveryYTD,
                         BudgetYTD = budgetYTD,
                         ReceivedFundsYTD = receivedYTD,
@@ -553,9 +581,13 @@ namespace PPMTool.Pages
                     numberOfWeeks++;
                     var item = dutyChartItems.Last();
                     item.ProjectShortfall = UpdateAverage(item.ProjectShortfall, wlmProject - totalDemand, numberOfWeeks);
-                    item.StaffManagementShortfall = UpdateAverage(item.StaffManagementShortfall, wlmStaff - (numStaff - GlobalDefaults.NumberOfStaffManagedByHeadDefault) * GlobalDefaults.StaffManagementDefaultFTE, numberOfWeeks);
-                    item.PSManagementShortfall = UpdateAverage(item.PSManagementShortfall, wlmPM - GlobalDefaults.ProjectManagementDefaultFTE * (numberConfirmed + numberUnconfirmed), numberOfWeeks);
-                    item.RSAShortfall = UpdateAverage(item.RSAShortfall, wlmRSA - (numberConfirmed + numberUnconfirmed) * GlobalDefaults.TechnicalLeadershipDefaultFTE, numberOfWeeks);
+                    item.StaffManagementShortfall = UpdateAverage(
+                        item.StaffManagementShortfall,
+                        wlmStaff - (numStaff - GetSetting(SettingType.NumberOfStaffManagedByHeadDefault, 0)) * GetSetting(SettingType.StaffManagementDefaultFTE, 0f),
+                        numberOfWeeks
+                    );
+                    item.PSManagementShortfall = UpdateAverage(item.PSManagementShortfall, wlmPM - leadershipDemand, numberOfWeeks);
+                    item.RSAShortfall = UpdateAverage(item.RSAShortfall, wlmRSA - (numberConfirmed + numberUnconfirmed) * GetSetting(SettingType.TechnicalLeadershipDefaultFTE, 0f), numberOfWeeks);
 
                     // Move to next week
                     currentWeekStart = currentWeekStart.AddDays(7);
@@ -755,17 +787,22 @@ namespace PPMTool.Pages
                         var peopleActive = await PersonService.GetEmployedPeopleShallowAsync(Context, startDate, endDate);
                         foreach (var person in peopleActive)
                         {
-                            // Filter list of tasks for those projects that just run during the window and are assigned to this person
+                            // Filter list of tasks for those projects that just run during the window and are assigned to this person.
+                            // Filter out leadership tasks for projects that don't allow them to be recharged.
                             var tasksInWindow = projectsInWindow
                                 .SelectMany(x => x.SubTasks)
                                 .Where(x => x.AssignedResources
-                                    .Any(x => x.Person.PersonId == person.PersonId)
-                                )
-                                .Where(x => x.IsWithin(startDate, endDate));
+                                    .Any(x => x.Person.PersonId == person.PersonId) &&
+                                    x.IsWithin(startDate, endDate) &&
+                                    (!x.IsLeadershipTask ||
+                                        (x.OwningProject.CostModel.HasLeadership() && x.IsLeadershipTask)
+                                    )
+                                );
                             Debug.WriteLine($"** {tasksInWindow.Count()} tasks within window for {person.Name}");
 
-                            // Represent the assignments (including leadership assignment if necessary) in the window as chunks
-                            var data = ExportHelper.GetAssignmentChunks(
+                            // Represent the assignments (including leadership assignments if cost model allows recharge) in the window as chunks.
+                            // Do not recompute the costs here as it is a waste of effort.
+                            var data = AssignmentHelper.GetAssignmentChunks(
                                 person,
                                 projectsInWindow,
                                 allFinRefs,
@@ -781,7 +818,7 @@ namespace PPMTool.Pages
                         Debug.WriteLine($"** {assignmentChunks.Count()} assignment entries generated!");
 
                         // Get recovery data for assignment chunks
-                        int totalDaysInReportingWindow = (int)(endDate.Subtract(startDate).TotalDays) + 1;
+                        int totalDaysInReportingWindow = (int)(endDate.Subtract(startDate).TotalDays + 1);
                         var totalData = ExportHelper.GetRecoveryData(
                             peopleActive,
                             assignmentChunks,
@@ -792,16 +829,17 @@ namespace PPMTool.Pages
                         );
                         Debug.WriteLine($"** {totalData.Count()} recovery summary entries generated!");
 
-                        // Genearte data for project summary
+                        // Generate data for project summary
                         var projectData = new List<ProjectBudgetSummary>();
                         foreach (var assignment in assignmentChunks)
                         {
                             // Find existing entry or add new
-                            var summary = projectData.FirstOrDefault(x => x.ProjectName == assignment.ProjectName);
+                            var summary = projectData.FirstOrDefault(x => x.ProjectId == assignment.ProjectId.ToString());
                             if (summary == null)
                             {
                                 summary = new ProjectBudgetSummary
                                 {
+                                    ProjectId = assignment.ProjectId.ToString(),
                                     ProjectName = assignment.ProjectName
                                 };
                                 projectData.Add(summary);
@@ -939,41 +977,53 @@ namespace PPMTool.Pages
                             var totalPeople = peopleActive.Count;
                             var columnTitles = new List<string>
                             {
-                                "Estimated Costs",
-                                "Actual Costs",
+                                "Estimated Costs (Mid-Grade)",
+                                "Actual Costs (Tracker)",
                                 "Estimate Error",
-                                "Target",
-                                "Target Costs",
-                                "Baseline Budget",
-                                "Recovered",
-                                "Recovered Costs",
-                                "Net (Capped)",
-                                "Net Costs",
-                                "Recovered (Inc Lead)",
-                                "Recovered Costs (Inc Lead)",
-                                "Net (Capped, Inc Lead)",
-                                "Net Costs (Inc Lead)",
-                                "In Budget Costs (Inc Lead)",
-                                "Actual Baseline (Inc Lead)",
-                                "Baseline Difference (Inc Lead)"
+                                "Project Work FTE",
+                                "Staff Mgmt FTE",
+                                "Project Mgmt FTE",
+                                "Service Mgmt FTE",
+                                "BAU FTE",
+                                "Personal Development FTE",
+                                "Tech Leadership FTE",
+                                "Project Work Costs",
+                                "Staff Mgmt Costs",
+                                "Project Mgmt Costs",
+                                "Service Mgmt Costs",
+                                "BAU Costs",
+                                "Personal Development Costs",
+                                "Tech Leadership Costs",
+                                "Estimated Baseline",
+                                "Assigned FTE",
+                                "Assigned Costs",
+                                "In Budget Costs",
+                                "Actual Baseline",
+                                "Baseline Surplus"
                             };
 
-                            var columnComnnets = new List<string>
+                            var columnComments = new List<string>
                             {
                                 "These are the costs of the person over the reporting period based on mid-grade estimates.",
                                 "These are the actual costs of the person over the reporting period based on finance tracker data (including PCM costs).",
                                 "This is the difference between estimated and actual costs.",
                                 "This is the average technical target recovery FTE for the person over the reporting period based on their workload model.",
+                                "This is the average staff management FTE for the person over the reporting period based on their workload model.",
+                                "This is the average project management FTE for the person over the reporting period based on their workload model.",
+                                "This is the average service management FTE for the person over the reporting period based on their workload model.",
+                                "This is the average business-as-usual FTE for the person over the reporting period based on their workload model.",
+                                "This is the average personal development FTE for the person over the reporting period based on their workload model.",
+                                "This is the average technical leadership FTE for the person over the reporting period based on their workload model.",
                                 "These are the technical target recovery costs of the person over the reporting period based on mid-grade estimates.",
-                                "This is the required baseline budget for the person over the reporting period (estimated costs - target costs).",
-                                "This is the average recovered FTE for the person over the reporting period based on their technical assignments.",
-                                "These are the recovered costs of the person over the reporting period based on mid-grade estimates for their technical assignments.",
-                                "This is the average net FTE (capped to their full-time FTE) for the person over the reporting period (technical target - recovered).",
-                                "These are the net (capped) costs of the person over the reporting period based on mid-grade estimates for their technical assignments.",
-                                "This is the average recovered FTE including leadership assignments (assuming we can recharge these) for the person over the reporting period based on their assignments",
-                                "These are the recovered costs of the person including leaership assignments over the reporting period based on mid-grade estimates.",
-                                "This is the average net FTE (capped to their full-time FTE) and including leadership assignments for the person over the reporting period (target - recovered inc lead).",
-                                "These are the net (capped) costs of the person including leadership assignments over the reporting period based on mid-grade estimates.",
+                                "These are the staff management costs of the person over the reporting period based on mid-grade estimates.",
+                                "These are the project management costs of the person over the reporting period based on mid-grade estimates.",
+                                "These are the service management costs of the person over the reporting period based on mid-grade estimates.",
+                                "These are the business-as-usual costs of the person over the reporting period based on mid-grade estimates.",
+                                "These are the personal development costs of the person over the reporting period based on mid-grade estimates.",
+                                "These are the technical leadership costs of the person over the reporting period based on mid-grade estimates.",
+                                "This is the required baseline budget for the person over the reporting period (estimated costs - project costs).",
+                                "This is the average recovered FTE including leadership assignments (that we can recharge) for the person over the reporting period based on their assignments",
+                                "These are the recovered costs of the person including leadership assignments over the reporting period based on mid-grade estimates.",
                                 "These are the costs that can be covered by known research funding sources for all assignments (technical and leadership).",
                                 "This the actual baseline budget required for the person based on their technical and leadership assignments and what we believe is available in research funding to cover them.",
                                 "The difference between the baseline budget required by their workload model and what is actually required based on predicted recharge."
@@ -997,7 +1047,7 @@ namespace PPMTool.Pages
                                 cell.Style.Font.Bold = true;
                                 comment = cell.CreateComment();
                                 comment.Author = "CapX Exporter";
-                                comment.AddText(columnComnnets[i]);
+                                comment.AddText(columnComments[i]);
                             }
 
                             string moneyFormat = "_-£* #,##0.00_-;[Red]-£* #,##0.00_-;_-£* \"-\"??_-;_-@_-";
@@ -1052,75 +1102,106 @@ namespace PPMTool.Pages
 
                                 // Target FTE
                                 cell = worksheetTotals.Cell(2 + i, 6);
-                                cell.Value = totalItem.GetAverageTarget(averagePeriod);
+                                cell.Value = totalItem.GetAverageProjectWorkTarget(averagePeriod);
                                 cell.Style.NumberFormat.Format = numberFormat;
 
-                                // Target Costs
+                                // Staff management FTE
                                 cell = worksheetTotals.Cell(2 + i, 7);
-                                var targetCosts = totalItem.GetAverageTargetCosts();
+                                cell.Value = totalItem.GetAverageStaffFTE(averagePeriod);
+                                cell.Style.NumberFormat.Format = numberFormat;
+
+                                // Project management FTE
+                                cell = worksheetTotals.Cell(2 + i, 8);
+                                cell.Value = totalItem.GetAverageProjectManagementFTE(averagePeriod);
+                                cell.Style.NumberFormat.Format = numberFormat;
+
+                                // Service management FTE
+                                cell = worksheetTotals.Cell(2 + i, 9);
+                                cell.Value = totalItem.GetAverageServiceManagementFTE(averagePeriod);
+                                cell.Style.NumberFormat.Format = numberFormat;
+
+                                // BAU FTE
+                                cell = worksheetTotals.Cell(2 + i, 10);
+                                cell.Value = totalItem.GetAverageBAUFTE(averagePeriod);
+                                cell.Style.NumberFormat.Format = numberFormat;
+
+                                // PD FTE
+                                cell = worksheetTotals.Cell(2 + i, 11);
+                                cell.Value = totalItem.GetAveragePersonalDevelopmentFTE(averagePeriod);
+                                cell.Style.NumberFormat.Format = numberFormat;
+
+                                // Tech Leadership FTE
+                                cell = worksheetTotals.Cell(2 + i, 12);
+                                cell.Value = totalItem.GetAverageTechLeadershipFTE(averagePeriod);
+                                cell.Style.NumberFormat.Format = numberFormat;
+
+                                // Project Costs
+                                cell = worksheetTotals.Cell(2 + i, 13);
+                                var targetCosts = totalItem.GetAverageProjectWorkTargetCosts();
                                 cell.Value = targetCosts;
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
+                                // Staff management costs
+                                cell = worksheetTotals.Cell(2 + i, 14);
+                                cell.Value = totalItem.GetAverageStaffMgmtCosts();
+                                cell.Style.NumberFormat.Format = moneyFormat;
+
+                                // Project management costs
+                                cell = worksheetTotals.Cell(2 + i, 15);
+                                cell.Value = totalItem.GetAverageProjectManagementCosts();
+                                cell.Style.NumberFormat.Format = moneyFormat;
+
+                                // Service management costs
+                                cell = worksheetTotals.Cell(2 + i, 16);
+                                cell.Value = totalItem.GetAverageServiceManagementCosts();
+                                cell.Style.NumberFormat.Format = moneyFormat;
+
+                                // BAU costs
+                                cell = worksheetTotals.Cell(2 + i, 17);
+                                cell.Value = totalItem.GetAverageBAUFTECosts();
+                                cell.Style.NumberFormat.Format = moneyFormat;
+
+                                // PD costs
+                                cell = worksheetTotals.Cell(2 + i, 18);
+                                cell.Value = totalItem.GetAveragePersonalDevelopmentFTECosts();
+                                cell.Style.NumberFormat.Format = moneyFormat;
+
+                                // Tech Leadership costs
+                                cell = worksheetTotals.Cell(2 + i, 19);
+                                cell.Value = totalItem.GetAverageTechLeadershipFTECosts();
+                                cell.Style.NumberFormat.Format = moneyFormat;
+
                                 // Baseline Budget
-                                cell = worksheetTotals.Cell(2 + i, 8);
-                                cell.FormulaR1C1 = "=RC[-5]-RC[-1]";
-                                cell.Style.NumberFormat.Format = moneyFormat;
-
-                                // Recovered FTE
-                                cell = worksheetTotals.Cell(2 + i, 9);
-                                cell.Value = totalItem.GetAverageRecovered(averagePeriod);
-                                cell.Style.NumberFormat.Format = numberFormat;
-
-                                // Recovered Costs
-                                cell = worksheetTotals.Cell(2 + i, 10);
-                                cell.Value = totalItem.GetAverageRecoveredCosts();
-                                cell.Style.NumberFormat.Format = moneyFormat;
-
-                                // Net Capped
-                                cell = worksheetTotals.Cell(2 + i, 11);
-                                cell.Value = totalItem.GetAverageNetCapped(averagePeriod);
-                                cell.Style.NumberFormat.Format = numberFormat;
-
-                                // Net Capped Costs
-                                cell = worksheetTotals.Cell(2 + i, 12);
-                                cell.Value = totalItem.GetAverageNetCappedCosts();
+                                cell = worksheetTotals.Cell(2 + i, 20);
+                                cell.FormulaR1C1 = "=RC[-17]-RC[-7]";
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Recovered Inc Lead
-                                cell = worksheetTotals.Cell(2 + i, 13);
+                                cell = worksheetTotals.Cell(2 + i, 21);
                                 cell.Value = totalItem.GetAverageRecoveredIncLeadership(averagePeriod);
                                 cell.Style.NumberFormat.Format = numberFormat;
 
                                 // Recovered Inc Lead Costs
-                                cell = worksheetTotals.Cell(2 + i, 14);
+                                cell = worksheetTotals.Cell(2 + i, 22);
                                 cell.Value = totalItem.GetAverageRecoveredIncLeadershipCosts();
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
-                                // Net Capped Inc Leads
-                                cell = worksheetTotals.Cell(2 + i, 15);
-                                cell.Value = totalItem.GetAverageNetCappedIncLeadership(averagePeriod);
-                                cell.Style.NumberFormat.Format = numberFormat;
-
-                                // Net Capped Inc Lead Costs
-                                cell = worksheetTotals.Cell(2 + i, 16);
-                                cell.Value = totalItem.GetAverageNetCappedIncLeadershipCosts();
-                                cell.Style.NumberFormat.Format = moneyFormat;
-
                                 // Amount in budget
-                                cell = worksheetTotals.Cell(2 + i, 17);
+                                cell = worksheetTotals.Cell(2 + i, 23);
                                 cell.Value = totalItem.GetInBudgetTotals();
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Baseline
-                                cell = worksheetTotals.Cell(2 + i, 18);
+                                cell = worksheetTotals.Cell(2 + i, 24);
                                 // = C - Q, both on the same row (relative R1C1: no anchors)
-                                cell.FormulaR1C1 = "=RC[-15]-RC[-1]";
+                                // Clamp to positive and don't want a negative baseline for a post
+                                cell.FormulaR1C1 = "=MAX(RC[-21]-RC[-1], 0)";
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
                                 // Difference to baseline
-                                cell = worksheetTotals.Cell(2 + i, 19);
-                                // = H - (baseline in col 18), same row (relative R1C1: no anchors)
-                                cell.FormulaR1C1 = "=RC[-11]-RC[-1]";
+                                cell = worksheetTotals.Cell(2 + i, 25);
+                                // = H - baseline, same row (relative R1C1: no anchors)
+                                cell.FormulaR1C1 = "=RC[-5]-RC[-1]";
                                 cell.Style.NumberFormat.Format = moneyFormat;
                             }
 
@@ -1141,6 +1222,10 @@ namespace PPMTool.Pages
 
                             // Adjust the column widths
                             worksheetTotals.Columns().AdjustToContents();
+
+                            // Group the WLM details
+                            worksheetTotals.Columns(6, 12).Group();
+                            worksheetTotals.CollapseColumns();
 
                             // **** Projects Sheet **** //
 
@@ -1167,7 +1252,7 @@ namespace PPMTool.Pages
 
                                 // Column A: Project name
                                 cell = worksheetProjects.Cell(2 + i, 1);
-                                cell.Value = proj.ProjectName;
+                                cell.Value = $"{GetSetting(SettingType.ProjectAbbreviation)}-{proj.ProjectId} {proj.ProjectName}";
 
                                 // Column B: PlannedCosts
                                 cell = worksheetProjects.Cell(2 + i, 2);
@@ -1224,15 +1309,15 @@ namespace PPMTool.Pages
 
                             // Write the rows
                             AddSummaryRow(ws, 4, "How much I think we cost (mid-grade estimates)", moneyFormat, $"=Costs!C{totalRow}");
-                            AddSummaryRow(ws, 5, "How much we aim to recover through WLM project work allocations (salary estimates)", moneyFormat, $"=Costs!G{totalRow}");
-                            AddSummaryRow(ws, 6, "How much we could recover (if all work we do as assignments is paid for)", moneyFormat, $"=Costs!N{totalRow}");
-                            AddSummaryRow(ws, 7, "How much we can't recover as money ran out (i.e. work we did for free)", moneyFormat, $"=Costs!Q{totalRow} - Costs!N{totalRow}");
+                            AddSummaryRow(ws, 5, "How much we aim to recover through WLM project work allocations (salary estimates)", moneyFormat, $"=Costs!M{totalRow}");
+                            AddSummaryRow(ws, 6, "How much we could recover (if all work we do as assignments is paid for)", moneyFormat, $"=Costs!V{totalRow}");
+                            AddSummaryRow(ws, 7, "How much we can't recover as money ran out (i.e. work we did for free)", moneyFormat, $"=Costs!W{totalRow} - Costs!V{totalRow}");
                             AddSummaryRow(ws, 8, "How much we actually can recover (based on money in the project budgets)", moneyFormat, null, "=R[-2]C + R[-1]C");
-                            AddSummaryRow(ws, 9, "Actual shortfall against cost recovery target due to combination of working for free and under assignment", moneyFormat, null, "=R[-1]C + R[-4]C");
+                            AddSummaryRow(ws, 9, "Actual surplus against cost recovery target due to combination of working for free and under assignment", moneyFormat, null, "=R[-1]C - R[-4]C");
                             AddSummaryRow(ws, 10, "How much ITS give us (baseline budget)", moneyFormat, null, "=R[-8]C * R[-7]C / 12");
-                            AddSummaryRow(ws, 11, "Shortfall in the budget provided by ITS to cover current operation (salary estimate)", moneyFormat, null, "=R[-1]C - (R[-6]C - R[-3]C)");
+                            AddSummaryRow(ws, 11, "Surplus against the budget provided by ITS to cover current operation (salary estimate)", moneyFormat, null, "=R[-1]C - (R[-7]C - R[-3]C)");
                             AddSummaryRow(ws, 12, "How much we actually cost (from tracker)", moneyFormat, $"Costs!D{totalRow}");
-                            AddSummaryRow(ws, 13, "Shortfall in the budget provided by ITS to cover operation based on actual costs from tracker", moneyFormat, null, "=R[-3]C - (R[-1]C - R[-4]C)");
+                            AddSummaryRow(ws, 13, "Surplus against the budget provided by ITS to cover operation based on actual costs from tracker", moneyFormat, null, "=R[-3]C - (R[-1]C - R[-5]C)");
 
                             // Style final row
                             range = ws.Range("A13:B13");

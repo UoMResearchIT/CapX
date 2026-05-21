@@ -1,28 +1,34 @@
 ﻿@using PPMTool.Data
+@using PPMTool.Data.Enums
+@using PPMTool.Services
 @using static PPMTool.Data.StatusMessage
+@inject FeatureService FeatureService
 
-<RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" class="my-1">
-    @if (Message.Type == MessageType.Info)
-    {
-        <RadzenIcon Icon="info" IconStyle="IconStyle.Info" title=@Message.Message />
-        <RadzenText Style="color: var(--rz-info); margin-bottom: 0;" Text=@Message.Message />
-    }
-    else if (Message.Type == MessageType.Warning)
-    {
-        <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning" title=@Message.Message />
-        <RadzenText Style="color: var(--rz-warning); margin-bottom: 0;" Text=@Message.Message />
-    }
-    else if (Message.Type == MessageType.Error)
-    {
-        <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title=@Message.Message />
-        <RadzenText Style="color: var(--rz-danger); margin-bottom: 0;" Text=@Message.Message />
-    }
-    else
-    {
-        <RadzenIcon Icon="check" IconStyle="IconStyle.Success" title=@Message.Message />
-        <RadzenText Style="color: var(--rz-success); margin-bottom: 0;" Text=@Message.Message />
-    }
-</RadzenStack>
+@if (Message.RelevantFeature == FeatureType.None || FeatureService.IsFeatureEnabled(Message.RelevantFeature))
+{
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" class="my-1">
+        @if (Message.Type == MessageType.Info)
+        {
+            <RadzenIcon Icon="info" IconStyle="IconStyle.Info" title=@Message.Message />
+            <RadzenText Style="color: var(--rz-info); margin-bottom: 0;" Text=@Message.Message />
+        }
+        else if (Message.Type == MessageType.Warning)
+        {
+            <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning" title=@Message.Message />
+            <RadzenText Style="color: var(--rz-warning); margin-bottom: 0;" Text=@Message.Message />
+        }
+        else if (Message.Type == MessageType.Error)
+        {
+            <RadzenIcon Icon="error" IconStyle="IconStyle.Danger" title=@Message.Message />
+            <RadzenText Style="color: var(--rz-danger); margin-bottom: 0;" Text=@Message.Message />
+        }
+        else
+        {
+            <RadzenIcon Icon="check" IconStyle="IconStyle.Success" title=@Message.Message />
+            <RadzenText Style="color: var(--rz-success); margin-bottom: 0;" Text=@Message.Message />
+        }
+        </RadzenStack>
+}
 
 @code {
 

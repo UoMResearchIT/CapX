@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using PPMTool.Data;
-using PPMTool.Data.Helpers;
+using PPMTool.Helpers;
+using PPMTool.Models;
 using PPMTool.Services;
 using Radzen.Blazor;
 
@@ -61,24 +61,27 @@ namespace PPMTool.Pages
                 var sources = FundingSourceService.GetAll(Context);
                 foreach (var project in projects)
                 {
-                    var resources = SubTaskService.GetResourcesForProject(Context, project.ProjectId);
+                    // Get the subtask / resource info for the project
+                    var subTasks = SubTaskService.GetAll(Context).Where(x => x.OwningProject.ProjectId == project.ProjectId);
 
+                    // Compute transaction breakdown for the project
                     var transactions = FinanceHelper.ComputeTransactionBreakdown(
                         Context,
-                        project.LeadershipFundingSource?.FundingSourceId ?? 0,
-                        project.PlannedLeadershipCosts,
-                        resources,
+                        project.CostModel,
+                        subTasks,
                         sources.Where(x => x.Project.ProjectId == project.ProjectId),
                         InvoiceService.GetFundsRequested(Context, project.ProjectId),
                         PaymentService.GetFundsReceived(Context, project.ProjectId)
                     );
 
                     var pm = ProjectService.GetProjectManager(Context, project.ProjectId);
+                    var school = ProjectService.GetSchoolAndFaculty(Context, project.ProjectId);
                     var actuals = SubTaskService.GetActuals(Context, project.ProjectId);
 
                     items.Add(
                         new FinanceSummaryItem(
                             project,
+                            school,
                             pm,
                             actuals,
                             transactions

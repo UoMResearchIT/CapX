@@ -5,9 +5,9 @@ name: C# .NET
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: ["dev"]
   pull_request:
-    branches: [ "dev" ]
+    branches: ["dev"]
 
 jobs:
   format_check:
@@ -16,34 +16,59 @@ jobs:
     defaults:
       run:
         working-directory: ./PPMTool
+
     steps:
-    - uses: actions/checkout@v5
-      with:
-        submodules: 'true'
-        token: ${{ secrets.ACTIONS_REPO_TOKEN }}
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v5
-      with:
-        dotnet-version: 8.0.x
-    - name: Format
-      run: dotnet format PPMTool.sln --exclude ../Blazor-ApexCharts/src/Blazor-ApexCharts.csproj --verify-no-changes --no-restore --verbosity detailed
-      
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.ORG_ACTIONS_BOT_APP_ID }}
+          private-key: ${{ secrets.ORG_ACTIONS_BOT_PRIVATE_KEY }}
+          owner: UoMResearchIT
+
+      - uses: actions/checkout@v5
+        with:
+          submodules: 'true'
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Format
+        run: dotnet format PPMTool.sln --exclude ../Blazor-ApexCharts/src/Blazor-ApexCharts.csproj --verify-no-changes --no-restore --verbosity detailed
+
   build:
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./PPMTool
+
     steps:
-    - uses: actions/checkout@v5
-      with:
-        submodules: 'true'
-        token: ${{ secrets.ACTIONS_REPO_TOKEN }}
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v5
-      with:
-        dotnet-version: 8.0.x
-    - name: Restore dependencies
-      run: dotnet restore --verbosity detailed
-    - name: Build
-      run: dotnet build --no-restore -c Release
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.ORG_ACTIONS_BOT_APP_ID }}
+          private-key: ${{ secrets.ORG_ACTIONS_BOT_PRIVATE_KEY }}
+          owner: UoMResearchIT
+
+      - uses: actions/checkout@v5
+        with:
+          submodules: 'true'
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore --verbosity detailed
+
+      - name: Build
+        run: dotnet build --no-restore -c Release

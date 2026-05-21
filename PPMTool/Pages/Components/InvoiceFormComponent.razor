@@ -1,9 +1,11 @@
 ﻿@inherits BaseFinanceItemFormComponent
+@inject SettingsService SettingsService
 @using Microsoft.Extensions.Logging
 @using PPMTool.Data
 @using PPMTool.Data.Entities
+@using PPMTool.Data.Enums
 @using PPMTool.Data.Helpers
-@using PPMTool.Enums
+@using PPMTool.Services
 @using Radzen
 
 <RadzenTemplateForm TItem="Invoice" Submit="@(() => HandleValidSubmit())" Data="@Invoice">
@@ -22,7 +24,7 @@
             <RadzenLabel Component="Notes" Text="Notes" class="font-weight-bold" />
             <RadzenTextArea @bind-Value="Invoice.Description" Name="Notes" Placeholder="Mandatory notes to describe the nature of the invoice" Style="width: 100%; height: 10rem;" />
             <RadzenLabel Component="InvoieReference" Text="Invoice Reference" class="font-weight-bold" />
-            <RadzenTextBox @bind-Value="Invoice.InvoiceReference" Name="InvoiceReference" Style="width:100%; margin-left: 0;" Placeholder="Invoice Reference e.g. RTP-123-2425-1"/>
+            <RadzenTextBox @bind-Value="Invoice.InvoiceReference" Name="InvoiceReference" Style="width:100%; margin-left: 0;" Placeholder="@($"Invoice Reference e.g. {SettingsService.GetSetting(SettingType.ProjectAbbreviation)}-123-2425-1")"/>
             <RadzenLabel Component="Status" Text="Status" class="font-weight-bold" />
             <HintComponent Message="The status of an invoice is determined from the linked payments or whether it has been marked as cancelled. Add and link a payment to update the invoice status or cancel it using the switch provided to update the status." />
             <RadzenBadge Text="@Invoice.Status.GetDescription()" BadgeStyle="@Invoice.Status.GetBadgeStyle()" />
@@ -114,7 +116,7 @@
             errorMessage = "You must give this item a description!";
             return false;
         }
-        if (!HtmlHelper.IsValidLink(Invoice.InvoiceUrl))
+        if (!Invoice.InvoiceUrl.IsValidURL())
         {
             errorMessage = "Invoice URL is required which links to an invoice or email as a SharePoint document so there is a physical record of the payment request!";
             return false;

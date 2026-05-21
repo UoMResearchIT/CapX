@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
+using PPMTool.Data.Interfaces;
 using PPMTool.Services;
 using Radzen;
 using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
-    public abstract class DataGridPage<T> : BasePage where T : class, ILoggableClass
+    public abstract class DataGridPage<T> : BasePage where T : class, ILoggableObject
     {
         protected RadzenDataGrid<T> dataGrid;
         protected IList<T> dataGridEntities;
@@ -107,7 +108,11 @@ namespace PPMTool.Pages
         protected virtual void OnCreateRow(T entity)
         {
             LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
-            dataGridEntityService.Add(Context, entity);
+            var duplicate = dataGridEntityService.Add(Context, entity);
+            if (duplicate < 0)
+            {
+                AddDuplicateErrorMessage(entity);
+            }
         }
 
         /// <summary>
@@ -117,7 +122,21 @@ namespace PPMTool.Pages
         protected virtual void OnUpdateRow(T entity)
         {
             LogInformation($"Update row in database for <{entity?.GetSensibleObjectName()}>");
-            dataGridEntityService.Update(Context, entity);
+            var duplicate = dataGridEntityService.Update(Context, entity);
+            if (duplicate < 0)
+            {
+                AddDuplicateErrorMessage(entity);
+            }
+        }
+
+        /// <summary>
+        /// Basic duplicate detected error message for a data grid page. Can be overridden as required.
+        /// </summary>
+        /// <param name="entity"></param>
+        protected virtual void AddDuplicateErrorMessage(T entity)
+        {
+            LogWarning($"Duplicate check failed for <{entity?.GetSensibleObjectName()}>");
+            SetErrorMessage(new StatusMessage($"A record with the same values already exists. Please change the values to be unique and try again.", StatusMessage.MessageType.Error));
         }
     }
 }
