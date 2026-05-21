@@ -436,14 +436,5 @@ namespace PPMTool.Data.Entities
         {
             return $"Project {RTP} | {Name}";
         }
-
-        /// <summary>
-        /// Returns the total planned cost of the project (tech + leaderhsip + indirects)
-        /// </summary>
-        /// <returns></returns>
-        public double GetTotalPlannedCosts()
-        {
-            return PlannedCost + PlannedLeadershipCosts + PlannedIndirectCost;
-        }
     }
 }

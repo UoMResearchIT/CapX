@@ -128,7 +128,7 @@ namespace PPMTool.Models
             DayRate = project.DayRate;
             Budget = project.Budget;
             BudgetIndirectCosts = project.BudgetedIndirects;
-            PlannedTotalCost = project.GetTotalPlannedCosts();
+            PlannedTotalCost = project.PlannedCost;
             PlannedLeadershipCosts = project.PlannedLeadershipCosts;
             PlannedIndirectCosts = project.PlannedIndirectCost;
             ActualTotalCost = project.ActualCost;
