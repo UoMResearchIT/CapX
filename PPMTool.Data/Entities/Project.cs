@@ -406,10 +406,14 @@ namespace PPMTool.Data.Entities
             // Truncate the cost to 2 DP as it is currency
             ActualIndirectCost = Math.Round(100 * actualIndirects) / 100;
             PlannedIndirectCost = Math.Round(100 * plannedIndirects) / 100;
-            ActualCost = Math.Round(100 * actualTech) / 100;
-            PlannedCost = Math.Round(100 * plannedTech) / 100;
             ActualLeadershipCosts = Math.Round(100 * actualLeadership) / 100;
             PlannedLeadershipCosts = Math.Round(100 * plannedLeadership) / 100;
+
+            // The planned and actuals for a project are are the total of all the cost categories
+            ActualCost = Math.Round(100 * actualTech) / 100;
+            ActualCost += ActualLeadershipCosts + ActualIndirectCost;
+            PlannedCost = Math.Round(100 * plannedTech) / 100;
+            PlannedCost += PlannedLeadershipCosts + PlannedIndirectCost;
         }
 
         /// <summary>
