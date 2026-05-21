@@ -154,10 +154,10 @@ namespace PPMTool.Data.Entities
             PlannedIndirectCost = 0d;
             if (project.CostModel.HasIndirects() && !subTask.IsLeadershipTask)
             {
-                // Planned indirects are just proportion of the technical costs
+                // Planned indirects are just proportion of the technical costs as they were computed using BilledFTE
                 PlannedIndirectCost = (PlannedCost * indirectsPercentage) / (1 + indirectsPercentage);
 
-                // Actual costs are also just proportion of the actual technical costs
+                // Actual costs are also just proportion of the actual technical costs as they were computed using BilledFTE
                 ActualIndirectCost = (ActualCost * indirectsPercentage) / (1 + indirectsPercentage);
             }
 

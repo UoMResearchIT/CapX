@@ -358,7 +358,7 @@ namespace PPMTool.Data.Entities
                         task.UpdateSubTaskCosts(this, financialReferences, indirectsPercentage);
                     }
 
-                    // Read subtask costs and hours and accumulate inot the relevant categories
+                    // Read subtask costs and hours and accumulate into the relevant categories
                     if (task.IsLeadershipTask)
                     {
                         actualLeadership += task.ActualCost;
@@ -366,6 +366,7 @@ namespace PPMTool.Data.Entities
                     }
                     else
                     {
+                        // Note that these will have been computed using BilledFTE so include indirects if applicable
                         actualTech += task.ActualCost;
                         plannedTech += task.PlannedCost;
                     }

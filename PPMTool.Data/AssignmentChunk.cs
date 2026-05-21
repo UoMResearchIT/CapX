@@ -137,6 +137,8 @@ namespace PPMTool.Data
             {
                 var annualCosts = finrefs.GetSuitableFinancialReference(FinancialYear).GetMidGradeCosts(Grade);
                 var fractionOfYear = (EndDate.Date.Subtract(StartDate.Date).TotalDays + 1) / 365d;
+
+                // The cost of a resource uses the BilledFTE which means it includes indirects if the model permits it
                 SalaryCostEstimate = annualCosts * BilledFTE * fractionOfYear;
 
                 // If the planned cost figures should be updated then they will match the salary cost estimate
