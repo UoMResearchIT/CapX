@@ -1,4 +1,8 @@
-﻿function toggleAutocompletePopup(visible, suggestions, razorComponentReference) {
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+function toggleAutocompletePopup(visible, suggestions, razorComponentReference) {
     console.log('Toggling autocomplete...')
     const magicBar = document.getElementById('magic-bar');
     let popup = document.getElementById('autocomplete-popup');

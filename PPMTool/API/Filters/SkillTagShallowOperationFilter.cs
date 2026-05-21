@@ -1,4 +1,8 @@
-﻿using System.Reflection;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Reflection;
 using Microsoft.OpenApi;
 using PPMTool.API.Attributes;
 using Swashbuckle.AspNetCore.SwaggerGen;

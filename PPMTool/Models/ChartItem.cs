@@ -1,4 +1,8 @@
-﻿using PPMTool.Enums;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using PPMTool.Enums;
 using PPMTool.Models.Interfaces;
 
 namespace PPMTool.Models

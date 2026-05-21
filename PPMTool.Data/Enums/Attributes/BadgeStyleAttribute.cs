@@ -1,4 +1,8 @@
-﻿using Radzen;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Radzen;
 
 namespace PPMTool.Data.Enums.Attributes
 {
