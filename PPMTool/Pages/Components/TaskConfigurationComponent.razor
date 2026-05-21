@@ -211,6 +211,7 @@
 
         public TaskConfigModel(FinancialReferenceService financialReferenceService, PPMToolContext context, bool isLeadership, double defaultDayRate, double indirectsPercentage)
         {
+            this.indirectsPercentage = indirectsPercentage;
             finRefService = financialReferenceService;
             this.context = context;
             this.isLeadership = isLeadership;

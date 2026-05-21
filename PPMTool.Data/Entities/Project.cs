@@ -358,7 +358,7 @@ namespace PPMTool.Data.Entities
                         task.UpdateSubTaskCosts(this, financialReferences, indirectsPercentage);
                     }
 
-                    // Read subtask costs and hours and accumulate inot the relevant categories
+                    // Read subtask costs and hours and accumulate into the relevant categories
                     if (task.IsLeadershipTask)
                     {
                         actualLeadership += task.ActualCost;
@@ -366,6 +366,7 @@ namespace PPMTool.Data.Entities
                     }
                     else
                     {
+                        // Note that these will have been computed using BilledFTE so include indirects if applicable
                         actualTech += task.ActualCost;
                         plannedTech += task.PlannedCost;
                     }
@@ -405,10 +406,14 @@ namespace PPMTool.Data.Entities
             // Truncate the cost to 2 DP as it is currency
             ActualIndirectCost = Math.Round(100 * actualIndirects) / 100;
             PlannedIndirectCost = Math.Round(100 * plannedIndirects) / 100;
-            ActualCost = Math.Round(100 * actualTech) / 100;
-            PlannedCost = Math.Round(100 * plannedTech) / 100;
             ActualLeadershipCosts = Math.Round(100 * actualLeadership) / 100;
             PlannedLeadershipCosts = Math.Round(100 * plannedLeadership) / 100;
+
+            // The planned and actuals for a project are are the total of all the cost categories
+            ActualCost = Math.Round(100 * actualTech) / 100;
+            ActualCost += ActualLeadershipCosts + ActualIndirectCost;
+            PlannedCost = Math.Round(100 * plannedTech) / 100;
+            PlannedCost += PlannedLeadershipCosts + PlannedIndirectCost;
         }
 
         /// <summary>
@@ -430,15 +435,6 @@ namespace PPMTool.Data.Entities
         public string GetSensibleObjectName()
         {
             return $"Project {RTP} | {Name}";
-        }
-
-        /// <summary>
-        /// Returns the total planned cost of the project (tech + leaderhsip + indirects)
-        /// </summary>
-        /// <returns></returns>
-        public double GetTotalPlannedCosts()
-        {
-            return PlannedCost + PlannedLeadershipCosts + PlannedIndirectCost;
         }
     }
 }
