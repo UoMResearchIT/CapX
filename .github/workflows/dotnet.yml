@@ -16,13 +16,15 @@ jobs:
     defaults:
       run:
         working-directory: ./PPMTool
+    permissions:
+      contents: read
 
     steps:
       - name: Create GitHub App token
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.ORG_ACTIONS_BOT_APP_ID }}
+          client-id: ${{ vars.ORG_ACTIONS_BOT_APP_ID }}
           private-key: ${{ secrets.ORG_ACTIONS_BOT_PRIVATE_KEY }}
           owner: UoMResearchIT
 
