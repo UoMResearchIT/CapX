@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
@@ -5,6 +9,7 @@ using Blazored.LocalStorage;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -15,10 +20,13 @@ using PPMTool.API.Authentication;
 using PPMTool.API.Endpoints;
 using PPMTool.API.Filters;
 using PPMTool.API.Services;
+using PPMTool.Data;
 using PPMTool.Data.Context;
-using PPMTool.Data.Helpers;
+using PPMTool.Helpers;
 using PPMTool.Services;
 using Radzen;
+using EnvironmentHelper = PPMTool.Helpers.EnvironmentHelper;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 #if RELEASE
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
@@ -59,14 +67,12 @@ builder.Services.AddServerSideBlazor().AddHubOptions(o =>
 });
 
 var connectionString = builder.Configuration.GetConnectionString("PPMToolContextConnection");
-builder.Services.AddDbContextFactory<PPMToolContext>(options =>
-    options.UseSqlite(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
-);
-
+var dbProvider = builder.Configuration.GetValue<string>("DbProvider").Clean();
+builder.Services.AddDbContextFactory<PPMToolContext>(options => options.AddDbProvider(connectionString, dbProvider));
 builder.Services.AddBlazoredSessionStorage();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddRadzenComponents();
-builder.Services.AddTransient<Microsoft.Extensions.Logging.ILogger>(s => s.GetRequiredService<ILogger<Program>>());
+builder.Services.AddTransient<ILogger>(s => s.GetRequiredService<ILogger<Program>>());
 builder.Services.AddScoped<InnateCodeService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<PersonService>();
@@ -84,7 +90,10 @@ builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<FundingSourceService>();
 builder.Services.AddScoped<FacultyService>();
 builder.Services.AddScoped<SchoolService>();
+builder.Services.AddScoped<CssVariableService>();
 builder.Services.AddSingleton<APIAuthService>();
+builder.Services.AddSingleton<FeatureService>();
+builder.Services.AddSingleton<SettingsService>();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -98,6 +107,16 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
     options.Secure = CookieSecurePolicy.Always;
     options.MinimumSameSitePolicy = SameSiteMode.None;
 });
+
+// Set the data protection settings rather than using the default
+// Allows us to store the encryption keys on disk instead of in memory to allow load balancing etc.
+var keyPath = builder.Configuration.GetValue<string>("DataProtection:KeyPath", null);
+if (!string.IsNullOrEmpty(keyPath))
+{
+    builder.Services.AddDataProtection()
+        .PersistKeysToFileSystem(new DirectoryInfo(keyPath))
+        .SetApplicationName("CapX");
+}
 
 // Choose the authentication type based on configuration
 var authenticationType = builder.Configuration.GetValue("Authentication:Type", "CAS");
@@ -319,16 +338,19 @@ app.UseWhen(
 app.MapFallbackToPage("/_Host");
 
 // Set the journal mode on the DB
-using (var connection = new SqliteConnection(connectionString))
+if (dbProvider == "sqlite")
 {
-    // Setting this should persist across connections
-    // https://learn.microsoft.com/en-gb/dotnet/standard/data/sqlite/compare#connection-strings
-    connection.Open();
-    using (var command = new SqliteCommand("PRAGMA journal_mode=WAL;", connection))
+    using (var connection = new SqliteConnection(connectionString))
     {
-        command.ExecuteNonQuery();
+        // Setting this should persist across connections
+        // https://learn.microsoft.com/en-gb/dotnet/standard/data/sqlite/compare#connection-strings
+        connection.Open();
+        using (var command = new SqliteCommand("PRAGMA journal_mode=WAL;", connection))
+        {
+            command.ExecuteNonQuery();
+        }
+        connection.Close();
     }
-    connection.Close();
 }
 
 // Set dummy data seed flag
@@ -340,7 +362,7 @@ using var scope = app.Services.CreateScope();
 var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
 using (var context = dbContextFactory.CreateDbContext())
 {
-    // Delete existing DB
+    // Delete existing DB if seeding to ensure a clean slate
     if (shouldSeed)
     {
         context.Database.EnsureDeleted();
@@ -353,10 +375,12 @@ using (var context = dbContextFactory.CreateDbContext())
 // Seed the default superuser from the settings if it doesn't already exist
 SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
 
+// Seed features
+SeedHelper.SeedFeatures(scope.ServiceProvider);
+
 // If seeding run the dummy data seeding methods
 if (shouldSeed)
 {
-
     // Seed tables with suitable values -- Note that competencies are already seeded by migrations
     SeedHelper.SeedPeople(scope.ServiceProvider);
     SeedHelper.SeedAbsences(scope.ServiceProvider);
@@ -384,6 +408,15 @@ CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Clean local application file path
 FileHelper.CleanLocalApplicationFilePath(logger);
+
+// Initialise feature service cache
+using (var context = dbContextFactory.CreateDbContext())
+{
+    var settingsService = app.Services.GetRequiredService<SettingsService>();
+    _ = settingsService.IntialiseServiceCacheAsync(context);
+    var featureService = app.Services.GetRequiredService<FeatureService>();
+    _ = featureService.IntialiseServiceCacheAsync(context);
+}
 
 // Run the app
 app.Run();

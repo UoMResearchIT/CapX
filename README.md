@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+-->
+
 # Capacity eXtended (CapX)
 This is tool initially started as a basic project and portfolio management (PPM) tool. Its first feature was capacity management, but it has since been extended to incorporate a much larger, more complex data model useful for an increased number of operational management activities. Written in .NET Blazor (Server) with a SQLite database, it is used for managing many aspects of the service delivery of the RSE department and the development of its staff.
 
@@ -33,13 +39,29 @@ Documentation of features and how to use them is available in the Wiki associate
 The software can be cloned with the usual `git clone` command. However, depending on the version checked out, it may contain submodules which can be initialised as part of the initial clone or as a separate step after the fact with `git submodule update --init --recursive`. If using Visual Studio 2022, developers will need to run `Update-Database` from the package manager console to create the DB and run the migrations before running the solution.
 
 ### Database Connection
-The database connection string needs to be specified in a `CONNECTION_STRING` environment variable. During development in Visual Studio, See the `.env.sample` file for example connection strings. Note that this is also required at "design-time" when running EF Core tools to update the database. The CapX API also connects the [leave booking system](https://holiday.its.manchester.ac.uk/) database. The connection string for this connection also needs to be specified in the same way in a variable called `LEAVEBOOKINGS_CONNECTION_STRING=`. During development, User Secrets can be used to override the blank value in the `appsettings.json`.
+The database connection string needs to be specified in a `CONNECTION_STRING` environment variable. During development in Visual Studio, See the `.env.sample` file for example connection strings. Note that this is also required at "design-time" when running EF Core tools to update the database. The University of Manchester instance of the CapX API also connects the [institutional leave booking system](https://holiday.its.manchester.ac.uk/) database. The connection string for this connection also needs to be specified in the same way in a variable called `LEAVEBOOKINGS_CONNECTION_STRING=`. If using CapX elsewhere, this can simply a be a dummy string as long as it is not blank. During development, User Secrets can be used to override the blank values specified in the `appsettings.json`.
 
 ### Seeding the Database
-The default database produced when first running EF Core's `dotnet ef database update` command (or `Update-Database` from within the Visual Studio Package Manager Console) runs the migrations available in the source code checked out. This produces an empty database. When the app starts, a single super user will be added to allow you to login. In addition, based on the migration data available in the source code, the timesheet activities and tasks in use at UoM at the time the feature was added are also there as well as the initial version of the RSE competency framework. Every other table is blank. This limits the ability to test new features or to demo the software without first adding records to the blank tables through the UI which takes time. To faciltate better testing, developers can set the `SEED_DUMMY_DATA` environment variable to "TRUE" (case insensitive) to have the software populate all the empty tables with dummy data on start-up.
+The app will run migrations every time it starts. If the connection string permits it, it will therefore create a blank database on first run. Furthermore, a single super user will be added to allow you to login. A blank database limits the ability to test new features or to demo the software without first adding records to the blank tables through the UI which takes time. To faciltate better testing, developers can set the `SEED_DUMMY_DATA` environment variable to "TRUE" (case insensitive) to have the software populate all the empty tables with dummy data on start-up.
 
 > [!WARNING] 
 > This feature overwrites all data in the tables as soon as the app starts!
+
+### Database Migrations
+As CapX supports multiple DB providers, the migrations required to set up the database and its tables are specific to the provider. Each supported provider has its own `.Migrations` project containing the relevant migrations for ensuring the DB is aligned to the models in the code. To add a new migration for a particular provider, set the `DB_PROVIDER` variable in the environment appropraitely then run following command from the root directory to invoke the EF Core Tools. For example, to add a migration for SQLite, set `DB_PROVIDER=sqlite` (typically using User Secrets if developing with Visual Studio or VS Code):
+
+```
+dotnet ef migrations add NameOfMigrationHere --context PPMToolContext --project PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj --startup-project PPMTool/PPMTool.csproj
+```
+
+The database can be updated manually with the following command but the web app calls `context.Database.Migrate();` anyway so the database will be created/updated as soon as the app runs making manual update rarely necessary.
+
+```
+dotnet ef database update --context PPMToolContext --project PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj --startup-project PPMTool/PPMTool.csproj
+```
+
+> [!WARNING] 
+> If you are adding a migration for one provider due to a DB schema change, it is expected that you would add migrations for all the others that replicate the same change. Otherwise different DB providers will end up with DB schemas that differ from each other!
 
 ### Solution/Build and Launch Configurations
 The Visual Studio solution no-longer has _launch_ configurations since the web app and the API are now integrated into one application. However, there are two _solution_ configurations: `Local` and `Release` that combine project-level _build_ configurations.
@@ -67,6 +89,8 @@ To set this up, create a `.env` file in the repository root with the following r
 | `SUPERUSER_NAME` | Name of the superuser (required if seeding) |
 | `SUPERUSER_USERNAME` | Username of the superuser (required if seeding) |
 | `SUPERUSER_EMAIL` | Email of the superuser (required if seeding) |
+| `DB_PROVIDER` | Which DB provider should be used. Supports sqlite, sqlserver, postgresql values. |
+| `DP_KEY_PATH` | Optional path to where on disk the data protection keys should be stored. |
 
 The following variables need only be set when not using the "Local" solution configuration:
 
@@ -122,4 +146,5 @@ TBC
 ## Known Issues
 1. CapX will run slowly in Firefox while the ad blocker is enabled. Disabling the ad blocker resolves this issue.
 2. Use of the Bitwarden browser plugin has been know to slow down the response of the interactive graphs. See [Issue 302](https://github.com/UoMResearchIT/CapX/issues/302) for details.
-3. CapX does not work properly in Safari on macOS when run from Docker.
+3. CapX does not work properly in Safari on macOS when run from Docker. See [Issue 570](https://github.com/UoMResearchIT/CapX/issues/570) for details.
+4. Use of GitInfo library means that the app must have access to the `.git` directory at compile-time. If checked out as a submodule this wont' be the case so this is not supported. See [Issue 1255](https://github.com/UoMResearchIT/CapX/issues/1255) for details.

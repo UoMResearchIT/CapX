@@ -1,92 +1,107 @@
-﻿@page "/manageskills"
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@page "/manageskills"
 @inherits DataGridPage<SkillTag>
 @using PPMTool.Data.Entities
-@using PPMTool.Enums
+@using PPMTool.Data.Enums
 @using PPMTool.Pages.Components
 <PageTitle>Manage Skills - CapX</PageTitle>
 
-<div class="container">
-    <div class="row">
-        <div class="col py-2">
-            <h1>Manage Skills</h1>
+<FeatureCheckComponent Feature="FeatureType.Skills">
+
+    <div class="container">
+        <div class="row">
+            <div class="col py-2">
+                <h1>Manage Skills</h1>
+            </div>
+            <div class="col-auto py-2 align-items-center">
+                <RadzenButton Text="Verify" Icon="cloud_done" Click="@VerifyControlledNamesAsync" Disabled="@(entityToInsert != null || Loading || !EditAuthorised)" />
+                <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled="@(entityToInsert != null || Loading || !EditAuthorised)" />
+            </div>
         </div>
-        <div class="col-auto py-2 align-items-center">
-            <RadzenButton Text="Verify" Icon="cloud_done" Click="@VerifyControlledNames" Disabled="@(entityToInsert != null || Loading || !EditAuthorised)" />
-            <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled="@(entityToInsert != null || Loading || !EditAuthorised)" />
+        <div class="row">
+            <div class="col py-2">
+                <RadzenText Text="Manage what skill tags are available in the system to associate with people and tasks." />
+            </div>
         </div>
-    </div>
-    @if (ErrorMessage != null)
-    {
-        <StatusMessageComponent Message="ErrorMessage" />
-    }
-    <hr />
-    @if (Loading)
-    {
-        <LoadingComponent />
-    }
-    else
-    {
-        <RadzenDataGrid @ref="dataGrid"
-                        AllowFiltering="true"
-                        AllowPaging="false"
-                        Count="@count"
-                        AllowSorting="true"
-                        EditMode="DataGridEditMode.Single"
-                        Data="@dataGridEntities"
-                        TItem="SkillTag"
-                        RowUpdate="@OnUpdateRow"
-                        RowCreate="@OnCreateRow"
-                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                        FilterMode="FilterMode.Simple"
-                        LoadData="LoadDataGrid">
-            <Columns>
-                <RadzenDataGridColumn TItem="SkillTag" Property="Name" Title="Name" Width="280px" MinWidth="10px" FilterOperator="FilterOperator.Contains">
-                    <EditTemplate Context="tag">
-                        <RadzenTextBox class="no-margin" @bind-Value="tag.Name" />
-                    </EditTemplate>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="SkillTag" Property="ControlledName" Title="Controlled Name" Width="280px" MinWidth="10px" FilterOperator="FilterOperator.Contains">
-                    <Template Context="tag">
-                        @if (tag.HasValidWikiLink == LinkCheckState.Success)
-                        {
-                            <RadzenStack Orientation="Radzen.Orientation.Horizontal">
-                                <RadzenIcon Icon="check_circle" Style="color: var(--rz-success)" title="Controlled name verified" />
-                                <a href="@tag.GetWikiLink()" target="_blank">
+        @if (ErrorMessage != null)
+        {
+            <StatusMessageComponent Message="ErrorMessage" />
+        }
+        <hr />
+        @if (Loading)
+        {
+            <LoadingComponent />
+        }
+        else
+        {
+            <RadzenDataGrid @ref="dataGrid"
+                            AllowFiltering="true"
+                            AllowPaging="false"
+                            Count="@count"
+                            AllowSorting="true"
+                            EditMode="DataGridEditMode.Single"
+                            Data="@dataGridEntities"
+                            TItem="SkillTag"
+                            RowUpdate="@OnUpdateRow"
+                            RowCreate="@OnCreateRow"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            FilterMode="FilterMode.Simple"
+                            LoadData="LoadDataGrid">
+                <Columns>
+                    <RadzenDataGridColumn TItem="SkillTag" Property="Name" Title="Name" Width="280px" MinWidth="10px" FilterOperator="FilterOperator.Contains">
+                        <EditTemplate Context="tag">
+                            <RadzenTextBox class="no-margin" @bind-Value="tag.Name" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SkillTag" Property="ControlledName" Title="Controlled Name" Width="280px" MinWidth="10px" FilterOperator="FilterOperator.Contains">
+                        <Template Context="tag">
+                            @if (tag.HasValidWikiLink == LinkCheckState.Success)
+                            {
+                                <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                                    <RadzenIcon Icon="check_circle" Style="color: var(--rz-success)" title="Controlled name verified" />
+                                    <a href="@tag.GetWikiLink()" target="_blank">
+                                        <RadzenText Text="@tag.ControlledName" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
+                                    </a>
+                                </RadzenStack>
+                            }
+                            else
+                            {
+                                <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                                    <RadzenIcon Icon="@(tag.HasValidWikiLink == LinkCheckState.Fail ? "cancel" : "do_not_disturb")"
+                                                Style="@($"color: {(tag.HasValidWikiLink == LinkCheckState.Fail ? "var(--rz-danger)" : "var(--rz-warning)")}")"
+                                                title="@($"{(tag.HasValidWikiLink == LinkCheckState.Fail ? "Controlled name verification failed!" : "Verification of controlled name pending")}")" />
                                     <RadzenText Text="@tag.ControlledName" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
-                                </a>
-                            </RadzenStack>
-                        }
-                        else
-                        {
-                            <RadzenStack Orientation="Radzen.Orientation.Horizontal">
-                                <RadzenIcon Icon="@(tag.HasValidWikiLink == LinkCheckState.Fail ? "cancel" : "do_not_disturb")"
-                                            Style="@($"color: {(tag.HasValidWikiLink == LinkCheckState.Fail ? "var(--rz-danger)" : "var(--rz-warning)")}")"
-                                            title="@($"{(tag.HasValidWikiLink == LinkCheckState.Fail ? "Controlled name verification failed!" : "Verification of controlled name pending")}")" />
-                                <RadzenText Text="@tag.ControlledName" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0;" />
-                            </RadzenStack>
-                        }
-                    </Template>
-                    <EditTemplate Context="tag">
-                        <RadzenTextBox class="no-margin" @bind-Value="tag.ControlledName" />
-                    </EditTemplate>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="SkillTag" Property="Rareness" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Rareness">
-                    <Template Context="tag">
-                        <SkillTagRarenessComponent SkillTag="@tag" Context="Context" />
-                    </Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="SkillTag" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
-                    <Template Context="tag">
-                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(tag))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="@(Loading || !EditAuthorised)" />
-                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(tag))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="@(Loading || !EditAuthorised)"  />
-                    </Template>
-                    <EditTemplate Context="tag">
-                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(tag))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
-                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(tag))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" />
-                    </EditTemplate>
-                </RadzenDataGridColumn>
-            </Columns>
-        </RadzenDataGrid>
-        <br />
-    }
-</div>
+                                </RadzenStack>
+                            }
+                        </Template>
+                        <EditTemplate Context="tag">
+                            <RadzenTextBox class="no-margin" @bind-Value="tag.ControlledName" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SkillTag" Property="Rareness" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Rareness">
+                        <Template Context="tag">
+                            <SkillTagRarenessComponent SkillTag="@tag" Context="Context" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SkillTag" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
+                        <Template Context="tag">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(tag))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="@(Loading || !EditAuthorised)" />
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(tag))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="@(Loading || !EditAuthorised)"  />
+                        </Template>
+                        <EditTemplate Context="tag">
+                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(tag))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
+                            <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(tag))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+            <br />
+        }
+    </div>
+
+</FeatureCheckComponent>

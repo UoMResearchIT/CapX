@@ -1,12 +1,18 @@
-﻿using System.Diagnostics;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
 using ApexCharts;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Data.Helpers;
+using PPMTool.Data.Enums;
 using PPMTool.Enums;
+using PPMTool.Helpers;
+using PPMTool.Models;
 using PPMTool.Services;
 using Radzen;
 
@@ -61,7 +67,6 @@ namespace PPMTool.Pages
         {
             includeUnFunded = value;
             await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-unfunded", value);
-            await ConfigureChartSource();
         }
 
         /// <summary>
@@ -72,7 +77,6 @@ namespace PPMTool.Pages
             includeLeavers = value;
             await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-leavers", value);
             await ReloadDropDownSourcesAsync();
-            await ConfigureChartSource();
         }
 
         /// <summary>
@@ -82,7 +86,6 @@ namespace PPMTool.Pages
         {
             includeFinished = value;
             await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished", value);
-            await ConfigureChartSource();
         }
 
         /// <summary>
@@ -101,9 +104,6 @@ namespace PPMTool.Pages
 
             // Save the new state
             await SavePeopleStateAsync();
-
-            // Regenerate the chart data
-            await ConfigureChartSource();
         }
 
         /// <summary>
@@ -153,7 +153,7 @@ namespace PPMTool.Pages
                 Debug.WriteLine($"** Selected {projectName}. Navigating to details page...");
 
                 // Use the title of the task to find its projectID then navigate to the details page
-                var project = ProjectService.GetAll(Context).FirstOrDefault(x => x.GetFullName() == projectName);
+                var project = ProjectService.GetAll(Context).FirstOrDefault(x => ProjectService.GetFullName(x) == projectName);
                 if (project != null)
                 {
                     Navigation.NavigateTo($"projects/projectdetails/{project.ProjectId}");
@@ -174,6 +174,7 @@ namespace PPMTool.Pages
                     await PeopleSelectionChangedAsync(chosenPeople);
                 }
             }
+            await ConfigureChartSourceAsync();
         }
 
         /// <summary>
@@ -295,7 +296,7 @@ namespace PPMTool.Pages
         /// <param name="manualEndDate">Overrides the end window for things like axis limits</param>
         /// <param name="customChartTitleGenerator">Generates the title for the charts - takes the name of the person if in project mode</param>
         /// <param name="projectModeCondition">Optional OR condition for deciding whether in project mode</param>
-        protected async Task ConfigureChartSource(
+        protected async Task ConfigureChartSourceAsync(
             Action afterConfigureTask = null,
             DateTime? manualStartDate = null,
             DateTime? manualEndDate = null,
@@ -402,7 +403,7 @@ namespace PPMTool.Pages
                             foreach (var group in groupedAssignments)
                             {
                                 // Compute chart items from the grouped assignments
-                                var seriesName = (group.Key as Project).GetFullName();
+                                var seriesName = ProjectService.GetFullName(group.Key as Project);
                                 chartSourceTemp.AddRange(
                                     GetProjectModeChartItemsFromAssignments(
                                         seriesName,

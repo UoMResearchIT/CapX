@@ -1,9 +1,13 @@
-﻿using System.Linq.Dynamic.Core;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Linq.Dynamic.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -41,21 +45,46 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Override the save row method to allow interruption to do custom validatoin and display an error.
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         protected override async Task SaveRow(User entity)
         {
             // Validate
             if (string.IsNullOrWhiteSpace(entity.CASUserName))
             {
-                SetErrorMessage(new StatusMessage("You must supply a user name", StatusMessage.MessageType.Error));
+                SetError("You must supply a user name");
                 return;
             }
             if (string.IsNullOrWhiteSpace(entity.Name))
             {
-                SetErrorMessage(new StatusMessage("You must give the user a name", StatusMessage.MessageType.Error));
+                SetError("You must give the user a name");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(entity.EmailAddress))
+            {
+                SetError("Users must have a valid email address");
                 return;
             }
 
             await base.SaveRow(entity);
+        }
+
+        /// <summary>
+        /// Wrapper to set an error message at the top of the page and fire a notification
+        /// </summary>
+        /// <param name="message"></param>
+        private void SetError(string message)
+        {
+            ShowNotification(new CapXNotificationMessage
+            {
+                Summary = "Oops!",
+                Detail = message,
+                Severity = NotificationSeverity.Error
+            });
+            SetErrorMessage(new StatusMessage(message, StatusMessage.MessageType.Error));
         }
     }
 }

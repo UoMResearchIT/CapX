@@ -1,12 +1,23 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Services
 {
     public class ProjectService : BaseEntityService<Project>
     {
+        private readonly SettingsService settingsService;
+
+        public ProjectService(SettingsService settingsService)
+        {
+            this.settingsService = settingsService;
+        }
+
         /// <inheritdoc />
         public override int Add(PPMToolContext context, Project projectModel, bool commitChanges = true)
         {
@@ -64,7 +75,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="projectModel"></param>
         /// <param name="commitChanges"></param>
-        /// <returns>-1 if a duplicate name, -2 if duplciate RTP</returns>
+        /// <returns>-1 if a duplicate name, -2 if duplicate abbreviation</returns>
         public override int Update(PPMToolContext context, Project projectModel, bool commitChanges = true)
         {
             if (DuplicateDetected(context, projectModel))
@@ -174,6 +185,34 @@ namespace PPMTool.Services
                 .Include(x => x.ProjectManager)
                 .FirstOrDefault(x => x.ProjectId == projectId)?
                 .ProjectManager;
+        }
+
+        /// <summary>
+        /// Returns the project name prefixed by the abbreviation from settings
+        /// </summary>
+        public string GetFullName(Project project)
+        {
+            var abbreviation = settingsService.GetSetting(SettingType.ProjectAbbreviation);
+            abbreviation ??= string.Empty;
+            return $"{abbreviation}-{project?.RTP} {project?.Name}";
+        }
+
+        /// <summary>
+        /// Retrieves the school and its associated faculty for the specified project.
+        /// </summary>
+        /// <remarks>The returned <see cref="School"/> entity includes its related <see cref="Faculty"/>
+        /// entity if available. This method performs eager loading of related entities to ensure all necessary data is
+        /// retrieved in a single query.</remarks>
+        /// <param name="context">The database context used to access project, school, and faculty data. Cannot be null.</param>
+        /// <param name="projectId">The unique identifier of the project whose school and faculty information is to be retrieved.</param>
+        /// <returns>The <see cref="School"/> entity associated with the specified project, including its faculty information, or
+        /// <see langword="null"/> if no matching project is found.</returns>
+        internal School GetSchoolAndFaculty(PPMToolContext context, int projectId)
+        {
+            return context.Projects
+                .Include(x => x.School)
+                .ThenInclude(x => x.Faculty)
+                .FirstOrDefault(x => x.ProjectId == projectId)?.School;
         }
     }
 }

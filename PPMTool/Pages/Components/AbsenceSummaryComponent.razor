@@ -1,9 +1,16 @@
-﻿@using Microsoft.EntityFrameworkCore
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@using Microsoft.EntityFrameworkCore
 @using PPMTool.Data.Context
-@using PPMTool.Enums
 @using PPMTool.Data.Entities
+@using PPMTool.Data.Enums
 @using PPMTool.Services
 @using System.Diagnostics
+@inherits BaseComponent
 
 <RadzenCard>
     <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.3rem">
@@ -22,7 +29,13 @@
                     }
                 }
             </RadzenStack>
-            <RadzenButton Click=@(args => EditPerson?.Invoke(Absence.Person)) Text="Edit Absences" Icon="edit" />
+            @if (ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser)
+            {
+                <RadzenButton Click=@(args => EditPerson?.Invoke(Absence.Person))
+                              Text="Edit Absences"
+                              Icon="edit"
+                              Disabled="@(!editAuthorised)" />
+            }
         </RadzenStack>
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.Start" Gap="0.7rem">
             <RadzenText Text="@($"{Absence.StartDate.ToString("dddd dd MMMM yyyy")}")" TextStyle="TextStyle.Subtitle1" />
@@ -41,7 +54,7 @@
     public Action<Person> EditPerson { get; set; }
 
     private bool isLeaving = false;
-
+    private bool editAuthorised = false;
 
     override protected void OnInitialized()
     {
@@ -53,5 +66,8 @@
             Absence.EndDate != null &&
             Absence.Person.EndDate != null &&
             Absence.EndDate!.Value.Date >= Absence.Person.EndDate!.Value.Date;
+
+        // Check the permissions of the active user
+        editAuthorised = ActiveUser.Person?.PersonId == Absence.Person.LineManager?.PersonId || ActiveUserRoleType == RoleType.Superuser;
     }
 }

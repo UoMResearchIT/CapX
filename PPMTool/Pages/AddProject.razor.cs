@@ -1,10 +1,15 @@
-﻿using System.Diagnostics;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
+using PPMTool.Data.Helpers;
 using PPMTool.Services;
 using Radzen;
 using static PPMTool.Data.StatusMessage;
@@ -53,12 +58,14 @@ namespace PPMTool.Pages
         private Project projectModel = new Project();
         private bool gotoDetails = false;
         private bool discardChanges = true;
+        private bool showOrgUnitsRequiredWarning = false;
         private IEnumerable<InnateCode> innateActivities = new List<InnateCode>();
         private IQueryable<InnateCode> innateActivityQuery;
         private IEnumerable<Person> projectManagers = new List<Person>();
         private IEnumerable<Faculty> faculties = new List<Faculty>();
         private IEnumerable<School> schools = new List<School>();
         private IEnumerable<ProjectStatus> statuses = new List<ProjectStatus>();
+        private IEnumerable<CostModel> costModels = new List<CostModel>();
         private ValidationMessageStore messageStore;
         private EditContext editContext;
         private double fundsReceived;
@@ -92,13 +99,24 @@ namespace PPMTool.Pages
             }
             else
             {
-                projectModel.DayRate = GlobalDefaults.DayRateDefault;
+                projectModel.DayRate = GetSetting(SettingType.DayRateDefault, 0f);
 
                 // Auto generate the RTP number based on the highest in the DB
                 projectModel.RTP = ProjectService.GetAll(Context).Select(x => x.RTP).DefaultIfEmpty(0).Max() + 1;
 
                 // Set the active user as the PM by default
                 projectModel.ProjectManager = ActiveUser?.Person;
+
+                // Specific check for when Finance feature has not been enabled and a new
+                // project is being added, as Faculties/Schools are required
+                if (!FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance))
+                {
+                    // If we have any active Schools then it means we have active Faculties too
+                    showOrgUnitsRequiredWarning = !SchoolService.GetAllActive(Context).Any();
+                }
+
+                // Set the selected school to null or the dropdown placeholder won't work
+                projectModel.School = null;
             }
 
             // Add default buttons with handlers
@@ -119,6 +137,7 @@ namespace PPMTool.Pages
                     && x.Person != null
                 );
             projectManagers = people.Where(x => users.Any(y => y.Person.PersonId == x.PersonId)).ToList();
+            costModels = DisplayOrderHelper.GetOrderListOfCostModels();
 
             // Create edit context and message store
             editContext = new EditContext(projectModel);
@@ -126,7 +145,7 @@ namespace PPMTool.Pages
 
             Loading = false;
             StateHasChanged();
-            LogInformation(projectModel.ProjectId > 0 ? $"Editing project {projectModel?.GetFullName()}" : $"Adding new project");
+            LogInformation(projectModel.ProjectId > 0 ? $"Editing project {projectModel?.GetSensibleObjectName()}" : $"Adding new project");
         }
 
         /// <summary>
@@ -169,8 +188,8 @@ namespace PPMTool.Pages
             {
                 schools = SchoolService.GetSchoolsForFaculty(Context, faculty.FacultyId);
 
-                // Reset the school
-                projectModel.School = new School();
+                // Reset the school so the placeholder shows again
+                projectModel.School = null;
             }
         }
 
@@ -214,8 +233,9 @@ namespace PPMTool.Pages
                     }
 
                     // Update the project summary values
-                    var finrefs = FinancialReferenceService.GetAll(Context);
-                    projectModel.UpdateProjectMetaData(true, finrefs);
+                    var finrefs = FinancialReferenceService.GetAllOrDefault(Context);
+                    var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+                    projectModel.UpdateProjectMetaData(true, finrefs, bauTopSlicePercentage);
 
                     if (ProjectId > 0)
                     {
@@ -248,7 +268,7 @@ namespace PPMTool.Pages
                             projectModel.ActualsLastUpdated = DateTime.Now.ToString("R");
                         }
 
-                        LogInformation($"Saving project {projectModel?.GetFullName()}...");
+                        LogInformation($"Saving project {projectModel?.GetSensibleObjectName()}...");
                         var res = ProjectService.Update(Context, projectModel);
                         CheckResultOfAddOrUpdate(res);
                     }
@@ -309,14 +329,14 @@ namespace PPMTool.Pages
             if (res < 0)
             {
                 // Duplicate found so show error message
-                LogWarning($"Duplicate project found with {(res == -1 ? $"name {projectModel?.Name}" : $"RTP-{projectModel?.RTP}")}!");
+                LogWarning($"Duplicate project found with {(res == -1 ? $"name {projectModel?.Name}" : $"{GetSetting(SettingType.ProjectAbbreviation)}-{projectModel?.RTP}")}!");
                 if (res == -1)
                 {
                     messageStore.Add(() => projectModel.Name, "Duplicate project name found!");
                 }
                 else
                 {
-                    messageStore.Add(() => projectModel.RTP, "Duplicate RTP number found!");
+                    messageStore.Add(() => projectModel.RTP, $"Duplicate {GetSetting(SettingType.ProjectAbbreviation)} number found!");
                 }
                 return false;
             }
@@ -346,7 +366,7 @@ namespace PPMTool.Pages
             // Not faculty or school objects or placeholder objects
             if (projectModel.School == null || projectModel.School?.Faculty == null || projectModel.School?.SchoolId == 0 || projectModel.School?.Faculty?.FacultyId == 0)
             {
-                messageStore.Add(() => projectModel.School, "Project must have a faculty and school set!");
+                messageStore.Add(() => projectModel.School, $"Project must have a {GetSetting(SettingType.OrgUnitUpper)} and {GetSetting(SettingType.OrgUnitLower)} set!");
                 return false;
             }
             return true;
@@ -375,7 +395,7 @@ namespace PPMTool.Pages
             if (ProjectId > 0)
             {
                 // Prompt
-                bool confirmed = await DialogService.Confirm($"You are about to delete project {projectModel.GetFullName()}. " +
+                bool confirmed = await DialogService.Confirm($"You are about to delete project {ProjectService.GetFullName(projectModel)}. " +
                     $"If this project was cancelled or didn't get funded then do not delete it but change its status instead so we can keep a record of unfunded projects.",
                     "Delete Project") ?? false;
                 if (confirmed)
@@ -392,7 +412,7 @@ namespace PPMTool.Pages
                         }
                     }
 
-                    LogInformation($"Deleting project {projectModel.GetFullName()}, ID {projectModel.ProjectId}");
+                    LogInformation($"Deleting project {projectModel.GetSensibleObjectName()}, ID {projectModel.ProjectId}");
 
                     // Delete the project from the database
                     ProjectService.Delete(Context, projectModel);

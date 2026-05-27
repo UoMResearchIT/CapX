@@ -1,8 +1,13 @@
-﻿using System.Diagnostics;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
+using static PPMTool.Data.Extensions;
 using static PPMTool.Pages.Components.TaskConfigurationComponent;
 
 namespace PPMTool.Pages
@@ -29,18 +34,31 @@ namespace PPMTool.Pages
 
         private Dictionary<string, TaskConfigModel> models;
         private TaskConfigModel summaryModel;
+        private bool isUsable = true;
+        private double defaultDayRate;
+        private double indirectsPercentage;
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            defaultDayRate = GetSetting(SettingType.DayRateDefault, 0.0);
+            indirectsPercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0.0);
 
-            summaryModel = new TaskConfigModel(FinancialReferenceService, Context, false);
-            models = new Dictionary<string, TaskConfigModel>
+            try
             {
-                { "Leadership", new TaskConfigModel(FinancialReferenceService, Context, true) },
-                { "RSE 1", new TaskConfigModel(FinancialReferenceService, Context, false) }
-            };
-            CostModel = CostModel.TechAndLeadershipWithIndirects;
+                FinancialReferenceService.GetFinancialReferenceForDate(Context, DateTime.Today);
+                summaryModel = new TaskConfigModel(FinancialReferenceService, Context, false, defaultDayRate, indirectsPercentage);
+                models = new Dictionary<string, TaskConfigModel>
+                {
+                    { "Leadership", new TaskConfigModel(FinancialReferenceService, Context, true, defaultDayRate, indirectsPercentage) },
+                    { "RSE 1", new TaskConfigModel(FinancialReferenceService, Context, false, defaultDayRate, indirectsPercentage) }
+                };
+                CostModel = CostModel.TechAndLeadershipWithIndirects;
+            }
+            catch (FinancialRefException)
+            {
+                isUsable = false;
+            }
             Loading = false;
         }
 
@@ -103,7 +121,7 @@ namespace PPMTool.Pages
         private void AddResource()
         {
             var numRes = models.Where(x => x.Key != "Leadership").Count() + 1;
-            var res = new TaskConfigModel(FinancialReferenceService, Context, false);
+            var res = new TaskConfigModel(FinancialReferenceService, Context, false, defaultDayRate, indirectsPercentage);
             models.Add($"RSE {numRes}", res);
             res.SetCostModel(CostModel);
             UpdateSummaryComponent("Self: Add Resource");

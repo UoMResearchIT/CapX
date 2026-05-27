@@ -1,8 +1,13 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Services
 {
@@ -192,15 +197,16 @@ namespace PPMTool.Services
             /// Method to return the strings as links to the projects
             /// </summary>
             /// <param name="configuration"></param>
+            /// <param name="abbrev"></param>
             /// <returns></returns>
-            public MarkupString GetRTPAsMarkup(IConfiguration configuration)
+            public MarkupString GetRTPAsMarkup(IConfiguration configuration, string abbrev)
             {
                 if (ProjectRTP != null && ProjectRTP.Count() > 0)
                 {
                     var temp = new List<string>();
                     foreach (var rtp in ProjectRTP)
                     {
-                        temp.Add($"<a href=\"{configuration["Authentication:HostUrl"]}/projects/projectdetails?rtp={rtp}\">RTP-{rtp}</a>");
+                        temp.Add($"<a href=\"{configuration["Authentication:HostUrl"]}/projects/projectdetails?rtp={rtp}\">{abbrev}-{rtp}</a>");
                     }
                     return (MarkupString)string.Join("<br />", temp);
                 }

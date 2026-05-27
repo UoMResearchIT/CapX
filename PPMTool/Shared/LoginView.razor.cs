@@ -1,4 +1,8 @@
-﻿using System.Diagnostics;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
@@ -20,6 +24,9 @@ namespace PPMTool.Shared
 
         [Inject]
         private ILocalStorageService LocalStorage { get; set; }
+
+        [Inject]
+        private CssVariableService CssVariableService { get; set; }
 
         private string displayName;
         private IEnumerable<User> users;
@@ -92,7 +99,7 @@ namespace PPMTool.Shared
             Logger.LogInformation($"Dark mode currently set to {isCurrentlyDark}");
 
             // Toggle
-            ThemeService.SetDarkLight(!isCurrentlyDark);
+            await ThemeService.SetDarkLightAsync(!isCurrentlyDark, SettingsService, CssVariableService);
 
             // Stash the setting in local storatge
             var storageValue = await LocalStorage.GetItemAsync<bool>("useDarkMode");

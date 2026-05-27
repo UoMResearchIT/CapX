@@ -1,4 +1,8 @@
-﻿using System.Data;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Data;
 using System.Diagnostics;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
@@ -7,7 +11,7 @@ using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -48,6 +52,9 @@ namespace PPMTool.Shared
         [Inject]
         private ThemeService ThemeService { get; set; }
 
+        [Inject]
+        private CssVariableService CssVariableService { get; set; }
+
         /// <summary>
         /// Whether there are any buttons or error messages to show in the action bar.
         /// </summary>
@@ -76,6 +83,26 @@ namespace PPMTool.Shared
         private RoleType activeUserRoleType;
 
         /// <summary>
+        /// Determines the CSS color variable to use for the banner based on the current environment and settings.
+        /// </summary>
+        /// <remarks>This method selects a different banner color in development environments when the
+        /// corresponding setting is enabled, which can help visually distinguish development from production
+        /// environments.</remarks>
+        /// <returns>A string containing the CSS variable name for the banner color. Returns "var(--rz-danger)" if development
+        /// banner colors are enabled and the environment is development; otherwise, returns "var(--rz-primary)".</returns>
+        private string GetBannerColour()
+        {
+            if (SettingsService.GetSetting<bool>(SettingType.UseDevelopmentBannerColours, true))
+            {
+                if (Environment.IsDevelopment())
+                {
+                    return "var(--rz-danger)";
+                }
+            }
+            return "var(--rz-primary)";
+        }
+
+        /// <summary>
         /// Specific object for populating the magic bar popup
         /// </summary>
         private class MagicBarItem
@@ -84,7 +111,7 @@ namespace PPMTool.Shared
 
             public string Name { get; }
 
-            public string DisplayName { get; }
+            public string DisplayName { get; set; }
 
             public Type ItemType { get; }
 
@@ -100,7 +127,6 @@ namespace PPMTool.Shared
             {
                 EntityId = project.ProjectId;
                 Name = project.Name;
-                DisplayName = $"{project.GetFullName()} ({project.PI})";
                 ItemType = typeof(Project);
             }
         }
@@ -154,7 +180,7 @@ namespace PPMTool.Shared
                 // Set the theme
                 var useDarkMode = await LocalStorage.GetItemAsync<bool>("useDarkMode");
                 Debug.WriteLine($"** Stored local value for darkmode = {useDarkMode}");
-                ThemeService.SetDarkLight(useDarkMode);
+                await ThemeService.SetDarkLightAsync(useDarkMode, SettingsService, CssVariableService);
             }
 
             // Set the user id to show the skills tab
@@ -196,7 +222,7 @@ namespace PPMTool.Shared
                         oldIncompleteSkillsValue != totalIncompleteSkills)
                     {
                         // Only expand the Admin menu item if SuperUser accessing the page and there are codes to be deactivated
-                        adminMenuItemExpanded = totalTimesheetCodesToDeactivate > 0 && loginView.ActiveUser.RoleType == Enums.RoleType.Superuser;
+                        adminMenuItemExpanded = totalTimesheetCodesToDeactivate > 0 && loginView.ActiveUser.RoleType == RoleType.Superuser;
 
                         // Now force a re-draw
                         StateHasChanged();
@@ -239,7 +265,7 @@ namespace PPMTool.Shared
                 );
                 var matchingProjects = ProjectService.GetAllShallow(context)
                 .Where(x =>
-                    x.GetFullName().ToLower().Contains(searchTerm.Clean()) ||
+                    ProjectService.GetFullName(x).ToLower().Contains(searchTerm.Clean()) ||
                     x.PI.ToLower().Contains(searchTerm.Clean())
                 );
 
@@ -251,7 +277,10 @@ namespace PPMTool.Shared
                 }
                 foreach (var project in matchingProjects)
                 {
-                    sourceData.Add(new MagicBarItem(project));
+                    sourceData.Add(new MagicBarItem(project)
+                    {
+                        DisplayName = $"{ProjectService.GetFullName(project)} ({project.PI})"
+                    });
                 }
                 sourceData.OrderBy(x => x.DisplayName);
 
@@ -332,6 +361,14 @@ namespace PPMTool.Shared
         public void ClearErrorMessage()
         {
             ErrorMessage = null;
+            StateHasChanged();
+        }
+
+        /// <summary>
+        /// Force a redraw of the component
+        /// </summary>
+        internal void Render()
+        {
             StateHasChanged();
         }
     }

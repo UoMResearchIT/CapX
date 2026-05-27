@@ -1,7 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Services
 {
@@ -267,7 +272,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal async Task<List<SkillTag>> GetAllPendingAsync(PPMToolContext context)
         {
-            return await context.SkillTags.Where(x => x.HasValidWikiLink == Enums.LinkCheckState.Pending).ToListAsync();
+            return await context.SkillTags.Where(x => x.HasValidWikiLink == LinkCheckState.Pending).ToListAsync();
         }
     }
 }

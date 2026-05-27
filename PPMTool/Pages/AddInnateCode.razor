@@ -1,11 +1,19 @@
-﻿@page "/managecodes/addinnatecode/{InnateCodeId:int}"
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@page "/managecodes/addinnatecode/{InnateCodeId:int}"
 @inherits DataGridPage<InnateCodeTask>
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
-@using PPMTool.Enums
+@using PPMTool.Data.Enums
 <PageTitle>Add Timesheet Code - CapX</PageTitle>
 
-<div class="container">
+<FeatureCheckComponent Feature="FeatureType.Timesheets">
+
+    <div class="container">
     @if (innateCode != null)
     {
         @if (InnateCodeId <= 0)
@@ -73,10 +81,13 @@
                                 @(task.Duty.GetDescription())
                             </Template>
                             <EditTemplate Context="task">
-                                <RadzenDropDown @bind-Value="task.Duty" Data="@Enum.GetValues(typeof(Duty))" />
+                                <RadzenDropDown TValue="Duty"
+                                                @bind-Value="task.Duty"
+                                                Data="duties"
+                                                ValueProperty="Value"
+                                                TextProperty="Text" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-
                         <RadzenDataGridColumn TItem="InnateCodeTask" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
                             <Template Context="c">
                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
@@ -93,3 +104,5 @@
         </RadzenCard>
     }
 </div>
+
+</FeatureCheckComponent>

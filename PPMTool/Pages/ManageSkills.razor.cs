@@ -1,10 +1,14 @@
-﻿using System.Diagnostics;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
 using System.Linq.Dynamic.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -156,31 +160,24 @@ namespace PPMTool.Pages
         /// <summary>
         /// Verify the controlled names for those pending and save to DB
         /// </summary>
-        private void VerifyControlledNames()
+        private async Task VerifyControlledNamesAsync()
         {
             Loading = true;
-            Task.Run(async () =>
+            await Task.Yield();
+            var toVerify = await TagService.GetAllPendingAsync(Context);
+            Debug.WriteLine($"** {toVerify.Count} tags to verify...");
+            foreach (var tag in toVerify)
             {
-                var toVerify = await TagService.GetAllPendingAsync(Context);
-                Debug.WriteLine($"** {toVerify.Count} tags to verify...");
-                foreach (var tag in toVerify)
+                var res = await tag.UpdateValidLinkAsync();
+                if (res != LinkCheckState.Pending)
                 {
-                    var res = await tag.UpdateValidLinkAsync();
-                    if (res != LinkCheckState.Pending)
-                    {
-                        Logger.LogInformation($"Updating the wiki link status for {tag.ControlledName}");
-                        TagService.Update(Context, tag);
-                    }
+                    Logger.LogInformation($"Updating the wiki link status for {tag.ControlledName}");
+                    TagService.Update(Context, tag);
                 }
-                LoadDataGrid(new LoadDataArgs());
-            }).ContinueWith(t =>
-            {
-                InvokeAsync(() =>
-                {
-                    Loading = false;
-                    StateHasChanged();
-                });
-            });
+            }
+            LoadDataGrid(new LoadDataArgs());
+            Loading = false;
+            StateHasChanged();
         }
     }
 }

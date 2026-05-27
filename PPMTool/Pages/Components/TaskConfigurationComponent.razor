@@ -1,11 +1,19 @@
-﻿@using PPMTool.Data
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@inject SettingsService SettingsService
+@using PPMTool.Data
 @using PPMTool.Data.Context
 @using PPMTool.Data.Entities
-@using PPMTool.Data.Helpers
-@using PPMTool.Enums
+@using PPMTool.Data.Enums
 @using System.ComponentModel.DataAnnotations
 @using System.Diagnostics
+@using PPMTool.Helpers
 @using PPMTool.Services
+
 <div class="row">
     <div class="col-3">
         <RadzenLabel class="radzen-form-label"
@@ -164,7 +172,13 @@
         // Initialise the model
         if (Model == null)
         {
-            Model = new TaskConfigModel(FinancialReferenceService, Context, IsLeadershipComponent);
+            Model = new TaskConfigModel(
+                FinancialReferenceService,
+                Context,
+                IsLeadershipComponent,
+                SettingsService.GetSetting(SettingType.DayRateDefault, 0.0),
+                SettingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0.0)
+            );
         }
         ValueChanged(nameof(Model.StartDate));
     }
@@ -192,21 +206,24 @@
     /// </summary>
     public class TaskConfigModel : BaseScheduledTask
     {
-        public double DayRate { get; set; } = GlobalDefaults.DayRateDefault;
+        public double DayRate { get; set; }
         public Rate ResourceRate { get; set; } = Rate.Standard;
         public CostModel CostModel { get; private set; }
 
         private FinancialReferenceService finRefService;
         private PPMToolContext context;
         private bool isLeadership;
+        private double indirectsPercentage = 0d;
 
-        public TaskConfigModel(FinancialReferenceService financialReferenceService, PPMToolContext context, bool isLeadership)
+        public TaskConfigModel(FinancialReferenceService financialReferenceService, PPMToolContext context, bool isLeadership, double defaultDayRate, double indirectsPercentage)
         {
+            this.indirectsPercentage = indirectsPercentage;
             finRefService = financialReferenceService;
             this.context = context;
             this.isLeadership = isLeadership;
             StartDate = DateTime.Today;
             EndDate = StartDate.AddDays(7);
+            DayRate = defaultDayRate;
         }
 
         /// <summary>
@@ -342,7 +359,7 @@
 
                     // Calculate the costs
                     techCost = resourceRate * dayScaled;
-                    indirectCost = (CostModel.HasIndirects() && !isLeadership) ? techCost * GlobalDefaults.BAUTopSliceFractionDefault : 0;
+                    indirectCost = (CostModel.HasIndirects() && !isLeadership) ? techCost * indirectsPercentage : 0;
                     PlannedIndirectCost += indirectCost;
                     PlannedCost += techCost + indirectCost;
                 }

@@ -1,8 +1,13 @@
-﻿using System.Diagnostics;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Enums;
 using PPMTool.Services;
 
@@ -71,7 +76,7 @@ namespace PPMTool.Pages
             owningProject = ProjectService.GetById(Context, ProjectId);
             originalStartDate = originalTask?.StartDate ?? DateTime.Today;
             originalEndDate = originalTask?.EndDate ?? DateTime.Today;
-            LogInformation($"Splitting task {originalTask?.Name} on {owningProject?.GetFullName()}");
+            LogInformation($"Splitting task {originalTask?.Name} on {owningProject?.GetSensibleObjectName()}");
 
             // Only allow the project manager to save the split or a superuser
             EditAuthorised = ActiveUserRoleType == RoleType.Superuser || owningProject?.ProjectManager.PersonId == ActiveUser?.Person?.PersonId;
@@ -356,7 +361,7 @@ namespace PPMTool.Pages
         /// </summary>
         private void DiscardChanges()
         {
-            LogInformation($"Discarding splitting task {originalAddTaskComponent?.TaskModel.Name} on {originalAddTaskComponent.ProjectModel.GetFullName()}!");
+            LogInformation($"Discarding splitting task {originalAddTaskComponent?.TaskModel.Name} on {originalAddTaskComponent.ProjectModel.GetSensibleObjectName()}!");
             Navigation.NavigateTo($"projects/projectdetails/{originalAddTaskComponent?.ProjectId}");
         }
 
@@ -385,11 +390,12 @@ namespace PPMTool.Pages
                 Debug.WriteLine($"** {owningProject?.SubTasks.Count} subtasks found! IDs: {string.Join("|", owningProject?.SubTasks.Select(x => x.SubTaskId))}");
 
                 // Update the project summary values
-                var finrefs = FinancialReferenceService.GetAll(Context);
-                owningProject.UpdateProjectMetaData(false, finrefs);
+                var finrefs = FinancialReferenceService.GetAllOrDefault(Context);
+                var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+                owningProject.UpdateProjectMetaData(false, finrefs, bauTopSlicePercentage);
 
                 // Update the project in the database
-                LogInformation($"Saving project {owningProject?.GetFullName()}...");
+                LogInformation($"Saving project {owningProject.GetSensibleObjectName()}...");
                 ProjectService.Update(Context, owningProject);
 
                 // Navigate back

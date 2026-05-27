@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 University of Manchester
+#
+# SPDX-License-Identifier: apache-2.0
+
 # Based on https://github.com/abmdev86/blazor-server-docker/tree/bb8e4fe2ce95863f9bfa257f4aa56217830b76a2
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
@@ -10,9 +14,13 @@ ARG BUILD_CONFIG=Local
 WORKDIR /src
 COPY nuget.config nuget.config
 
-COPY PPMTool/PPMTool.csproj PPMTool/PPMTool.csproj
 COPY PPMTool/PPMTool.sln PPMTool/PPMTool.sln
+COPY PPMTool/PPMTool.csproj PPMTool/PPMTool.csproj
 COPY PPMTool.Tests/PPMTool.Tests.csproj PPMTool.Tests/PPMTool.Tests.csproj
+COPY PPMTool.Data/PPMTool.Data.csproj PPMTool.Data/PPMTool.Data.csproj
+COPY PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj
+COPY PPMTool.Migrations.SqlServer/PPMTool.Migrations.SqlServer.csproj PPMTool.Migrations.SqlServer/PPMTool.Migrations.SqlServer.csproj
+COPY PPMTool.Migrations.PostgreSql/PPMTool.Migrations.PostgreSql.csproj PPMTool.Migrations.PostgreSql/PPMTool.Migrations.PostgreSql.csproj
 
 # Restore packages
 RUN dotnet nuget locals all --clear \
@@ -20,6 +28,10 @@ RUN dotnet nuget locals all --clear \
 
 # Copy full sources (inc. git for GitInfo library)
 COPY PPMTool PPMTool
+COPY PPMTool.Data PPMTool.Data
+COPY PPMTool.Migrations.Sqlite PPMTool.Migrations.Sqlite
+COPY PPMTool.Migrations.SqlServer PPMTool.Migrations.SqlServer
+COPY PPMTool.Migrations.PostgreSql PPMTool.Migrations.PostgreSql
 COPY .git .git
 
 # Second restore needed for .NET 10 EF tools but don't know why
@@ -40,9 +52,6 @@ RUN mkdir -p /app/publish/state
 
 # App expects DB at /app/PPMTool.db so create symlink
 RUN ln -s state/PPMTool.db /app/publish/PPMTool.db
-
-# Copy migration data files needed for runtime seeding (SEED_DUMMY_DATA=TRUE)
-RUN mkdir -p /app/publish/Migrations && cp -r PPMTool/Migrations/Data /app/publish/Migrations/
 
 FROM base AS final
 WORKDIR /app

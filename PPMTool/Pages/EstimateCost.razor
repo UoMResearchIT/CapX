@@ -1,7 +1,14 @@
-﻿@page "/estimatecost"
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@page "/estimatecost"
 @inherits BasePage
 @using PPMTool.Data
-@using PPMTool.Enums
+@using PPMTool.Data.Helpers
+@using PPMTool.Data.Enums
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
 @using System.Diagnostics
@@ -26,6 +33,10 @@
     {
         <LoadingComponent />
     }
+    else if (!isUsable)
+    {
+        <StatusMessageComponent Message="@(new StatusMessage("There are no financial references available in the system. You must add at least one before this page can be used.", StatusMessage.MessageType.Error))" />
+    }
     else
     {
         <RadzenCard>
@@ -37,7 +48,7 @@
                                  Component="CostModel" /><br />
                     <RadzenDropDown class="radzen-dropdown"
                                     @bind-Value="CostModel"
-                                    Data="@(Enum.GetValues(typeof(CostModel)))"
+                                    Data="@DisplayOrderHelper.GetOrderListOfCostModels()"
                                     Name="CostModel">
                         <Template Context="cost">
                             @($"{((CostModel)cost).GetAttribute<DisplayAttribute>().Name} : {((CostModel)cost).GetDescription()}")

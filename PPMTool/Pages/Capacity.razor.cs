@@ -1,10 +1,16 @@
-﻿using System.Data;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Data;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Data.Helpers;
+using PPMTool.Data.Enums;
 using PPMTool.Enums;
+using PPMTool.Helpers;
+using PPMTool.Models;
 using Radzen;
 
 namespace PPMTool.Pages
@@ -35,6 +41,13 @@ namespace PPMTool.Pages
 
             if (!firstRender) return;
 
+            // Navigate away if feature not enabled
+            if (!FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
+            {
+                Navigation.NavigateTo("people");
+                return;
+            }
+
             // Certain roles can use the dropdowns and save manager settings so need to reload
             if (EditAuthorised || ActiveUserRoleType == RoleType.Reader)
             {
@@ -47,9 +60,6 @@ namespace PPMTool.Pages
                 {
                     await ReloadDropDownSourcesAsync();
                 }
-
-                // Load the chart source based on the current configuration
-                await ConfigureChartSource();
             }
             else
             {
@@ -62,6 +72,9 @@ namespace PPMTool.Pages
                 // Will automatically load the chart source
                 await PeopleSelectionChangedAsync(chosenPeople);
             }
+
+            // Load the chart source based on the current configuration
+            await ConfigureChartSourceAsync();
 
             LogInformation($"Viewing capacity page");
         }
@@ -170,9 +183,7 @@ namespace PPMTool.Pages
             // Reload the people to include just those working on projects that PM manages
             await ReloadDropDownSourcesAsync();
 
-            // Reconfigure the chart
-            await ConfigureChartSource();
-
+            // Log selection
             LogInformation($"Selected manager: {item?.Name}");
         }
 
@@ -195,11 +206,11 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Wrapper for the chart configuration event that sets the optional paramters relevant for this page
+        /// Wrapper for the chart configuration event that sets the optional parameters relevant for this page
         /// </summary>
-        private async Task ConfigureChartSource()
+        private async Task ConfigureChartSourceAsync()
         {
-            await ConfigureChartSource(
+            await ConfigureChartSourceAsync(
                 customChartTitleGenerator: (name) => $"Load for {(!string.IsNullOrEmpty(name) ? name : "All")} {(ManagerChosen() ? " with manager " + ChosenManager.Name : "")}",
                 projectModeCondition: () => ManagerChosen()
             );

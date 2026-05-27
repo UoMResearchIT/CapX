@@ -1,7 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -22,7 +27,7 @@ namespace PPMTool.Pages
                 .ToList();
 
             // Only superusers can edit financial references
-            EditAuthorised = ActiveUserRoleType == Enums.RoleType.Superuser;
+            EditAuthorised = ActiveUserRoleType == RoleType.Superuser;
             LogInformation($"Viewing finref grid");
         }
 

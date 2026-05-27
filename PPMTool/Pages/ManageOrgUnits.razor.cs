@@ -1,7 +1,12 @@
-﻿using System.Linq.Dynamic.Core;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Linq.Dynamic.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -135,6 +140,11 @@ namespace PPMTool.Pages
                     break;
 
                 case School school:
+                    // Reactivate the parent Faculty if the School is made active
+                    if (newValue == true)
+                    {
+                        await ToggleFacultyActiveAsync(school.Faculty, true);
+                    }
                     ToggleSchoolActive(school, newValue);
                     break;
 
@@ -220,7 +230,7 @@ namespace PPMTool.Pages
             ShowNotification(new CapXNotificationMessage
             {
                 Summary = "Duplicate Detected!",
-                Detail = $"The {(unit is School ? "school" : "faculty")} name and code must be unique!"
+                Detail = $"The {GetSetting((unit is School ? SettingType.OrgUnitLower : SettingType.OrgUnitUpper))} name and code must be unique!"
             });
         }
     }

@@ -1,12 +1,17 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
+using PPMTool.Data.Interfaces;
 using PPMTool.Services;
 using Radzen;
 using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
-    public abstract class DataGridPage<T> : BasePage where T : class, ILoggableClass
+    public abstract class DataGridPage<T> : BasePage where T : class, ILoggableObject
     {
         protected RadzenDataGrid<T> dataGrid;
         protected IList<T> dataGridEntities;

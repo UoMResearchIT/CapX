@@ -1,8 +1,13 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
+using PPMTool.Services;
 using PPMTool.Shared;
 using Radzen;
 using static PPMTool.Shared.MainLayout;
@@ -36,6 +41,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private NotificationService NotificationService { get; set; }
+
+        [Inject]
+        protected FeatureService FeatureService { get; set; }
 
         private bool loading = true;
         [CascadingParameter]

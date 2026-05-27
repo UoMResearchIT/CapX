@@ -1,11 +1,16 @@
-﻿using System.Diagnostics;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Data.Helpers;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
+using PPMTool.Helpers;
 using PPMTool.Services;
 using Radzen;
 using Xceed.Words.NET;
@@ -267,7 +272,7 @@ namespace PPMTool.Pages
                 Category = competency.Category.GetDescription();
                 Description = HtmlHelper.ConvertToPlainText(competency.Description);
                 LatestAssessmentDate = latestAssessment == null ? new DateTime() : DateTime.Parse(latestAssessment.DateCreated);
-                AssessmentStatus = latestAssessment == null ? Enums.AssessmentStatus.Unmet.ToNiceString() : latestAssessment.Status.ToNiceString();
+                AssessmentStatus = latestAssessment == null ? Data.Enums.AssessmentStatus.Unmet.ToNiceString() : latestAssessment.Status.ToNiceString();
                 Evidence = latestAssessment == null ? "Never assessed!" : HtmlHelper.ConvertToPlainText(latestAssessment.Evidence);
             }
         }
@@ -564,7 +569,7 @@ namespace PPMTool.Pages
                 var groups = new List<CompetencyGroup>();
                 var newGroup = new CompetencyGroup(
                     5,
-                    "Foundation Level (Grade 5)",
+                    "Foundation Skills",
                     "counter_1",
                     competencies
                         .Where(x => x.Grade == 5)
@@ -580,7 +585,7 @@ namespace PPMTool.Pages
 
                 newGroup = new CompetencyGroup(
                     6,
-                    "Advanced Level (Grade 6)",
+                    "Advanced Skills",
                     "counter_2",
                     competencies
                         .Where(x => x.Grade == 6)
@@ -596,7 +601,7 @@ namespace PPMTool.Pages
 
                 newGroup = new CompetencyGroup(
                     7,
-                    "Leadership Level (Grade 7)",
+                    "Leadership Skills",
                     "counter_3",
                     competencies
                         .Where(x => x.Grade == 7)
@@ -671,41 +676,33 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Adds an assessment
+        /// Adds or updates an assessment
         /// </summary>
         /// <param name="assessment"></param>
-        private void AddAssessment(CompetencyAssessment assessment)
+        /// <param name="isUpdate"></param>
+        /// <returns>An error message or empty string if successful</returns>
+        private string AddOrUpdateAssessment(CompetencyAssessment assessment, bool isUpdate = false)
         {
-            LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
+            LogInformation($"{(isUpdate ? "Updating" : "Adding")} assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
             if (ValidateAssessment(assessment, out var message))
             {
-                CompetencyService.AddAssessment(Context, assessment);
-                UpdateMet();
+                try
+                {
+                    _ = isUpdate ?
+                    CompetencyService.UpdateAssessment(Context, assessment) :
+                    CompetencyService.AddAssessment(Context, assessment);
+                    UpdateMet();
+                    StateHasChanged();
+                    return string.Empty;
+                }
+                catch (Exception ex)
+                {
+                    message = $"Failed to {(isUpdate ? "update" : "add")} assessment: {ex.Message}";
+                }
             }
-            else
-            {
-                ShowValidationError(message);
-            }
+            ShowValidationError(message);
             StateHasChanged();
-        }
-
-        /// <summary>
-        /// Updates an assessment
-        /// </summary>
-        /// <param name="assessment"></param>
-        private void UpdateAssessment(CompetencyAssessment assessment)
-        {
-            LogInformation($"Updating assessment to Evidence: \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
-            if (ValidateAssessment(assessment, out var message))
-            {
-                CompetencyService.UpdateAssessment(Context, assessment);
-                UpdateMet();
-            }
-            else
-            {
-                ShowValidationError(message);
-            }
-            StateHasChanged();
+            return message;
         }
 
         /// <summary>
@@ -729,7 +726,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private bool ValidateAssessment(CompetencyAssessment assessment, out string message)
         {
-            // Need to have evidence but only if assessment status is partially met or met
+            // Only check the evidence required condition when not setting an assessment to unmet
             if ((string.IsNullOrWhiteSpace(assessment.Evidence) || string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.Evidence))) && assessment.Status != AssessmentStatus.Unmet)
             {
                 message = "Evidence is required!";

@@ -1,15 +1,21 @@
-﻿@using Microsoft.EntityFrameworkCore
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@using Microsoft.EntityFrameworkCore
 @using PPMTool.Data.Context
-@using PPMTool.Enums
+@using PPMTool.Data.Enums
 @using PPMTool.Data.Entities
 @using PPMTool.Services
 @using System.Diagnostics
 
 <RadzenCard>
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween" Gap="0rem" Wrap="FlexWrap.Wrap">
-        <RadzenStack class="col-5 p-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.3rem">
+        <RadzenStack class="col-5 p-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.4rem">
             <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0rem">
-                <RadzenText TextStyle="TextStyle.H5" Text="@Project.GetFullName()" />
+                <RadzenText TextStyle="TextStyle.H5" Text="@ProjectService.GetFullName(Project)" />
                 <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
             </RadzenStack>
             <StatusMessageSummaryComponent Messages="Project.GetLatestStatusMessages()" />
@@ -43,7 +49,10 @@
                 </ChildContent>
             </RadzenSplitButton>
             <RadzenButton Click=@(args => EditProject(Project)) Icon="edit" Disabled="@(!EditAuthorised)" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Edit Project"))" />
-            <RadzenButton Click="@(args => EditFinance(Project))" Icon="payments" Disabled="@(!EditAuthorised)" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Finance"))" />
+            @if (financeEnabled)
+            {
+                <RadzenButton Click="@(args => EditFinance(Project))" Icon="payments" Disabled="@(!EditAuthorised)" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Finance"))" />
+            }
             <RequestAndScrumButtonsComponent Project="@Project" ShowTooltip="ShowTooltip" />
         </RadzenStack>
     </RadzenStack>
@@ -78,12 +87,20 @@
     [Inject]
     private NavigationManager Navigation { get; set; }
 
+    [Inject] 
+    private FeatureService FeatureService { get; set; }
+
+    [Inject]
+    private ProjectService ProjectService { get; set; }
+
+    private bool financeEnabled;
     private string borderClass;
     private ButtonStyle buttonStyle;
 
     override protected void OnInitialized()
     {
         base.OnInitialized();
+        financeEnabled = FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance);
 
         if (OverDueNoteCount > 0)
         {

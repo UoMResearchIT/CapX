@@ -1,4 +1,10 @@
-﻿@page "/manageaccess"
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@page "/manageaccess"
 @inherits DataGridPage<User>
 @using PPMTool.Pages.Components
 @using PPMTool.Data.Entities
@@ -11,6 +17,11 @@
         </div>
         <div class="col-auto">
             <RadzenButton class="float-right" Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null) />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col py-2">
+            <RadzenText Text="Manage what users can access the app, what role they have when doing so and whether they are linked to a team member." />
         </div>
     </div>
     @if (ErrorMessage != null)

@@ -1,9 +1,12 @@
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
 #if RELEASE
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 #else
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using PPMTool.Enums;
 #endif
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -12,6 +15,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Services;
+using PPMTool.Data.Enums;
+using PPMTool.Data;
 
 namespace PPMTool.Pages.Account
 {

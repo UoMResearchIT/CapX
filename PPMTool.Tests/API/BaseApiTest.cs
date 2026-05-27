@@ -1,7 +1,11 @@
-﻿using System.Diagnostics;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Tests.API
 {
@@ -26,6 +30,7 @@ namespace PPMTool.Tests.API
         public void SetupForAPI()
         {
             // Get the API key to use from the database
+            // TODO: This needs to use the DbProvider options in the environment variables instead of hardcoding the path and provider
             var dbPath = Path.Combine(AppContext.BaseDirectory, "../../../../PPMTool/PPMTool.db");
             var options = new DbContextOptionsBuilder<PPMToolContext>()
                 .UseSqlite($"Data Source={dbPath};Cache=Shared;")
@@ -65,7 +70,7 @@ namespace PPMTool.Tests.API
                     if (report != null)
                     {
                         ManagerApiKey = key.Key;
-                        ManagerName = key.Owner.Person.Name;
+                        ManagerName = key.Owner!.Person?.Name;
                         ManagerReport = report.Name;
                         return;
                     }

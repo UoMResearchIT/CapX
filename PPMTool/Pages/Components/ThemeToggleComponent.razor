@@ -1,4 +1,10 @@
-﻿@inject ThemeService ThemeService
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@inject ThemeService ThemeService
 @inject IWebHostEnvironment Environment
 
 <RadzenButton Icon="@(isInDarkMode ? "light_mode" : "dark_mode")" Click="@(args => ToggleThemeAction?.Invoke())" Variant="Variant.Text" class="@($"{(Environment.IsDevelopment() ? "header-footer-icon-dev" : "header-footer-icon")}")" />

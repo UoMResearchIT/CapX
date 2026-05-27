@@ -1,6 +1,13 @@
-﻿@page "/manageorgunits"
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@page "/manageorgunits"
 @inherits BasePage
 @using PPMTool.Data.Entities
+@using PPMTool.Data.Enums
 @using PPMTool.Pages.Components
 @using Radzen
 
@@ -12,9 +19,15 @@
             <h2>Manage Organisational Units</h2>
         </div>
         <div class="col py-2">
-            <RadzenButton Icon="add" Text="Add Faculty" Click="@(() => StartAddingFaculty())" Style="float: right;"/>
+            <RadzenButton Icon="add" Text="@($"Add {GetSetting(SettingType.OrgUnitUpper)}")" Click="@(() => StartAddingFaculty())" Style="float: right;"/>
         </div>
     </div>
+    <div class="row">
+        <div class="col py-2">
+            <RadzenText Text="@($"Manage {GetSetting(SettingType.OrgUnitUpper)} and {GetSetting(SettingType.OrgUnitLower)} options.")" />
+        </div>
+    </div>
+    <hr />
 
     <div class="orgunits-accordion">
         @if (isAddingFaculty)
@@ -60,7 +73,7 @@
                             {
                                 @foreach (var school in faculty.Schools.OrderBy(x =>x.Name))
                                 {
-                                        <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="padding-left: 10px;">
+                                        <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="padding: 8px 15px; padding-left: 30px;">
                                             <EditOrgUnitEntityComponent OrgUnit="@school"
                                                                         OnSaveSucceeded="OrgUnitSuccessfulAdd"
                                                                         OnCancel="OrgUnitAddCancelled"
@@ -86,7 +99,7 @@
                             }
 
                             <div class="accordion-orgsubunit" style="text-align: right; background-color: unset;">
-                                <RadzenButton Icon="add" Text="Add School" Click="@(() => StartAddingSchool(faculty))" />
+                                <RadzenButton Icon="add" Text="@($"Add {GetSetting(SettingType.OrgUnitLower)}")" Click="@(() => StartAddingSchool(faculty))" />
                             </div> 
                         </ChildContent>
                 </RadzenAccordionItem>

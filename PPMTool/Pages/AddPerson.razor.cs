@@ -1,8 +1,13 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 using static PPMTool.Data.StatusMessage;
@@ -44,7 +49,7 @@ namespace PPMTool.Pages
                     EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
 
                     // Developers can view their own page; managers can view all people pages; superuser can view everything
-                    viewAuthorised = IsSuperuserOrLineManagerOrPerson(personModel) || ActiveUserRoleType == Enums.RoleType.Manager;
+                    viewAuthorised = IsSuperuserOrLineManagerOrPerson(personModel) || ActiveUserRoleType == RoleType.Manager;
 
                     // Reset the action bar
                     SetDefaultActionBar(HandleSubmit, DiscardChanges);
@@ -66,14 +71,14 @@ namespace PPMTool.Pages
             SetDefaultActionBar(HandleSubmit, DiscardChanges);
 
             // Find out if superuser for delete button
-            isSuperUser = ActiveUserRoleType == Enums.RoleType.Superuser;
+            isSuperUser = ActiveUserRoleType == RoleType.Superuser;
 
             // Superusers and managers can add new users so must have at least view permissions by default
-            viewAuthorised = isSuperUser || ActiveUserRoleType == Enums.RoleType.Manager;
+            viewAuthorised = isSuperUser || ActiveUserRoleType == RoleType.Manager;
 
             // Map the list of managers for drop down
             managers = UserService.GetAll(Context)
-                .Where(x => (x.RoleType == Enums.RoleType.Manager || x.RoleType == Enums.RoleType.Superuser) && x.Person != null && x.Person?.PersonId != personModel.PersonId)
+                .Where(x => (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser) && x.Person != null && x.Person?.PersonId != personModel.PersonId)
                 .Select(x => x.Person)
                 .DistinctBy(x => x.PersonId)
                 .OrderBy(x => x.Name)
@@ -174,8 +179,8 @@ namespace PPMTool.Pages
             editContext.NotifyValidationStateChanged();
             if (editContext.Validate())
             {
-                // Extra validation
-                if (!CheckLineManagerSet())
+                // Extra validation -- only check if there are managers to pick from
+                if (managers.Any() && !CheckLineManagerSet())
                 {
                     UpdateErrorOnActionBarFromContextMessageStore();
                     return;

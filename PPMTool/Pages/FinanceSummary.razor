@@ -1,14 +1,22 @@
-﻿@page "/managefinancialitems/summary"
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@page "/managefinancialitems/summary"
 @inherits BasePage
-@using PPMTool.Data
+@using PPMTool.Models
 @using PPMTool.Data.Entities
-@using PPMTool.Enums
+@using PPMTool.Data.Enums
 @using PPMTool.Pages.Components
 @using Radzen
 @using System.ComponentModel.DataAnnotations
 <PageTitle>Finance Summary - CapX</PageTitle>
 
-<div class="container">
+<FeatureCheckComponent Feature="FeatureType.ProjectFinance">
+
+    <div class="container">
     <div class="row align-items-center">
         <div class="col mr-auto">
             <h1>Finance Summary</h1>
@@ -34,7 +42,7 @@
             <Columns>
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="StartDate" Title="Start Date" FormatString="{0:yyyy-MM-dd}" MinWidth="10px" />
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="EndDate" Title="End Date" FormatString="{0:yyyy-MM-dd}" MinWidth="10px" />
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ProjectRTP" Title="RTP" MinWidth="10px" />
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ProjectRTP" Title="@($"{GetSetting(SettingType.ProjectAbbreviation)}")" MinWidth="10px" />
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ProjectName" Title="Project Name" MinWidth="10px" />
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ProjectPI" Title="Project PI" MinWidth="10px" Width="7rem" />
                 <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ProjectPM" Title="PM" MinWidth="10px" Width="7rem" />
@@ -43,12 +51,12 @@
                         @item.ProjectStatus.ToNiceString()
                     </Template>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="Faculty" Title="Faculty" MinWidth="10px">
+                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="Faculty" Title="@($"{GetSetting(SettingType.OrgUnitUpper)}")" MinWidth="10px">
                     <Template Context="item">
                         @item.Faculty.Name
                     </Template>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="School" Title="School" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="School" Title="@($"{GetSetting(SettingType.OrgUnitLower)}")" MinWidth="10px">
                     <Template Context="item">
                         @item.School.Name
                     </Template>
@@ -94,3 +102,5 @@
         </RadzenDataGrid>
     </RadzenCard>
 </div>
+
+</FeatureCheckComponent>

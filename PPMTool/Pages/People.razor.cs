@@ -1,8 +1,13 @@
-﻿using System.Diagnostics;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
 using System.Linq.Dynamic.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -20,6 +25,7 @@ namespace PPMTool.Pages
         private IEnumerable<Person> people;
         private int count;
         private int pageCount = 10;
+        private bool skillsEnabled;
 
         private bool includeLeavers;
         public bool IncludeLeavers
@@ -39,6 +45,8 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            skillsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Skills);
+
             Loading = true;
             EnqueueLoadData(GetLoadTask);
 
@@ -101,19 +109,13 @@ namespace PPMTool.Pages
             if (!EditAuthorised)
             {
                 // Only show the person themselves if in developer view
-                query = query.Where(x => x.PersonId == ActiveUser.Person.PersonId);
+                query = query.Where(x => ActiveUser.Person != null && x.PersonId == ActiveUser.Person!.PersonId);
             }
 
-            // Apply filter
-            if (!string.IsNullOrEmpty(args.Filter))
-            {
-                // Filter via the Where method
-                query = query.Where(args.Filter);
-            }
-
-            // Now apply the custom filters
+            // Now apply the custom filters (pattern matching syntax for non-null object)
             if (args.Filters is { } filters && filters.Any())
             {
+                // Filter on Skill Tags
                 var filter = args.Filters.FirstOrDefault(x => x.Property == "SkillTags");
                 var filterValue = filter?.FilterValue as string;
                 if (filter != null && filterValue != null)
@@ -121,6 +123,7 @@ namespace PPMTool.Pages
                     query = query.Where(x => x.OwnedSkills.Any(x => x.SkillTag.Name.Trim().ToLower().Contains(filterValue.Trim().ToLower())));
                 }
 
+                // Add filter on Line Manager
                 filter = filters.FirstOrDefault(f => f.Property == "LineManager");
                 filterValue = (filter?.FilterValue as string)?.Trim();
                 if (!string.IsNullOrEmpty(filterValue))
@@ -128,13 +131,22 @@ namespace PPMTool.Pages
                     var filterValueLower = filterValue.ToLower();
                     query = query.Where(x =>
                         x.LineManager != null &&
-                        ((x.LineManager.Name ?? "").Trim().ToLower()).Contains(filterValueLower));
+                        (x.LineManager.Name ?? "").Trim().ToLower().Contains(filterValueLower));
+                }
+
+                // Add any filters than are none of the special ones
+                var stdFilters = args.Filters.Where(x => x.Property != "SkillTags" && x.Property != "LineManager");
+                if (stdFilters.Any())
+                {
+                    // Filter via the Where method
+                    query = query.Where(args.Filter);
                 }
             }
 
-            // Apply custom order
+            // Sorting needed
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
+                // Check details of the sort
                 if (args.Sorts is { } sorts && sorts.Any())
                 {
                     var sort = args.Sorts?.First();
@@ -156,11 +168,13 @@ namespace PPMTool.Pages
                             query.OrderBy(x => x.LineManager != null ? x.LineManager.Name : "") :
                             query.OrderByDescending(x => x.LineManager != null ? x.LineManager.Name : "");
                     }
-                }
-                else
-                {
-                    // Sort via the OrderBy method
-                    query = query.OrderBy(args.OrderBy);
+
+                    // No special handling required
+                    else
+                    {
+                        // Sort via the OrderBy method
+                        query = query.OrderBy(args.OrderBy);
+                    }
                 }
             }
 
