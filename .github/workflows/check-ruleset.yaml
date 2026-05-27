@@ -28,7 +28,7 @@ name: Check Repository Ruleset
 
 on:
   push:
-    branches: [main]
+    branches: [dev]
   pull_request:
 
 permissions:
