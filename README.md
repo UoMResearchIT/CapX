@@ -11,9 +11,9 @@ This is tool initially started as a basic project and portfolio management (PPM)
 > The [dRTP Operational Management Community Practice (dRTP-OMCoP)](https://uomresearchit.github.io/DRTP-Op-Man-CoP-Website/) are responsible for its strategic direction. We’d love to hear if you are using this tool. If you would like to be part of dRTP-OMCoP then please let us know!
 
 ## User Accounts and Access
-The app suports integration with CAS / Shibboleth as well as Azure AD / Entra with access to restricted parts of the app managed within the app using a Role-Based Access Control (RBAC) database table. Super-users are able to manage user roles and access via the "Manage Access" page.
+The app supports integration with CAS / Shibboleth as well as Azure AD / Entra with access to restricted parts of the app managed within the app using a Role-Based Access Control (RBAC) database table. Super-users are able to manage user roles and access via the "Manage Access" page.
 
-If the app is run in the "Local" solution configuration then third-party authentication is disabled and instead, users can select any name from a dropdown list to log in as any user from the header bar -- this mode is intended for debugging or demos.
+If the app is run in the "Local" solution configuration then third-party authentication is disabled. Users can then select any name from the dropdown list in the header bar to log in as that person and role. This mode is intended for debugging or demos.
 
 ## API Access
 Any user of the web application can gain access to the API endpoints. Note that their success in using the endpoints is dictated by their role in the web app RBAC database table. To access the API, users need to generate an API key from the "Developer Settings" in the web app under the "Developer Settings". The successful generation of an API key in the web app depends on a suitable secret (minimum 32 characters) being injected into the `Jwt:SecretKey` configuration parameter for the web application. This secret parameter can be injected via an environment variable named `API_KEY_SECRET`, or during development if using Visual Studio, this can be done by simply opening "Manage User Secrets" for the project and adding `"Jwt:SecretKey" : "some-32-char-long-value"` to the .NET secrets manager.
@@ -34,7 +34,7 @@ Documentation of some of the features and how to use them is available in the Wi
 The software can be cloned with the usual `git clone` command. However, depending on the version checked out, it may contain submodules which can be initialised as part of the initial clone or as a separate step after the fact with `git submodule update --init --recursive`.
 
 > [!TIP]
-> By defualt, cloning the repository will checkout the `dev` branch. If you simply want to deploy a particular release then you can checkout the relevant tagged commit using `git checkout <tagname>` e.g. `git checkout Release_v1.14.0` then follow the instructions below to spin-up the container with Docker Compose below.
+> By default, cloning the repository will checkout the `dev` branch. If you simply want to deploy a particular release then you can checkout the relevant tagged commit using `git checkout <tagname>` e.g. `git checkout Release_v1.14.0` then follow the instructions below to spin-up the container with Docker Compose below.
 
 ### Database Connection
 The database connection string needs to be specified in a `CONNECTION_STRING` environment variable. During development in Visual Studio, See the `.env.sample` file for example connection strings. Note that this is also required at "design-time" when running EF Core tools to update the database. The connection string for `LEAVEBOOKINGS_CONNECTION_STRING=` is only relevant to The University of Manchester. If using CapX elsewhere, this can simply a be a dummy string as long as it is not blank. During development, User Secrets can be used to override the blank values specified in the `appsettings.json`.
