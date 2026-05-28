@@ -43,12 +43,12 @@ namespace PPMTool.Services
         public ILogger Logger { get; }
 
         /// <summary>
-        /// Send an email to the list of recipients provided.
+        /// Send an email to the recipient provided.
         /// </summary>
         /// <param name="to"></param>
         /// <param name="subject"></param>
         /// <param name="message"></param>
-        public void SendEmail(IEnumerable<string> to, string subject, string message)
+        public void SendEmail(string to, string subject, string message)
         {
 
             var mailMessage = new MailMessage
@@ -58,13 +58,9 @@ namespace PPMTool.Services
                 Body = message,
                 IsBodyHtml = true,
             };
+            mailMessage.To.Add(to);
 
-            foreach (var recipient in to.Distinct())
-            {
-                mailMessage.To.Add(recipient);
-            }
-
-            Logger.LogInformation($"Sending email to {string.Join(',', mailMessage.To)}, subject {mailMessage.Subject}");
+            Logger.LogInformation($"Sending email to {mailMessage.To}, subject {mailMessage.Subject}");
 
 #if RELEASE
             // Launch a background task to do the sending
@@ -78,7 +74,7 @@ namespace PPMTool.Services
                 }
                 catch (Exception e)
                 {
-                    Logger.LogError($"Failed to send email to {string.Join(',', mailMessage.To)}, subject {mailMessage.Subject}:\n{e}");
+                    Logger.LogError($"Failed to send email to {mailMessage.To}, subject {mailMessage.Subject}:\n{e}");
                 }
             });
 #endif
@@ -94,7 +90,7 @@ namespace PPMTool.Services
             List<string> recipients = new List<string>();
 
             // Run a background thread to do the sending and updating
-            await Task.Run(() =>
+            await Task.Run(async () =>
             {
                 try
                 {
@@ -128,7 +124,11 @@ namespace PPMTool.Services
 
                             // Send email
                             Debug.WriteLine($"** Sending Timesheet Submission email to {string.Join("|", recipients)}");
-                            SendEmail(recipients, subject, body.ToString());
+                            foreach (var recipient in recipients)
+                            {
+                                SendEmail(recipient, subject, body.ToString());
+                                await Task.Delay(1000);
+                            }
                         }
                     }
                 }
@@ -310,9 +310,13 @@ namespace PPMTool.Services
                                 }
                                 recipients.AddRange(lineManagerEmailAddresses);
                             }
+
                             Debug.WriteLine($"** Sending email to {string.Join(',', recipients)}");
-                            SendEmail(recipients, subject, body.ToString());
-                            await Task.Delay(1000);
+                            foreach (var recipient in recipients)
+                            {
+                                SendEmail(recipient, subject, body.ToString());
+                                await Task.Delay(1000);
+                            }
                         }
                     }
                 }
@@ -470,8 +474,11 @@ namespace PPMTool.Services
                                 recipients.AddRange(lineManagerEmailAddresses);
                             }
                             Debug.WriteLine($"** Sending email to {string.Join(',', recipients)}");
-                            SendEmail(recipients, subject, body.ToString());
-                            await Task.Delay(1000);
+                            foreach (var recipient in recipients)
+                            {
+                                SendEmail(recipient, subject, body.ToString());
+                                await Task.Delay(1000);
+                            }
                         }
                     }
                 }
