@@ -30,25 +30,17 @@ using ILogger = Microsoft.Extensions.Logging.ILogger;
 #if RELEASE
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
-using Serilog;
 #endif
 
 // Add environment variables to the configuration
 var builder = WebApplication.CreateBuilder(args);
 EnvironmentHelper.LoadEnvironmentVariables(builder);
 
-#if RELEASE
-// Configure logging
-builder.Logging.AddSerilog(new LoggerConfiguration()
-    .WriteTo.Console()
-    .WriteTo.File(
-        path: builder.Configuration.GetValue<string>("LogPath"),
-        rollingInterval: RollingInterval.Day,
-        retainedFileCountLimit: null,
-        retainedFileTimeLimit: TimeSpan.FromDays(30)
-    )
-.CreateLogger());
+// Configure logging -- use console logging only
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
+#if RELEASE
 // Configure Sentry
 SentrySdk.Init(o =>
 {
