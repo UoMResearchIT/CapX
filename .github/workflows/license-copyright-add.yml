@@ -4,8 +4,7 @@
 
 name: Add Licence and Copyright Headers
 
-on:
-  pull_request
+on: pull_request
 
 jobs:
   add-headers:

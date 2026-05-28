@@ -2,8 +2,7 @@ name: Docker Images Build and Health Check
 
 on:
   push:
-    branches:
-      - dev
+    branches: [dev]
   pull_request:
 
 permissions:

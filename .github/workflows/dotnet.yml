@@ -5,9 +5,8 @@ name: C# .NET
 
 on:
   push:
-    branches: ["dev"]
+    branches: [dev]
   pull_request:
-    branches: ["dev"]
 
 jobs:
   format-check:
@@ -43,4 +42,4 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Format
-        run: dotnet format PPMTool.sln --exclude ../Blazor-ApexCharts/src/Blazor-ApexCharts.csproj --verify-no-changes --no-restore --verbosity detailed
+        run: dotnet format PPMTool.sln --verify-no-changes --no-restore --verbosity detailed
