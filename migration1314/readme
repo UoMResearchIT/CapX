@@ -1,4 +1,0 @@
-This is a temporary folder to aid the migration of the application from the closed-source v1.13.X to the open source v1.14.0 where the migrations are squashed into a single migration
-- Step 1: Delete any old DB with NEW_DB filename specified in the script.
-- Step 2: Run the app to create a blank DB with the InitialCreate migration run and inserted into the migrations history table.
-- Step 3: Run the script with python to copy all the data from the v13 DB to the new one.
