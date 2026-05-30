@@ -365,11 +365,13 @@ using (var context = dbContextFactory.CreateDbContext())
     // Delete existing DB if seeding to ensure a clean slate
     if (shouldSeed)
     {
-        context.Database.EnsureDeleted();
+        await context.Database.EnsureDeletedAsync();
     }
 
-    // Run migrations
-    context.Database.Migrate();
+    // MigrateAsync rather than Migrate: Npgsql 10 does not support synchronous command
+    // execution (throws InvalidCastException: PoolingDataSource -> MultiplexingDataSource),
+    // so the synchronous overload silently fails on PostgreSQL, leaving the schema out of date.
+    await context.Database.MigrateAsync();
 }
 
 // Seed the default superuser from the settings if it doesn't already exist
