@@ -37,8 +37,9 @@ jobs:
   check:
     if: github.repository_owner == 'UoMResearchIT'
     name: Check Ruleset
-    uses: UoMResearchIT/actions/.github/workflows/check-ruleset.yaml@631e75042fd39b85beba5d00729d2650ee8f4013 # main
+    uses: UoMResearchIT/actions/.github/workflows/check-ruleset.yaml@7a30635d87460270dde919e71e31c5dd1f789f20 # temporary feature branch that allows "ignore" argument
     with:
       bot-id: ${{ vars.ORG_ACTIONS_BOT_APP_ID }}
+      ignore: '["require_code_owner_review"]'
     secrets:
       bot-key: ${{ secrets.ORG_ACTIONS_BOT_PRIVATE_KEY }}
