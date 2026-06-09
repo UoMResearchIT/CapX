@@ -99,7 +99,7 @@ namespace PPMTool.Services
                     {
                         Person lineManager = staff.LineManager;
 
-                        if (lineManager != staff) // No point in Superuser emailing themselves about their timesheet. :)
+if (lineManager != staff) // No point emailing someone about their own timesheet if they are their own line manager. :)
                         {
                             User lineManagerUser = UserService.GetAll(context).First(p => p.Person.PersonId == lineManager.PersonId);
                             var lineManagerEmailAddresses = lineManagerUser.GetNormalisedEmailAddresses();
