@@ -5,9 +5,8 @@ name: C# .NET
 
 on:
   push:
-    branches: ["dev"]
+    branches: [dev]
   pull_request:
-    branches: ["dev"]
 
 jobs:
   format-check:
@@ -16,26 +15,31 @@ jobs:
     defaults:
       run:
         working-directory: ./PPMTool
+    permissions:
+      contents: read
 
     steps:
       - name: Create GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ vars.ORG_ACTIONS_BOT_APP_ID }}
+          client-id: ${{ vars.ORG_ACTIONS_BOT_APP_ID }}
           private-key: ${{ secrets.ORG_ACTIONS_BOT_PRIVATE_KEY }}
           owner: UoMResearchIT
+          # NB: No current submodules; the .gitmodules file is empty
+          repositories: CapX
+          permission-contents: read
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: 'true'
           token: ${{ steps.app-token.outputs.token }}
           persist-credentials: false
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
         with:
           dotnet-version: 10.0.x
 
       - name: Format
-        run: dotnet format PPMTool.sln --exclude ../Blazor-ApexCharts/src/Blazor-ApexCharts.csproj --verify-no-changes --no-restore --verbosity detailed
+        run: dotnet format PPMTool.sln --verify-no-changes --no-restore --verbosity detailed
