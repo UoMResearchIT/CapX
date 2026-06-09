@@ -43,14 +43,13 @@ namespace PPMTool.Services
         public ILogger Logger { get; }
 
         /// <summary>
-        /// Send an email to the list of recipients provided.
+        /// Send an email to the recipient provided.
         /// </summary>
         /// <param name="to"></param>
         /// <param name="subject"></param>
         /// <param name="message"></param>
-        public void SendEmail(IEnumerable<string> to, string subject, string message)
+        public void SendEmail(string to, string subject, string message)
         {
-
             var mailMessage = new MailMessage
             {
                 From = new MailAddress(Configuration["Email:From"]),
@@ -58,13 +57,9 @@ namespace PPMTool.Services
                 Body = message,
                 IsBodyHtml = true,
             };
+            mailMessage.To.Add(to);
 
-            foreach (var recipient in to.Distinct())
-            {
-                mailMessage.To.Add(recipient);
-            }
-
-            Logger.LogInformation($"Sending email to {string.Join(',', mailMessage.To)}, subject {mailMessage.Subject}");
+            Logger.LogInformation($"Sending email to {to}, subject {mailMessage.Subject}");
 
 #if RELEASE
             // Launch a background task to do the sending
@@ -78,7 +73,7 @@ namespace PPMTool.Services
                 }
                 catch (Exception e)
                 {
-                    Logger.LogError($"Failed to send email to {string.Join(',', mailMessage.To)}, subject {mailMessage.Subject}:\n{e}");
+                    Logger.LogInformation($"Failed to send email to {to}, subject {mailMessage.Subject}");
                 }
             });
 #endif
@@ -94,7 +89,7 @@ namespace PPMTool.Services
             List<string> recipients = new List<string>();
 
             // Run a background thread to do the sending and updating
-            await Task.Run(() =>
+            await Task.Run(async () =>
             {
                 try
                 {
@@ -103,32 +98,39 @@ namespace PPMTool.Services
                     {
                         Person lineManager = staff.LineManager;
 
-                        if (lineManager != staff) // No point in AH emailing himself about his timesheet. :)
+                        if (lineManager != staff) // No point emailing someone about their own timesheet if they are their own line manager. :)
                         {
                             User lineManagerUser = UserService.GetAll(context).First(p => p.Person.PersonId == lineManager.PersonId);
                             var lineManagerEmailAddresses = lineManagerUser.GetNormalisedEmailAddresses();
-                            if (!lineManagerEmailAddresses.Any())
+                            if (lineManagerEmailAddresses.Any())
                             {
-                                lineManagerEmailAddresses.Add($"{lineManagerUser.CASUserName}@manchester.ac.uk");
+                                foreach (var lineManagerEmailAddress in lineManagerEmailAddresses)
+                                {
+                                    recipients.Add(lineManagerEmailAddress);
+                                }
                             }
-                            foreach (var lineManagerEmailAddress in lineManagerEmailAddresses)
+
+                            // Only build the email and send it if there are any email addresses
+                            if (recipients.Any())
                             {
-                                recipients.Add(lineManagerEmailAddress);
+                                // Create email
+                                var subject = $"{Configuration["Email:TimesheetSubmissionEmailSubject"]}. {staff.ShortName} [{timesheet.StartDate.ToString("dd/MM/yy")}]";
+
+                                StringBuilder body = new StringBuilder();
+                                body.Append($"<p>Dear {lineManager.Name},</p>");
+                                body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailBody"]} by {staff.Name} for the week commencing {timesheet.StartDate.ToString("dd/MM/yy")}.</p>");
+                                body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailEndBody"]}</p>");
+                                body.Append($"<p><a href=\"{Configuration["Authentication:HostUrl"]}/timesheets/addtimesheet/{timesheet.TimesheetId.ToString()}\">Review this timesheet on CapX</a></p>");
+                                body.Append("<p><em>Sent from CapX</em></p>");
+
+                                // Send email
+                                Debug.WriteLine($"** Sending Timesheet Submission email to {string.Join("|", recipients)}");
+                                foreach (var recipient in recipients)
+                                {
+                                    SendEmail(recipient, subject, body.ToString());
+                                    await Task.Delay(1000);
+                                }
                             }
-
-                            // Create email
-                            var subject = $"{Configuration["Email:TimesheetSubmissionEmailSubject"]}. {staff.ShortName} [{timesheet.StartDate.ToString("dd/MM/yy")}]";
-
-                            StringBuilder body = new StringBuilder();
-                            body.Append($"<p>Dear {lineManager.Name},</p>");
-                            body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailBody"]} by {staff.Name} for the week commencing {timesheet.StartDate.ToString("dd/MM/yy")}.</p>");
-                            body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailEndBody"]}</p>");
-                            body.Append($"<p><a href=\"{Configuration["Authentication:HostUrl"]}/timesheets/addtimesheet/{timesheet.TimesheetId.ToString()}\">Review this timesheet on CapX</a></p>");
-                            body.Append("<p><em>Sent from CapX</em></p>");
-
-                            // Send email
-                            Debug.WriteLine($"** Sending Timesheet Submission email to {string.Join("|", recipients)}");
-                            SendEmail(recipients, subject, body.ToString());
                         }
                     }
                 }
@@ -310,9 +312,13 @@ namespace PPMTool.Services
                                 }
                                 recipients.AddRange(lineManagerEmailAddresses);
                             }
+
                             Debug.WriteLine($"** Sending email to {string.Join(',', recipients)}");
-                            SendEmail(recipients, subject, body.ToString());
-                            await Task.Delay(1000);
+                            foreach (var recipient in recipients)
+                            {
+                                SendEmail(recipient, subject, body.ToString());
+                                await Task.Delay(1000);
+                            }
                         }
                     }
                 }
@@ -470,8 +476,11 @@ namespace PPMTool.Services
                                 recipients.AddRange(lineManagerEmailAddresses);
                             }
                             Debug.WriteLine($"** Sending email to {string.Join(',', recipients)}");
-                            SendEmail(recipients, subject, body.ToString());
-                            await Task.Delay(1000);
+                            foreach (var recipient in recipients)
+                            {
+                                SendEmail(recipient, subject, body.ToString());
+                                await Task.Delay(1000);
+                            }
                         }
                     }
                 }
