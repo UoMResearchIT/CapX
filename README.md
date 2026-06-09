@@ -8,7 +8,7 @@ SPDX-License-Identifier: apache-2.0
 This tool initially started as a basic project and portfolio management (PPM) tool. Its first feature was capacity management, but it has since been extended to incorporate a much larger, more complex data model useful for an increased number of operational management activities. Written in .NET Blazor (Server) with a SQLite database (other providers are supported), it is used for managing many aspects of the service delivery of the digital research technical professional departments and the development of its staff.
 
 > [!IMPORTANT]
-> The [dRTP Operational Management Peer Advice and Shared Support (dRTP COMPASS)](https://uomresearchit.github.io/DRTP-Op-Man-CoP-Website/) is responsible for its strategic direction. We’d love to hear if you are using this tool. If you would like to be part of dRTP-OMCoP then please let us know!
+> The [dRTP Community of Operational Management, Peer Advice and Shared Support (dRTP COMPASS)](https://uomresearchit.github.io/DRTP-Op-Man-CoP-Website/) is responsible for its strategic direction. We’d love to hear if you are using this tool. If you would like to be part of dRTP-OMCoP then please let us know!
 
 ## User Accounts and Access
 The app supports integration with CAS / Shibboleth as well as Azure AD / Entra with access to restricted parts of the app managed within the app using a Role-Based Access Control (RBAC) database table. Super-users are able to manage user roles and access via the "Manage Access" page.
