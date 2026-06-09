@@ -50,7 +50,6 @@ namespace PPMTool.Services
         /// <param name="message"></param>
         public void SendEmail(string to, string subject, string message)
         {
-
             var mailMessage = new MailMessage
             {
                 From = new MailAddress(Configuration["Email:From"]),
@@ -60,7 +59,7 @@ namespace PPMTool.Services
             };
             mailMessage.To.Add(to);
 
-Logger.LogInformation("Sending email to {To}, subject {Subject}", to, mailMessage.Subject);
+            Logger.LogInformation($"Sending email to {to}, subject {mailMessage.Subject}");
 
 #if RELEASE
             // Launch a background task to do the sending
@@ -74,7 +73,7 @@ Logger.LogInformation("Sending email to {To}, subject {Subject}", to, mailMessag
                 }
                 catch (Exception e)
                 {
-Logger.LogError(e, "Failed to send email to {To}, subject {Subject}", to, mailMessage.Subject);
+                    Logger.LogInformation($"Failed to send email to {to}, subject {mailMessage.Subject}");
                 }
             });
 #endif
@@ -99,7 +98,7 @@ Logger.LogError(e, "Failed to send email to {To}, subject {Subject}", to, mailMe
                     {
                         Person lineManager = staff.LineManager;
 
-if (lineManager != staff) // No point emailing someone about their own timesheet if they are their own line manager. :)
+                        if (lineManager != staff) // No point emailing someone about their own timesheet if they are their own line manager. :)
                         {
                             User lineManagerUser = UserService.GetAll(context).First(p => p.Person.PersonId == lineManager.PersonId);
                             var lineManagerEmailAddresses = lineManagerUser.GetNormalisedEmailAddresses();
@@ -111,7 +110,8 @@ if (lineManager != staff) // No point emailing someone about their own timesheet
                                 }
                             }
 
-                            if (recipients.Any()) // Build the email and send it if there are any email addresses
+                            // Only build the email and send it if there are any email addresses
+                            if (recipients.Any())
                             {
                                 // Create email
                                 var subject = $"{Configuration["Email:TimesheetSubmissionEmailSubject"]}. {staff.ShortName} [{timesheet.StartDate.ToString("dd/MM/yy")}]";
