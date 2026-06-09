@@ -60,7 +60,7 @@ namespace PPMTool.Services
             };
             mailMessage.To.Add(to);
 
-            Logger.LogInformation($"Sending email to {mailMessage.To}, subject {mailMessage.Subject}");
+Logger.LogInformation("Sending email to {To}, subject {Subject}", to, mailMessage.Subject);
 
 #if RELEASE
             // Launch a background task to do the sending
