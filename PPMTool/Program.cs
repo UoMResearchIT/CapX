@@ -405,9 +405,9 @@ FileHelper.CleanLocalApplicationFilePath(logger);
 using (var context = dbContextFactory.CreateDbContext())
 {
     var settingsService = app.Services.GetRequiredService<SettingsService>();
-    _ = settingsService.IntialiseServiceCacheAsync(context);
+    await settingsService.IntialiseServiceCacheAsync(context);
     var featureService = app.Services.GetRequiredService<FeatureService>();
-    _ = featureService.IntialiseServiceCacheAsync(context);
+    await featureService.IntialiseServiceCacheAsync(context);
 }
 
 // Run the app
