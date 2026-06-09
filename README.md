@@ -46,7 +46,7 @@ The app will run migrations every time it starts. If the connection string permi
 > This feature overwrites all data in the tables as soon as the app starts!
 
 ### Database Migrations
-As CapX supports multiple DB providers, the migrations required to set up the database and its tables are specific to the provider. Each supported provider has its own `.Migrations` project containing the relevant migrations for ensuring the DB is aligned to the models in the code. To add a new migration for a particular provider, set the `DB_PROVIDER` variable in the environment appropriately then run following command from the root directory to invoke the EF Core Tools. For example, to add a migration for SQLite, set `DB_PROVIDER=sqlite` (typically using User Secrets if developing with Visual Studio or VS Code):
+As CapX supports multiple DB providers, the migrations required to set up the database and its tables are specific to the provider. Each supported provider has its own `.Migrations` project containing the relevant migrations for ensuring the DB is aligned to the models in the code. To add a new migration for a particular provider, set the `DB_PROVIDER` variable in the environment appropriately then run the following command from the root directory to invoke the EF Core Tools. For example, to add a migration for SQLite, set `DB_PROVIDER=sqlite` (typically using User Secrets if developing with Visual Studio or VS Code):
 
 ```
 dotnet ef migrations add NameOfMigrationHere --context PPMToolContext --project PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj --startup-project PPMTool/PPMTool.csproj
