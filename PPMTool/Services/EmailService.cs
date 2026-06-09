@@ -74,7 +74,7 @@ Logger.LogInformation("Sending email to {To}, subject {Subject}", to, mailMessag
                 }
                 catch (Exception e)
                 {
-                    Logger.LogError($"Failed to send email to {mailMessage.To}, subject {mailMessage.Subject}:\n{e}");
+Logger.LogError(e, "Failed to send email to {To}, subject {Subject}", to, mailMessage.Subject);
                 }
             });
 #endif
