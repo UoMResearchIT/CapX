@@ -141,33 +141,7 @@ namespace PPMTool.Pages
                 query = query.Where(args.Filter);
             }
 
-            // Filter on Faculty and School
-            if (args.Filters is { } filters && filters.Any())
-            {
-                var filter = filters.FirstOrDefault(f => f.Property == "Faculty");
-                var filterValue = (filter?.FilterValue as string)?.Trim();
-                if (!string.IsNullOrEmpty(filterValue))
-                {
-                    var filterValueLower = filterValue.ToLower();
-                    query = query.Where(x =>
-                        x.School != null &&
-                        x.School.Faculty != null &&
-                        ((x.School.Faculty.Code ?? "").Trim().ToLower()).Contains(filterValueLower));
-                }
-
-                filter = filters.FirstOrDefault(f => f.Property == "School");
-                filterValue = (filter?.FilterValue as string)?.Trim();
-                if (!string.IsNullOrEmpty(filterValue))
-                {
-                    var filterValueLower = filterValue.ToLower();
-                    query = query.Where(x =>
-                        x.School != null &&
-                        ((x.School.Code ?? "").Trim().ToLower()).Contains(filterValueLower));
-                }
-            }
-
             query = ApplySorting(query, args);
-
 
             // Assign to grid source
             var data = query.ToList();
