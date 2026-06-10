@@ -308,5 +308,13 @@ namespace PPMTool.Data.Entities
                 .OrderBy(x => x.ChangeDate)
                 .LastOrDefault();
         }
+
+        /// <summary>
+        /// Stores the calculated grade based on the person's current WLM and the date.
+        /// Used for filtering by Grade on the Manage People page currently.
+        /// </summary>
+        /// <returns></returns>
+        [NotMapped]
+        public int CurrentGrade { get; set; }
     }
 }
