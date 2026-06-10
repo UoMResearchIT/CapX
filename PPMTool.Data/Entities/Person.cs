@@ -315,6 +315,6 @@ namespace PPMTool.Data.Entities
         /// </summary>
         /// <returns></returns>
         [NotMapped]
-        public int CurrentGrade { get; set; }
+        public int? CurrentGrade { get => GetGradeOnDate(DateTime.Today); }
     }
 }
