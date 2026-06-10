@@ -161,17 +161,6 @@ namespace PPMTool.Pages
             // ---- COUNT BEFORE PAGING ----
             count = query.Count();
 
-
-            foreach (Person p in query)
-            {
-                p.CurrentGrade = p.WorkloadModelChanges
-                                .Where(x => x.ChangeDate <= DateTime.Today)
-                                .OrderBy(x => x.ChangeDate)
-                                .Select(x => x.Grade)
-                                .LastOrDefault();
-            }
-
-
             // ---- PAGING ----
             var skip = args.Skip ?? 0;
             var take = args.Top ?? pageCount;
