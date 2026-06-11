@@ -440,5 +440,13 @@ namespace PPMTool.Data.Entities
         {
             return $"Project {RTP} | {Name}";
         }
+
+        /// <summary>
+        /// Property to allow filtering on FundingReceived in datagrids.
+        /// Can't populate in here without adding the PaymentService though.
+        /// </summary>
+        /// <returns></returns>
+        [NotMapped]
+        public double FundsReceived { get; set; }
     }
 }

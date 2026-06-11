@@ -126,6 +126,13 @@ namespace PPMTool.Pages
 
             // Initialise the project list -- developers can only see projects to which they are assigned
             IQueryable<Project> query = ProjectService.GetAll(Context).OrderBy(x => x.RTP).AsQueryable();
+
+            // Add details of FundsReceived so we can use it for filtering in the grid as a property
+            foreach(Project p in query)
+            {
+                p.FundsReceived = PaymentService.GetFundsReceived(Context, p.ProjectId);
+            }
+
             if (ActiveUserRoleType == RoleType.Developer)
             {
                 query = query.Where(x => ActiveUser.Person != null && x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person.PersonId == ActiveUser.Person!.PersonId)));

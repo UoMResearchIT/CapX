@@ -82,7 +82,14 @@ SPDX-License-Identifier: apache-2.0
                         </Template>
                     </RadzenDataGridColumn>
                     <!-- Default datetimes added when creating a Project are Max and Min to be shaped when tasks are added -->
-                    <RadzenDataGridColumn TItem="Project" Property="StartDate" Title="Start Date" MinWidth="10px" Filterable="false">
+                    <RadzenDataGridColumn TItem="Project"
+                                          Property="StartDate"
+                                          Title="Start Date"
+                                          FormatString="{0:dd/MM/yyyy}"
+                                          Type="typeof(DateTime)"
+                                          FilterMode="FilterMode.SimpleWithMenu"
+                                          FilterOperator="FilterOperator.GreaterThanOrEquals"
+                                          Width="13rem">
                         <Template Context="p">
                             @if (p.StartDate == DateTime.MaxValue)
                             {
@@ -90,19 +97,26 @@ SPDX-License-Identifier: apache-2.0
                             }
                             else
                             {
-                                p.StartDate.ToString("d");
+                                @p.StartDate.ToShortDateString()
                             }
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Project" Property="EndDate" Title="End Date" MinWidth="10px" Filterable="false">
+                    <RadzenDataGridColumn TItem="Project"
+                                          Property="EndDate"
+                                          Title="End Date"
+                                          FormatString="{0:dd/MM/yyyy}"
+                                          Type="typeof(DateTime)"
+                                          FilterMode="FilterMode.SimpleWithMenu"
+                                          FilterOperator="FilterOperator.LessThanOrEquals"
+                                          Width="13rem">
                         <Template Context="p">
-                            @if (p.EndDate == DateTime.MinValue)
+                            @if (p.StartDate == DateTime.MaxValue)
                             {
                                 <StatusMessageComponent Message="@(new StatusMessage("No tasks!", StatusMessage.MessageType.Error))" />
                             }
                             else
                             {
-                                p.EndDate.ToString("d");
+                                @p.StartDate.ToShortDateString()
                             }
                         </Template>
                     </RadzenDataGridColumn>
@@ -113,20 +127,48 @@ SPDX-License-Identifier: apache-2.0
                                 @(p.CostModel.GetAttribute<DisplayAttribute>().Name)
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="Project" Property="DayRate" Title="Day Rate" Width="8rem" MinWidth="10px" Filterable="false">
+                        <RadzenDataGridColumn TItem="Project" Property="DayRate" Title="Day Rate" Width="8rem" Filterable="false">
                             <Template Context="p">
                                 @(p.CostModel == CostModel.DayRate ? p.DayRate.ToString("C0") : "N/A")
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="Project" Property="Budget" Title="Budget" FormatString="{0:C0}" MinWidth="10px" Filterable="false" />
-                        <RadzenDataGridColumn TItem="Project" Property="ActualCost" Title="Actual Cost" FormatString="{0:C0}" MinWidth="10px" Filterable="false" />
-                        <RadzenDataGridColumn TItem="Project" Property="FundsReceived" Title="Funds Received" Filterable="false" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="Project" 
+                                              Property="Budget" 
+                                              Title="Budget" 
+                                              FormatString="{0:C0}" 
+                                              Width="10rem" 
+                                              Type="typeof(double)" 
+                                              FilterMode="FilterMode.SimpleWithMenu" 
+                                              FilterOperator="FilterOperator.GreaterThanOrEquals" />
+                        <RadzenDataGridColumn TItem="Project" 
+                                              Property="ActualCost" 
+                                              Title="Actual Cost" 
+                                              FormatString="{0:C0}" 
+                                              Width="10rem"
+                                              Type="typeof(double)"
+                                              FilterMode="FilterMode.SimpleWithMenu"
+                                              FilterOperator="FilterOperator.GreaterThanOrEquals" />
+                        <RadzenDataGridColumn TItem="Project" 
+                                              Property="FundsReceived" 
+                                              Title="Funds Received" 
+                                              Width="10rem"
+                                              Type="typeof(double)"
+                                              FilterMode="FilterMode.SimpleWithMenu"
+                                              FilterOperator="FilterOperator.GreaterThanOrEquals">
                             <Template Context="p">
-                                @(PaymentService.GetFundsReceived(Context, p.ProjectId).ToString("C0"))
+                                @p.FundsReceived.ToString("C0")
                             </Template>
                         </RadzenDataGridColumn>
                     }
-                    <RadzenDataGridColumn TItem="Project" Property="ActualWorkHours" Title="Actual Work" FormatString="{0:F0}" MinWidth="10px" Filterable="false" />
+                    <RadzenDataGridColumn TItem="Project" 
+                                          Property="ActualWorkHours" 
+                                          Title="Actual Work" 
+                                          FormatString="{0:F0}" 
+                                          MinWidth="10px" 
+                                          Width="10rem"
+                                          Type="typeof(double)"
+                                          FilterMode="FilterMode.SimpleWithMenu"
+                                          FilterOperator="FilterOperator.GreaterThanOrEquals" />
                     <RadzenDataGridColumn TItem="Project" Title="Details" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="6rem" FrozenPosition="FrozenColumnPosition.Right">
                         <Template Context="p">
                             <RadzenButton Icon="info" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => NavigateToProjectDetails(p.ProjectId))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Details"))" />
