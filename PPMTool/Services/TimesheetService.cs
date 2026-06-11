@@ -319,8 +319,9 @@ namespace PPMTool.Services
 
             // Get line managed staff numbers (submitted timesheets)
             var peopleManaged = context.People
-                .Where(x => x.LineManager != null && x.LineManager.PersonId == activeUserId);
-            if (await peopleManaged.CountAsync() > 0)
+                .Where(x => x.LineManager != null && x.LineManager.PersonId == activeUserId)
+                .ToList();
+            if (peopleManaged.Count > 0)
             {
                 foreach (Person p in peopleManaged)
                 {

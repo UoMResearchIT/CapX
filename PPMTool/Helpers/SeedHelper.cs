@@ -883,7 +883,9 @@ namespace PPMTool.Helpers
 
                 // For each person, add some random owned skills
                 var random = new Random();
-                foreach (var person in context.People)
+                var allPeople = context.People.ToList();
+                var allSkillTags = context.SkillTags.ToList();
+                foreach (var person in allPeople)
                 {
                     var skillIdsOwned = new List<int>();
                     for (int i = 0; i < 5; ++i)
@@ -892,10 +894,10 @@ namespace PPMTool.Helpers
                         var proficiencyRating = random.Next(Enum.GetValues<SkillProficiency>().Count());
 
                         // Get random skill tag that is not already owned by this person
-                        var skillTag = context.SkillTags.ElementAt(random.Next(context.SkillTags.Count()));
+                        var skillTag = allSkillTags.ElementAt(random.Next(allSkillTags.Count));
                         while (skillIdsOwned.Contains(skillTag.SkillTagId))
                         {
-                            skillTag = context.SkillTags.ElementAt(random.Next(context.SkillTags.Count()));
+                            skillTag = allSkillTags.ElementAt(random.Next(allSkillTags.Count));
                         }
 
                         // Add the skill tag to the list of owned skills
@@ -919,7 +921,7 @@ namespace PPMTool.Helpers
                 var totalActivePeople = context.People
                     .Where(x => x.StartDate <= DateTime.Today && (x.EndDate == null || x.EndDate >= DateTime.Today))
                     .Count();
-                foreach (var skillTag in context.SkillTags)
+                foreach (var skillTag in allSkillTags)
                 {
                     var totalInstances = context.OwnedSkills.Include(x => x.SkillTag).Where(x => x.SkillTag.SkillTagId == skillTag.SkillTagId).Count();
                     skillTag.UpdateRareness(totalInstances, totalActivePeople);
@@ -948,12 +950,14 @@ namespace PPMTool.Helpers
 
                 // For each person, add assessments for half of the competencies
                 var random = new Random();
-                foreach (var person in context.People)
+                var allPeople = context.People.ToList();
+                var allCompetencies = context.Competencies.ToList();
+                foreach (var person in allPeople)
                 {
                     for (int i = 0; i < competencyCount / 2; ++i)
                     {
                         // Get a random competency
-                        var competency = context.Competencies.ElementAt(random.Next(competencyCount));
+                        var competency = allCompetencies.ElementAt(random.Next(competencyCount));
 
                         // Create a new competency assessment
                         var assessment = new CompetencyAssessment
@@ -2434,7 +2438,8 @@ namespace PPMTool.Helpers
             logger.LogInformation("Seeding timesheets...");
             using (var context = dbContextFactory.CreateDbContext())
             {
-                foreach (var person in context.People.Include(x => x.WorkloadModelChanges))
+                var allPeople = context.People.Include(x => x.WorkloadModelChanges).ToList();
+                foreach (var person in allPeople)
                 {
                     // Set start and end dates to the nearest Monday
                     var startDate = person.StartDate;
