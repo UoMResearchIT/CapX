@@ -5,6 +5,7 @@ on:
   pull_request:
     branches:
       - '**'
+permissions: {}
 
 jobs:
   check-repo-name-conventions:
@@ -14,26 +15,31 @@ jobs:
     steps:
       - name: Check repository name
         run: |
-          REPO_NAME=${{ github.repository }}
           REPO_NAME=${REPO_NAME##*/}
           if [[ ! "$REPO_NAME" =~ ^([A-Z][A-Za-z0-9]*)(-[A-Z][A-Za-z0-9]*)*$ ]]; then
             echo "Repository name '$REPO_NAME' does not follow the naming convention established in the RSE Agile Method Handbook."
             exit 1
           fi
-          
+        env:
+          REPO_NAME: ${{ github.repository }}
+
   check-branch-name-conventions:
     if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - name: Check branch name
         run: |
-          BRANCH_NAME=${{ github.event.pull_request.head.ref }}
-          if [[ ! "$BRANCH_NAME" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+          if [[ ! "$BRANCH_NAME" =~ ^(copilot\/)?[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
             echo "Branch name '$BRANCH_NAME' does not follow the naming convention established in the RSE Agile Method Handbook."
             exit 1
           fi
-      
+        env:
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
