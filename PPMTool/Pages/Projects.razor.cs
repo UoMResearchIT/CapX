@@ -128,7 +128,7 @@ namespace PPMTool.Pages
             IQueryable<Project> query = ProjectService.GetAll(Context).OrderBy(x => x.RTP).AsQueryable();
 
             // Add details of FundsReceived so we can use it for filtering in the grid as a property
-            foreach(Project p in query)
+            foreach (Project p in query)
             {
                 p.FundsReceived = PaymentService.GetFundsReceived(Context, p.ProjectId);
             }
