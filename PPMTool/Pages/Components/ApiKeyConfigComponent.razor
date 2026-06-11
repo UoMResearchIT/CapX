@@ -92,9 +92,9 @@ SPDX-License-Identifier: apache-2.0
         {
             Active = true,
             Owner = ActiveUser,
-            ExpiresAt = DateTime.UtcNow.AddDays(
+            ExpiresAt = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(
                 (default(ApiKeyExpirationOptions)).GetAttribute<ExpirationInDaysAttribute>()
-                .Days)
+                .Days), DateTimeKind.Unspecified)
         };
 
         // Statuses for the dropdown
@@ -173,7 +173,7 @@ SPDX-License-Identifier: apache-2.0
     private void ValidityChosen(object value)
     {
         var days = ((ApiKeyExpirationOptions)value).GetAttribute<ExpirationInDaysAttribute>().Days;
-        apiKey.ExpiresAt = DateTime.UtcNow.AddDays(days);
+        apiKey.ExpiresAt = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(days), DateTimeKind.Unspecified);
         Debug.WriteLine($"Expiry set to {apiKey.ExpiresAt.ToString("R")} => {days} Days");
     }
 }
