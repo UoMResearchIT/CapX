@@ -218,7 +218,7 @@ namespace PPMTool.Services
         /// <inheritdoc />
         public override IEnumerable<Setting> GetAll(PPMToolContext context)
         {
-            return GetAllSettingsAsync(context).Result;
+            return context.Settings.ToList();
         }
 
         /// <summary>

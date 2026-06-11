@@ -12,3 +12,12 @@ updates:
       all-updates:
         patterns:
           - "*"
+    cooldown:
+      default-days: 7
+  - package-ecosystem: "github-actions"
+    directories:
+      - "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7

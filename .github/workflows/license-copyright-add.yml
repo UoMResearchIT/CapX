@@ -4,12 +4,11 @@
 
 name: Add Licence and Copyright Headers
 
-on:
-  pull_request
+on: pull_request
 
 jobs:
   add-headers:
     permissions:
       pull-requests: write
       contents: write
-    uses: UoMResearchIT/actions/.github/workflows/apply-reuse.yml@main
+    uses: UoMResearchIT/actions/.github/workflows/apply-reuse.yml@ff421cc61cc2f129dd095dcc0058d77f5c7606e0 # main
