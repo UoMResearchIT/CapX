@@ -70,6 +70,22 @@ namespace PPMTool.Data.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Npgsql v6+ maps DateTime -> timestamptz and rejects Kind=Unspecified.
+            // The codebase uses DateTime.Today/DateTime.Now throughout, which produce
+            // Kind=Unspecified. Map all DateTime columns to timestamp without time zone
+            // so Npgsql treats them as local/unspecified rather than requiring UTC.
+            if (Database.ProviderName == "Npgsql.EntityFrameworkCore.PostgreSQL")
+            {
+                foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+                {
+                    foreach (var property in entityType.GetProperties()
+                        .Where(p => p.ClrType == typeof(DateTime) || p.ClrType == typeof(DateTime?)))
+                    {
+                        property.SetColumnType("timestamp without time zone");
+                    }
+                }
+            }
         }
 
         /// <summary>
