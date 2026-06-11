@@ -101,7 +101,7 @@ namespace PPMTool.Pages
                         );
                     }
                 }
-                catch (Exception e) { Debug.WriteLine($"Error : {e.Message}"); }
+                catch (Exception e) { Logger.LogError($"Error on Finance Summary page : {e.Message}"); }
             }).ContinueWith(t =>
             {
                 InvokeAsync(() =>
