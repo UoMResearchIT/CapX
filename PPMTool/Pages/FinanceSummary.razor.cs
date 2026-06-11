@@ -59,7 +59,7 @@ namespace PPMTool.Pages
         private Task GetLoadTask()
         {
             return Task.Run(() =>
-            {                
+            {
                 try
                 {
                     Debug.WriteLine($"** Loading finance data...");
