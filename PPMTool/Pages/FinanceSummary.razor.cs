@@ -5,6 +5,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using Microsoft.EntityFrameworkCore;
 using PPMTool.Helpers;
 using PPMTool.Models;
 using PPMTool.Services;
@@ -58,40 +59,49 @@ namespace PPMTool.Pages
         private Task GetLoadTask()
         {
             return Task.Run(() =>
-            {
-                Debug.WriteLine($"** Loading finance data...");
-                items = new List<FinanceSummaryItem>();
-                var projects = ProjectService.GetAllShallow(Context);
-                var sources = FundingSourceService.GetAll(Context);
-                foreach (var project in projects)
+            {                
+                try
                 {
-                    // Get the subtask / resource info for the project
-                    var subTasks = SubTaskService.GetAll(Context).Where(x => x.OwningProject.ProjectId == project.ProjectId);
+                    Debug.WriteLine($"** Loading finance data...");
+                    items = new List<FinanceSummaryItem>();
+                    var projects = ProjectService
+                        .GetAllShallow(Context)
+                        .AsQueryable()
+                        .Include(p => p.SubTasks);
 
-                    // Compute transaction breakdown for the project
-                    var transactions = FinanceHelper.ComputeTransactionBreakdown(
-                        Context,
-                        project.CostModel,
-                        subTasks,
-                        sources.Where(x => x.Project.ProjectId == project.ProjectId),
-                        InvoiceService.GetFundsRequested(Context, project.ProjectId),
-                        PaymentService.GetFundsReceived(Context, project.ProjectId)
-                    );
+                    var sources = FundingSourceService.GetAll(Context);
 
-                    var pm = ProjectService.GetProjectManager(Context, project.ProjectId);
-                    var school = ProjectService.GetSchoolAndFaculty(Context, project.ProjectId);
-                    var actuals = SubTaskService.GetActuals(Context, project.ProjectId);
+                    foreach (var project in projects)
+                    {
+                        // Get the subtask / resource info for the project
+                        var subTasks = project.SubTasks;
 
-                    items.Add(
-                        new FinanceSummaryItem(
-                            project,
-                            school,
-                            pm,
-                            actuals,
-                            transactions
-                        )
-                    );
+                        // Compute transaction breakdown for the project
+                        var transactions = FinanceHelper.ComputeTransactionBreakdown(
+                            Context,
+                            project.CostModel,
+                            subTasks,
+                            sources.Where(x => x.Project.ProjectId == project.ProjectId),
+                            InvoiceService.GetFundsRequested(Context, project.ProjectId),
+                            PaymentService.GetFundsReceived(Context, project.ProjectId)
+                        );
+
+                        var pm = ProjectService.GetProjectManager(Context, project.ProjectId);
+                        var school = ProjectService.GetSchoolAndFaculty(Context, project.ProjectId);
+                        var actuals = SubTaskService.GetActuals(Context, project.ProjectId);
+
+                        items.Add(
+                            new FinanceSummaryItem(
+                                project,
+                                school,
+                                pm,
+                                actuals,
+                                transactions
+                            )
+                        );
+                    }
                 }
+                catch (Exception e) { Debug.WriteLine($"Error : {e.Message}"); }
             }).ContinueWith(t =>
             {
                 InvokeAsync(() =>
