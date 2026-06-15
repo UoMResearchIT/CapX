@@ -255,7 +255,7 @@ namespace PPMTool.Services
                 InnateCodeTask task = tasks.FirstOrDefault(x => x.InnateCodeTaskId == taskId);
 
                 // If task is no-longer in the DB or if the task is no-longer associated with an active code then remove from template
-                if (task == null || !task.InnateCode.IsActive)
+                if (task == null || !task.IsActive || !task.InnateCode.IsActive)
                 {
                     // Remove from template
                     if (task != null) DeleteFromTemplate(context, person, task);

@@ -88,6 +88,14 @@ SPDX-License-Identifier: apache-2.0
                                                 TextProperty="Text" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="InnateCodeTask" Property="IsActive" Title="Active" Width="5rem" MinWidth="10px">
+                            <Template Context="c">
+                                <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
+                                    <RadzenSwitch @bind-Value="c.IsActive" Disabled="true" Name="IsActive" />
+                                    <RadzenLabel Style="visibility: hidden" Component="IsActive" Text="Is Active?" />
+                                </RadzenStack>
+                            </Template>
+                        </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="InnateCodeTask" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
                             <Template Context="c">
                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />

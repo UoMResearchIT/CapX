@@ -414,11 +414,11 @@ namespace PPMTool.Pages
             // Check if submitting with inactive Task Codes (only if being submitted but not from a rejected state)
             if (timesheet.TimesheetEntries.Count > 0 && newStatus == TimesheetStatus.Submitted && timesheet.Status != TimesheetStatus.Rejected)
             {
-                // Present an error and exit early
-                if (timesheet.TimesheetEntries.Any(x => !x.InnateCodeTask.InnateCode.IsActive && x.TotalHours > 0))
+                // Present an error and exit early if trying to book to an inactive task
+                if (timesheet.TimesheetEntries.Any(x => (!x.InnateCodeTask.IsActive || !x.InnateCodeTask.InnateCode.IsActive) && x.TotalHours > 0))
                 {
                     var inactiveTasksCheck = await DialogService.Alert(
-                        $"You cannot submit a timesheet which uses an inactive activity code." +
+                        $"You cannot submit a timesheet which uses an inactive activity eor task." +
                         $"If you need a code to be reactivated then contact your project manager to organise this.",
                         "Booked to Inactive Code"
                     ) ?? false;
@@ -655,16 +655,16 @@ namespace PPMTool.Pages
         /// <param name="args"></param>
         private void CellRender(DataGridCellRenderEventArgs<TimesheetEntry> args)
         {
-
-
             if (args != null)
             {
-                // ActiveUser by default if no task is found (e.g. when there are no rows) otherwise based on code state
-                bool isActiveCode = args.Data.InnateCodeTask?.InnateCode?.IsActive ?? true;
+                // Row is considered active if both the timesheet task and the code are active
+                bool isActiveTask =
+                    (args.Data.InnateCodeTask?.IsActive ?? true) &&
+                    (args.Data.InnateCodeTask?.InnateCode?.IsActive ?? true);
 
                 if (args.Column.Property != null)
                 {
-                    if (!isActiveCode)
+                    if (!isActiveTask)
                     {
                         if (args.Column.Property == "IsInTemplate")
                         {
@@ -674,7 +674,7 @@ namespace PPMTool.Pages
                         {
                             args.Attributes.Add("style", $"background-color : #FFD6D7;");
                         }
-                        args.Attributes.Add("title", "Activity code is no longer active");
+                        args.Attributes.Add("title", "Task or Activity is no longer active");
                     }
                     else
                     {
@@ -693,12 +693,12 @@ namespace PPMTool.Pages
                                 args.Attributes.Add("title", "Task is part of your default template");
                             }
 
-                            if (!isActiveCode)
+                            if (!isActiveTask)
                             {
                                 // Reset the styling to get the darker red regardless of whether the item is in the user's template
                                 args.Attributes.Clear();
                                 args.Attributes.Add("style", $"background-color : red;");
-                                args.Attributes.Add("title", "Code is inactive - no further time can be allocated to it.");
+                                args.Attributes.Add("title", "Task or Activity is no longer active -- it cannot be booked to");
                             }
                         }
                     }
