@@ -89,12 +89,18 @@ SPDX-License-Identifier: apache-2.0
                             </EditTemplate>
                         </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="InnateCodeTask" Property="IsActive" Title="Active" Width="5rem" MinWidth="10px">
-                            <Template Context="c">
-                                <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
-                                    <RadzenSwitch @bind-Value="c.IsActive" Disabled="true" Name="IsActive" />
-                                    <RadzenLabel Style="visibility: hidden" Component="IsActive" Text="Is Active?" />
-                                </RadzenStack>
-                            </Template>
+                                <Template Context="c">
+                                    <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
+                                        <RadzenSwitch @bind-Value="c.IsActive" Disabled="true" Name="IsActive" />
+                                        <RadzenLabel Style="visibility: hidden" Component="IsActive" Text="Is Active?" />
+                                    </RadzenStack>
+                                </Template>
+                                <EditTemplate Context="c">
+                                    <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
+                                        <RadzenSwitch @bind-Value="c.IsActive" Name="IsActive" />
+                                        <RadzenLabel Style="visibility: hidden" Component="IsActive" Text="Is Active?" />
+                                    </RadzenStack>
+                                </EditTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="InnateCodeTask" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
                             <Template Context="c">

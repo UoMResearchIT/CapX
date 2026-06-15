@@ -672,7 +672,7 @@ namespace PPMTool.Pages
                         }
                         else
                         {
-                            args.Attributes.Add("style", $"background-color : #FFD6D7;");
+                            args.Attributes.Add("style", $"background-color : var(--rz-danger-lighter);");
                         }
                         args.Attributes.Add("title", "Task or Activity is no longer active");
                     }
