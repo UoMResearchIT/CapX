@@ -3,11 +3,10 @@
 // SPDX-License-Identifier: apache-2.0
 
 using System.ComponentModel.DataAnnotations;
-using PPMTool.Data.Interfaces;
 
 namespace PPMTool.Data.Entities
 {
-    public class InnateCode : ILoggableObject
+    public class InnateCode : BaseBookableItem
     {
         public int InnateCodeId { get; set; }
 
@@ -24,11 +23,6 @@ namespace PPMTool.Data.Entities
         public string ActivityName { get; set; } = null!;
 
         /// <summary>
-        /// Whether this code is active and can be booked to
-        /// </summary>
-        public bool IsActive { get; set; } = true;
-
-        /// <summary>
         /// Whether this code contains sensitive information that should be restricted to line manager and the person
         /// </summary>
         public bool IsSensitive { get; set; }
@@ -37,7 +31,6 @@ namespace PPMTool.Data.Entities
         /// The collection of innate code tasks that belong to this code
         /// </summary>
         public virtual ICollection<InnateCodeTask> Tasks { get; set; } = new List<InnateCodeTask>();
-
 
         /// <summary>
         /// Joins the activity code and name together with a hyphen.
@@ -52,7 +45,7 @@ namespace PPMTool.Data.Entities
         /// Required implementation to identify this object in the logs
         /// </summary>
         /// <returns></returns>
-        public string GetSensibleObjectName()
+        public override string GetSensibleObjectName()
         {
             return GetCodeAsString();
         }
