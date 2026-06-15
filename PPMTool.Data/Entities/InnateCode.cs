@@ -33,6 +33,17 @@ namespace PPMTool.Data.Entities
         public virtual ICollection<InnateCodeTask> Tasks { get; set; } = new List<InnateCodeTask>();
 
         /// <summary>
+        /// Method to deactivate all tasks too -- assuming they are deep loaded
+        /// </summary>
+        public void DeactivateAllTasks()
+        {
+            foreach (var task in Tasks)
+            {
+                task.IsActive = false;
+            }
+        }
+
+        /// <summary>
         /// Joins the activity code and name together with a hyphen.
         /// </summary>
         /// <returns></returns>

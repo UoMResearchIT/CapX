@@ -102,6 +102,7 @@ namespace PPMTool.Pages
         {
             var code = InnateCodeService.GetById(Context, toDeactivate.InnateCodeId);
             code.IsActive = false;
+            code.DeactivateAllTasks();
             LogInformation($"Deactivating timesheet code {code.GetSensibleObjectName()}");
             InnateCodeService.Update(Context, code);
             Loading = true;
@@ -127,6 +128,7 @@ namespace PPMTool.Pages
                 toDeactive = codesToDeactivate[i];
                 code = InnateCodeService.GetById(Context, toDeactive.InnateCodeId);
                 code.IsActive = false;
+                code.DeactivateAllTasks();
                 LogInformation($"Deactivating timesheet code {code.GetSensibleObjectName()}");
                 InnateCodeService.Update(Context, code, false);
             }
@@ -135,6 +137,7 @@ namespace PPMTool.Pages
             toDeactive = codesToDeactivate.Last();
             code = InnateCodeService.GetById(Context, toDeactive.InnateCodeId);
             code.IsActive = false;
+            code.DeactivateAllTasks();
             LogInformation($"Deactivating timesheet code {code.GetSensibleObjectName()}");
             InnateCodeService.Update(Context, code);
             Loading = true;

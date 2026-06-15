@@ -154,9 +154,24 @@ namespace PPMTool.Pages
             {
                 TaskName = "Maintenance",
                 InnateCode = innateCode,
-                Duty = Duty.ProjectWork
+                Duty = Duty.BAU
             });
             await dataGrid.Reload();
+        }
+
+        /// <summary>
+        /// Callback when the swtich is changed
+        /// </summary>
+        private void ActivityActiveChanged(bool value)
+        {
+            // If setting to false then deactivate all the tasks
+            if (!value)
+            {
+                foreach (var entity in dataGridEntities)
+                {
+                    entity.IsActive = false;
+                }
+            }
         }
     }
 }

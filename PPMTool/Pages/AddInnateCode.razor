@@ -40,7 +40,7 @@ SPDX-License-Identifier: apache-2.0
                     </div>
                     <div class="col-2">
                         <RadzenLabel class="radzen-form-label" Text="Active" Component="IsActive" /><br />
-                        <RadzenSwitch @bind-Value="innateCode.IsActive" Style="margin-top: 1rem" Name="IsActive" />
+                        <RadzenSwitch @bind-Value="innateCode.IsActive" Style="margin-top: 1rem" Name="IsActive" Change="@ActivityActiveChanged" />
                     </div>
                     <div class="col-2">
                         <RadzenLabel class="radzen-form-label" Text="Sensitive" Component="IsSensitive" /><br />
