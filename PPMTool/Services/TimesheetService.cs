@@ -23,6 +23,10 @@ namespace PPMTool.Services
         /// </summary>
         public bool HasStaffTimesheetActions { get; private set; }
 
+        public TimesheetService(ILogger<TimesheetService> logger) : base(logger)
+        {
+        }
+
         /// <summary>
         /// Adds a timesheet. If duplicate found does not add but returns -1 otherwise returns ID of added timesheet.
         /// </summary>
@@ -260,7 +264,7 @@ namespace PPMTool.Services
                     // Remove from template
                     if (task != null) DeleteFromTemplate(context, person, task);
 
-                    Debug.WriteLine($"** Removing task from template as no longer in DB or code is inactive: {task?.GetSensibleObjectName()}");
+                    logger.LogInformation($"Removing task from template as no longer in DB or code is inactive: {task?.GetSensibleObjectName()}");
                 }
                 else
                 {
@@ -269,7 +273,7 @@ namespace PPMTool.Services
                     entry.InnateCodeTask = task;
                     timesheet.TimesheetEntries.Add(entry);
 
-                    Debug.WriteLine($"** Adding new task to the timesheet : {task.InnateCode.GetSensibleObjectName()} : {task.GetSensibleObjectName()}");
+                    logger.LogInformation($"Adding new task to the timesheet : {task.InnateCode.GetSensibleObjectName()} : {task.GetSensibleObjectName()}");
                 }
             }
             CommitChanges(context);

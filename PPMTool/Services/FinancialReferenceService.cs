@@ -10,6 +10,10 @@ namespace PPMTool.Services
 {
     public class FinancialReferenceService : BaseEntityService<FinancialReference>
     {
+        public FinancialReferenceService(ILogger<FinancialReferenceService> logger) : base(logger)
+        {
+        }
+
         public override int Add(PPMToolContext context, FinancialReference entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))

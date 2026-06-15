@@ -11,13 +11,10 @@ namespace PPMTool.Services
 {
     public class UserService : BaseEntityService<User>
     {
-
-        private ILogger<UserService> logger;
         private IDbContextFactory<PPMToolContext> contextFactory;
 
-        public UserService(ILogger<UserService> logger, IDbContextFactory<PPMToolContext> contextFactory)
+        public UserService(ILogger<UserService> logger, IDbContextFactory<PPMToolContext> contextFactory) : base(logger)
         {
-            this.logger = logger;
             this.contextFactory = contextFactory;
         }
 

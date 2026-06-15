@@ -10,6 +10,10 @@ namespace PPMTool.Services
 {
     public class PersonService : BaseEntityService<Person>
     {
+        public PersonService(ILogger<PersonService> logger) : base(logger)
+        {
+        }
+
         /// <inheritdoc />
         public override int Add(PPMToolContext context, Person personModel, bool commitChanges = true)
         {
