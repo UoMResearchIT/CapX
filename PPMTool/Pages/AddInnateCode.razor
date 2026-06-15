@@ -97,7 +97,7 @@ SPDX-License-Identifier: apache-2.0
                                 </Template>
                                 <EditTemplate Context="c">
                                     <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
-                                        <RadzenSwitch @bind-Value="c.IsActive" Name="IsActive" />
+                                        <RadzenSwitch @bind-Value="c.IsActive" Disabled="@(!c.InnateCode.IsActive)" Name="IsActive" />
                                         <RadzenLabel Style="visibility: hidden" Component="IsActive" Text="Is Active?" />
                                     </RadzenStack>
                                 </EditTemplate>
