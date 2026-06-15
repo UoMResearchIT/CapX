@@ -15,7 +15,7 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                 table: "InnateCodeTasks",
                 type: "bit",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: true);
         }
 
         /// <inheritdoc />

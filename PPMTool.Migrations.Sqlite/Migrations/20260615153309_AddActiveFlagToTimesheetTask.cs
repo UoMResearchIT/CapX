@@ -15,7 +15,7 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 table: "InnateCodeTasks",
                 type: "INTEGER",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: true);
         }
 
         /// <inheritdoc />

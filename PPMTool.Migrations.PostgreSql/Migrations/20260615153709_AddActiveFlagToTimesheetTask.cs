@@ -15,7 +15,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 table: "InnateCodeTasks",
                 type: "boolean",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: true);
         }
 
         /// <inheritdoc />
