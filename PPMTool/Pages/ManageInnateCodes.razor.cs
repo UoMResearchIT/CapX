@@ -18,9 +18,13 @@ namespace PPMTool.Pages
         private InnateCodeService InnateCodeService { get; set; }
 
         [Inject]
+        private TimesheetService TimesheetService { get; set; }
+
+        [Inject]
         private IConfiguration Configuration { get; set; }
 
         private List<CodeToDeactivate> codesToDeactivate;
+        private List<int> codesWithBookings = new List<int>();
 
         protected override void OnInitialized()
         {
@@ -37,6 +41,7 @@ namespace PPMTool.Pages
             {
                 dataGridEntities = InnateCodeService.GetAll(Context).ToList();
                 codesToDeactivate = (await InnateCodeService.GetCodesToDeactivateAsync(Context)).ToList() ?? new List<CodeToDeactivate>();
+                codesWithBookings = (await TimesheetService.GetCodeIdsWithBookingsAsync(Context)).ToList() ?? new List<int>();
 
             }).ContinueWith(t =>
             {
@@ -74,6 +79,11 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Delete a timesheet code and save to DB
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
         private async Task DeleteCode(InnateCode code)
         {
             if (await DialogService.Confirm($"You are about to delete innate code {code.GetCodeAsString()}.", "Delete Code") ?? false)
@@ -84,11 +94,18 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Navigate to the edit page
+        /// </summary>
+        /// <param name="code"></param>
         private void EditCode(InnateCode code)
         {
             Navigation.NavigateTo($"managecodes/addinnatecode/{code.InnateCodeId}");
         }
 
+        /// <summary>
+        /// Navigate to the add page
+        /// </summary>
         private void AddCode()
         {
             Navigation.NavigateTo("managecodes/addinnatecode/-1");
