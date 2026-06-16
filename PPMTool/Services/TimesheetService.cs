@@ -366,5 +366,47 @@ namespace PPMTool.Services
                 .ThenInclude(x => x.InnateCode)
                 .ToListAsync();
         }
+
+        /// <summary>
+        /// Get the list of IDs of timesheet code tasks that have bookings against them in the system's timesheets
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="innateCodeId"></param>
+        /// <returns></returns>
+        public async Task<List<int>> GetTaskIdsWithBookingsForCodeAsync(PPMToolContext context, int innateCodeId)
+        {
+            // Get the tasks for the code supplied
+            var taskIds = context.InnateCodes
+                .Include(x => x.Tasks)
+                .FirstOrDefault(x => x.InnateCodeId == innateCodeId)?
+                .Tasks
+                .Select(x => x.InnateCodeTaskId)
+                .Distinct()
+                .ToList();
+
+            // Get the list of tasks that have bookings against them
+            var bookedTasks = context.TimesheetEntries
+                .Where(x => taskIds.Contains(x.InnateCodeTask.InnateCodeTaskId))
+                .Select(x => x.InnateCodeTask.InnateCodeTaskId)
+                .Distinct();
+
+            // Return the intersection
+            return await bookedTasks.ToListAsync();
+        }
+
+        /// <summary>
+        /// Gets the list of IDs of timesheet codes that have bookings against at least on of their tasks in the system's timesheets
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public async Task<List<int>> GetCodeIdsWithBookingsAsync(PPMToolContext context)
+        {
+            // Get the list of code IDs that have bookings against them
+            var bookedCodeIds = context.TimesheetEntries
+                .Include(x => x.InnateCodeTask)
+                .Select(x => x.InnateCodeTask.InnateCode.InnateCodeId)
+                .Distinct();
+            return await bookedCodeIds.ToListAsync();
+        }
     }
 }
