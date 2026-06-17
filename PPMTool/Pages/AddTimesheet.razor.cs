@@ -650,60 +650,57 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Fired when a cell of the datagrid is rendered. Used to set the colour styling of the cells.
+        /// Method to handle the rendering of the datagrid cells. This is used to apply custom styling to the cells based on the data they contain.
         /// </summary>
         /// <param name="args"></param>
         private void CellRender(DataGridCellRenderEventArgs<TimesheetEntry> args)
         {
-            if (args != null)
+            // If the column property is null then we can't do anything
+            if (args?.Column?.Property == null)
+                return;
+
+            // Check if the task is active or not based on the task itself and the owning activity
+            var isActiveTask =
+                (args.Data.InnateCodeTask?.IsActive ?? true) &&
+                (args.Data.InnateCodeTask?.InnateCode?.IsActive ?? true);
+
+            // Inactive tasks are highlighted in red and have a tooltip to explain why
+            if (!isActiveTask)
             {
-                // Row is considered active if both the timesheet task and the code are active
-                bool isActiveTask =
-                    (args.Data.InnateCodeTask?.IsActive ?? true) &&
-                    (args.Data.InnateCodeTask?.InnateCode?.IsActive ?? true);
+                // The "edge" (IsInTemplate column) is highlighted in red, the rest of the row is a lighter red
+                var colour = args.Column.Property == "IsInTemplate"
+                    ? "red"
+                    : "var(--rz-danger-lighter)";
 
-                if (args.Column.Property != null)
-                {
-                    if (!isActiveTask)
-                    {
-                        if (args.Column.Property == "IsInTemplate")
-                        {
-                            args.Attributes.Add("style", $"background-color : red;");
-                        }
-                        else
-                        {
-                            args.Attributes.Add("style", $"background-color : var(--rz-danger-lighter);");
-                        }
-                        args.Attributes.Add("title", "Task or Activity is no longer active");
-                    }
-                    else
-                    {
-                        string theDay = args.Column.Title.Clean();
-                        if (dayColours.ContainsKey(theDay))
-                        {
-                            args.Attributes.Add("style", $"background-color : {dayColours[theDay]}");
-                        }
-
-                        if (args.Column.Property == "IsInTemplate")
-                        {
-                            // Styling for items which are in the user's template
-                            if (args.Data.IsInTemplate == true)
-                            {
-                                args.Attributes.Add("style", $"background-color :  var(--rz-panel-menu-item-2nd-level-active-background-color)");
-                                args.Attributes.Add("title", "Task is part of your default template");
-                            }
-
-                            if (!isActiveTask)
-                            {
-                                // Reset the styling to get the darker red regardless of whether the item is in the user's template
-                                args.Attributes.Clear();
-                                args.Attributes.Add("style", $"background-color : red;");
-                                args.Attributes.Add("title", "Task or Activity is no longer active -- it cannot be booked to");
-                            }
-                        }
-                    }
-                }
+                args.Attributes["style"] = $"background-color: {colour};";
+                args.Attributes["title"] = "Task or Activity is no longer active";
+                return;
             }
+
+            // Active tasks are highlighted based on the day of the week and whether they are part of the user's template
+            string style = null;
+            string title = null;
+
+            // Day colour
+            var theDay = args.Column.Title?.Clean();
+            if (theDay != null && dayColours.TryGetValue(theDay, out var dayColour))
+            {
+                style = $"background-color: {dayColour};";
+            }
+
+            // Template styling
+            if (args.Column.Property == "IsInTemplate" && args.Data.IsInTemplate == true)
+            {
+                style = "background-color: var(--rz-panel-menu-item-2nd-level-active-background-color);";
+                title = "Task is part of your template";
+            }
+
+            // Apply styling
+            if (style != null)
+                args.Attributes["style"] = style;
+
+            if (title != null)
+                args.Attributes["title"] = title;
         }
 
         /// <summary>
