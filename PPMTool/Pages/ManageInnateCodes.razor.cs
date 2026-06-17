@@ -26,39 +26,14 @@ namespace PPMTool.Pages
         private List<CodeToDeactivate> codesToDeactivate;
         private List<int> codesWithBookings = new List<int>();
 
-        protected override void OnInitialized()
+        protected override async Task OnInitializedAsync()
         {
-            base.OnInitialized();
+            await base.OnInitializedAsync();
             dataGridEntityService = InnateCodeService;
             Loading = true;
-            EnqueueLoadData(GetLoadTask);
+            await Task.Yield();
+            await LoadData();
             LogInformation($"Viewing innate code grid");
-        }
-
-        private Task GetLoadTask()
-        {
-            return Task.Run(async () =>
-            {
-                dataGridEntities = InnateCodeService.GetAll(Context).ToList();
-                codesToDeactivate = (await InnateCodeService.GetCodesToDeactivateAsync(Context)).ToList() ?? new List<CodeToDeactivate>();
-                codesWithBookings = (await TimesheetService.GetCodeIdsWithBookingsAsync(Context)).ToList() ?? new List<int>();
-
-            }).ContinueWith(t =>
-            {
-                InvokeAsync(() =>
-                {
-                    Loading = false;
-                    try
-                    {
-                        StateHasChanged();
-                    }
-                    catch
-                    {
-
-                    }
-
-                });
-            });
         }
 
         protected override void OnAfterRender(bool firstRender)
@@ -77,6 +52,18 @@ namespace PPMTool.Pages
                     dataGrid.Reload();
                 }
             }
+        }
+
+        /// <summary>
+        /// Load the data for the grid
+        /// </summary>
+        /// <returns></returns>
+        private async Task LoadData()
+        {
+            dataGridEntities = InnateCodeService.GetAll(Context).ToList();
+            codesToDeactivate = (await InnateCodeService.GetCodesToDeactivateAsync(Context)).ToList() ?? new List<CodeToDeactivate>();
+            codesWithBookings = (await TimesheetService.GetCodeIdsWithBookingsAsync(Context)).ToList() ?? new List<int>();
+            Loading = false;
         }
 
         /// <summary>
@@ -123,7 +110,7 @@ namespace PPMTool.Pages
             LogInformation($"Deactivating timesheet code {code.GetSensibleObjectName()}");
             InnateCodeService.Update(Context, code);
             Loading = true;
-            EnqueueLoadData(GetLoadTask);
+            EnqueueLoadData(LoadData);
             StateHasChanged();
         }
 
@@ -158,7 +145,7 @@ namespace PPMTool.Pages
             LogInformation($"Deactivating timesheet code {code.GetSensibleObjectName()}");
             InnateCodeService.Update(Context, code);
             Loading = true;
-            EnqueueLoadData(GetLoadTask);
+            EnqueueLoadData(LoadData);
             StateHasChanged();
         }
     }
