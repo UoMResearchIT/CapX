@@ -68,7 +68,7 @@ namespace PPMTool.Helpers
             var overridingValues = new Dictionary<string, string>();
 
             // Get the API key secret
-            ReadValue("API_KEY_SECRET", "Jwt:SecretKey", ref overridingValues);
+            EnvironmentHelper.ReadValue("API_KEY_SECRET", "Jwt:SecretKey", ref overridingValues);
 
             // Get Sentry DSN
             ReadValue("SENTRY_DSN", "Sentry:Dsn", ref overridingValues);
@@ -103,9 +103,6 @@ namespace PPMTool.Helpers
 
             // Data protection
             ReadValue("DP_KEY_PATH", "DataProtection:KeyPath", ref overridingValues);
-
-            // Other settings
-            ReadValue("TIMESHEET_HELP_URL", "TimesheetHelpUrl", ref overridingValues);
 
             // Set seed dummy data flag if environment variable is set to true (case insensitive)
             var seedDummyData = Environment.GetEnvironmentVariable("SEED_DUMMY_DATA");
