@@ -10,7 +10,6 @@ SPDX-License-Identifier: apache-2.0
 @using PPMTool.Data.Entities
 @using PPMTool.Data.Enums
 @using PPMTool.Pages.Components
-@using PPMTool.Services
 @using Radzen.Blazor
 @inject IJSRuntime JSRuntime
 
@@ -66,7 +65,7 @@ SPDX-License-Identifier: apache-2.0
                             <h2>Timesheet Entries</h2>
                         </div>
                         <div class="col-auto" style="align-content: center; margin-bottom: .5rem">
-                            <a href="https://livemanchesterac-my.sharepoint.com/shared?listurl=https%3A%2F%2Flivemanchesterac%2Esharepoint%2Ecom%2Fsites%2FUOM%2DITS%2DResearch%2DIT%2FShared%20Documents&id=%2Fsites%2FUOM%2DITS%2DResearch%2DIT%2FShared%20Documents%2FRSE%20Team%2FRead%2DOnly%2FPolicies%20and%20Processes%2FRSE%5FRoles%5FExpectations%5Fand%5FTime%5FTracking%2Epdf&parent=%2Fsites%2FUOM%2DITS%2DResearch%2DIT%2FShared%20Documents%2FRSE%20Team%2FRead%2DOnly%2FPolicies%20and%20Processes" target="_blank">
+                            <a href="@Configuration["TimesheetTaskCategorisationDocumentUrl"]" target="_blank">
                                 <RadzenButton class="mx-1" Icon="help" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" MouseEnter="@((args) => ShowTooltip(args, "Open the timesheet task categorisation document"))" />
                             </a>
                             <RadzenButton Variant="Variant.Outlined" Text="Reorder your template" Click="@(() => { ReorderTimesheetTemplate(@timesheet); })" Icon="autorenew" title="Reorder your timesheet template" Disabled=@(entityToInsert != null || entityToUpdate != null || !timesheet.IsOwner(ActiveUser)) Style="margin-right: 0.75rem;" />

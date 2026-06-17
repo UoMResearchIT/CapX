@@ -34,6 +34,9 @@ namespace PPMTool.Pages
         [Inject]
         public EmailService EmailService { get; set; }
 
+        [Inject]
+        public IConfiguration Configuration { get; set; }
+
         private Timesheet timesheet;
         private IList<InnateCode> innateCodeDropdownSource = new List<InnateCode>();
         private IEnumerable<InnateCodeTask> innateCodeTaskDropdownSource = new List<InnateCodeTask>();
