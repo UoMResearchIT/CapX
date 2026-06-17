@@ -529,7 +529,8 @@ namespace PPMTool.Pages
             // Load the innate tasks associated with the selected innate code
             Debug.WriteLine($"** Selected {value}");
             var tasks = innateCodeDropdownSource
-                .FirstOrDefault(x => x.GetCodeAsString() == (value as string))?.Tasks
+                .FirstOrDefault(x => x.GetCodeAsString() == (value as string))?
+                .Tasks
                 .ToList();
 
             // Find all existing entries that use this same code
@@ -541,6 +542,9 @@ namespace PPMTool.Pages
 
             // Remove the tasks from the list that are already in use
             tasks?.RemoveAll(x => tasksInUse.Contains(x));
+
+            // Now filter the remaining list to only include active tasks
+            tasks = tasks?.Where(x => x.IsActive).ToList();
 
             // Assign the tasks
             innateCodeTaskDropdownSource = tasks;
