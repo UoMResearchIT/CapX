@@ -418,7 +418,7 @@ namespace PPMTool.Pages
                 if (timesheet.TimesheetEntries.Any(x => (!x.InnateCodeTask.IsActive || !x.InnateCodeTask.InnateCode.IsActive) && x.TotalHours > 0))
                 {
                     var inactiveTasksCheck = await DialogService.Alert(
-                        $"You cannot submit a timesheet which uses an inactive activity eor task." +
+                        $"You cannot submit a timesheet which uses an inactive activity or task." +
                         $"If you need a code to be reactivated then contact your project manager to organise this.",
                         "Booked to Inactive Code"
                     ) ?? false;
