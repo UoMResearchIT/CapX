@@ -167,7 +167,7 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Callback when the swtich is changed
+        /// Callback when the switch is changed
         /// </summary>
         private void ActivityActiveChanged(bool value)
         {

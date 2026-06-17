@@ -14,7 +14,7 @@ namespace PPMTool.Services
         /// <summary>
         /// Logger for logging service interactions
         /// </summary>
-        protected ILogger logger = null!;
+        protected readonly ILogger logger;
 
         /// <summary>
         /// Constructor but with DI
