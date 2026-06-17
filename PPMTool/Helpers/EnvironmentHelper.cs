@@ -68,7 +68,7 @@ namespace PPMTool.Helpers
             var overridingValues = new Dictionary<string, string>();
 
             // Get the API key secret
-            EnvironmentHelper.ReadValue("API_KEY_SECRET", "Jwt:SecretKey", ref overridingValues);
+            ReadValue("API_KEY_SECRET", "Jwt:SecretKey", ref overridingValues);
 
             // Get Sentry DSN
             ReadValue("SENTRY_DSN", "Sentry:Dsn", ref overridingValues);

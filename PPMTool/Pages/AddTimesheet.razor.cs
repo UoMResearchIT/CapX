@@ -64,6 +64,13 @@ namespace PPMTool.Pages
         private WorkloadModelChange currentWLM;
         private WLMWeeklyDataChartItem wlmChartItem;
         private double totalFTEForTimesheet;
+        private string timesheetHelpUrl = null;
+
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+            timesheetHelpUrl = GetSetting<TimesheetHelpUrl>();
+        }
 
         protected override async Task OnParametersSetAsync()
         {
@@ -276,11 +283,6 @@ namespace PPMTool.Pages
                 // Default is to order by the user's template if viewing their own timesheet
                 PopulateDataGridDataSource();
             }
-        }
-
-        protected override void OnInitialized()
-        {
-            base.OnInitialized();
         }
 
         /// <summary>

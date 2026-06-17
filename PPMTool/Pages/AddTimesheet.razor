@@ -65,9 +65,9 @@ SPDX-License-Identifier: apache-2.0
                             <h2>Timesheet Entries</h2>
                         </div>
                         <div class="col-auto" style="align-content: center; margin-bottom: .5rem">
-                            @if (!string.IsNullOrWhiteSpace(Configuration["TimesheetHelpUrl"]))
+                            @if (!string.IsNullOrWhiteSpace(timesheetHelpUrl))
                             {
-                                <a href="@Configuration["TimesheetHelpUrl"]" target="_blank">
+                                <a href="@timesheetHelpUrl" target="_blank">
                                     <RadzenButton class="mx-1" Icon="help" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" MouseEnter="@((args) => ShowTooltip(args, "Open the timesheet help document"))" />
                                 </a>
                             }
