@@ -69,7 +69,7 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            timesheetHelpUrl = GetSetting<TimesheetHelpUrl>();
+            timesheetHelpUrl = GetSetting(SettingType.TimesheetHelpUrl);
         }
 
         protected override async Task OnParametersSetAsync()
