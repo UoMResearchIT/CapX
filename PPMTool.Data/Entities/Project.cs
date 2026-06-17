@@ -442,7 +442,7 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Property to allow filtering on FundingReceived in datagrids.
+        /// Property to allow filtering on FundsReceived in datagrids.
         /// Can't populate in here without adding the PaymentService though.
         /// </summary>
         /// <returns></returns>
