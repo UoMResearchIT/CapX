@@ -93,6 +93,7 @@ To set this up, create a `.env` file in the repository root with the following r
 | `SUPERUSER_EMAIL` | Email of the superuser (required if seeding) |
 | `DB_PROVIDER` | Which DB provider should be used. Supports sqlite, sqlserver, postgresql values. |
 | `DP_KEY_PATH` | Optional path to where on disk the data protection keys should be stored. |
+| `TIMESHEET_HELP_URL` | URL to the timesheet help document. |
 
 The following variables need only be set when not using the "Local" solution configuration:
 
