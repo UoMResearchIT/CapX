@@ -125,8 +125,8 @@ SPDX-License-Identifier: apache-2.0
                                           class="m-1"
                                           Click="@(args => DeleteCode(code))"
                                           @onclick:stopPropagation="true"
-                                          MouseEnter="@(args => ShowTooltip(args, $"{(codesWithBookings.Any(id => id == code.InnateCodeId) ? "Cannot Delete (In Use)" : "Delete")}"))"
-                                          Disabled="@(codesWithBookings.Any(id => id == code.InnateCodeId))" />
+                                          MouseEnter="@(args => ShowTooltip(args, codesWithBookings.Contains(code.InnateCodeId) ? "Cannot Delete (In Use)" : "Delete"))"
+                                          Disabled="@(codesWithBookings.Contains(code.InnateCodeId))" />
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>
