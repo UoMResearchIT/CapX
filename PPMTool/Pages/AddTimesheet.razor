@@ -65,9 +65,12 @@ SPDX-License-Identifier: apache-2.0
                             <h2>Timesheet Entries</h2>
                         </div>
                         <div class="col-auto" style="align-content: center; margin-bottom: .5rem">
-                            <a href="@Configuration["TimesheetTaskCategorisationDocumentUrl"]" target="_blank">
-                                <RadzenButton class="mx-1" Icon="help" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" MouseEnter="@((args) => ShowTooltip(args, "Open the timesheet task categorisation document"))" />
-                            </a>
+                            @if (!string.IsNullOrWhiteSpace(Configuration["TimesheetHelpUrl"]))
+                            {
+                                <a href="@Configuration["TimesheetHelpUrl"]" target="_blank">
+                                    <RadzenButton class="mx-1" Icon="help" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" MouseEnter="@((args) => ShowTooltip(args, "Open the timesheet help document"))" />
+                                </a>
+                            }
                             <RadzenButton Variant="Variant.Outlined" Text="Reorder your template" Click="@(() => { ReorderTimesheetTemplate(@timesheet); })" Icon="autorenew" title="Reorder your timesheet template" Disabled=@(entityToInsert != null || entityToUpdate != null || !timesheet.IsOwner(ActiveUser)) Style="margin-right: 0.75rem;" />
                             <RadzenButton Text="Add New Task" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)) Style="padding: 0 2rem" />
                         </div>
