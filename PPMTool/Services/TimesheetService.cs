@@ -375,23 +375,22 @@ namespace PPMTool.Services
         /// <returns></returns>
         public async Task<List<int>> GetTaskIdsWithBookingsForCodeAsync(PPMToolContext context, int innateCodeId)
         {
-            // Get the tasks for the code supplied
-            var taskIds = context.InnateCodes
-                .Include(x => x.Tasks)
-                .FirstOrDefault(x => x.InnateCodeId == innateCodeId)?
-                .Tasks
-                .Select(x => x.InnateCodeTaskId)
+            var taskIds = await context.InnateCodeTasks
+                .Where(t => t.InnateCodeId == innateCodeId)
+                .Select(t => t.InnateCodeTaskId)
                 .Distinct()
-                .ToList();
+                .ToListAsync();
 
-            // Get the list of tasks that have bookings against them
-            var bookedTasks = context.TimesheetEntries
-                .Where(x => taskIds.Contains(x.InnateCodeTask.InnateCodeTaskId))
-                .Select(x => x.InnateCodeTask.InnateCodeTaskId)
-                .Distinct();
+            if (taskIds.Count == 0)
+            {
+                return new List<int>();
+            }
 
-            // Return the intersection
-            return await bookedTasks.ToListAsync();
+            return await context.TimesheetEntries
+                .Where(e => taskIds.Contains(e.InnateCodeTaskId))
+                .Select(e => e.InnateCodeTaskId)
+                .Distinct()
+                .ToListAsync();
         }
 
         /// <summary>
