@@ -206,5 +206,22 @@ namespace PPMTool.Services
                 .Where(x => x.StartDate <= endDate && (x.EndDate == null || x.EndDate >= startDate))
                 .ToList();
         }
+
+        /// <summary>
+        /// Get all people who have a Project Management allowance during the given window
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        public IEnumerable<Person> GetPeopleWithProjectManagementAllowanceDuringWindow(PPMToolContext context, DateTime startDate, DateTime endDate)
+        {
+            var midDate = startDate.Date.AddDays((endDate.Date - startDate.Date).Days / 2); // Check a date in the middle of the range
+
+            return context.People
+                .Where(x => x.StartDate.Date <= endDate && (x.EndDate == null || x.EndDate.Value.Date >= startDate))
+                .ToList()
+                .Where(person => person.GetWorkloadModelOnDateOrDefault(midDate).ProjectAndServiceManagementFTE > 0);
+        }
     }
 }
