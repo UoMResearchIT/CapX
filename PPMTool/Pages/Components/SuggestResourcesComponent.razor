@@ -218,7 +218,8 @@ SPDX-License-Identifier: apache-2.0
                 var assignments = new List<Assignment>();
                 foreach (var project in validProjects)
                 {
-                    foreach (var subTask in project.SubTasks)
+                    // Skip leadership tasks as they come from PSM allowance, not ProjectWork allowance
+                    foreach (var subTask in project.SubTasks.Where(x => !x.IsLeadershipTask))
                     {
                         // Don't use the task model from the DB list but instead use the current resource settings
                         if (subTask.SubTaskId == TaskModel.SubTaskId)
