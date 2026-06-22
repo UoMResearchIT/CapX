@@ -287,7 +287,7 @@ SPDX-License-Identifier: apache-2.0
                     {
                         // Compute what the remaining demand would be if the person's provisional assignments were removed
                         var available = person.GetProjectWorkAvailabilityOnDate(currentDay);
-                        var assignmentsOnDay = assignments.Sum(assignment =>
+                        var confirmedAssignmentsOnDay = assignments.Sum(assignment =>
                             {
                                 if ((assignment as Assignment)?.ProjectStatus.IsUnconfirmed() ?? true)
                                 {
@@ -298,7 +298,7 @@ SPDX-License-Identifier: apache-2.0
                                 return resource?.AssignmentFTE ?? 0;
                             });
 
-                        var unassigned = available - assignmentsOnDay;
+                        var unassigned = available - confirmedAssignmentsOnDay;
                         return Math.Round(unassigned, 3);
                     },
                     tooltipMessageFormatter: assignments =>
