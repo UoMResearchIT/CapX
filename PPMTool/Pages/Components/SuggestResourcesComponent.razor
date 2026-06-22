@@ -65,6 +65,9 @@ SPDX-License-Identifier: apache-2.0
     private ProjectService ProjectService { get; set; }
 
     [Inject]
+    private PersonService PersonService { get; set; }
+
+    [Inject]
     private IJSRuntime JSRuntime { get; set; }
 
     private ChartModel chartModel;
@@ -300,6 +303,19 @@ SPDX-License-Identifier: apache-2.0
 
                         var unassigned = available - confirmedAssignmentsOnDay;
                         return Math.Round(unassigned, 3);
+                    },
+                    gapFillingFunction: (person, gapStart, gapEnd) =>
+                    {
+                        return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(
+                            person,
+                            PersonService.GetWorkloadModelChanges(context, person.PersonId),
+                            gapStart,
+                            gapEnd,
+                            wlm => Math.Round(wlm?.ProjectWorkFTE ?? 0, 3),
+                            wlm => Math.Round(wlm?.ProjectWorkFTE ?? 0, 3),
+                            (value1, value2, isHatched) => GetColourOfBlock(value1, value2, isHatched),
+                            p => GenerateTooltipMessages(p)
+                        );
                     },
                     tooltipMessageFormatter: assignments =>
                     {
