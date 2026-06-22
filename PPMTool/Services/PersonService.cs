@@ -216,12 +216,43 @@ namespace PPMTool.Services
         /// <returns></returns>
         public IEnumerable<Person> GetPeopleWithProjectManagementAllowanceDuringWindow(PPMToolContext context, DateTime startDate, DateTime endDate)
         {
-            var midDate = startDate.Date.AddDays((endDate.Date - startDate.Date).Days / 2); // Check a date in the middle of the range
-
-            return context.People
+            var employedPeople = context.People
                 .Where(x => x.StartDate.Date <= endDate && (x.EndDate == null || x.EndDate.Value.Date >= startDate))
-                .ToList()
-                .Where(person => person.GetWorkloadModelOnDateOrDefault(midDate).ProjectAndServiceManagementFTE > 0);
+                .ToList();
+
+            return employedPeople
+                .Where(person =>
+                {
+                    // Get all WLM changes for this person ordered by date descending
+                    var allWlmChanges = context.WorkloadModelChanges
+                        .Where(w => w.Person.PersonId == person.PersonId)
+                        .OrderByDescending(w => w.ChangeDate)
+                        .ToList();
+
+                    // If none then return
+                    if (!allWlmChanges.Any())
+                        return false;
+
+                    // Get the last change before the window starts (applies at window start)
+                    var changeBeforeWindow = allWlmChanges
+                        .Where(w => w.ChangeDate.Date < startDate)
+                        .FirstOrDefault();
+
+                    // Get all changes that occur during the window
+                    var changesInWindow = allWlmChanges
+                        .Where(w => w.ChangeDate.Date >= startDate && w.ChangeDate.Date <= endDate)
+                        .ToList();
+
+                    // Concat them all into a single range
+                    var relevantChanges = new List<WorkloadModelChange>();
+                    if (changeBeforeWindow != null)
+                        relevantChanges.Add(changeBeforeWindow);
+                    relevantChanges.AddRange(changesInWindow);
+
+                    // Return true if any relevant change has Project Management allowance
+                    return relevantChanges.Any(w => w.ProjectManagementFTE > 0);
+                })
+                .ToList();
         }
     }
 }
