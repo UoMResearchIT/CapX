@@ -345,6 +345,11 @@ if (dbProvider == "sqlite")
     }
 }
 
+// Set default culture
+var cultureInfo = new CultureInfo("en-GB");
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
 // Set dummy data seed flag
 // This is intended for development and testing purposes only and should be used with caution as it will delete existing data.
 var shouldSeed = builder.Configuration.GetValue<bool>("DeveloperSettings:SeedDummyData");
@@ -364,50 +369,41 @@ using (var context = dbContextFactory.CreateDbContext())
     // execution (throws InvalidCastException: PoolingDataSource -> MultiplexingDataSource),
     // so the synchronous overload silently fails on PostgreSQL, leaving the schema out of date.
     await context.Database.MigrateAsync();
-}
 
-// Seed the default superuser from the settings if it doesn't already exist
-SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
+    // Seed the default superuser from the settings if it doesn't already exist
+    SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
 
-// Seed features
-SeedHelper.SeedFeatures(scope.ServiceProvider);
+    // Seed features
+    SeedHelper.SeedFeatures(scope.ServiceProvider);
 
-// If seeding run the dummy data seeding methods
-if (shouldSeed)
-{
-    // Seed tables with suitable values -- Note that competencies are already seeded by migrations
-    SeedHelper.SeedPeople(scope.ServiceProvider);
-    SeedHelper.SeedAbsences(scope.ServiceProvider);
-    SeedHelper.SeedUsers(scope.ServiceProvider);
-    SeedHelper.SeedWorkloadModelChanges(scope.ServiceProvider);
-    SeedHelper.SeedSkillTags(scope.ServiceProvider);
-    SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);
-    SeedHelper.SeedCompetencyAssessments(scope.ServiceProvider);
-    SeedHelper.SeedInnateCodesAndTasks(scope.ServiceProvider);
-    SeedHelper.SeedFinancialReferences(scope.ServiceProvider);
-    SeedHelper.SeedOrganisationalUnits(scope.ServiceProvider);
-    SeedHelper.SeedProjects(scope.ServiceProvider);
-    SeedHelper.SeedFundingSources(scope.ServiceProvider);
-    SeedHelper.SeedSubTasks(scope.ServiceProvider);
-    SeedHelper.SeedResources(scope.ServiceProvider);
-    SeedHelper.SeedNotes(scope.ServiceProvider);
-    SeedHelper.SeedInvoicesAndPayments(scope.ServiceProvider);
-    SeedHelper.SeedTimesheets(scope.ServiceProvider);
-}
+    // If seeding run the dummy data seeding methods
+    if (shouldSeed)
+    {
+        // Seed tables with suitable values -- Note that competencies are already seeded by migrations
+        SeedHelper.SeedPeople(scope.ServiceProvider);
+        SeedHelper.SeedAbsences(scope.ServiceProvider);
+        SeedHelper.SeedUsers(scope.ServiceProvider);
+        SeedHelper.SeedWorkloadModelChanges(scope.ServiceProvider);
+        SeedHelper.SeedSkillTags(scope.ServiceProvider);
+        SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);
+        SeedHelper.SeedCompetencyAssessments(scope.ServiceProvider);
+        SeedHelper.SeedInnateCodesAndTasks(scope.ServiceProvider);
+        SeedHelper.SeedFinancialReferences(scope.ServiceProvider);
+        SeedHelper.SeedOrganisationalUnits(scope.ServiceProvider);
+        SeedHelper.SeedProjects(scope.ServiceProvider);
+        SeedHelper.SeedFundingSources(scope.ServiceProvider);
+        SeedHelper.SeedSubTasks(scope.ServiceProvider);
+        SeedHelper.SeedResources(scope.ServiceProvider);
+        SeedHelper.SeedNotes(scope.ServiceProvider);
+        SeedHelper.SeedInvoicesAndPayments(scope.ServiceProvider);
+        SeedHelper.SeedTimesheets(scope.ServiceProvider);
+    }
 
-// Set default culture
-var cultureInfo = new CultureInfo("en-GB");
-CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
-CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
-
-// Clean local application file path
-FileHelper.CleanLocalApplicationFilePath(logger);
-
-// Initialise feature service cache
-using (var context = dbContextFactory.CreateDbContext())
-{
+    // Initialise the settings cache
     var settingsService = app.Services.GetRequiredService<SettingsService>();
     await settingsService.IntialiseServiceCacheAsync(context);
+
+    // Initialise the feature cache
     var featureService = app.Services.GetRequiredService<FeatureService>();
     await featureService.IntialiseServiceCacheAsync(context);
 
@@ -415,6 +411,9 @@ using (var context = dbContextFactory.CreateDbContext())
     var projectService = app.Services.GetRequiredService<ProjectService>();
     await projectService.UpdateAllProjectMetaDataAsync(context);
 }
+
+// Clean local application file path
+FileHelper.CleanLocalApplicationFilePath(logger);
 
 // Run the app
 app.Run();
