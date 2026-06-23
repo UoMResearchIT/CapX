@@ -410,6 +410,10 @@ using (var context = dbContextFactory.CreateDbContext())
     await settingsService.IntialiseServiceCacheAsync(context);
     var featureService = app.Services.GetRequiredService<FeatureService>();
     await featureService.IntialiseServiceCacheAsync(context);
+
+    // Update the project meta data for all projects in the database
+    var projectService = app.Services.GetRequiredService<ProjectService>();
+    await projectService.UpdateAllProjectMetaDataAsync(context);
 }
 
 // Run the app

@@ -325,6 +325,7 @@ namespace PPMTool.Data.Entities
         /// <param name="recomputeSubTaskCosts">Whether to update the subtask costs and save to database</param>
         /// <param name="financialReferences">If necessary a set of financial references</param>
         /// <param name="indirectsPercentage">The percentage of top slice to apply from the settings</param>
+        /// <exception cref="Exception">When no financial references are available in the DB with which to update the costs</exception>
         public void UpdateProjectMetaData(bool recomputeSubTaskCosts, IEnumerable<FinancialReference> financialReferences, float indirectsPercentage)
         {
             // Check conditions for cost update

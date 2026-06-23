@@ -12,10 +12,18 @@ namespace PPMTool.Services
     public class ProjectService : BaseEntityService<Project>
     {
         private readonly SettingsService settingsService;
+        private readonly FinancialReferenceService financialReferenceService;
+        private readonly ILogger<ProjectService> logger;
 
-        public ProjectService(SettingsService settingsService)
+        public ProjectService(
+            SettingsService settingsService,
+            FinancialReferenceService financialReferenceService,
+            ILogger<ProjectService> logger
+        )
         {
             this.settingsService = settingsService;
+            this.financialReferenceService = financialReferenceService;
+            this.logger = logger;
         }
 
         /// <inheritdoc />
@@ -213,6 +221,37 @@ namespace PPMTool.Services
                 .Include(x => x.School)
                 .ThenInclude(x => x.Faculty)
                 .FirstOrDefault(x => x.ProjectId == projectId)?.School;
+        }
+
+        /// <summary>
+        /// Updates the metadata for all projects in the database context.
+        /// This method iterates through all projects, invoking the UpdateProjectMetaData method on each project to refresh its metadata.
+        /// The changes are then persisted to the database.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        internal async Task UpdateAllProjectMetaDataAsync(PPMToolContext context)
+        {
+            var prefix = settingsService.GetSetting(SettingType.ProjectAbbreviation, string.Empty);
+            var indirects = settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0);
+            var finrefs = financialReferenceService.GetAll(context);
+            var projects = await context.Projects.ToListAsync();
+            foreach (var project in projects)
+            {
+                try
+                {
+                    project.UpdateProjectMetaData(
+                        true,
+                        finrefs,
+                        indirects
+                    );
+                    Update(context, project);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning($"Error occurred while updating project metadata for project {project.ProjectId} ({prefix}-{project.RTP}): {ex.Message}");
+                }
+            }
         }
     }
 }
