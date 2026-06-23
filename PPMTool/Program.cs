@@ -408,7 +408,7 @@ using (var context = dbContextFactory.CreateDbContext())
     await featureService.IntialiseServiceCacheAsync(context);
 
     // Update the project meta data for all projects in the database
-    var projectService = app.Services.GetRequiredService<ProjectService>();
+    var projectService = scope.ServiceProvider.GetRequiredService<ProjectService>();
     await projectService.UpdateAllProjectMetaDataAsync(context);
 }
 
