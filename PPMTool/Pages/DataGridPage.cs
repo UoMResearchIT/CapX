@@ -80,18 +80,30 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected virtual async Task DeleteRow(T entity)
         {
-            Reset();
-            if (dataGridEntities.Contains(entity))
+            var isInDataSource = dataGridEntities.Contains(entity);
+            var isTrackedEditRow = ReferenceEquals(entityToInsert, entity) || ReferenceEquals(entityToUpdate, entity);
+
+            if (isInDataSource)
             {
                 LogInformation($"Delete row in data grid source for <{entity?.GetSensibleObjectName()}>");
                 dataGridEntities.Remove(entity);
             }
-            else
+            else if (isTrackedEditRow)
             {
                 LogInformation($"Cancel edit row in view for <{entity?.GetSensibleObjectName()}>");
                 dataGrid.CancelEditRow(entity);
             }
-            await dataGrid.Reload();
+            else
+            {
+                LogWarning($"Ignoring delete request for stale row <{entity?.GetSensibleObjectName()}>.");
+            }
+
+            Reset();
+
+            if (dataGrid != null && (isInDataSource || isTrackedEditRow))
+            {
+                await dataGrid.Reload();
+            }
         }
 
         /// <summary>
