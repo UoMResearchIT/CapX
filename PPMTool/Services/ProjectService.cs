@@ -230,12 +230,12 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        internal async Task UpdateAllProjectMetaDataAsync(PPMToolContext context)
+        internal void UpdateAllProjectMetaData(PPMToolContext context)
         {
             var prefix = settingsService.GetSetting(SettingType.ProjectAbbreviation, string.Empty);
             var indirects = settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0);
             var finrefs = financialReferenceService.GetAll(context);
-            var projects = await context.Projects.ToListAsync();
+            var projects = GetAll(context);
             foreach (var project in projects)
             {
                 try
@@ -246,6 +246,7 @@ namespace PPMTool.Services
                         indirects
                     );
                     Update(context, project);
+                    logger.LogInformation($"Updated project metadata for project {project.ProjectId} ({prefix}-{project.RTP})");
                 }
                 catch (Exception ex)
                 {

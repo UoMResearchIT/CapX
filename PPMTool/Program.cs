@@ -409,7 +409,7 @@ using (var context = dbContextFactory.CreateDbContext())
 
     // Update the project meta data for all projects in the database
     var projectService = scope.ServiceProvider.GetRequiredService<ProjectService>();
-    await projectService.UpdateAllProjectMetaDataAsync(context);
+    projectService.UpdateAllProjectMetaData(context);
 }
 
 // Clean local application file path
