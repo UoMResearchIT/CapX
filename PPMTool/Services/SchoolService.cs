@@ -10,6 +10,10 @@ namespace PPMTool.Services
 {
     public class SchoolService : BaseEntityService<School>
     {
+        public SchoolService(ILogger<SchoolService> logger) : base(logger)
+        {
+        }
+
         /// <summary>
         /// Returns schools in the DB (active ones only, by default)
         /// </summary>

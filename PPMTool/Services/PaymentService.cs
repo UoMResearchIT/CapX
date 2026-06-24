@@ -15,6 +15,10 @@ namespace PPMTool.Services
     /// </summary>
     public class PaymentService : BaseEntityService<Payment>
     {
+        public PaymentService(ILogger<PaymentService> logger) : base(logger)
+        {
+        }
+
         /// <summary>
         /// Get payments from the DB
         /// </summary>

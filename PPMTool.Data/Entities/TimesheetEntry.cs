@@ -35,6 +35,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         public virtual InnateCodeTask InnateCodeTask { get; set; } = null!;
+        public int InnateCodeTaskId { get; set; }
 
         /// <summary>
         /// Represents the number of hours spent on the task on Monday.

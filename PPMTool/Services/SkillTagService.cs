@@ -12,6 +12,10 @@ namespace PPMTool.Services
 {
     public class SkillTagService : BaseEntityService<SkillTag>
     {
+        public SkillTagService(ILogger<SkillTagService> logger) : base(logger)
+        {
+        }
+
         /// <summary>
         /// Returns all skill tags in the DB
         /// </summary>
