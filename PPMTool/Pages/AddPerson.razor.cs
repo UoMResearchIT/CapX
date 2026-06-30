@@ -172,6 +172,9 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Method to handle the submit action for the form, including validation and saving the person model
+        /// </summary>
         private void HandleSubmit()
         {
             ClearErrorMessage();
@@ -205,6 +208,9 @@ namespace PPMTool.Pages
                             messageStore.Add(() => personModel.ShortName, "Duplicate initials found!");
                         }
                     }
+
+                    // Update any linked user display name
+                    UserService.UpdateDisplayName(Context, personModel);
                 }
                 else
                 {
