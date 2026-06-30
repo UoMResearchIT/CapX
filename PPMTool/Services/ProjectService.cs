@@ -13,7 +13,7 @@ namespace PPMTool.Services
     {
         private readonly SettingsService settingsService;
 
-        public ProjectService(SettingsService settingsService)
+        public ProjectService(ILogger<ProjectService> logger, SettingsService settingsService) : base(logger)
         {
             this.settingsService = settingsService;
         }

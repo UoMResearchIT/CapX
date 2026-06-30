@@ -15,6 +15,10 @@ namespace PPMTool.Services
     /// </summary>
     public class PaymentService : BaseEntityService<Payment>
     {
+        public PaymentService(ILogger<PaymentService> logger) : base(logger)
+        {
+        }
+
         /// <summary>
         /// Get payments from the DB
         /// </summary>
@@ -101,11 +105,12 @@ namespace PPMTool.Services
                 .Where(x => x.Invoice.InvoiceId == invoice.InvoiceId)
                 .ToList();
             var totalPaid = payments.RoundedSum(x => x.Value, 0);
+            var invoiceValue = Math.Round(invoice.Value, 0);
             if (totalPaid <= 0)
             {
                 return InvoiceStatus.Unpaid;
             }
-            else if (totalPaid < invoice.Value)
+            else if (totalPaid < invoiceValue)
             {
                 return InvoiceStatus.PartiallyPaid;
             }

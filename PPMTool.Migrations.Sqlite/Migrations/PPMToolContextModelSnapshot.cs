@@ -19,7 +19,7 @@ namespace PPMTool.Migrations.Sqlite.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.7");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.8");
 
             modelBuilder.Entity("PPMTool.Data.Entities.Absence", b =>
                 {
@@ -311,6 +311,9 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("InnateCodeId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("TaskName")

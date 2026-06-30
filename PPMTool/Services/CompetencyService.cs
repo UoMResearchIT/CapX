@@ -11,6 +11,10 @@ namespace PPMTool.Services
 {
     public class CompetencyService : BaseEntityService<Competency>
     {
+        public CompetencyService(ILogger<CompetencyService> logger) : base(logger)
+        {
+        }
+
         /// <inheritdoc />
         public override int Add(PPMToolContext context, Competency entity, bool commitChanges = true)
         {
