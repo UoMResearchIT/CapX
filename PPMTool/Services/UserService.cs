@@ -152,8 +152,12 @@ namespace PPMTool.Services
                 // Update the display name for all users linked to this person
                 foreach (var user in linkedUsers)
                 {
-                    user.Name = personModel.Name;
-                    context.Users.Update(user);
+                    if (user.Name != personModel.Name)
+                    {
+                        logger.LogInformation($"Updating display name for {personModel.Name}");
+                        user.Name = personModel.Name;
+                        Update(context, user);
+                    }
                 }
             }
         }
