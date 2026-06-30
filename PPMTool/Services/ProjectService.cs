@@ -13,17 +13,15 @@ namespace PPMTool.Services
     {
         private readonly SettingsService settingsService;
         private readonly FinancialReferenceService financialReferenceService;
-        private readonly ILogger<ProjectService> logger;
 
         public ProjectService(
             SettingsService settingsService,
             FinancialReferenceService financialReferenceService,
             ILogger<ProjectService> logger
-        )
+        ) : base(logger)
         {
             this.settingsService = settingsService;
             this.financialReferenceService = financialReferenceService;
-            this.logger = logger;
         }
 
         /// <inheritdoc />

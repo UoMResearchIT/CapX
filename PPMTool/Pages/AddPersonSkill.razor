@@ -65,7 +65,7 @@ SPDX-License-Identifier: apache-2.0
                                             Data="@ownedTags"
                                             TItem="OwnedSkill">
                                 <Template Context="tag">
-                                    <div class="row align-items-center" style="@($"margin: -0.8rem; {(!tag.RecordComplete() ? "background-color: #FFF3CD;" : "")}")">
+                                    <div class="row align-items-center" style="@($"margin: -0.8rem; {(!tag.RecordComplete() ? "background-color: var(--rz-warning-lighter);" : "")}")">
                                         <div class="col">
                                             @if (tag.SkillTag.HasValidWikiLink == LinkCheckState.Success)
                                             {

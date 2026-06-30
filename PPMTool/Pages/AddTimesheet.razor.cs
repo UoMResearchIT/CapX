@@ -61,6 +61,13 @@ namespace PPMTool.Pages
         private WorkloadModelChange currentWLM;
         private WLMWeeklyDataChartItem wlmChartItem;
         private double totalFTEForTimesheet;
+        private string timesheetHelpUrl = null;
+
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+            timesheetHelpUrl = GetSetting(SettingType.TimesheetHelpUrl);
+        }
 
         protected override async Task OnParametersSetAsync()
         {
@@ -275,11 +282,6 @@ namespace PPMTool.Pages
             }
         }
 
-        protected override void OnInitialized()
-        {
-            base.OnInitialized();
-        }
-
         /// <summary>
         /// Load innate codes to populate the dropdown source. If there is a timesheet then remove codes that have been used and have no tasks left.
         /// </summary>
@@ -414,11 +416,11 @@ namespace PPMTool.Pages
             // Check if submitting with inactive Task Codes (only if being submitted but not from a rejected state)
             if (timesheet.TimesheetEntries.Count > 0 && newStatus == TimesheetStatus.Submitted && timesheet.Status != TimesheetStatus.Rejected)
             {
-                // Present an error and exit early
-                if (timesheet.TimesheetEntries.Any(x => !x.InnateCodeTask.InnateCode.IsActive && x.TotalHours > 0))
+                // Present an error and exit early if trying to book to an inactive task
+                if (timesheet.TimesheetEntries.Any(x => (!x.InnateCodeTask.IsActive || !x.InnateCodeTask.InnateCode.IsActive) && x.TotalHours > 0))
                 {
                     var inactiveTasksCheck = await DialogService.Alert(
-                        $"You cannot submit a timesheet which uses an inactive activity code." +
+                        $"You cannot submit a timesheet which uses an inactive activity or task." +
                         $"If you need a code to be reactivated then contact your project manager to organise this.",
                         "Booked to Inactive Code"
                     ) ?? false;
@@ -529,7 +531,8 @@ namespace PPMTool.Pages
             // Load the innate tasks associated with the selected innate code
             Debug.WriteLine($"** Selected {value}");
             var tasks = innateCodeDropdownSource
-                .FirstOrDefault(x => x.GetCodeAsString() == (value as string))?.Tasks
+                .FirstOrDefault(x => x.GetCodeAsString() == (value as string))?
+                .Tasks
                 .ToList();
 
             // Find all existing entries that use this same code
@@ -541,6 +544,9 @@ namespace PPMTool.Pages
 
             // Remove the tasks from the list that are already in use
             tasks?.RemoveAll(x => tasksInUse.Contains(x));
+
+            // Now filter the remaining list to only include active tasks
+            tasks = tasks?.Where(x => x.IsActive).ToList();
 
             // Assign the tasks
             innateCodeTaskDropdownSource = tasks;
@@ -650,60 +656,57 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Fired when a cell of the datagrid is rendered. Used to set the colour styling of the cells.
+        /// Method to handle the rendering of the datagrid cells. This is used to apply custom styling to the cells based on the data they contain.
         /// </summary>
         /// <param name="args"></param>
         private void CellRender(DataGridCellRenderEventArgs<TimesheetEntry> args)
         {
+            // If the column property is null then we can't do anything
+            if (args?.Column?.Property == null)
+                return;
 
+            // Check if the task is active or not based on the task itself and the owning activity
+            var isActiveTask =
+                (args.Data.InnateCodeTask?.IsActive ?? true) &&
+                (args.Data.InnateCodeTask?.InnateCode?.IsActive ?? true);
 
-            if (args != null)
+            // Inactive tasks are highlighted in red and have a tooltip to explain why
+            if (!isActiveTask)
             {
-                // ActiveUser by default if no task is found (e.g. when there are no rows) otherwise based on code state
-                bool isActiveCode = args.Data.InnateCodeTask?.InnateCode?.IsActive ?? true;
+                // The "edge" (IsInTemplate column) is highlighted in red, the rest of the row is a lighter red
+                var colour = args.Column.Property == "IsInTemplate"
+                    ? "red"
+                    : "var(--rz-danger-lighter)";
 
-                if (args.Column.Property != null)
-                {
-                    if (!isActiveCode)
-                    {
-                        if (args.Column.Property == "IsInTemplate")
-                        {
-                            args.Attributes.Add("style", $"background-color : red;");
-                        }
-                        else
-                        {
-                            args.Attributes.Add("style", $"background-color : #FFD6D7;");
-                        }
-                        args.Attributes.Add("title", "Activity code is no longer active");
-                    }
-                    else
-                    {
-                        string theDay = args.Column.Title.Clean();
-                        if (dayColours.ContainsKey(theDay))
-                        {
-                            args.Attributes.Add("style", $"background-color : {dayColours[theDay]}");
-                        }
-
-                        if (args.Column.Property == "IsInTemplate")
-                        {
-                            // Styling for items which are in the user's template
-                            if (args.Data.IsInTemplate == true)
-                            {
-                                args.Attributes.Add("style", $"background-color :  var(--rz-panel-menu-item-2nd-level-active-background-color)");
-                                args.Attributes.Add("title", "Task is part of your default template");
-                            }
-
-                            if (!isActiveCode)
-                            {
-                                // Reset the styling to get the darker red regardless of whether the item is in the user's template
-                                args.Attributes.Clear();
-                                args.Attributes.Add("style", $"background-color : red;");
-                                args.Attributes.Add("title", "Code is inactive - no further time can be allocated to it.");
-                            }
-                        }
-                    }
-                }
+                args.Attributes["style"] = $"background-color: {colour};";
+                args.Attributes["title"] = "Task or Activity is no longer active";
+                return;
             }
+
+            // Active tasks are highlighted based on the day of the week and whether they are part of the user's template
+            string style = null;
+            string title = null;
+
+            // Day colour
+            var theDay = args.Column.Title?.Clean();
+            if (theDay != null && dayColours.TryGetValue(theDay, out var dayColour))
+            {
+                style = $"background-color: {dayColour};";
+            }
+
+            // Template styling
+            if (args.Column.Property == "IsInTemplate" && args.Data.IsInTemplate == true)
+            {
+                style = "background-color: var(--rz-panel-menu-item-2nd-level-active-background-color);";
+                title = "Task is part of your template";
+            }
+
+            // Apply styling
+            if (style != null)
+                args.Attributes["style"] = style;
+
+            if (title != null)
+                args.Attributes["title"] = title;
         }
 
         /// <summary>

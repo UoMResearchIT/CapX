@@ -13,6 +13,10 @@ namespace PPMTool.Services
 {
     public class InnateCodeService : BaseEntityService<InnateCode>
     {
+        public InnateCodeService(ILogger<InnateCodeService> logger) : base(logger)
+        {
+        }
+
         /// <inheritdoc />
         public override int Add(PPMToolContext context, InnateCode entity, bool commitChanges = true)
         {

@@ -75,5 +75,9 @@ namespace PPMTool.Data.Enums
         [Description("Optional logo that is displayed in the header in dark mode.")]
         [DefaultSettingValue("")]
         OrganisationLogoDark = 15,
+
+        [Description("URL to documentation that provides help for the timesheet functionality.")]
+        [DefaultSettingValue("")]
+        TimesheetHelpUrl = 16
     }
 }

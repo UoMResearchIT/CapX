@@ -10,6 +10,10 @@ namespace PPMTool.Services
 {
     public class PersonService : BaseEntityService<Person>
     {
+        public PersonService(ILogger<PersonService> logger) : base(logger)
+        {
+        }
+
         /// <inheritdoc />
         public override int Add(PPMToolContext context, Person personModel, bool commitChanges = true)
         {
@@ -204,6 +208,54 @@ namespace PPMTool.Services
             var people = await GetAllShallowAsync(context);
             return people
                 .Where(x => x.StartDate <= endDate && (x.EndDate == null || x.EndDate >= startDate))
+                .ToList();
+        }
+
+        /// <summary>
+        /// Get all people who have a Project Management allowance during the given window
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        public IEnumerable<Person> GetPeopleWithProjectManagementAllowanceDuringWindow(PPMToolContext context, DateTime startDate, DateTime endDate)
+        {
+            var employedPeople = context.People
+                .Where(x => x.StartDate.Date <= endDate && (x.EndDate == null || x.EndDate.Value.Date >= startDate))
+                .ToList();
+
+            return employedPeople
+                .Where(person =>
+                {
+                    // Get all WLM changes for this person ordered by date descending
+                    var allWlmChanges = context.WorkloadModelChanges
+                        .Where(w => w.Person.PersonId == person.PersonId)
+                        .OrderByDescending(w => w.ChangeDate)
+                        .ToList();
+
+                    // If none then return
+                    if (!allWlmChanges.Any())
+                        return false;
+
+                    // Get the last change before the window starts (applies at window start)
+                    var changeBeforeWindow = allWlmChanges
+                        .Where(w => w.ChangeDate.Date < startDate)
+                        .FirstOrDefault();
+
+                    // Get all changes that occur during the window
+                    var changesInWindow = allWlmChanges
+                        .Where(w => w.ChangeDate.Date >= startDate && w.ChangeDate.Date <= endDate)
+                        .ToList();
+
+                    // Concat them all into a single range
+                    var relevantChanges = new List<WorkloadModelChange>();
+                    if (changeBeforeWindow != null)
+                        relevantChanges.Add(changeBeforeWindow);
+                    relevantChanges.AddRange(changesInWindow);
+
+                    // Return true if any relevant change has Project Management allowance
+                    return relevantChanges.Any(w => w.ProjectManagementFTE > 0);
+                })
                 .ToList();
         }
     }

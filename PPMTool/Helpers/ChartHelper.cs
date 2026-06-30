@@ -27,7 +27,7 @@ namespace PPMTool.Helpers
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
         /// <param name="gapFillingFunction">Function that fills gaps in the chart items</param>
         /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block based on list of assignments that fall within the block</param>
-        /// <param name="ignoreZeroValue1Entries">If true, does not create a block if it has a value of 0 for value 1, leaving a gap</param>
+        /// <param name="ignoreZeroValue1Entries">If true, does not create a block if it has a value of 0 for value 1, leaving a gap. Default is false.</param>
         /// <returns></returns>
         public static IEnumerable<ChartItem> ConvertAssignmentsToChartItems(
             IEnumerable<Assignment> assignments,
