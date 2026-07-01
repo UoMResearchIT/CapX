@@ -79,10 +79,10 @@ namespace PPMTool.Data.Entities
         public double TotalHours { get; private set; }
 
         /// <summary>
-        /// Represents whether this task is part of the user's template
+        /// Represents whether this task is part of the user's template. This must be explicitly set with the <see cref="SetIsInTemplate(bool)"/> method.
         /// </summary>
         [NotMapped]
-        public bool IsInTemplate { get; set; }
+        public bool IsInTemplate { get; private set; }
 
         /// <summary>
         /// Method to sum up the hours in the entry and update the TotalHours property.
@@ -92,6 +92,15 @@ namespace PPMTool.Data.Entities
         public void UpdateTotalHours()
         {
             TotalHours = MondayHours + TuesdayHours + WednesdayHours + ThursdayHours + FridayHours + SaturdayHours + SundayHours;
+        }
+
+        /// <summary>
+        /// Sets the IsInTemplate property to indicate whether this task is part of the user's template.
+        /// </summary>
+        /// <param name="isInTemplate"></param>
+        public void SetIsInTemplate(bool isInTemplate)
+        {
+            IsInTemplate = isInTemplate;
         }
 
         /// <summary>
