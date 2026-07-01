@@ -226,8 +226,7 @@ namespace PPMTool.Services
         /// This method iterates through all projects, invoking the UpdateProjectMetaData method on each project to refresh its metadata.
         /// The changes are then persisted to the database.
         /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
+        /// <param name="context">The database context used to access and update projects.</param>
         internal void UpdateAllProjectMetaData(PPMToolContext context)
         {
             var prefix = settingsService.GetSetting(SettingType.ProjectAbbreviation, string.Empty);
