@@ -230,7 +230,7 @@ namespace PPMTool.Services
         internal void UpdateAllProjectMetaData(PPMToolContext context)
         {
             var prefix = settingsService.GetSetting(SettingType.ProjectAbbreviation, string.Empty);
-            var indirects = settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0);
+            var indirects = settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
             var finrefs = financialReferenceService.GetAll(context);
             var projects = GetAll(context);
             foreach (var project in projects)
