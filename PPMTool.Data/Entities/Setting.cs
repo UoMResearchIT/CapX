@@ -23,7 +23,8 @@ namespace PPMTool.Data.Entities
         public SettingType SettingType { get; set; }
 
         /// <summary>
-        /// Shadow property to get the name of the setting type as a string for use in the UI. This is not mapped to the database as it is derived from the SettingType enum.
+        /// Shadow property to get the name of the setting type as a string for use in the UI.
+        /// This is not mapped to the database as it is derived from the SettingType enum.
         /// </summary>
         [NotMapped]
         public string SettingTypeAsText => SettingType.ToString();

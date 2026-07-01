@@ -94,6 +94,26 @@ namespace PPMTool.Services
         }
 
         /// <summary>
+        /// Gets funds received for multiple projects in a single query and return as a dictionary mapping ProjectId to FundsReceived.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="projectIds"></param>
+        /// <returns>Dictionary mapping ProjectId to FundsReceived</returns>
+        public IDictionary<int, double> GetFundsReceivedForProjects(PPMToolContext context, IEnumerable<int> projectIds)
+        {
+            // Return an empty dictionary if the projectIds collection is null or empty
+            var projectIdList = projectIds.ToList();
+            if (!projectIdList.Any())
+                return new Dictionary<int, double>();
+
+            return context.Payments
+                .Where(p => projectIdList.Contains(p.Project.ProjectId))
+                .GroupBy(p => p.Project.ProjectId)
+                .Select(g => new { ProjectId = g.Key, FundsReceived = g.Sum(p => p.Value) })
+                .ToDictionary(x => x.ProjectId, x => Math.Round(x.FundsReceived, 0));
+        }
+
+        /// <summary>
         /// Gets the invoice status by evaluating payments made against the invoice value
         /// </summary>
         /// <param name="context"></param>

@@ -234,7 +234,7 @@ namespace PPMTool.Pages
                 // Sets a boolean for use in the datagrid to show which items are part of the template
                 foreach (TimesheetEntry e in orderedResults)
                 {
-                    e.IsInTemplate = order.Contains(e.InnateCodeTask.InnateCodeTaskId);
+                    e.SetIsInTemplate(order.Contains(e.InnateCodeTask.InnateCodeTaskId));
                 }
 
                 return orderedResults;
