@@ -254,6 +254,7 @@ namespace PPMTool.Services
                         finrefs,
                         indirects
                     );
+                    CommitChanges(context);
                     logger.LogInformation($"Updated project metadata for project {project.ProjectId} ({prefix}-{project.RTP})");
                 }
                 catch (Exception ex)
@@ -261,7 +262,6 @@ namespace PPMTool.Services
                     logger.LogWarning(ex, $"Error occurred while updating project metadata for project {project.ProjectId} ({prefix}-{project.RTP}): {ex.Message}");
                 }
             }
-            CommitChanges(context);
         }
     }
 }
