@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
+using PPMTool.Helpers;
 using PPMTool.Services;
 using Radzen;
 
@@ -112,28 +113,15 @@ namespace PPMTool.Pages
                 query = query.Where(x => ActiveUser.Person != null && x.PersonId == ActiveUser.Person!.PersonId);
             }
 
-
-            // ---- CUSTOM FILTERS ONLY ----
+            // ---- GRID FILTERING ----
+            // Apply filters manually so custom columns such as SkillTags do not flow into
+            // Dynamic LINQ against Person, which does not expose a SkillTags property.
             if (args.Filters is { } filters && filters.Any())
             {
-                // SkillTags custom filter
-                var skillFilter = filters.FirstOrDefault(x => x.Property == "SkillTags");
-                var skillFilterValue = (skillFilter?.FilterValue as string)?.Trim();
-
-                if (!string.IsNullOrWhiteSpace(skillFilterValue))
+                foreach (var filter in filters)
                 {
-                    var filterValueLower = skillFilterValue.ToLower();
-
-                    query = query.Where(x =>
-                        x.OwnedSkills.Any(s =>
-                            (s.SkillTag.Name ?? "").Trim().ToLower().Contains(filterValueLower)));
+                    query = ApplyFilter(query, filter);
                 }
-            }
-
-            // ---- BUILT-IN RADZEN FILTERING ----
-            if (!string.IsNullOrWhiteSpace(args.Filter))
-            {
-                query = query.Where(args.Filter);
             }
 
             // ---- SORTING ----
@@ -168,7 +156,20 @@ namespace PPMTool.Pages
             people = query.Skip(skip).Take(take).ToList();
 
             Debug.WriteLine($"** {count} people loaded. {people.Count()} displayed.");
+        }
 
+        private IQueryable<Person> ApplyFilter(IQueryable<Person> query, FilterDescriptor filter)
+        {
+            return filter.Property switch
+            {
+                "Name" => FilterHelper.ApplyStringFilter(query, filter, person => person.Name),
+                "ShortName" => FilterHelper.ApplyStringFilter(query, filter, person => person.ShortName),
+                "LineManager.Name" => FilterHelper.ApplyStringFilter(query, filter, person => person.LineManager?.Name),
+                "SkillTags" => FilterHelper.ApplyStringFilter(query, filter,
+                    person => string.Join(", ", person.OwnedSkills.Select(skill => skill.SkillTag.Name).OrderBy(name => name))),
+                "CurrentGrade" => FilterHelper.ApplyNullableIntFilter(query, filter, person => person.CurrentGrade),
+                _ => query
+            };
         }
     }
 }
