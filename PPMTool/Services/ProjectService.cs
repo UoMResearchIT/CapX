@@ -233,16 +233,10 @@ namespace PPMTool.Services
             var indirects = settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
             var finrefs = financialReferenceService.GetAll(context).ToList();
             var projects = context.Projects
-                .Include(p => p.School)
-                    .ThenInclude(s => s.Faculty)
                 .Include(p => p.SubTasks)
                     .ThenInclude(s => s.AssignedResources)
                         .ThenInclude(r => r.Person)
                             .ThenInclude(r => r.WorkloadModelChanges)
-                .Include(p => p.SubTasks)
-                    .ThenInclude(s => s.AssignedResources)
-                        .ThenInclude(r => r.FundedFrom)
-                .Include(p => p.ProjectManager)
                 .Include(p => p.FundingSources)
                 .ToList();
             foreach (var project in projects)
