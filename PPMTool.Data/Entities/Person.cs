@@ -310,6 +310,16 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// Shadow property to store a comma-separated list of the person's skill tag names.
+        /// Used for filtering on the Manage People page.
+        /// </summary>
+        [NotMapped]
+        public string SkillTags
+        {
+            get => string.Join(", ", OwnedSkills.Select(skill => skill.SkillTag.Name).OrderBy(name => name));
+        }
+
+        /// <summary>
         /// Shadow property to store the current grade of the person based on the person's current WLM and the date.
         /// Used for filtering by Grade on the Manage People page currently.
         /// </summary>

@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
-using PPMTool.Helpers;
 using PPMTool.Services;
 using Radzen;
 
@@ -114,14 +113,9 @@ namespace PPMTool.Pages
             }
 
             // ---- GRID FILTERING ----
-            // Apply filters manually so custom columns such as SkillTags do not flow into
-            // Dynamic LINQ against Person, which does not expose a SkillTags property.
-            if (args.Filters is { } filters && filters.Any())
+            if (!string.IsNullOrWhiteSpace(args.Filter))
             {
-                foreach (var filter in filters)
-                {
-                    query = ApplyFilter(query, filter);
-                }
+                query = query.Where(args.Filter);
             }
 
             // ---- SORTING ----
@@ -158,18 +152,5 @@ namespace PPMTool.Pages
             Debug.WriteLine($"** {count} people loaded. {people.Count()} displayed.");
         }
 
-        private IQueryable<Person> ApplyFilter(IQueryable<Person> query, FilterDescriptor filter)
-        {
-            return filter.Property switch
-            {
-                "Name" => FilterHelper.ApplyStringFilter(query, filter, person => person.Name),
-                "ShortName" => FilterHelper.ApplyStringFilter(query, filter, person => person.ShortName),
-                "LineManager.Name" => FilterHelper.ApplyStringFilter(query, filter, person => person.LineManager?.Name),
-                "SkillTags" => FilterHelper.ApplyStringFilter(query, filter,
-                    person => string.Join(", ", person.OwnedSkills.Select(skill => skill.SkillTag.Name).OrderBy(name => name))),
-                "CurrentGrade" => FilterHelper.ApplyNullableIntFilter(query, filter, person => person.CurrentGrade),
-                _ => query
-            };
-        }
     }
 }
