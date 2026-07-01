@@ -127,12 +127,6 @@ namespace PPMTool.Pages
             // Initialise the project list -- developers can only see projects to which they are assigned
             IQueryable<Project> query = ProjectService.GetAll(Context).OrderBy(x => x.RTP).AsQueryable();
 
-            // Add details of FundsReceived so we can use it for filtering in the grid as a property
-            foreach (Project p in query)
-            {
-                p.FundsReceived = PaymentService.GetFundsReceived(Context, p.ProjectId);
-            }
-
             if (ActiveUserRoleType == RoleType.Developer)
             {
                 query = query.Where(x => ActiveUser.Person != null && x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person.PersonId == ActiveUser.Person!.PersonId)));
@@ -153,14 +147,29 @@ namespace PPMTool.Pages
             // Assign to grid source
             var data = query.ToList();
             count = data.Count;
+
+            List<Project> projectsToDisplay;
             if (args.Skip == null)
             {
-                projects = data.Take(pageCount).ToList();
+                projectsToDisplay = data.Take(pageCount).ToList();
             }
             else
             {
-                projects = data.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+                projectsToDisplay = data.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
             }
+
+            // Load FundsReceived for displayed projects only (after filtering and paging)
+            var projectIds = projectsToDisplay.Select(p => p.ProjectId).ToList();
+            var fundsReceivedLookup = PaymentService.GetFundsReceivedForProjects(Context, projectIds);
+
+            // Populate FundsReceived from the lookup
+            foreach (var project in projectsToDisplay)
+            {
+                project.FundsReceived = fundsReceivedLookup.TryGetValue(project.ProjectId, out var funds) ? funds : 0;
+            }
+
+            // Now assign to bound variable for display
+            projects = projectsToDisplay;
 
             Debug.WriteLine($"** {data.Count()} projects loaded. {projects.Count()} displayed.");
         }
