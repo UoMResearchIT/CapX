@@ -231,7 +231,7 @@ namespace PPMTool.Services
         {
             var prefix = settingsService.GetSetting(SettingType.ProjectAbbreviation, string.Empty);
             var indirects = settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
-            var finrefs = financialReferenceService.GetAll(context);
+            var finrefs = financialReferenceService.GetAll(context).ToList();
             var projects = GetAll(context);
             foreach (var project in projects)
             {
