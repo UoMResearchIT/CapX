@@ -310,7 +310,7 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Stores the calculated grade based on the person's current WLM and the date.
+        /// Shadow property to store the current grade of the person based on the person's current WLM and the date.
         /// Used for filtering by Grade on the Manage People page currently.
         /// </summary>
         /// <returns></returns>

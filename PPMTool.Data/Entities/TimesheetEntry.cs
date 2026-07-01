@@ -73,7 +73,7 @@ namespace PPMTool.Data.Entities
         public double SundayHours { get; set; }
 
         /// <summary>
-        /// Total hours for the week for this entry
+        /// Total hours for the week for this entry. This must be explicitly updated with the <see cref="UpdateTotalHours"/> method.
         /// </summary>
         [NotMapped]
         public double TotalHours { get; private set; }
@@ -85,7 +85,8 @@ namespace PPMTool.Data.Entities
         public bool IsInTemplate { get; set; }
 
         /// <summary>
-        /// Method to sum up the hours in the entry
+        /// Method to sum up the hours in the entry and update the TotalHours property.
+        /// This should be called whenever the hours for any day are modified.
         /// </summary>
         /// <returns></returns>
         public void UpdateTotalHours()

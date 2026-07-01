@@ -137,6 +137,14 @@ namespace PPMTool.Data.Entities
         public virtual ICollection<FundingSource> FundingSources { get; set; } = new List<FundingSource>();
 
         /// <summary>
+        /// Shadow property to allow easy filtering on FundsReceived in datagrids.
+        /// Requires additional logic in the service layer to populate this property when retrieving projects from the database.
+        /// </summary>
+        /// <returns></returns>
+        [NotMapped]
+        public double FundsReceived { get; set; }
+
+        /// <summary>
         /// Constructor also adds default status messages
         /// </summary>
         public Project()
@@ -440,13 +448,5 @@ namespace PPMTool.Data.Entities
         {
             return $"Project {RTP} | {Name}";
         }
-
-        /// <summary>
-        /// Property to allow filtering on FundsReceived in datagrids.
-        /// Can't populate in here without adding the PaymentService though.
-        /// </summary>
-        /// <returns></returns>
-        [NotMapped]
-        public double FundsReceived { get; set; }
     }
 }
