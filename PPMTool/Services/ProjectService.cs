@@ -247,7 +247,7 @@ namespace PPMTool.Services
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning($"Error occurred while updating project metadata for project {project.ProjectId} ({prefix}-{project.RTP}): {ex.Message}");
+                    logger.LogWarning(ex, $"Error occurred while updating project metadata for project {project.ProjectId} ({prefix}-{project.RTP}): {ex.Message}");
                 }
             }
         }
