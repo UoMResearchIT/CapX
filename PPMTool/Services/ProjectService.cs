@@ -232,7 +232,13 @@ namespace PPMTool.Services
             var prefix = settingsService.GetSetting(SettingType.ProjectAbbreviation, string.Empty);
             var indirects = settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
             var finrefs = financialReferenceService.GetAll(context).ToList();
-            var projects = GetAll(context);
+            var projects = context.Projects
+                .Include(p => p.SubTasks)
+                    .ThenInclude(s => s.AssignedResources)
+                        .ThenInclude(r => r.Person)
+                            .ThenInclude(r => r.WorkloadModelChanges)
+                .Include(p => p.FundingSources)
+                .ToList();
             foreach (var project in projects)
             {
                 try
@@ -242,7 +248,7 @@ namespace PPMTool.Services
                         finrefs,
                         indirects
                     );
-                    Update(context, project);
+                    CommitChanges(context);
                     logger.LogInformation($"Updated project metadata for project {project.ProjectId} ({prefix}-{project.RTP})");
                 }
                 catch (Exception ex)
