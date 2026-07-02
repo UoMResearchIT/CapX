@@ -31,13 +31,18 @@ namespace PPMTool.Tests.Core
             // Navigate to the page with retry logic
             await NavigateWithRetryAsync($"{Setup.BaseUrl}{url}");
 
-            // Check if we're on the login page (unauthenticated)
+            // Check if we're on the login page (unauthenticated) by checking the page title
             if (!skipLoginCheck)
             {
-                await HandleLoginIfNeeded();
+                // Wait for the page to have a title
+                await Expect(Page).ToHaveTitleAsync(new Regex(".*"), new() { Timeout = 2000 });
 
-                // Navigate to the target page (in case we were redirected)
-                await NavigateWithRetryAsync($"{Setup.BaseUrl}{url}");
+                var currentTitle = await Page.TitleAsync();
+                if (currentTitle == "CapX - Log In")
+                {
+                    // We're on the login page, need to authenticate
+                    await HandleLoginAndNavigateAsync(url);
+                }
             }
 
             // Assert that the page title is correct with retry timeout
@@ -63,9 +68,9 @@ namespace PPMTool.Tests.Core
                     await Page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle });
                     return;
                 }
-                catch (Exception ex) when (retries < navigationRetries - 1 && 
-                    (ex.Message.Contains("ERR_CONNECTION_REFUSED") || 
-                     ex.Message.Contains("ERR_ABORTED") || 
+                catch (Exception ex) when (retries < navigationRetries - 1 &&
+                    (ex.Message.Contains("ERR_CONNECTION_REFUSED") ||
+                     ex.Message.Contains("ERR_ABORTED") ||
                      ex.Message.Contains("ERR_NETWORK_CHANGED")))
                 {
                     retries++;
@@ -78,30 +83,30 @@ namespace PPMTool.Tests.Core
         }
 
         /// <summary>
-        /// Handles the login process if the user is not authenticated. It checks for the presence of the "Log in" button, clicks it, and then clicks the auto-login link to authenticate the user.
+        /// Handles the login process by clicking the Log In button and waiting for authentication to complete,
+        /// then navigates to the target URL.
         /// </summary>
+        /// <param name="targetUrl"></param>
         /// <returns></returns>
-        private async Task HandleLoginIfNeeded()
+        private async Task HandleLoginAndNavigateAsync(string targetUrl)
         {
-            // Check if the Log in button is visible (indicates we're not authenticated)
-            var loginButton = Page.Locator("a:has-text('Log in')");
+            // Find the Log in button - in LOCAL mode this link contains the username parameter
+            var loginButton = Page.Locator("a:has-text('Log in')").First;
 
-            try
+            if (await loginButton.IsVisibleAsync())
             {
-                // Only if the login button is visible should we attempt to log in
-                if (await loginButton.IsVisibleAsync())
-                {
-                    // Click the Log in button - in LOCAL mode this link already contains the username parameter
-                    await loginButton.ClickAsync();
+                // Click the Log in button
+                await loginButton.ClickAsync();
 
-                    // Wait for the login/redirect to complete
-                    await Page.WaitForLoadStateAsync();
-                }
+                // Wait for navigation to complete
+                await Page.WaitForLoadStateAsync();
+
+                // Navigate to the target page
+                await NavigateWithRetryAsync($"{Setup.BaseUrl}{targetUrl}");
             }
-            catch
+            else
             {
-                // If the login button is not found or times out, we're likely already authenticated
-                // Continue without logging in
+                throw new InvalidOperationException("Login button not found on login page. Cannot authenticate.");
             }
         }
 
