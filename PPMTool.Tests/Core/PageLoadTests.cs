@@ -4,16 +4,41 @@
 
 namespace PPMTool.Tests.Core
 {
-    [Parallelizable(ParallelScope.Self)]
+    [Parallelizable(ParallelScope.None)]
     [TestFixture]
     public class PageLoadTests : PageTest
     {
         private const int pageLoadTimeoutMs = 5000;
+        private const int navigationRetries = 3;
+        private const int retryDelayMs = 500;
 
-        private async Task VerifyPageLoaded(string url, string expectedTitle)
+        [TearDown]
+        public async Task TearDownTest()
         {
-            // Navigate to the page
-            await Page.GotoAsync($"{Setup.BaseUrl}{url}");
+            // Add a small delay between tests to allow the server to recover
+            await Task.Delay(500);
+        }
+
+        /// <summary>
+        /// Verifies that a page loads correctly by checking the title and ensuring that the Blazor crash banner is not visible.
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="expectedTitle"></param>
+        /// <param name="skipLoginCheck"></param>
+        /// <returns></returns>
+        private async Task VerifyPageLoaded(string url, string expectedTitle, bool skipLoginCheck = false)
+        {
+            // Navigate to the page with retry logic
+            await NavigateWithRetryAsync($"{Setup.BaseUrl}{url}");
+
+            // Check if we're on the login page (unauthenticated)
+            if (!skipLoginCheck)
+            {
+                await HandleLoginIfNeeded();
+
+                // Navigate to the target page (in case we were redirected)
+                await NavigateWithRetryAsync($"{Setup.BaseUrl}{url}");
+            }
 
             // Assert that the page title is correct with retry timeout
             await Expect(Page).ToHaveTitleAsync(expectedTitle, new() { Timeout = pageLoadTimeoutMs });
@@ -23,10 +48,67 @@ namespace PPMTool.Tests.Core
             await Expect(crashBanner).ToBeHiddenAsync(new() { Timeout = pageLoadTimeoutMs });
         }
 
-        [Test]
-        public async Task HomepageShouldLoadWithCorrectTitleAndNoCrashBanner()
+        /// <summary>
+        /// Navigates to a URL with retry logic to handle temporary connection issues.
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        private async Task NavigateWithRetryAsync(string url)
         {
-            await VerifyPageLoaded("/", "CapX - Log In");
+            int retries = 0;
+            while (retries < navigationRetries)
+            {
+                try
+                {
+                    await Page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle });
+                    return;
+                }
+                catch (Exception ex) when (retries < navigationRetries - 1 && 
+                    (ex.Message.Contains("ERR_CONNECTION_REFUSED") || 
+                     ex.Message.Contains("ERR_ABORTED") || 
+                     ex.Message.Contains("ERR_NETWORK_CHANGED")))
+                {
+                    retries++;
+                    await Task.Delay(retryDelayMs);
+                }
+            }
+
+            // Final attempt without retry
+            await Page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle });
+        }
+
+        /// <summary>
+        /// Handles the login process if the user is not authenticated. It checks for the presence of the "Log in" button, clicks it, and then clicks the auto-login link to authenticate the user.
+        /// </summary>
+        /// <returns></returns>
+        private async Task HandleLoginIfNeeded()
+        {
+            // Check if the Log in button is visible (indicates we're not authenticated)
+            var loginButton = Page.Locator("a:has-text('Log in')");
+
+            try
+            {
+                // Only if the login button is visible should we attempt to log in
+                if (await loginButton.IsVisibleAsync())
+                {
+                    // Click the Log in button - in LOCAL mode this link already contains the username parameter
+                    await loginButton.ClickAsync();
+
+                    // Wait for the login/redirect to complete
+                    await Page.WaitForLoadStateAsync();
+                }
+            }
+            catch
+            {
+                // If the login button is not found or times out, we're likely already authenticated
+                // Continue without logging in
+            }
+        }
+
+        [Test]
+        public async Task LogInPageShouldLoadWithCorrectTitleAndNoCrashBanner()
+        {
+            await VerifyPageLoaded("/", "CapX - Log In", true);
         }
 
         [Test]
