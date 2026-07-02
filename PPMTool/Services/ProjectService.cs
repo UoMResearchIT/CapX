@@ -12,10 +12,16 @@ namespace PPMTool.Services
     public class ProjectService : BaseEntityService<Project>
     {
         private readonly SettingsService settingsService;
+        private readonly FinancialReferenceService financialReferenceService;
 
-        public ProjectService(ILogger<ProjectService> logger, SettingsService settingsService) : base(logger)
+        public ProjectService(
+            SettingsService settingsService,
+            FinancialReferenceService financialReferenceService,
+            ILogger<ProjectService> logger
+        ) : base(logger)
         {
             this.settingsService = settingsService;
+            this.financialReferenceService = financialReferenceService;
         }
 
         /// <inheritdoc />
@@ -213,6 +219,43 @@ namespace PPMTool.Services
                 .Include(x => x.School)
                 .ThenInclude(x => x.Faculty)
                 .FirstOrDefault(x => x.ProjectId == projectId)?.School;
+        }
+
+        /// <summary>
+        /// Updates the metadata for all projects in the database context.
+        /// This method iterates through all projects, invoking the UpdateProjectMetaData method on each project to refresh its metadata.
+        /// The changes are then persisted to the database.
+        /// </summary>
+        /// <param name="context">The database context used to access and update projects.</param>
+        internal void UpdateAllProjectMetaData(PPMToolContext context)
+        {
+            var prefix = settingsService.GetSetting(SettingType.ProjectAbbreviation, string.Empty);
+            var indirects = settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+            var finrefs = financialReferenceService.GetAll(context).ToList();
+            var projects = context.Projects
+                .Include(p => p.SubTasks)
+                    .ThenInclude(s => s.AssignedResources)
+                        .ThenInclude(r => r.Person)
+                            .ThenInclude(r => r.WorkloadModelChanges)
+                .Include(p => p.FundingSources)
+                .ToList();
+            foreach (var project in projects)
+            {
+                try
+                {
+                    project.UpdateProjectMetaData(
+                        true,
+                        finrefs,
+                        indirects
+                    );
+                    CommitChanges(context);
+                    logger.LogInformation($"Updated project metadata for project {project.ProjectId} ({prefix}-{project.RTP})");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, $"Error occurred while updating project metadata for project {project.ProjectId} ({prefix}-{project.RTP}): {ex.Message}");
+                }
+            }
         }
     }
 }
