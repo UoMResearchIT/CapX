@@ -1,15 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
+using PPMTool.Data.Interfaces;
 using PPMTool.Services;
 using Radzen;
 using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
-    public abstract class DataGridPage<T> : BasePage where T : class, ILoggableClass
+    public abstract class DataGridPage<T> : BasePage where T : class, ILoggableObject
     {
         protected RadzenDataGrid<T> dataGrid;
         protected IList<T> dataGridEntities;
@@ -32,7 +34,7 @@ namespace PPMTool.Pages
         {
             entityToInsert = null;
             entityToUpdate = null;
-            ErrorMessage = null;
+            ClearErrorMessage();
         }
 
         /// <summary>
@@ -40,7 +42,7 @@ namespace PPMTool.Pages
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        protected async virtual Task EditRow(T entity)
+        protected virtual async Task EditRow(T entity)
         {
             entityToUpdate = entity;
             LogInformation($"Edit row in view for <{entityToUpdate?.GetSensibleObjectName()}>");
@@ -52,7 +54,7 @@ namespace PPMTool.Pages
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        protected async virtual Task SaveRow(T entity)
+        protected virtual async Task SaveRow(T entity)
         {
             LogInformation($"Update row in view for <{entity?.GetSensibleObjectName()}>");
             Reset();
@@ -76,27 +78,39 @@ namespace PPMTool.Pages
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        protected async virtual Task DeleteRow(T entity)
+        protected virtual async Task DeleteRow(T entity)
         {
-            Reset();
-            if (dataGridEntities.Contains(entity))
+            var isInDataSource = dataGridEntities.Contains(entity);
+            var isTrackedEditRow = ReferenceEquals(entityToInsert, entity) || ReferenceEquals(entityToUpdate, entity);
+
+            if (isInDataSource)
             {
                 LogInformation($"Delete row in data grid source for <{entity?.GetSensibleObjectName()}>");
                 dataGridEntities.Remove(entity);
             }
-            else
+            else if (isTrackedEditRow)
             {
                 LogInformation($"Cancel edit row in view for <{entity?.GetSensibleObjectName()}>");
                 dataGrid.CancelEditRow(entity);
             }
-            await dataGrid.Reload();
+            else
+            {
+                LogWarning($"Ignoring delete request for stale row <{entity?.GetSensibleObjectName()}>.");
+            }
+
+            Reset();
+
+            if (dataGrid != null && (isInDataSource || isTrackedEditRow))
+            {
+                await dataGrid.Reload();
+            }
         }
 
         /// <summary>
         /// Create an entity instance and add to datagrid
         /// </summary>
         /// <returns></returns>
-        protected async virtual Task InsertRow()
+        protected virtual async Task InsertRow()
         {
             entityToInsert = Activator.CreateInstance(typeof(T)) as T;
             LogInformation($"Add row in view for <{entityToInsert?.GetSensibleObjectName()}>");
@@ -110,7 +124,11 @@ namespace PPMTool.Pages
         protected virtual void OnCreateRow(T entity)
         {
             LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
-            dataGridEntityService.Add(Context, entity);
+            var duplicate = dataGridEntityService.Add(Context, entity);
+            if (duplicate < 0)
+            {
+                AddDuplicateErrorMessage(entity);
+            }
         }
 
         /// <summary>
@@ -120,7 +138,21 @@ namespace PPMTool.Pages
         protected virtual void OnUpdateRow(T entity)
         {
             LogInformation($"Update row in database for <{entity?.GetSensibleObjectName()}>");
-            dataGridEntityService.Update(Context, entity);
+            var duplicate = dataGridEntityService.Update(Context, entity);
+            if (duplicate < 0)
+            {
+                AddDuplicateErrorMessage(entity);
+            }
+        }
+
+        /// <summary>
+        /// Basic duplicate detected error message for a data grid page. Can be overridden as required.
+        /// </summary>
+        /// <param name="entity"></param>
+        protected virtual void AddDuplicateErrorMessage(T entity)
+        {
+            LogWarning($"Duplicate check failed for <{entity?.GetSensibleObjectName()}>");
+            SetErrorMessage(new StatusMessage($"A record with the same values already exists. Please change the values to be unique and try again.", StatusMessage.MessageType.Error));
         }
     }
 }

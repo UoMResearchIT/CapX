@@ -1,8 +1,13 @@
-﻿using System.Diagnostics;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using PPMTool.Data;
-using PPMTool.Data.Helpers;
+using Microsoft.EntityFrameworkCore;
+using PPMTool.Helpers;
+using PPMTool.Models;
 using PPMTool.Services;
 using Radzen.Blazor;
 
@@ -55,36 +60,48 @@ namespace PPMTool.Pages
         {
             return Task.Run(() =>
             {
-                Debug.WriteLine($"** Loading finance data...");
-                items = new List<FinanceSummaryItem>();
-                var projects = ProjectService.GetAllShallow(Context);
-                var sources = FundingSourceService.GetAll(Context);
-                foreach (var project in projects)
+                try
                 {
-                    var resources = SubTaskService.GetResourcesForProject(Context, project.ProjectId);
+                    Debug.WriteLine($"** Loading finance data...");
+                    items = new List<FinanceSummaryItem>();
+                    var projects = ProjectService
+                        .GetAllShallow(Context)
+                        .AsQueryable()
+                        .Include(p => p.SubTasks);
 
-                    var transactions = FinanceHelper.ComputeTransactionBreakdown(
-                        Context,
-                        project.LeadershipFundingSource?.FundingSourceId ?? 0,
-                        project.PlannedLeadershipCosts,
-                        resources,
-                        sources.Where(x => x.Project.ProjectId == project.ProjectId),
-                        InvoiceService.GetFundsRequested(Context, project.ProjectId),
-                        PaymentService.GetFundsReceived(Context, project.ProjectId)
-                    );
+                    var sources = FundingSourceService.GetAll(Context);
 
-                    var pm = ProjectService.GetProjectManager(Context, project.ProjectId);
-                    var actuals = SubTaskService.GetActuals(Context, project.ProjectId);
+                    foreach (var project in projects)
+                    {
+                        // Get the subtask / resource info for the project
+                        var subTasks = project.SubTasks;
 
-                    items.Add(
-                        new FinanceSummaryItem(
-                            project,
-                            pm,
-                            actuals,
-                            transactions
-                        )
-                    );
+                        // Compute transaction breakdown for the project
+                        var transactions = FinanceHelper.ComputeTransactionBreakdown(
+                            Context,
+                            project.CostModel,
+                            subTasks,
+                            sources.Where(x => x.Project.ProjectId == project.ProjectId),
+                            InvoiceService.GetFundsRequested(Context, project.ProjectId),
+                            PaymentService.GetFundsReceived(Context, project.ProjectId)
+                        );
+
+                        var pm = ProjectService.GetProjectManager(Context, project.ProjectId);
+                        var school = ProjectService.GetSchoolAndFaculty(Context, project.ProjectId);
+                        var actuals = SubTaskService.GetActuals(Context, project.ProjectId);
+
+                        items.Add(
+                            new FinanceSummaryItem(
+                                project,
+                                school,
+                                pm,
+                                actuals,
+                                transactions
+                            )
+                        );
+                    }
                 }
+                catch (Exception e) { Logger.LogError($"Error on Finance Summary page : {e.Message}"); }
             }).ContinueWith(t =>
             {
                 InvokeAsync(() =>

@@ -1,6 +1,12 @@
-﻿@using PPMTool.Data.Entities
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
 
-<div class="card" id="@($"note_{Note.NoteId}")">
+SPDX-License-Identifier: apache-2.0
+*@
+
+@using PPMTool.Data.Entities
+
+<RadzenCard id="@($"note_{Note.NoteId}")">
     <div class="row">
         <div class="col">
             <div class="row-auto">
@@ -61,13 +67,13 @@
                 {
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
                         <RadzenText Text="Completed: " TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem" />
-                        <RadzenText Text="@Note.DueDate.Value.ToShortDateString()" TextStyle="TextStyle.Body1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem" />
+                        <RadzenText Text="@Note.CompletedDate.Value.ToShortDateString()" TextStyle="TextStyle.Body1" TextAlign="TextAlign.Start" Style="margin-bottom: -0.1rem" />
                     </RadzenStack>
                 }
             </RadzenStack>
         </div>
     </div>
-</div>
+</RadzenCard>
 
 @code
 {

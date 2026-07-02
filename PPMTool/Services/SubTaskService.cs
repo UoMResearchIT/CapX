@@ -1,4 +1,8 @@
-﻿using System.Diagnostics;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
 using PPMTool.Data.Context;
@@ -8,12 +12,11 @@ namespace PPMTool.Services
 {
     public class SubTaskService : BaseEntityService<SubTask>
     {
-        /// <summary>
-        /// Adds a subtask
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="taskModel"></param>
-        /// <returns></returns>
+        public SubTaskService(ILogger<SubTaskService> logger) : base(logger)
+        {
+        }
+
+        /// <inheritdoc />
         public override int Add(PPMToolContext context, SubTask taskModel, bool commitChanges = true)
         {
             context.SubTasks.Add(taskModel);
@@ -21,11 +24,7 @@ namespace PPMTool.Services
             return taskModel.SubTaskId;
         }
 
-        /// <summary>
-        /// Update an existing subtask
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="taskModel"></param>
+        /// <inheritdoc />
         public override int Update(PPMToolContext context, SubTask taskModel, bool commitChanges = true)
         {
             context.SubTasks.Update(taskModel);
@@ -75,7 +74,7 @@ namespace PPMTool.Services
             foreach (var followerTask in followerTasks)
             {
                 // Call schedule and have it tracked in the context
-                error = followerTask.Schedule(true);
+                error = followerTask.Schedule();
 
                 // If error then abandon forward propagation
                 if (error != null) return new Tuple<string, string>(followerTask.Name, error);
@@ -96,6 +95,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="subTask"></param>
+        /// <param name="commitChanges"></param>
         public override void Delete(PPMToolContext context, SubTask subTask, bool commitChanges = true)
         {
             foreach (var res in subTask.AssignedResources)
@@ -114,6 +114,10 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal bool IsUniqueTaskNameInProject(Project projectModel, SubTask taskModel)
         {
+            // Leadership tasks have a fixed name
+            if (taskModel.IsLeadershipTask) return true;
+
+            // Check other tasks
             var subSet = projectModel.SubTasks.Where(x => x.SubTaskId != taskModel.SubTaskId);
             return !subSet.Any(x => x.Name == taskModel.Name);
         }
@@ -138,6 +142,9 @@ namespace PPMTool.Services
             // Reset ID
             clone.SubTaskId = 0;
 
+            // Add the project
+            clone.OwningProject = taskToClone.OwningProject;
+
             // Create new resources
             clone.AssignedResources.Clear();
             foreach (var res in taskToClone.AssignedResources)
@@ -145,12 +152,12 @@ namespace PPMTool.Services
                 clone.AssignedResources.Add(new Resource
                 {
                     AssignmentFTE = res.AssignmentFTE,
+                    BilledFTE = res.BilledFTE,
                     DayRate = res.DayRate,
                     IsProvisional = res.IsProvisional,
                     Person = res.Person,
                     UseProjectDayRate = res.UseProjectDayRate,
-                    FundedFrom = res.FundedFrom,
-                    Rate = res.Rate
+                    FundedFrom = res.FundedFrom
                 });
             }
 

@@ -1,12 +1,20 @@
-﻿@using PPMTool.Data.Context
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@using PPMTool.Data.Context
 @using PPMTool.Data.Entities
-@using PPMTool.Enums
+@using PPMTool.Data.Enums
 @using PPMTool.Services
 
-<RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
-    <SkillTagRarenessEmblemComponent SkillTag="SkillTag" />
-    <RadzenText TextStyle="TextStyle.Body2" Text="@SkillTag.Rareness.ToString()" Style="@($"color: {SkillTag.Rareness.GetTextColourCode()}; margin-bottom: 0;")" />
-</RadzenStack>
+<div class="emblem-background">
+    <RadzenStack class="mt-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
+        <SkillTagRarenessEmblemComponent SkillTag="SkillTag" />
+        <RadzenText TextStyle="TextStyle.Body2" Text="@SkillTag.Rareness.ToString()" Style="@($"color: {SkillTag.Rareness.GetTextColourCode()}; margin-bottom: 0;")" />
+    </RadzenStack>
+</div>
 
 @code {
 

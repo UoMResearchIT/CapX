@@ -1,4 +1,8 @@
-﻿using PPMTool.Data;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -6,6 +10,10 @@ namespace PPMTool.Services
 {
     public class FinancialReferenceService : BaseEntityService<FinancialReference>
     {
+        public FinancialReferenceService(ILogger<FinancialReferenceService> logger) : base(logger)
+        {
+        }
+
         public override int Add(PPMToolContext context, FinancialReference entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
@@ -23,9 +31,35 @@ namespace PPMTool.Services
             if (commitChanges) CommitChanges(context);
         }
 
+        /// <summary>
+        /// Retrieves all financial reference entities from the specified database context. Will return an empty list if no references exist.
+        /// </summary>
+        /// <param name="context">The database context used to access financial reference entities. Cannot be null.</param>
+        /// <returns>An enumerable collection of all financial reference entities in the context.</returns>
         public override IEnumerable<FinancialReference> GetAll(PPMToolContext context)
         {
             return context.FinancialReferences;
+        }
+
+        /// <summary>
+        /// Returns the Financial References from the db. If none have been added then the app will
+        /// crash in certain places if the Finance Feature is not enabled. The check in this method
+        /// helps avoid this exception by passing back a non-null, non-zero IEnumerable to satisfy
+        /// the requesting call. This was added to allow bypassing of the crash when a new Project
+        /// was added without the Finance Feature being enabled (so no Financial References exist).
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public IEnumerable<FinancialReference> GetAllOrDefault(PPMToolContext context)
+        {
+            // If DB table is empty return a list of one default item to avoid a financial ref exception
+            if (!context.FinancialReferences.Any())
+            {
+                return new List<FinancialReference> { new FinancialReference() };
+            }
+
+            // Default to the standard call if there are references in the list
+            return GetAll(context);
         }
 
         public override int Update(PPMToolContext context, FinancialReference entity, bool commitChanges = true)

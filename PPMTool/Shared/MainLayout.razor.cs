@@ -1,12 +1,19 @@
-﻿using System.Data;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Data;
 using System.Diagnostics;
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Shared
 {
@@ -39,8 +46,31 @@ namespace PPMTool.Shared
         [Inject]
         private SkillTagService SkillTagService { get; set; }
 
+        [Inject]
+        private ILocalStorageService LocalStorage { get; set; }
+
+        [Inject]
+        private ThemeService ThemeService { get; set; }
+
+        [Inject]
+        private CssVariableService CssVariableService { get; set; }
+
+        /// <summary>
+        /// Whether there are any buttons or error messages to show in the action bar.
+        /// </summary>
+        public bool ShowActionBar => Buttons.Any() || ErrorMessage != null;
+
+        /// <summary>
+        /// Error message to show
+        /// </summary>
+        public StatusMessage ErrorMessage { get; private set; }
+
+        // Action buttons to show in the action bar
+        public List<ActionButton> Buttons { get; } = new();
+
         private bool sidebarExpanded = true;
         private string versionString;
+        private string commitString;
         private string searchTerm;
         private List<MagicBarItem> sourceData = new();
         private DotNetObjectReference<MainLayout> razorComponentReference;
@@ -52,37 +82,139 @@ namespace PPMTool.Shared
         private int? activeUserId;
         private RoleType activeUserRoleType;
 
+        /// <summary>
+        /// Determines the CSS color variable to use for the banner based on the current environment and settings.
+        /// </summary>
+        /// <remarks>This method selects a different banner color in development environments when the
+        /// corresponding setting is enabled, which can help visually distinguish development from production
+        /// environments.</remarks>
+        /// <returns>A string containing the CSS variable name for the banner color. Returns "var(--rz-danger)" if development
+        /// banner colors are enabled and the environment is development; otherwise, returns "var(--rz-primary)".</returns>
+        private string GetBannerColour()
+        {
+            if (SettingsService.GetSetting<bool>(SettingType.UseDevelopmentBannerColours, true))
+            {
+                if (Environment.IsDevelopment())
+                {
+                    return "var(--rz-danger)";
+                }
+            }
+            return "var(--rz-primary)";
+        }
+
+        /// <summary>
+        /// Specific object for populating the magic bar popup
+        /// </summary>
+        private class MagicBarItem
+        {
+            public int EntityId { get; }
+
+            public string Name { get; }
+
+            public string DisplayName { get; set; }
+
+            public Type ItemType { get; }
+
+            public MagicBarItem(Person person)
+            {
+                EntityId = person.PersonId;
+                Name = person.Name;
+                DisplayName = $"{person.Name} ({person.ShortName})";
+                ItemType = typeof(Person);
+            }
+
+            public MagicBarItem(Project project)
+            {
+                EntityId = project.ProjectId;
+                Name = project.Name;
+                ItemType = typeof(Project);
+            }
+        }
+
+        /// <summary>
+        /// Model of an action button
+        /// </summary>
+        public class ActionButton
+        {
+            /// <summary>
+            /// Text on the button
+            /// </summary>
+            public string Text { get; set; } = "Save";
+
+            /// <summary>
+            /// Icon on the button
+            /// </summary>
+            public string Icon { get; set; } = "check";
+
+            /// <summary>
+            /// Action to invoke when clicked
+            /// </summary>
+            public Action OnClick { get; set; }
+
+            /// <summary>
+            /// Whether the button should be disabled or not
+            /// </summary>
+            public bool Disabled { get; set; }
+
+            /// <summary>
+            /// Style of the button
+            /// </summary>
+            public ButtonStyle ButtonStyle { get; set; } = ButtonStyle.Primary;
+        }
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
             versionString = $"v{Configuration["VersionNumber"]}";
+            commitString = $"#{ThisAssembly.Git.Commit}";
             razorComponentReference = DotNetObjectReference.Create(this);
         }
 
-        protected override void OnAfterRender(bool firstRender)
+        protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            base.OnAfterRender(firstRender);
+            await base.OnAfterRenderAsync(firstRender);
 
-            // Update the badges in the sidebar if necessary
-            if (loginView != null && loginView.ActiveUser != null)
+            // Apply the theme
+            if (firstRender)
+            {
+                // Set the theme
+                var useDarkMode = await LocalStorage.GetItemAsync<bool>("useDarkMode");
+                Debug.WriteLine($"** Stored local value for darkmode = {useDarkMode}");
+                await ThemeService.SetDarkLightAsync(useDarkMode, SettingsService, CssVariableService);
+            }
+
+            // Set the user id to show the skills tab
+            if (activeUserId == null)
             {
                 using (var context = ContextFactory.CreateDbContext())
                 {
                     // Store the active user ID
                     activeUserId = loginView.ActiveUser?.Person?.PersonId;
                     activeUserRoleType = loginView.ActiveUser?.RoleType ?? RoleType.None;
+                }
 
+                if (activeUserId != null)
+                {
+                    StateHasChanged();
+                }
+            }
+
+            // Update the badges in the sidebar if necessary
+            if (loginView != null && loginView.ActiveUser != null)
+            {
+                using (var context = ContextFactory.CreateDbContext())
+                {
                     // Update timesheet badge
                     var oldTimesheetIssuesValue = totalTimesheetIssues;
-                    totalTimesheetIssues = TimesheetService.GetIssueCount(context, activeUserId ?? 0);
+                    totalTimesheetIssues = await TimesheetService.GetIssueCountAsync(context, activeUserId ?? 0);
 
                     // Update timesheet code badge
                     var oldTimesheetCodeIssuesValue = totalTimesheetCodesToDeactivate;
-                    totalTimesheetCodesToDeactivate = InnateCodeService.GetCodesToDeactivate(context).Count();
+                    totalTimesheetCodesToDeactivate = (await InnateCodeService.GetCodesToDeactivateAsync(context)).Count();
 
                     // Update skills badge
                     var oldIncompleteSkillsValue = totalIncompleteSkills;
-                    totalIncompleteSkills = SkillTagService.GetIncompleteRecordCount(context, activeUserId ?? 0);
+                    totalIncompleteSkills = await SkillTagService.GetIncompleteRecordCountAsync(context, activeUserId ?? 0);
 
                     // Only call state has changed when something has changed
                     if (oldTimesheetCodeIssuesValue != totalTimesheetCodesToDeactivate ||
@@ -90,7 +222,7 @@ namespace PPMTool.Shared
                         oldIncompleteSkillsValue != totalIncompleteSkills)
                     {
                         // Only expand the Admin menu item if SuperUser accessing the page and there are codes to be deactivated
-                        adminMenuItemExpanded = totalTimesheetCodesToDeactivate > 0 && loginView.ActiveUser.RoleType == Enums.RoleType.Superuser;
+                        adminMenuItemExpanded = totalTimesheetCodesToDeactivate > 0 && loginView.ActiveUser.RoleType == RoleType.Superuser;
 
                         // Now force a re-draw
                         StateHasChanged();
@@ -128,13 +260,13 @@ namespace PPMTool.Shared
                 // Pull the sources from the DB
                 var matchingPeople = (await PersonService.GetAllShallowAsync(context))
                 .Where(x =>
-                    x.Name.ToLower().Contains(searchTerm.Trim().ToLower()) ||
-                    x.ShortName.ToLower().Contains(searchTerm.Trim().ToLower())
+                    x.Name.ToLower().Contains(searchTerm.Clean()) ||
+                    x.ShortName.ToLower().Contains(searchTerm.Clean())
                 );
                 var matchingProjects = ProjectService.GetAllShallow(context)
                 .Where(x =>
-                    x.GetFullName().ToLower().Contains(searchTerm.Trim().ToLower()) ||
-                    x.PI.ToLower().Contains(searchTerm.Trim().ToLower())
+                    ProjectService.GetFullName(x).ToLower().Contains(searchTerm.Clean()) ||
+                    x.PI.ToLower().Contains(searchTerm.Clean())
                 );
 
                 // Add to source
@@ -145,7 +277,10 @@ namespace PPMTool.Shared
                 }
                 foreach (var project in matchingProjects)
                 {
-                    sourceData.Add(new MagicBarItem(project));
+                    sourceData.Add(new MagicBarItem(project)
+                    {
+                        DisplayName = $"{ProjectService.GetFullName(project)} ({project.PI})"
+                    });
                 }
                 sourceData.OrderBy(x => x.DisplayName);
 
@@ -181,39 +316,60 @@ namespace PPMTool.Shared
             ClearMagicBar();
         }
 
+        /// <summary>
+        /// Called when dispose is called on the layout itself
+        /// </summary>
         public void Dispose()
         {
             razorComponentReference?.Dispose();
         }
 
         /// <summary>
-        /// Specific object for populating the magic bar popup
+        /// Helper to set buttons
         /// </summary>
-        private class MagicBarItem
+        /// <param name="buttons"></param>
+        public void SetButtons(IEnumerable<ActionButton> buttons)
         {
-            public int EntityId { get; }
+            Buttons.Clear();
+            Buttons.AddRange(buttons);
+            StateHasChanged();
+        }
 
-            public string Name { get; }
+        /// <summary>
+        /// Set the error message
+        /// </summary>
+        /// <param name="message"></param>
+        public void SetErrorMessage(StatusMessage message)
+        {
+            ErrorMessage = message;
+            StateHasChanged();
+        }
 
-            public string DisplayName { get; }
+        /// <summary>
+        /// Reset the action bar completely to initial state
+        /// </summary>
+        public void Reset()
+        {
+            Buttons.Clear();
+            ErrorMessage = null;
+            StateHasChanged();
+        }
 
-            public Type ItemType { get; }
+        /// <summary>
+        /// Clears the error message
+        /// </summary>
+        public void ClearErrorMessage()
+        {
+            ErrorMessage = null;
+            StateHasChanged();
+        }
 
-            public MagicBarItem(Person person)
-            {
-                EntityId = person.PersonId;
-                Name = person.Name;
-                DisplayName = $"{person.Name} ({person.ShortName})";
-                ItemType = typeof(Person);
-            }
-
-            public MagicBarItem(Project project)
-            {
-                EntityId = project.ProjectId;
-                Name = project.Name;
-                DisplayName = $"{project.GetFullName()} ({project.PI})";
-                ItemType = typeof(Project);
-            }
+        /// <summary>
+        /// Force a redraw of the component
+        /// </summary>
+        internal void Render()
+        {
+            StateHasChanged();
         }
     }
 }

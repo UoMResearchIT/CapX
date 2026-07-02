@@ -1,19 +1,23 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Services
 {
     public class InnateCodeService : BaseEntityService<InnateCode>
     {
-        /// <summary>
-        /// Will not add a duplicate but return -1 instead. If successfully added, will return new ID of saved entity.
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="entity"></param>
-        /// <returns></returns>
+        public InnateCodeService(ILogger<InnateCodeService> logger) : base(logger)
+        {
+        }
+
+        /// <inheritdoc />
         public override int Add(PPMToolContext context, InnateCode entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
@@ -27,19 +31,26 @@ namespace PPMTool.Services
             return entity.InnateCodeId;
         }
 
+        /// <summary>
+        /// Duplicate detected if the name or the code are the same as another 
+        /// or if any of the tasks within the code have the same name as another task on the code
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, InnateCode entity)
         {
-            // Duplicate detected if the name or the code are the same as another or if any of the tasks within the
-            // code have the same name as another
             var all = GetAll(context);
             var duplicatesNameOfAnother = all
-            .Any(x => (x.ActivityName.Trim().ToLower() == entity.ActivityName.Trim().ToLower() &&
-                x.ActivityCode.Trim().ToLower() == entity.ActivityCode.Trim().ToLower())
-                && x.InnateCodeId != entity.InnateCodeId);
+                .Any(x =>
+                (x.ActivityName.Trim().ToLower() == entity.ActivityName.Trim().ToLower() ||
+                x.ActivityCode.Trim().ToLower() == entity.ActivityCode.Trim().ToLower()) &&
+                x.InnateCodeId != entity.InnateCodeId);
             var duplicatesTasks = entity.Tasks.DistinctBy(x => x.TaskName.Trim().ToLower()).Count() != entity.Tasks.Count;
             return duplicatesNameOfAnother || duplicatesTasks;
         }
 
+        /// <inheritdoc />
         public override void Delete(PPMToolContext context, InnateCode entity, bool commitChanges = true)
         {
             // Remove tasks so they are not orphaned
@@ -49,6 +60,7 @@ namespace PPMTool.Services
             if (commitChanges) CommitChanges(context);
         }
 
+        /// <inheritdoc />
         public override IEnumerable<InnateCode> GetAll(PPMToolContext context)
         {
             return context.InnateCodes
@@ -56,6 +68,7 @@ namespace PPMTool.Services
                 .Include(x => x.Tasks);
         }
 
+        /// <inheritdoc />
         public override int Update(PPMToolContext context, InnateCode entity, bool commitChanges = true)
         {
             if (DuplicateDetected(context, entity))
@@ -82,8 +95,8 @@ namespace PPMTool.Services
         /// <returns>Duty as int or -1 if not match found</returns>
         internal int FindDutyForTask(PPMToolContext context, string activity, string task)
         {
-            var activityToMatch = activity.Trim().ToLower();
-            var taskToMatch = task.Trim().ToLower();
+            var activityToMatch = activity.Clean();
+            var taskToMatch = task.Clean();
             var splitActivityParams = activityToMatch.Split(" - ", 2);
             if (splitActivityParams.Length < 2) return -1;
             var matchAct = context.InnateCodes.FirstOrDefault(x => x.ActivityCode.Trim().ToLower() == splitActivityParams[0].Trim().ToLower() && x.ActivityName.Trim().ToLower() == splitActivityParams[1].Trim().ToLower());
@@ -128,26 +141,35 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public IEnumerable<CodeToDeactivate> GetCodesToDeactivate(PPMToolContext context)
+        public async Task<IEnumerable<CodeToDeactivate>> GetCodesToDeactivateAsync(PPMToolContext context)
         {
             // Get codes which are active, contain "S-RES-" (i.e. project codes) and 
-            // which are not associated with any currently active projects
-            var codes = context.InnateCodes
+            // which are not associated with any currently active projects. If finished, then 
+            // only include if the end date of the associated project is more than 4 weeks ago.
+            // This is to allow people to submit final timesheets against recently finished projects.
+            var codes = await context.InnateCodes
                 .Where(ic => ic.IsActive && ic.ActivityCode.ToLower().Contains("s-res-") &&
                     context.Projects.Any(p =>
+
+                        // Project timesheet code matches
                         p.InnateActivity.InnateCodeId == ic.InnateCodeId &&
-                        (int)p.ProjectStatus >= (int)ProjectStatus.Finished
+
+                        // Project is cancelled or finished more than 28 days ago
+                        ((int)p.ProjectStatus > (int)ProjectStatus.Finished ||
+                        (p.ProjectStatus == ProjectStatus.Finished && p.EndDate <= DateTime.Today.AddDays(-28)))
                     )
-                );
+                )
+                .ToListAsync();
 
             // Map the codes to CodeToDeactivate objects
             IList<CodeToDeactivate> codesToDeactivate = new List<CodeToDeactivate>();
             foreach (var code in codes)
             {
-                var projects = context.Projects
+                var projects = await context.Projects
                     .Include(p => p.ProjectManager)
                     .Include(p => p.InnateActivity)
-                    .Where(p => p.InnateActivity.InnateCodeId == code.InnateCodeId);
+                    .Where(p => p.InnateActivity.InnateCodeId == code.InnateCodeId)
+                    .ToListAsync();
                 var pmNames = projects.Select(x => x.ProjectManager == null ? "Not Set" : x.ProjectManager.Name);
                 var obj = new CodeToDeactivate(code, pmNames, projects.Select(x => x.RTP));
                 codesToDeactivate.Add(obj);
@@ -179,15 +201,16 @@ namespace PPMTool.Services
             /// Method to return the strings as links to the projects
             /// </summary>
             /// <param name="configuration"></param>
+            /// <param name="abbrev"></param>
             /// <returns></returns>
-            public MarkupString GetRTPAsMarkup(IConfiguration configuration)
+            public MarkupString GetRTPAsMarkup(IConfiguration configuration, string abbrev)
             {
                 if (ProjectRTP != null && ProjectRTP.Count() > 0)
                 {
                     var temp = new List<string>();
                     foreach (var rtp in ProjectRTP)
                     {
-                        temp.Add($"<a href=\"{configuration["Authentication:HostUrl"]}/projects/projectdetails?rtp={rtp}\">RTP-{rtp}</a>");
+                        temp.Add($"<a href=\"{configuration["Authentication:HostUrl"]}/projects/projectdetails?rtp={rtp}\">{abbrev}-{rtp}</a>");
                     }
                     return (MarkupString)string.Join("<br />", temp);
                 }

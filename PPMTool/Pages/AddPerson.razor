@@ -1,8 +1,14 @@
-﻿@page "/people/addperson/{PersonId:int}"
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@page "/people/addperson/{PersonId:int}"
 @inherits BasePage
 @using PPMTool.Data
 @using PPMTool.Data.Entities
-@using PPMTool.Enums
+@using PPMTool.Data.Enums
 @using PPMTool.Pages.Components
 <PageTitle>Add Person - CapX</PageTitle>
 
@@ -11,7 +17,7 @@
     {
         <LoadingComponent />
     }
-    else if (!canView)
+    else if (!viewAuthorised)
     {
         <StatusMessageComponent Message="@(new StatusMessage("You are not permitted to view this page!", StatusMessage.MessageType.Error))" />
     }
@@ -32,17 +38,25 @@
                         </div>
                         @if (PersonId > 0)
                         {
-                            <div class="col-auto">
-                                <RadzenButton ButtonStyle="ButtonStyle.Primary"
-                                              ButtonType="ButtonType.Button"
-                                              Click="@EditSkills"
-                                              Text="@($"{(IsSuperuserOrLineManagerOrPerson(personModel) ? "Edit" : "View")} Skills")"
-                                              Icon="@(IsSuperuserOrLineManagerOrPerson(personModel) ? "edit" : "visibility")"
-                                              Disabled="@(ActiveUserRoleType != RoleType.Manager && !IsSuperuserOrLineManagerOrPerson(personModel))" />
-                            </div>
-                            <div class="col-auto">
-                                <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="@ViewCapacity" Text="View Capacity" Icon="lists" />
-                            </div>
+                            @if (FeatureService.IsFeatureEnabled(FeatureType.Skills))
+                            {
+                                <div class="col-auto">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                                  ButtonType="ButtonType.Button"
+                                                  Click="@EditSkills"
+                                                  Text="@($"{(IsSuperuserOrLineManagerOrPerson(personModel) ? "Edit" : "View")} Skills")"
+                                                  Icon="@(IsSuperuserOrLineManagerOrPerson(personModel) ? "edit" : "visibility")"
+                                                  Disabled="@(ActiveUserRoleType != RoleType.Manager && !IsSuperuserOrLineManagerOrPerson(personModel))" />
+                                </div>
+                            }
+
+                            @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
+                            {
+                                <div class="col-auto">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Click="@ViewCapacity" Text="View Capacity" Icon="lists" />
+                                </div>
+                            }
+
                             <div class="col-auto">
                                 <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeletePersonAsync" Text="Delete" Icon="delete" Disabled=!isSuperUser />
                             </div>
@@ -53,20 +67,20 @@
         </div>
         <hr />
 
-        <div class="card">
-            <EditForm EditContext="editContext" OnSubmit="@HandleSubmit">
+        <RadzenCard>
+            <EditForm EditContext="editContext">
                 <div class="row">
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Name" /><br>
-                        <RadzenTextBox TValue="string" @bind-Value="personModel.Name" Disabled=!EditAuthorised/>
+                        <RadzenLabel class="radzen-form-label" Text="Name" Component="Name" /><br>
+                        <RadzenTextBox class="radzen-text-box" Name="Name" @bind-Value="personModel.Name" Disabled="!EditAuthorised" />
                     </div>
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Initials" /><br>
-                        <RadzenTextBox TValue="string" @bind-Value="personModel.ShortName" Disabled=!EditAuthorised />
+                        <RadzenLabel class="radzen-form-label" Text="Initials" Component="Initials" /><br>
+                        <RadzenTextBox class="radzen-text-box" Name="Initials" @bind-Value="personModel.ShortName" Disabled=!EditAuthorised />
                     </div>
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Line Manager" /><br>
-                        <RadzenDropDown class="radzen-dropdown" TValue="Person" TextProperty="Name" @bind-Value="personModel.LineManager" Data="@managers" Disabled=!EditAuthorised />
+                        <RadzenLabel class="radzen-form-label" Text="Line Manager" Component="LM" /><br>
+                        <RadzenDropDown class="radzen-dropdown" Name="LM" TValue="Person" TextProperty="Name" @bind-Value="personModel.LineManager" Data="@managers" Disabled=!EditAuthorised />
                     </div>
                 </div>
                 <div class="row">
@@ -79,7 +93,7 @@
                         <RadzenDatePicker class="radzen-datepicker" @bind-Value="personModel.EndDate" ShowTime="false" DateFormat="dd/MM/yyyy" Disabled=!EditAuthorised />
                     </div>
                     <div class="col">
-                        <RadzenLabel class="radzen-form-label" Text="Post FTE" Component="FTE" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Dark Icon="info" title="This is the FTE of the post as agreed as part of the department budget. If someone is working less than 1.0 FTE i.e. part-time, this should be reflected as a WLM change." /><br />
+                        <RadzenLabel class="radzen-form-label" Text="Post FTE" Component="FTE" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="This is the FTE of the post as agreed as part of the department budget. If someone is working less than 1.0 FTE i.e. part-time, this should be reflected as a WLM change." /><br />
                         <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Max="@Convert.ToDecimal(1.0)" Step="0.001" @bind-Value="personModel.FTE" Disabled="@(ActiveUserRoleType != RoleType.Superuser)" />
                     </div>
                 </div>
@@ -96,9 +110,9 @@
                         </div>
                         <hr />
                         <RadzenDataList AllowVirtualization=true
-                                        class="half-height-list"
+                                        AllowPaging="true"
+                                        PageSize="3"
                                         WrapItems="false"
-                                        AllowPaging="false"
                                         Data="@personModel.WorkloadModelChanges.OrderByDescending(x => x.ChangeDate)"
                                         TItem="WorkloadModelChange">
                             <Template Context="d">
@@ -130,7 +144,7 @@
                                             <RadzenStack Orientation="Radzen.Orientation.Vertical">
                                                 <RadzenText Text="Staff" TextStyle="TextStyle.Subtitle1" />
                                                 <RadzenText Text="Project / Service" TextStyle="TextStyle.Subtitle1" />
-                                                <RadzenText Text="Architecture" TextStyle="TextStyle.Subtitle1" />
+                                                <RadzenText Text="Tech Lead" TextStyle="TextStyle.Subtitle1" />
                                             </RadzenStack>
                                             <RadzenStack Orientation="Radzen.Orientation.Vertical">
                                                 <RadzenText Text="@d.StaffManagementFTE.ToString()" />
@@ -143,48 +157,44 @@
                             </Template>
                         </RadzenDataList>
                     </div>
-                    <div class="col mt-2" style="min-width: 500px">
-                        <div class="row align-items-center">
-                            <div class="col-auto mr-auto py-2">
-                                <h3>Absence</h3>
-                            </div>
-                            <div class="col-auto">
-                                <RadzenButton Text="Edit" Icon="edit" ButtonType="ButtonType.Button" Click="@(args => EditAbsence())" Disabled=!EditAuthorised />
-                            </div>
-                        </div>
-                        <hr />
-                        <RadzenDataList AllowVirtualization=true
-                                        class="half-height-list"
-                                        WrapItems="false"
-                                        AllowPaging="false"
-                                        Data="@personModel.Absences.OrderByDescending(x => x.StartDate)"
-                                        TItem="Absence">
-                            <Template Context="a">
-                                <div class="row flexbox p-0">
-                                    <div class="col-3">
-                                        @a.StartDate.ToShortDateString()
-                                    </div>
-                                    <div class="col-3">
-                                        to
-                                    </div>
-                                    <div class="col-3">
-                                        @(a.EndDate?.ToShortDateString() ?? "Not Set")
-                                    </div>
+                    @if (FeatureService.IsFeatureEnabled(FeatureType.Absences))
+                    {
+                        <div class="col mt-2" style="min-width: 500px">
+                            <div class="row align-items-center">
+                                <div class="col-auto mr-auto py-2">
+                                    <h3>Absence</h3>
                                 </div>
-                            </Template>
-                        </RadzenDataList>
-                    </div>
+                                <div class="col-auto">
+                                    <RadzenButton Text="Edit" Icon="edit" ButtonType="ButtonType.Button" Click="@(args => EditAbsence())" Disabled=!EditAuthorised />
+                                </div>
+                            </div>
+                            <hr />
+                            <RadzenDataList AllowVirtualization=true
+                                            WrapItems="false"
+                                            AllowPaging="true"
+                                            PageSize="9"
+                                            Data="@personModel.Absences.OrderByDescending(x => x.StartDate)"
+                                            TItem="Absence">
+                                <Template Context="a">
+                                    <div class="row flexbox p-0">
+                                        <div class="col-3">
+                                            @a.StartDate.ToShortDateString()
+                                        </div>
+                                        <div class="col-3">
+                                            to
+                                        </div>
+                                        <div class="col-3">
+                                            @(a.EndDate?.ToShortDateString() ?? "Not Set")
+                                        </div>
+                                    </div>
+                                </Template>
+                            </RadzenDataList>
+                        </div>
+                    }
                 </div>
                 <hr />
                 <DataAnnotationsValidator />
-                <ValidationSummary />
-                <div class="row float-right">
-                    <div class="col">
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" Disabled=!EditAuthorised />
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
-                    </div>
-                </div>
             </EditForm>
-        </div>
+        </RadzenCard>
     }
 </div>

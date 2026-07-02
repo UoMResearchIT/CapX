@@ -1,5 +1,12 @@
-﻿@using PPMTool.Data.Entities
-@using PPMTool.Enums
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@using PPMTool.Data.Entities
+@using PPMTool.Data.Enums
+@using PPMTool.Data.Enums.Attributes
 
 <RadzenImage Path="@($"images/emb_{SkillTag.Rareness.GetAttribute<IconAttribute>()?.Name}.png")" Style="@($"width: {SizeInRem}rem; height: {SizeInRem}rem;")" title="@($"{SkillTag.RarenessCount} RSE(s) with this tag")" />
 

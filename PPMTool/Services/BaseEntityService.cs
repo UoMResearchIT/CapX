@@ -1,4 +1,8 @@
-﻿using System.Diagnostics;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
 using PPMTool.Data.Context;
@@ -7,6 +11,20 @@ namespace PPMTool.Services
 {
     public abstract class BaseEntityService<T> : IEntityService<T>
     {
+        /// <summary>
+        /// Logger for logging service interactions
+        /// </summary>
+        protected readonly ILogger logger;
+
+        /// <summary>
+        /// Constructor but with DI
+        /// </summary>
+        /// <param name="logger"></param>
+        public BaseEntityService(ILogger logger)
+        {
+            this.logger = logger;
+        }
+
         /// <summary>
         /// Method to restore a model to its unmodified state in the database after local modification.
         /// Doesn't have to be the same type as the service that extends this class 

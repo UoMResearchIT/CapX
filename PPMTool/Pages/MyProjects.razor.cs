@@ -1,7 +1,11 @@
-﻿using System.Diagnostics;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen.Blazor;
 
@@ -48,6 +52,13 @@ namespace PPMTool.Pages
             // Load settings the first time
             if (firstRender)
             {
+                // Navigate away if feature not enabled
+                if (!FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
+                {
+                    Navigation.NavigateTo("people");
+                    return;
+                }
+
                 // Navigate away if not a manager
                 if (ActiveUserRoleType != RoleType.Superuser && ActiveUserRoleType != RoleType.Manager)
                 {
@@ -65,6 +76,7 @@ namespace PPMTool.Pages
                     {
                         Navigation.NavigateTo("datadashboard");
                     }
+                    return;
                 }
 
                 // Get switch setting

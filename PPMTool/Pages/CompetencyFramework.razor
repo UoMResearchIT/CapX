@@ -1,182 +1,203 @@
-﻿@page "/competencies"
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@page "/competencies"
 @using PPMTool.Data
 @using PPMTool.Data.Entities
+@using PPMTool.Data.Enums.Attributes
 @using PPMTool.Pages.Components
-@using PPMTool.Enums
+@using PPMTool.Data.Enums
 @inherits BasePage
 <PageTitle>Development Journey - CapX</PageTitle>
 
-<div class="container">
-    <div class="row">
-        <div class="col">
-            <h2>Development Journey Summary</h2>
-        </div>
-        @if (ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser)
-        {
+<FeatureCheckComponent Feature="FeatureType.DevelopmentJourney">
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h2>Development Journey Summary</h2>
+            </div>
+            @if (ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser)
+            {
+                <div class="col-auto">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
+                        <RadzenLabel class="rz-text-subtitle1" Text="Show All Staff:" Style="margin-bottom: -0.2rem" Component="ShowAllStaff"/>
+                        <RadzenSwitch @bind-Value="@showAllStaff" Disabled="@Loading" Change="@(async () => await LoadDataAsync())" Name="ShowAllStaff"/>
+                    </RadzenStack>
+                </div>
+            }
             <div class="col-auto">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
-                    <RadzenLabel class="rz-text-subtitle1" Text="Show All Staff:" Style="margin-bottom: -0.2rem" Component="ShowAllStaff"/>
-                    <RadzenSwitch @bind-Value="@showAllStaff" Disabled="@Loading" Change="@(async () => await LoadDataAsync())" Name="ShowAllStaff"/>
+                    <RadzenLabel class="rz-text-subtitle1" Text="Load Only Unmet Competencies:" Style="margin-bottom: -0.2rem" Component="ShowUnMetOnly" />
+                    <RadzenSwitch @bind-Value="@showUnMetOnly" Disabled="@Loading" Change="@(async () => await LoadDataAsync())" Name="ShowUnMetOnly" />
                 </RadzenStack>
             </div>
-        }
-        <div class="col-auto">
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.1rem" AlignItems="AlignItems.Center">
-                <RadzenLabel class="rz-text-subtitle1" Text="Load Only Unmet Competencies:" Style="margin-bottom: -0.2rem" Component="ShowUnMetOnly" />
-                <RadzenSwitch @bind-Value="@showUnMetOnly" Disabled="@Loading" Change="@(async () => await LoadDataAsync())" Name="ShowUnMetOnly" />
+        </div>
+        <div class="row">
+            <div class="col">
+                <RadzenText Text="Your development journey and competency framework assessments are only visible to you, your line manager and system super-users. It is designed as a tool for personal reflection and a mechanism to monitor your own development journey as an RSE. You may wish to share this with your line manager to assist with the setting of Role-Based Objectives as part of your Personal Development Review (PDR)." TextStyle="TextStyle.Body2" />
+            </div>
+        </div>
+        <hr />
+        <RadzenStack Orientation="Radzen.Orientation.Vertical">
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                <RadzenText Text="Show Journey For:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem"/>
+                <RadzenButton Text="Download Assessments"
+                              Icon="@(exportRunning ? "hourglass_empty" : "download")"
+                              Click="@ExportDataAsync"
+                              Disabled="@(Loading || exportRunning)" />
             </RadzenStack>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col">
-            <RadzenText Text="Your development journey and competency framework assessments are only visible to you, your line manager and system super-users. It is designed as a tool for personal reflection and a mechanism to monitor your own development journey as an RSE. You may wish to share this with your line manager to assist with the setting of Role-Based Objectives as part of your Personal Development Review (PDR)." TextStyle="TextStyle.Body2" />
-        </div>
-    </div>
-    <hr />
-    <RadzenStack class="radzen-shaded" Orientation="Radzen.Orientation.Vertical">
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
-            <RadzenText Text="Show Journey For:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0rem"/>
-            <RadzenButton Text="Download Data"
-                          Icon="@(exportRunning ? "hourglass_empty" : "download")"
-                          Click="@ExportDataAsync"
-                          Disabled="@(Loading || exportRunning)" />
-        </RadzenStack>
-        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem" Style="margin-top: -0.3rem; width: 100%">
-            <RadzenIcon Icon="person" IconStyle="IconStyle.Dark" />
-            <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelectedAsync" Data="@availablePeople" Style="width:100%" Disabled="!EditAuthorised" />
-        </RadzenStack>
+            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem" Style="margin-top: -0.3rem; width: 100%">
+                <RadzenIcon Icon="person" IconStyle="IconStyle.Primary" />
+                <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelectedAsync" Data="@availablePeople" Style="width:100%" Disabled="!EditAuthorised" />
+            </RadzenStack>
             
+            @if (Loading)
+            {
+                <LoadingComponent />
+            }
+            else
+            {
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceEvenly" Wrap="FlexWrap.Wrap">
+                    @foreach (var comp in competencyGroups)
+                    {
+                        <PathwayGaugeComponent AssessmentsForGradeAndPerson="@comp.CompetencyAssessments"
+                                               TotalNumberOfCompetenciesInGrade="@comp.Total"
+                                               Title="@comp.Description" />
+                    }
+                </RadzenStack>
+            }
+        </RadzenStack>
+        <hr />
+        <div class="row">
+            <div class="col">
+                <h2>Competencies Framework Assessment</h2>
+            </div>
+            @if (userIsSuperuser)
+            {
+                <div class="col-auto">
+                    <RadzenButton Text="Download Framework"
+                              Icon="@(downloadFrameworkRunning ? "hourglass_empty" : "download")"
+                              Click="@ExportFrameworkAsync"
+                              Disabled="@(Loading || downloadFrameworkRunning)" />
+                </div>
+                <div class="col-auto">
+                    <RadzenButton Icon="add" Text="Add Competency" Click="AddCompetency" />
+                </div>
+            }
+        </div>
+        <div class="row">
+            <div class="col">
+                <RadzenText Text="Complete your assessment by expanding each category. You can edit previous assessments or add new ones to keep track of your journey. You can also filter on particular competencies through the search or just the unmet ones with the switches."        
+                            TextStyle="TextStyle.Body2" />
+            </div>
+        </div>
+        <hr />
+        <div class="row">
+            <div class="col">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem; width: 100%">
+                    <RadzenIcon Icon="search" IconStyle="IconStyle.Primary" />
+                    <RadzenTextBox @bind-Value=@competencySearchTerms
+                                   Placeholder="Search Competencies"
+                                   Change=@FilterCompetencies
+                                   Disabled="@Loading"
+                                   class="radzen-text-box" />
+                    <RadzenButton Icon="clear"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Click="@ClearSearch"
+                                  MouseEnter="@(args => ShowTooltip(args, "Clear"))"
+                                  Disabled="@Loading" />
+                </RadzenStack>
+            </div>
+        </div>
+        <br />
         @if (Loading)
         {
             <LoadingComponent />
         }
         else
         {
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceEvenly" Wrap="FlexWrap.Wrap">
-                @foreach (var comp in competencyGroups)
-                {
-                    <PathwayGaugeComponent AssessmentsForGradeAndPerson="@comp.CompetencyAssessments"
-                                           TotalNumberOfCompetenciesInGrade="@comp.Total"
-                                           Title="@comp.Description" />
-                }
-            </RadzenStack>
+            <RadzenAccordion Multiple="true">
+                <Items>
+                    @foreach (var comp in competencyGroups)
+                    {
+                        <RadzenAccordionItem Text="@($"Grade {comp.Grade}")"
+                                             Icon="@comp.Icon"
+                                             CollapseTitle="Collapse"
+                                             ExpandTitle="Expand"
+                                             CollapseAriaLabel="@($"Collapse the Grade {comp.Grade} Competencies")"
+                                             ExpandAriaLabel="@($"Expand the Grade {comp.Grade} Competencies")"
+                                             Selected="@comp.Selected"
+                                             @onclick="@(() => comp.ToggleAccordion())">
+                            <Template>
+                                <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                                             JustifyContent="JustifyContent.SpaceBetween"
+                                             AlignItems="AlignItems.Center"
+                                             Style="width:100%">
+                                    <h3 style="margin-bottom:0.1rem; color: var(--rz-primary)">@comp.Description</h3>
+                                    <RadzenProgressBar Value="@comp.Met"
+                                                       Max="@comp.Total"
+                                                       Unit="@($" out of {comp.Total} complete")"
+                                                       ProgressBarStyle="ProgressBarStyle.Success"
+                                                       Style="width: 50%"
+                                                       class="mx-5" />
+                                </RadzenStack>
+                            </Template>
+                            <ChildContent>
+                                <RadzenAccordion Multiple="true">
+                                    <Items>
+                                        @foreach (var group in comp.CompetenciesGroupedByCategory)
+                                        {
+                                            var key = group.Key;
+                                            <RadzenAccordionItem Text="@($"Grade {comp.Grade} {group.Key.GetDescription()} Competencies")"
+                                                                 Icon="@(group.Key.GetAttribute<IconAttribute>().Name)"
+                                                                 CollapseTitle="Collapse"
+                                                                 ExpandTitle="Expand"
+                                                                 CollapseAriaLabel="@($"Collapse the Grade 5 {group.Key.GetDescription()} Competencies")"
+                                                                 ExpandAriaLabel="@($"Expand the Grade 5 {group.Key.GetDescription()} Competencies")"
+                                                                 Selected="@(comp.CompetencySelectionState[key])"
+                                                                 @onclick="@(() => comp.ToggleAccordion(key))"
+                                                                 Style="border: var(--rz-card-border);">
+                                                <Template>
+                                                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
+                                                        <h4 style="margin-bottom:0.2rem; width:50%; text-align:start;">@($"{group.FirstOrDefault()?.GetCategoryId()} {group.Key.GetDescription()}")</h4>
+                                                        <RadzenProgressBar Value="@(comp.CompetencyMetValues[key])"
+                                                                           Max="@(group.Count())"
+                                                                           Unit="@($" out of {group.Count()} complete")"
+                                                                           ProgressBarStyle="ProgressBarStyle.Primary"
+                                                                           Style="width: 50%"
+                                                                           class="mx-5" />
+                                                    </RadzenStack>
+                                                </Template>
+                                                <ChildContent>
+                                                    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
+                                                        @foreach (var competency in group)
+                                                        {
+                                                            <CompetencyCardComponent Competency="competency"
+                                                                                     EditAuthorised="userIsSuperuser"
+                                                                                     EditCompetencyAction="@(competency => EditCompetency(competency))"
+                                                                                     AddAssessmentAction="@(assessment => AddOrUpdateAssessment(assessment))"
+                                                                                     UpdateAssessmentAction="@(assessment => AddOrUpdateAssessment(assessment, true))"
+                                                                                     ShowTooltip="@((arg, message) => ShowTooltip(arg, message))"
+                                                                                     SelectedPerson="selectedPerson"
+                                                                                     ActiveUserId="activeUserId" />
+                                                        }
+                                                    </RadzenStack>
+                                                </ChildContent>
+                                            </RadzenAccordionItem>
+                                        }
+                                    </Items>
+                                </RadzenAccordion>
+                            </ChildContent>
+                        </RadzenAccordionItem>
+                    }
+                </Items>
+            </RadzenAccordion>
         }
-    </RadzenStack>
-    <br />
-    <div class="row">
-        <div class="col">
-            <h2>Competencies Framework Assessment</h2>
-        </div>
-        <div class="col-auto">
-            <RadzenButton Icon="add" Text="Add Competency" Click="AddCompetency" Disabled="!userIsSuperuser" />
-        </div>
+        <br />
     </div>
-    <div class="row">
-        <div class="col">
-            <RadzenText Text="Complete your assessment by expanding each category. You can edit previous assessments or add new ones to keep track of your journey. You can also filter on particular competencies through the search or just the unmet ones with the switches."        
-                        TextStyle="TextStyle.Body2" />
-        </div>
-    </div>
-    <hr />
-    <div class="row">
-        <div class="col">
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -0.3rem; width: 100%">
-                <RadzenIcon Icon="search" IconStyle="IconStyle.Dark" />
-                <RadzenTextBox @bind-Value=@competencySearchTerms
-                               Placeholder="Search Competencies"
-                               Change=@FilterCompetencies
-                               Disabled="@Loading" />
-                <RadzenButton Icon="clear"
-                              ButtonStyle="ButtonStyle.Light"
-                              Click="@ClearSearch"
-                              MouseEnter="@(args => ShowTooltip(args, "Clear"))"
-                              Disabled="@Loading" />
-            </RadzenStack>
-        </div>
-    </div>
-    <br />
-    @if (Loading)
-    {
-        <LoadingComponent />
-    }
-    else
-    {
-        <RadzenAccordion Multiple="true">
-            <Items>
-                @foreach (var comp in competencyGroups)
-                {
-                    <RadzenAccordionItem Text="@($"Grade {comp.Grade}")"
-                                         Icon="@comp.Icon"
-                                         CollapseTitle="Collapse"
-                                         ExpandTitle="Expand"
-                                         CollapseAriaLabel="@($"Collapse the Grade {comp.Grade} Competencies")"
-                                         ExpandAriaLabel="@($"Expand the Grade {comp.Grade} Competencies")"
-                                         Selected="@comp.Selected"
-                                         @onclick="@(() => comp.ToggleAccordion())">
-                        <Template>
-                            <RadzenStack Orientation="Radzen.Orientation.Horizontal"
-                                         JustifyContent="JustifyContent.SpaceBetween"
-                                         AlignItems="AlignItems.Center"
-                                         Style="width:100%">
-                                <h3 style="margin-bottom:0.2rem; color: #609">@comp.Description</h3>
-                                <RadzenProgressBar Value="@comp.Met"
-                                                   Max="@comp.Total"
-                                                   Unit="@($" out of {comp.Total} complete")"
-                                                   ProgressBarStyle="ProgressBarStyle.Success"
-                                                   Style="width: 50%"
-                                                   class="mx-5" />
-                            </RadzenStack>
-                        </Template>
-                        <ChildContent>
-                            <RadzenAccordion Multiple="true">
-                                <Items>
-                                    @foreach (var group in comp.CompetenciesGroupedByCategory)
-                                    {
-                                        var key = group.Key;
-                                        <RadzenAccordionItem Text="@($"Grade {comp.Grade} {group.Key.GetDescription()} Competencies")"
-                                                             Icon="@(group.Key.GetAttribute<IconAttribute>().Name)"
-                                                             CollapseTitle="Collapse"
-                                                             ExpandTitle="Expand"
-                                                             CollapseAriaLabel="@($"Collapse the Grade 5 {group.Key.GetDescription()} Competencies")"
-                                                             ExpandAriaLabel="@($"Expand the Grade 5 {group.Key.GetDescription()} Competencies")"
-                                                             Selected="@(comp.CompetencySelectionState[key])"
-                                                             @onclick="@(() => comp.ToggleAccordion(key))"
-                                                             Style="background-color: var(--rz-base-50);">
-                                            <Template>
-                                                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="width:100%">
-                                                    <h4 style="margin-bottom:0.2rem; width:50%">@($"{group.FirstOrDefault()?.GetCategoryId()} {group.Key.GetDescription()}")</h4>
-                                                    <RadzenProgressBar Value="@(comp.CompetencyMetValues[key])"
-                                                                       Max="@(group.Count())"
-                                                                       Unit="@($" out of {group.Count()} complete")"
-                                                                       ProgressBarStyle="ProgressBarStyle.Primary"
-                                                                       Style="width: 50%"
-                                                                       class="mx-5" />
-                                                </RadzenStack>
-                                            </Template>
-                                            <ChildContent>
-                                                <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
-                                                    @foreach (var competency in group)
-                                                    {
-                                                        <CompetencyCardComponent Competency="competency"
-                                                                                 EditAuthorised="userIsSuperuser"
-                                                                                 EditCompetencyAction="@(competency => EditCompetency(competency))"
-                                                                                 AddAssessmentAction="@(assessment => AddAssessment(assessment))"
-                                                                                 UpdateAssessmentAction="@(assessment => UpdateAssessment(assessment))"
-                                                                                 ShowTooltip="@((arg, message) => ShowTooltip(arg, message))"
-                                                                                 SelectedPerson="selectedPerson"
-                                                                                 ActiveUserId="activeUserId" />
-                                                    }
-                                                </RadzenStack>
-                                            </ChildContent>
-                                        </RadzenAccordionItem>
-                                    }
-                                </Items>
-                            </RadzenAccordion>
-                        </ChildContent>
-                    </RadzenAccordionItem>
-                }
-            </Items>
-        </RadzenAccordion>
-    }
-    <br />
-</div>
+
+</FeatureCheckComponent>

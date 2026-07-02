@@ -1,4 +1,10 @@
-﻿@page "/projects/splittask/{ProjectId:int}/{SubTaskId:int}"
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@page "/projects/splittask/{ProjectId:int}/{SubTaskId:int}"
 @inherits BasePage
 @using PPMTool.Data
 @using PPMTool.Data.Entities
@@ -34,7 +40,7 @@ else
     }
     <hr />
 
-    <RadzenStack Gap="1rem" Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%;">
+    <RadzenStack Gap="1rem" Orientation="Radzen.Orientation.Vertical">
         <RadzenText TextStyle="TextStyle.Body1">This task currently runs from <b>@originalStartDate.ToShortDateString()</b> to <b>@originalEndDate.ToShortDateString()</b></RadzenText>
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
             <RadzenText TextStyle="TextStyle.Body1">Choose how to split the task:</RadzenText>
@@ -84,7 +90,7 @@ else
             <StatusMessageSummaryComponent Messages="@statusMessages" IgnoreStatus="true" />
         }
         <div class="col-auto" style="margin-left: -1rem">
-            <RadzenButton Click="InitialiseTaskComponentsClicked" Text="Split Task" Icon="@(splitPending ? "hourglass_empty" : "settings_ethernet")" Disabled="@(splitPending || !UserInputProvided())" />
+            <RadzenButton Click="InitialiseTaskComponentsClicked" Text="Split Task" Icon="settings_ethernet" Disabled="@(splitPending || !UserInputProvided())" />
         </div>
     </RadzenStack>
     <hr />
@@ -93,28 +99,28 @@ else
     {
         <div class="row">
             <div class="col" style="min-width: 500px">
-                <div class="card">
+                <RadzenCard>
                     <AddTask @ref="@originalAddTaskComponent"
                              IsSplit="true"
                              ProjectId="@ProjectId"
                              TaskId="@(SubTaskId ?? 0)" />
-                </div>
+                </RadzenCard>
             </div>
             <div class="col" style="min-width: 500px">
-                <div class="card">
+                <RadzenCard>
                     <AddTask @ref="@newAddTaskComponent"
                              IsSplit="true"
                              IsCopy="true"
                              ProjectId="@ProjectId"
                              TaskId="@(SubTaskId ?? 0)" />
-                </div>
+                </RadzenCard>
             </div>
         </div>
         <hr />
 
         <div class="row">
             <div class="col-auto">
-                <RadzenButton Click="UpdateSubTasks" Text="Update Tasks" Icon="@(disableButtons ? "hourglass_empty" : "refresh")" Disabled="disableButtons" />
+                <RadzenButton Click="UpdateSubTasks" Text="Update Tasks" Icon="refresh" Disabled="disableButtons" />
             </div>
             <div class="col align-items-center">
                 @if (showTaskInvalidError)
@@ -124,8 +130,8 @@ else
             </div>
             <div class="col-auto">
                 <RadzenStack JustifyContent="JustifyContent.End" Orientation="Radzen.Orientation.Horizontal" Gap="0.4rem" Style="width:100%">
-                    <RadzenButton Click="UpdateAndSave" Text="Update & Save Tasks" Icon="@(disableButtons ? "hourglass_empty" : "check")" Disabled="@(!EditAuthorised || disableButtons)" />
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Click="DiscardChanges" Text="Discard" Icon="@(disableButtons ? "hourglass_empty" : "close")" Disabled="@disableButtons" />
+                    <RadzenButton Click="UpdateAndSave" Text="Update & Save Tasks" Icon="check" Disabled="@(!EditAuthorised || disableButtons)" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Click="DiscardChanges" Text="Discard" Icon="close" Disabled="@disableButtons" />
                 </RadzenStack>
             </div>
         </div>

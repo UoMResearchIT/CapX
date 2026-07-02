@@ -1,4 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -9,6 +13,10 @@ namespace PPMTool.Services
     /// </summary>
     public class ApiKeyService : BaseEntityService<ApiKey>
     {
+        public ApiKeyService(ILogger<ApiKeyService> logger) : base(logger)
+        {
+        }
+
         public override int Add(PPMToolContext context, ApiKey entity, bool commitChanges = true)
         {
             context.ApiKeys.Add(entity);

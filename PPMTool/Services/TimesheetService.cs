@@ -1,8 +1,13 @@
-﻿using System.Diagnostics;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
 using FluentDateTime;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Services
 {
@@ -18,22 +23,27 @@ namespace PPMTool.Services
         /// </summary>
         public bool HasStaffTimesheetActions { get; private set; }
 
+        public TimesheetService(ILogger<TimesheetService> logger) : base(logger)
+        {
+        }
+
         /// <summary>
         /// Adds a timesheet. If duplicate found does not add but returns -1 otherwise returns ID of added timesheet.
         /// </summary>
         /// <param name="context"></param>
         /// <param name="timesheetModel"></param>
+        /// <param name="commitChanges"></param>
         /// <returns>-1 if a duplicate or the id of the timesheet</returns>
-        public override int Add(PPMToolContext context, Timesheet timesheetmodel, bool commitChanges = true)
+        public override int Add(PPMToolContext context, Timesheet timesheetModel, bool commitChanges = true)
         {
-            if (DuplicateDetected(context, timesheetmodel))
+            if (DuplicateDetected(context, timesheetModel))
             {
                 return -1;
             }
 
-            context.Timesheets.Add(timesheetmodel);
+            context.Timesheets.Add(timesheetModel);
             if (commitChanges) CommitChanges(context);
-            return timesheetmodel.TimesheetId;
+            return timesheetModel.TimesheetId;
         }
 
         /// <summary>
@@ -51,7 +61,7 @@ namespace PPMTool.Services
         /// Get timesheet by its ID
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="timesheetID"></param>
+        /// <param name="timesheetId"></param>
         /// <returns></returns>
         internal Timesheet GetById(PPMToolContext context, int? timesheetId)
         {
@@ -59,12 +69,7 @@ namespace PPMTool.Services
                 .FirstOrDefault(t => t.TimesheetId == timesheetId);
         }
 
-        /// <summary>
-        /// Update an existing timesheet and returns the ID of the updated timesheet
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="timesheetModel"></param>
-        /// <returns>-1 if a duplicate</returns>
+        /// <inheritdoc />
         public override int Update(PPMToolContext context, Timesheet timesheetModel, bool commitChanges = true)
         {
             if (DuplicateDetected(context, timesheetModel))
@@ -81,6 +86,7 @@ namespace PPMTool.Services
         /// Gets all the timesheets with related data
         /// </summary>
         /// <param name="context"></param>
+        /// <param name="user"></param>
         /// <returns></returns>
         public IEnumerable<Timesheet> GetMyTimesheets(PPMToolContext context, Person user)
         {
@@ -102,11 +108,7 @@ namespace PPMTool.Services
                 .ThenInclude(x => x.InnateCode);
         }
 
-        /// <summary>
-        /// Delete the timesheet from the database
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="timesheetModel"></param>
+        /// <inheritdoc />
         public override void Delete(PPMToolContext context, Timesheet timesheetModel, bool commitChanges = true)
         {
             context.Timesheets.Remove(timesheetModel);
@@ -257,12 +259,12 @@ namespace PPMTool.Services
                 InnateCodeTask task = tasks.FirstOrDefault(x => x.InnateCodeTaskId == taskId);
 
                 // If task is no-longer in the DB or if the task is no-longer associated with an active code then remove from template
-                if (task == null || !task.InnateCode.IsActive)
+                if (task == null || !task.IsActive || !task.InnateCode.IsActive)
                 {
                     // Remove from template
                     if (task != null) DeleteFromTemplate(context, person, task);
 
-                    Debug.WriteLine($"** Removing task from template as no longer in DB or code is inactive: {task?.GetSensibleObjectName()}");
+                    logger.LogInformation($"Removing task from template as no longer in DB or code is inactive: {task?.GetSensibleObjectName()}");
                 }
                 else
                 {
@@ -271,7 +273,7 @@ namespace PPMTool.Services
                     entry.InnateCodeTask = task;
                     timesheet.TimesheetEntries.Add(entry);
 
-                    Debug.WriteLine($"** Adding new task to the timesheet : {task.InnateCode.GetSensibleObjectName()} : {task.GetSensibleObjectName()}");
+                    logger.LogInformation($"Adding new task to the timesheet : {task.InnateCode.GetSensibleObjectName()} : {task.GetSensibleObjectName()}");
                 }
             }
             CommitChanges(context);
@@ -303,7 +305,7 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="activeUserId"></param>
         /// <returns></returns>
-        public int GetIssueCount(PPMToolContext context, int activeUserId)
+        public async Task<int> GetIssueCountAsync(PPMToolContext context, int activeUserId)
         {
             Debug.WriteLine("** Updating timesheet notification count");
             HasOwnTimesheetActions = false;
@@ -313,16 +315,24 @@ namespace PPMTool.Services
             int staffNotificationsCount = 0;
 
             // Get user's rejected timesheet numbers
-            selfNotificationsCount += context.Timesheets.Include(x => x.Owner).Where(x => x.Owner.PersonId == activeUserId && x.Status == Enums.TimesheetStatus.Rejected).Count();
+            selfNotificationsCount += await context.Timesheets
+                .Include(x => x.Owner)
+                .Where(x => x.Owner.PersonId == activeUserId && x.Status == TimesheetStatus.Rejected)
+                .CountAsync();
             HasOwnTimesheetActions = selfNotificationsCount > 0;
 
             // Get line managed staff numbers (submitted timesheets)
-            var peopleManaged = context.People.Where(x => x.LineManager.PersonId == activeUserId);
-            if (peopleManaged.Count() > 0)
+            var peopleManaged = context.People
+                .Where(x => x.LineManager != null && x.LineManager.PersonId == activeUserId)
+                .ToList();
+            if (peopleManaged.Count > 0)
             {
                 foreach (Person p in peopleManaged)
                 {
-                    staffNotificationsCount += context.Timesheets.Include(x => x.Owner).Where(x => x.Owner.PersonId == p.PersonId && x.Status == Enums.TimesheetStatus.Submitted).Count();
+                    staffNotificationsCount += await context.Timesheets
+                        .Include(x => x.Owner)
+                        .Where(x => x.Owner.PersonId == p.PersonId && x.Status == TimesheetStatus.Submitted)
+                        .CountAsync();
                 }
             }
             HasStaffTimesheetActions = staffNotificationsCount > 0;
@@ -355,6 +365,47 @@ namespace PPMTool.Services
                 .Include(x => x.InnateCodeTask)
                 .ThenInclude(x => x.InnateCode)
                 .ToListAsync();
+        }
+
+        /// <summary>
+        /// Get the list of IDs of timesheet code tasks that have bookings against them in the system's timesheets
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="innateCodeId"></param>
+        /// <returns></returns>
+        public async Task<List<int>> GetTaskIdsWithBookingsForCodeAsync(PPMToolContext context, int innateCodeId)
+        {
+            var taskIds = await context.InnateCodeTasks
+                .Where(t => t.InnateCodeId == innateCodeId)
+                .Select(t => t.InnateCodeTaskId)
+                .Distinct()
+                .ToListAsync();
+
+            if (taskIds.Count == 0)
+            {
+                return new List<int>();
+            }
+
+            return await context.TimesheetEntries
+                .Where(e => taskIds.Contains(e.InnateCodeTaskId))
+                .Select(e => e.InnateCodeTaskId)
+                .Distinct()
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Gets the list of IDs of timesheet codes that have bookings against at least on of their tasks in the system's timesheets
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public async Task<List<int>> GetCodeIdsWithBookingsAsync(PPMToolContext context)
+        {
+            // Get the list of code IDs that have bookings against them
+            var bookedCodeIds = context.TimesheetEntries
+                .Include(x => x.InnateCodeTask)
+                .Select(x => x.InnateCodeTask.InnateCode.InnateCodeId)
+                .Distinct();
+            return await bookedCodeIds.ToListAsync();
         }
     }
 }

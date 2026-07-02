@@ -1,13 +1,19 @@
-﻿using System.Diagnostics;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Data.Helpers;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
+using PPMTool.Helpers;
 using PPMTool.Services;
 using Radzen;
+using Xceed.Words.NET;
 
 namespace PPMTool.Pages
 {
@@ -117,7 +123,13 @@ namespace PPMTool.Pages
             /// <param name="description"></param>
             /// <param name="icon"></param>
             /// <param name="groupedCompetencies"></param>
-            public CompetencyGroup(int grade, string description, string icon, IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedCompetencies, IEnumerable<CompetencyAssessment> assessments)
+            /// <param name="assessments"></param>
+            public CompetencyGroup(
+                int grade,
+                string description,
+                string icon,
+                IEnumerable<IGrouping<CompetencyCategory, Competency>> groupedCompetencies,
+                IEnumerable<CompetencyAssessment> assessments)
             {
                 Grade = grade;
                 Description = description;
@@ -139,7 +151,7 @@ namespace PPMTool.Pages
             /// <summary>
             /// Will take a boolean flag for the state of an accordion and toggle it
             /// </summary>
-            /// <param name="state"></param>
+            /// <param name="category"></param>
             public void ToggleAccordion(CompetencyCategory? category = null)
             {
                 // Decide on which accordion to expand
@@ -215,6 +227,7 @@ namespace PPMTool.Pages
         private bool showUnMetOnly;
         private bool showAllStaff = true;
         private bool exportRunning;
+        private bool downloadFrameworkRunning;
 
         private class CompetencyAssessmentExportLine
         {
@@ -259,9 +272,88 @@ namespace PPMTool.Pages
                 Category = competency.Category.GetDescription();
                 Description = HtmlHelper.ConvertToPlainText(competency.Description);
                 LatestAssessmentDate = latestAssessment == null ? new DateTime() : DateTime.Parse(latestAssessment.DateCreated);
-                AssessmentStatus = latestAssessment == null ? Enums.AssessmentStatus.Unmet.ToNiceString() : latestAssessment.Status.ToNiceString();
+                AssessmentStatus = latestAssessment == null ? Data.Enums.AssessmentStatus.Unmet.ToNiceString() : latestAssessment.Status.ToNiceString();
                 Evidence = latestAssessment == null ? "Never assessed!" : HtmlHelper.ConvertToPlainText(latestAssessment.Evidence);
             }
+        }
+
+        /// <summary>
+        /// Method to export the competency framework to a Word doc to make it easier to update as a group
+        /// </summary>
+        /// <returns></returns>
+        private async Task ExportFrameworkAsync()
+        {
+            LogInformation($"Exporting competency framework to Word...");
+
+            downloadFrameworkRunning = true;
+
+            await Task.Run(async () =>
+            {
+                try
+                {
+                    // Create file path
+                    var filename = $"CompetencyFramework_{DateTime.Now.ToString("yyyyMMddHHmmss")}.docx";
+                    var path = FileHelper.GetLocalApplicationFilePath(filename);
+
+                    // Create Word Doc
+                    var doc = DocX.Create(path);
+                    foreach (var group in competencyGroups)
+                    {
+                        // Write Heading 1
+                        var text = doc.InsertParagraph(group.Description);
+                        text.StyleId = "Heading1";
+
+                        foreach (var category in group.CompetenciesGroupedByCategory)
+                        {
+                            // Write Heading 2
+                            text = doc.InsertParagraph(category.Key.GetDescription());
+                            text.StyleId = "Heading2";
+
+                            foreach (var competency in category.Where(x => x.IsActive))
+                            {
+                                // Write Heading 3
+                                text = doc.InsertParagraph(competency.GetHierarchyId());
+                                text.StyleId = "Heading3";
+
+                                // Write Competency Description
+                                HtmlHelper.InsertHtmlLikeTextWithLinks(doc, competency.GetSensibleObjectName(), "Normal");
+
+                                // Write Competency Objective
+                                doc.InsertParagraph("");
+                                text = doc.InsertParagraph("Objective");
+                                text.StyleId = "Normal";
+                                text.Bold();
+                                HtmlHelper.InsertHtmlLikeTextWithLinks(doc, competency.Objective, "Normal");
+                            }
+                        }
+                    }
+
+                    // Save the document
+                    doc.Save();
+
+                    await InvokeAsync(async () =>
+                    {
+                        // Get file stream
+                        using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
+
+                        // Invoke JS on the client to download the file
+                        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
+                    });
+                }
+                catch (Exception e)
+                {
+                    LogError($"Exporting framework failed: {e}");
+                }
+
+            }).ContinueWith(t =>
+            {
+                InvokeAsync(() =>
+                {
+                    LogInformation($"Framework export task finished {t.Status}");
+                    downloadFrameworkRunning = false;
+                    StateHasChanged();
+                });
+            });
         }
 
         /// <summary>
@@ -275,116 +367,113 @@ namespace PPMTool.Pages
 
             await Task.Run(async () =>
             {
-                // Create blank list of data
-                var assessments = new List<CompetencyAssessmentExportLine>();
-
-                // Get the assessment info
-                if (SelectedPerson == null)
+                try
                 {
-                    LogWarning("Tried to export data without selecting a person!");
-                    return;
-                }
+                    // Create blank list of data
+                    var assessments = new List<CompetencyAssessmentExportLine>();
 
-                // Go through the groups and extract the info
-                foreach (var group in competencyGroups)
-                {
-                    foreach (var category in group.CompetenciesGroupedByCategory)
+                    // Get the assessment info
+                    if (SelectedPerson == null)
                     {
-                        foreach (var competency in category.Where(x => x.IsActive))
+                        LogWarning("Tried to export data without selecting a person!");
+                        return;
+                    }
+
+                    // Go through the groups and extract the info
+                    foreach (var group in competencyGroups)
+                    {
+                        foreach (var category in group.CompetenciesGroupedByCategory)
                         {
-                            var latestAssessment = competency.Assessments
-                                .Where(x => x.PersonId == SelectedPerson.PersonId)
-                                .OrderByDescending(x => x.DateCreated)
-                                .FirstOrDefault();
-                            assessments.Add(new CompetencyAssessmentExportLine(competency, latestAssessment));
+                            foreach (var competency in category.Where(x => x.IsActive))
+                            {
+                                var latestAssessment = competency.Assessments
+                                    .Where(x => x.PersonId == SelectedPerson.PersonId)
+                                    .OrderByDescending(x => DateTime.Parse(x.DateCreated))
+                                    .FirstOrDefault();
+                                assessments.Add(new CompetencyAssessmentExportLine(competency, latestAssessment));
+                            }
                         }
                     }
-                }
 
-                // Run the file export on the render context
-                await InvokeAsync(async () =>
-                {
-                    try
+                    // Create file path
+                    var filename = $"DevelopmentJourney_{SelectedPerson?.ShortName}_{DateTime.Now.ToString("yyyyMMddHHmmss")}.xlsx";
+                    var path = FileHelper.GetLocalApplicationFilePath(filename);
+
+                    // Create workbook and worksheet
+                    using (var workbook = new XLWorkbook())
                     {
-                        // Create file path
-                        var filename = $"DevelopmentJourney_{SelectedPerson?.ShortName}_{DateTime.Now.Ticks}.xlsx";
-                        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CapX");
-                        Directory.CreateDirectory(folder);
-                        var path = Path.Combine(folder, filename);
+                        var worksheet = workbook.Worksheets.Add("Data");
 
-                        // Create workbook and worksheet
-                        using (var workbook = new XLWorkbook())
+                        // Write header row
+                        var props = typeof(CompetencyAssessmentExportLine).GetProperties();
+                        var propNames = props.Select(x => x.Name).ToList();
+                        for (int i = 0; i < propNames.Count; i++)
                         {
-                            var worksheet = workbook.Worksheets.Add("Data");
+                            var cell = worksheet.Cell(1, i + 1);
+                            cell.Value = propNames[i];
+                            cell.Style.Font.Bold = true;
+                        }
 
-                            // Write header row
-                            var props = typeof(CompetencyAssessmentExportLine).GetProperties();
-                            var propNames = props.Select(x => x.Name).ToList();
-                            for (int i = 0; i < propNames.Count; i++)
+                        // Write data rows
+                        for (int row = 0; row < assessments.Count; row++)
+                        {
+                            var record = assessments[row];
+                            for (int col = 0; col < propNames.Count; col++)
                             {
-                                var cell = worksheet.Cell(1, i + 1);
-                                cell.Value = propNames[i];
-                                cell.Style.Font.Bold = true;
-                            }
+                                var property = record.GetType().GetProperty(propNames[col]);
+                                var rawValue = property?.GetValue(record);
+                                var cell = worksheet.Cell(row + 2, col + 1);
 
-                            // Write data rows
-                            for (int row = 0; row < assessments.Count; row++)
-                            {
-                                var record = assessments[row];
-                                for (int col = 0; col < propNames.Count; col++)
+                                // Format and assign
+                                if (propNames[col] == "LatestAssessmentDate")
                                 {
-                                    var property = record.GetType().GetProperty(propNames[col]);
-                                    var rawValue = property?.GetValue(record);
-                                    var cell = worksheet.Cell(row + 2, col + 1);
-
-                                    // Format and assign
-                                    if (propNames[col] == "LatestAssessmentDate")
+                                    if (rawValue is DateTime dt)
                                     {
-                                        if (rawValue is DateTime dt)
-                                        {
-                                            cell.Value = dt;
-                                            cell.Style.DateFormat.Format = "dd/MM/yyyy";
-                                        }
-                                        else
-                                        {
-                                            cell.Value = rawValue?.ToString() ?? string.Empty;
-                                        }
+                                        cell.Value = dt;
+                                        cell.Style.DateFormat.Format = "dd/MM/yyyy";
                                     }
                                     else
                                     {
-                                        if (rawValue is int)
-                                        {
-                                            cell.Value = (int)rawValue;
-                                        }
-                                        else if (rawValue is double)
-                                        {
-                                            cell.Value = (double)rawValue;
-                                        }
-                                        else
-                                        {
-                                            cell.Value = rawValue?.ToString() ?? string.Empty;
-                                        }
+                                        cell.Value = rawValue?.ToString() ?? string.Empty;
+                                    }
+                                }
+                                else
+                                {
+                                    if (rawValue is int)
+                                    {
+                                        cell.Value = (int)rawValue;
+                                    }
+                                    else if (rawValue is double)
+                                    {
+                                        cell.Value = (double)rawValue;
+                                    }
+                                    else
+                                    {
+                                        cell.Value = rawValue?.ToString() ?? string.Empty;
                                     }
                                 }
                             }
-
-                            // Save the workbook
-                            workbook.SaveAs(path);
                         }
 
-                        Debug.WriteLine($"** Exported {assessments.Count} rows to {path}");
+                        // Save the workbook
+                        workbook.SaveAs(path);
 
+                        Debug.WriteLine($"** Exported {assessments.Count} rows to {path}");
+                    }
+
+                    await InvokeAsync(async () =>
+                    {
                         // Get file stream
                         using var streamRef = new DotNetStreamReference(stream: File.Open(path, FileMode.Open));
 
                         // Invoke JS on the client to download the file
                         await JSRuntime.InvokeVoidAsync("downloadFileFromStream", filename, streamRef);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogError($"Could not download file: {ex}");
-                    }
-                });
+                    });
+                }
+                catch (Exception e)
+                {
+                    LogError($"Exporting development journey failed: {e}");
+                }
 
             }).ContinueWith(t =>
             {
@@ -458,7 +547,7 @@ namespace PPMTool.Pages
                     var latestAssessments = competencies
                             .SelectMany(x => x.Assessments)
                             .Where(x => x.PersonId == selectedPerson.PersonId)
-                            .OrderByDescending(x => x.DateCreated)
+                            .OrderByDescending(x => DateTime.Parse(x.DateCreated))
                             .GroupBy(x => x.CompetencyId);
 
                     // Get a list of competency IDs for those where the latest assessment is fully met
@@ -480,7 +569,7 @@ namespace PPMTool.Pages
                 var groups = new List<CompetencyGroup>();
                 var newGroup = new CompetencyGroup(
                     5,
-                    "Foundation Level (Grade 5)",
+                    "Foundation Skills",
                     "counter_1",
                     competencies
                         .Where(x => x.Grade == 5)
@@ -496,7 +585,7 @@ namespace PPMTool.Pages
 
                 newGroup = new CompetencyGroup(
                     6,
-                    "Advanced Level (Grade 6)",
+                    "Advanced Skills",
                     "counter_2",
                     competencies
                         .Where(x => x.Grade == 6)
@@ -512,7 +601,7 @@ namespace PPMTool.Pages
 
                 newGroup = new CompetencyGroup(
                     7,
-                    "Leadership Level (Grade 7)",
+                    "Leadership Skills",
                     "counter_3",
                     competencies
                         .Where(x => x.Grade == 7)
@@ -587,41 +676,33 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Adds an assessment
+        /// Adds or updates an assessment
         /// </summary>
         /// <param name="assessment"></param>
-        private void AddAssessment(CompetencyAssessment assessment)
+        /// <param name="isUpdate"></param>
+        /// <returns>An error message or empty string if successful</returns>
+        private string AddOrUpdateAssessment(CompetencyAssessment assessment, bool isUpdate = false)
         {
-            LogInformation($"Adding assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
+            LogInformation($"{(isUpdate ? "Updating" : "Adding")} assessment \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
             if (ValidateAssessment(assessment, out var message))
             {
-                CompetencyService.AddAssessment(Context, assessment);
-                UpdateMet();
+                try
+                {
+                    _ = isUpdate ?
+                    CompetencyService.UpdateAssessment(Context, assessment) :
+                    CompetencyService.AddAssessment(Context, assessment);
+                    UpdateMet();
+                    StateHasChanged();
+                    return string.Empty;
+                }
+                catch (Exception ex)
+                {
+                    message = $"Failed to {(isUpdate ? "update" : "add")} assessment: {ex.Message}";
+                }
             }
-            else
-            {
-                ShowValidationError(message);
-            }
+            ShowValidationError(message);
             StateHasChanged();
-        }
-
-        /// <summary>
-        /// Updates an assessment
-        /// </summary>
-        /// <param name="assessment"></param>
-        private void UpdateAssessment(CompetencyAssessment assessment)
-        {
-            LogInformation($"Updating assessment to Evidence: \"{assessment.Evidence}\" | Status = {assessment.Status} for {selectedPerson?.Name} for competency {assessment.CompetencyId}");
-            if (ValidateAssessment(assessment, out var message))
-            {
-                CompetencyService.UpdateAssessment(Context, assessment);
-                UpdateMet();
-            }
-            else
-            {
-                ShowValidationError(message);
-            }
-            StateHasChanged();
+            return message;
         }
 
         /// <summary>
@@ -641,10 +722,11 @@ namespace PPMTool.Pages
         /// Check the assessment model is correct before adding or updating
         /// </summary>
         /// <param name="assessment"></param>
+        /// <param name="message"></param>
         /// <returns></returns>
         private bool ValidateAssessment(CompetencyAssessment assessment, out string message)
         {
-            // Need to have evidence but only if assessment status is partially met or met
+            // Only check the evidence required condition when not setting an assessment to unmet
             if ((string.IsNullOrWhiteSpace(assessment.Evidence) || string.IsNullOrWhiteSpace(HtmlHelper.ConvertToPlainText(assessment.Evidence))) && assessment.Status != AssessmentStatus.Unmet)
             {
                 message = "Evidence is required!";
@@ -701,7 +783,7 @@ namespace PPMTool.Pages
                     }
 
                     // Find competencies with matching string
-                    var term = competencySearchTerms.Trim().ToLower();
+                    var term = competencySearchTerms.Clean();
                     var matching = competencies.Where(x => x.GetHierarchyId().Contains(term) || x.Description.ToLower().Contains(term) || x.Objective.ToLower().Contains(term));
 
                     // Expand the accordions for those matching

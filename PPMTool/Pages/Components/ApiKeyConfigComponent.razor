@@ -1,13 +1,21 @@
-﻿@inherits ComponentBase
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@inherits ComponentBase
+@using System.Diagnostics
 @using Microsoft.Extensions.Configuration
 @using Microsoft.Extensions.Logging
-@using PPMTool.Data
+@using PPMTool.API
 @using PPMTool.Data.Context
+@using PPMTool.Data.Entities
+@using PPMTool.Data.Enums
 @using PPMTool.Enums
+@using PPMTool.Enums.Attributes
 @using PPMTool.Services
 @using Radzen
-@using PPMTool.Data.Entities
-@using System.Diagnostics
 
 <RadzenTemplateForm TItem="ApiKey" Submit="@HandleValidSubmit" Data="@apiKey">
     <RadzenFieldset Text="Key Configuration">
@@ -84,9 +92,9 @@
         {
             Active = true,
             Owner = ActiveUser,
-            ExpiresAt = DateTime.UtcNow.AddDays(
+            ExpiresAt = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(
                 (default(ApiKeyExpirationOptions)).GetAttribute<ExpirationInDaysAttribute>()
-                .Days)
+                .Days), DateTimeKind.Unspecified)
         };
 
         // Statuses for the dropdown
@@ -165,7 +173,7 @@
     private void ValidityChosen(object value)
     {
         var days = ((ApiKeyExpirationOptions)value).GetAttribute<ExpirationInDaysAttribute>().Days;
-        apiKey.ExpiresAt = DateTime.UtcNow.AddDays(days);
+        apiKey.ExpiresAt = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(days), DateTimeKind.Unspecified);
         Debug.WriteLine($"Expiry set to {apiKey.ExpiresAt.ToString("R")} => {days} Days");
     }
 }

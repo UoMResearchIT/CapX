@@ -1,0 +1,242 @@
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
+using PPMTool.Data;
+using PPMTool.Data.Context;
+using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
+using PPMTool.Models;
+
+namespace PPMTool.Helpers
+{
+    /// <summary>
+    /// Helper to process finance data.sources into a form usable by other components
+    /// </summary>
+    public abstract class FinanceHelper
+    {
+        /// <summary>
+        /// Calculate the funds requested for a project
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="costModel"></param>
+        /// <param name="subTasks"></param>
+        /// <param name="fundingSources"></param>
+        /// <param name="requestedFromInvoices"></param>
+        /// <param name="receivedFromPayments"></param>
+        /// <returns></returns>
+        internal static TransactionBreakdown ComputeTransactionBreakdown(
+            PPMToolContext context,
+            CostModel costModel,
+            IEnumerable<SubTask> subTasks,
+            IEnumerable<FundingSource> fundingSources,
+            double requestedFromInvoices,
+            double receivedFromPayments)
+        {
+            // DA is just the sum of the DA funding sources
+            var da = fundingSources
+                .Where(x => x.FundingSourceType == FundingSourceType.DA)
+                .RoundedSum(x => x.AmountAvailable, 2);
+
+            // DI is based on the salary costs and assignments of the resources
+            var di = subTasks
+                .Where(x => !x.IsLeadershipTask)
+                .SelectMany(x => x.AssignedResources)
+                .Where(x => x.FundedFrom?.FundingSourceType == FundingSourceType.DI)
+                .RoundedSum(x => x.PlannedCost, 2);
+
+            // Add to these totals the leadership costs that are funded through DI
+            var leadershipCostsThatAreDI = subTasks
+                .Where(x => x.IsLeadershipTask && x.AssignedResources
+                    .Any(x => x.FundedFrom?.FundingSourceType == FundingSourceType.DI))
+                .RoundedSum(x => x.PlannedCost, 2);
+            if (costModel.HasLeadership())
+            {
+                di += leadershipCostsThatAreDI;
+            }
+
+            // Create the item adding in the invoiced amounts and the direct payments
+            return new TransactionBreakdown(da, di, requestedFromInvoices, receivedFromPayments, fundingSources);
+        }
+
+        /// <summary>
+        /// Generates a series of project budget detail objects, one for each resource assigned to subtasks on the projects supplied.
+        /// Resources with no funding source will be ignored and will not be included in the dictionary.
+        /// They can be assumed to be not in budget.
+        /// </summary>
+        /// <param name="projects"></param>
+        /// <returns></returns>
+        internal static IDictionary<string, AssignmentBudgetDetail> GetProjectBudgetDetail(IEnumerable<Project> projects)
+        {
+            // Initialise the dictionary
+            var budgets = new Dictionary<string, AssignmentBudgetDetail>();
+
+            foreach (var project in projects)
+            {
+                // Get all subtasks and remove the leadership tasks if necessary
+                var subtasks = project.SubTasks.ToList();
+                if (!project.CostModel.HasLeadership())
+                {
+                    subtasks = subtasks.Where(x => !x.IsLeadershipTask).ToList();
+                }
+
+                // Get all the resource assignments with funding sources
+                var assignments = subtasks
+                    .SelectMany(x => x.AssignedResources)
+                    .Where(x => x.FundedFrom != null)
+                    .ToList();
+
+                // Get the start and end dates of the marching window
+                var currentDate = project.StartDate.Date;
+                var endDate = project.EndDate.Date;
+
+                // Map funding sources to temporary counter
+                var fundingPots = new Dictionary<int, double>();
+                foreach (var fs in project.FundingSources)
+                {
+                    // Add to existing or create new as required
+                    if (fundingPots.TryGetValue(fs.FundingSourceId, out var existingAmount))
+                    {
+                        fundingPots[fs.FundingSourceId] = existingAmount + fs.AmountAvailable;
+                    }
+                    else
+                    {
+                        fundingPots[fs.FundingSourceId] = fs.AmountAvailable;
+                    }
+                }
+
+                Debug.WriteLine($"** {fundingPots.Count} funding pots for {project.GetSensibleObjectName()}. Total budget of {fundingPots.Sum(x => x.Value):C0}. {assignments.Count} assignments with funding sources.");
+
+                // If no funding pots or billable assignments then move to next project
+                if (fundingPots.Count == 0 || assignments.Count == 0)
+                {
+                    continue;
+                }
+
+                // Initialise the budget details using a dictionary for lookin gup the assignment
+                var budgetMap = assignments.ToDictionary(
+                    x => x.GenerateUniqueResourceKey(),
+                    x => new AssignmentBudgetDetail
+                    {
+                        Resource = x,
+                        InBudget = 0,
+                        DailyCost = x.PlannedCost / x.SubTask.DurationDays,
+                        Status = BudgetStatus.FullyInBudget
+                    });
+
+                budgets.AddRange(budgetMap);
+
+                // March through the project
+                while (currentDate <= endDate)
+                {
+                    // Get all assignments on current day
+                    foreach (var assignment in assignments)
+                    {
+                        // If no assignments running on the day then move to next day
+                        if (!assignment.SubTask.IsWithin(currentDate))
+                            continue;
+
+                        // Get budget detail of the assignment from the dictionary
+                        var budgetDetail = budgetMap[assignment.GenerateUniqueResourceKey()];
+
+                        // Skip if already marked as out of budget or partial as nothing to do
+                        if (budgetDetail.Status == BudgetStatus.NotInBudget || budgetDetail.Status == BudgetStatus.PartiallyInBudget)
+                            continue;
+
+                        // Is first day of the assignment
+                        var isFirstDayOfAssignment = currentDate.Date == assignment.SubTask.StartDate.Date;
+
+                        // Log current funding pot status and get pot value for update
+                        var fsId = assignment.FundedFrom.FundingSourceId;
+                        if (!fundingPots.TryGetValue(fsId, out var potValue))
+                            continue;
+                        var potHasMoneyBeforeUpdate = potValue > 0;
+
+                        // Update the funding pot information by deducting the costs
+                        potValue -= budgetDetail.DailyCost;
+                        fundingPots[fsId] = potValue;
+
+                        // Check funding pot status after
+                        var potEmptyAfterUpdate = potValue <= 0;
+
+                        // If the assignment has just started and the funding pot was already negative then mark as out of budget
+                        if (isFirstDayOfAssignment && !potHasMoneyBeforeUpdate)
+                        {
+                            // Task never had budget on day one so fully out of budget
+                            budgetDetail.Status = BudgetStatus.NotInBudget;
+                        }
+                        // If something was positive and has now gone negative then flag the status as partially in budget
+                        else if (budgetDetail.Status == BudgetStatus.FullyInBudget &&
+                                 potHasMoneyBeforeUpdate && potEmptyAfterUpdate)
+                        {
+                            // Downgrade to partial and stash the expiry date
+                            budgetDetail.Status = BudgetStatus.PartiallyInBudget;
+                            budgetDetail.FundingSourceExpired = currentDate;
+
+                            // Update the in budget amount by the remainder
+                            budgetDetail.InBudget += budgetDetail.DailyCost;
+                            budgetDetail.InBudget += potValue;
+                        }
+
+                        // If still in budget then update the amount on the budget detail
+                        if (budgetDetail.Status == BudgetStatus.FullyInBudget)
+                        {
+                            budgetDetail.InBudget += budgetDetail.DailyCost;
+                        }
+                    }
+
+                    // Advance to next day
+                    currentDate = currentDate.AddDays(1);
+                }
+            }
+
+            return budgets;
+        }
+
+        /// <summary>
+        /// Take the start and end dates and break it into chunks based on financial year boundaries
+        /// </summary>
+        /// <returns></returns>
+        public static List<DateRange> GetFinancialYearDateRanges(DateTime startDate, DateTime endDate)
+        {
+            var result = new List<DateRange>();
+            var overallRange = new DateRange
+            {
+                StartDate = startDate,
+                EndDate = endDate
+            };
+            DateTime currentStart = overallRange.StartDate;
+            DateTime financialYearEnd = new DateTime(currentStart.Month > 7 ? currentStart.Year + 1 : currentStart.Year, 7, 31);
+
+            while (true)
+            {
+                // If the financial year end is not within the remaining range, break
+                if (!overallRange.IsWithin(financialYearEnd))
+                {
+                    // Add the final chunk if there's still time left
+                    if (currentStart <= overallRange.EndDate)
+                    {
+                        result.Add(new DateRange
+                        {
+                            StartDate = currentStart,
+                            EndDate = overallRange.EndDate
+                        });
+                    }
+                    break;
+                }
+
+                result.Add(new DateRange
+                {
+                    StartDate = currentStart,
+                    EndDate = financialYearEnd
+                });
+
+                currentStart = financialYearEnd.AddDays(1);
+                financialYearEnd = financialYearEnd.AddYears(1);
+            }
+
+            return result;
+        }
+    }
+}

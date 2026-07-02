@@ -1,9 +1,16 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
+using static PPMTool.Data.StatusMessage;
 
 namespace PPMTool.Pages
 {
@@ -19,32 +26,33 @@ namespace PPMTool.Pages
         [Parameter]
         public int PersonId { get; set; }
 
+        private bool viewAuthorised;
         private Person personModel = new();
         private IList<Person> managers = new List<Person>();
         private EditContext editContext;
         private ValidationMessageStore messageStore;
         private bool isSuperUser;
-        private bool canView;
 
         protected override void OnParametersSet()
         {
             base.OnParametersSet();
 
-            // Default view permission based on edit authorisation
-            canView = EditAuthorised;
-
             // Load the person model if necessary
-            if (PersonId > 0)
+            if (PersonId > 0 && personModel?.PersonId != PersonId)
             {
                 personModel = PersonService.GetAll(Context).FirstOrDefault(x => x.PersonId == PersonId);
 
+                // Update permissions if viewing / editing an existing person
                 if (personModel != null)
                 {
                     // Edit should only be authorised for the line manager or superusers
                     EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
 
-                    // Developers can view their own page; managers can view all people pages
-                    canView = EditAuthorised || ActiveUser?.Person?.PersonId == personModel.PersonId || ActiveUserRoleType == Enums.RoleType.Manager;
+                    // Developers can view their own page; managers can view all people pages; superuser can view everything
+                    viewAuthorised = IsSuperuserOrLineManagerOrPerson(personModel) || ActiveUserRoleType == RoleType.Manager;
+
+                    // Reset the action bar
+                    SetDefaultActionBar(HandleSubmit, DiscardChanges);
                 }
             }
 
@@ -52,19 +60,25 @@ namespace PPMTool.Pages
             editContext = new EditContext(personModel);
             messageStore = new ValidationMessageStore(editContext);
 
-            LogInformation(personModel?.PersonId > 0 ? $"Editing person {personModel?.Name}" : $"Adding new person");
+            LogInformation((personModel?.PersonId > 0 ? $"Editing person {personModel?.Name}" : $"Adding new person") + $" - ViewAuthorised = {viewAuthorised}; EditAuthorised = {EditAuthorised}");
         }
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
 
+            // Setup the default action bar
+            SetDefaultActionBar(HandleSubmit, DiscardChanges);
+
             // Find out if superuser for delete button
-            isSuperUser = UserService.GetRoleTypeForUsername(Context, ActiveUserName) == Enums.RoleType.Superuser;
+            isSuperUser = ActiveUserRoleType == RoleType.Superuser;
+
+            // Superusers and managers can add new users so must have at least view permissions by default
+            viewAuthorised = isSuperUser || ActiveUserRoleType == RoleType.Manager;
 
             // Map the list of managers for drop down
             managers = UserService.GetAll(Context)
-                .Where(x => (x.RoleType == Enums.RoleType.Manager || x.RoleType == Enums.RoleType.Superuser) && x.Person != null && x.Person?.PersonId != personModel.PersonId)
+                .Where(x => (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser) && x.Person != null && x.Person?.PersonId != personModel.PersonId)
                 .Select(x => x.Person)
                 .DistinctBy(x => x.PersonId)
                 .OrderBy(x => x.Name)
@@ -89,7 +103,7 @@ namespace PPMTool.Pages
         private void EditAvailability()
         {
             // Check the existing model is valid first
-            messageStore.Clear();
+            ClearErrorMessage();
             if (editContext.Validate())
             {
                 HandleSubmit();
@@ -101,6 +115,11 @@ namespace PPMTool.Pages
                     Navigation.NavigateTo($"people/addavailabilitychange/{personModel.PersonId}");
                 }
             }
+            var messages = editContext.GetValidationMessages();
+            if (messages.Any())
+            {
+                SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
+            }
         }
 
         /// <summary>
@@ -109,7 +128,7 @@ namespace PPMTool.Pages
         private void EditAbsence()
         {
             // Check the existing model is valid first
-            messageStore.Clear();
+            ClearErrorMessage();
             if (editContext.Validate())
             {
                 HandleSubmit();
@@ -121,6 +140,11 @@ namespace PPMTool.Pages
                     Navigation.NavigateTo($"people/addabsence/{personModel.PersonId}");
                 }
             }
+            var messages = editContext.GetValidationMessages();
+            if (messages.Any())
+            {
+                SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
+            }
         }
 
         /// <summary>
@@ -129,7 +153,7 @@ namespace PPMTool.Pages
         private void EditSkills()
         {
             // Check the existing model is valid first
-            messageStore.Clear();
+            ClearErrorMessage();
             if (editContext.Validate())
             {
                 HandleSubmit();
@@ -141,13 +165,30 @@ namespace PPMTool.Pages
                     Navigation.NavigateTo($"skills/{personModel?.PersonId}");
                 }
             }
+            var messages = editContext.GetValidationMessages();
+            if (messages.Any())
+            {
+                SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
+            }
         }
 
+        /// <summary>
+        /// Method to handle the submit action for the form, including validation and saving the person model
+        /// </summary>
         private void HandleSubmit()
         {
+            ClearErrorMessage();
             messageStore.Clear();
+            editContext.NotifyValidationStateChanged();
             if (editContext.Validate())
             {
+                // Extra validation -- only check if there are managers to pick from
+                if (managers.Any() && !CheckLineManagerSet())
+                {
+                    UpdateErrorOnActionBarFromContextMessageStore();
+                    return;
+                }
+
                 if (PersonId > 0)
                 {
                     LogInformation($"Saving person {personModel?.Name}...");
@@ -166,9 +207,10 @@ namespace PPMTool.Pages
                         {
                             messageStore.Add(() => personModel.ShortName, "Duplicate initials found!");
                         }
-                        return;
                     }
-                    ;
+
+                    // Update any linked user display name
+                    UserService.UpdateDisplayName(Context, personModel);
                 }
                 else
                 {
@@ -186,12 +228,48 @@ namespace PPMTool.Pages
                         {
                             messageStore.Add(() => personModel.ShortName, "Duplicate initials found!");
                         }
-                        return;
                     }
                 }
 
-                Navigation.NavigateTo("people");
+                if (!editContext.GetValidationMessages().Any())
+                {
+                    Navigation.NavigateTo("people");
+                }
             }
+
+            // Transfer message store to action bar
+            UpdateErrorOnActionBarFromContextMessageStore();
+        }
+
+        /// <summary>
+        /// Method to set the error message on the action bar from the edit context
+        /// </summary>
+        private void UpdateErrorOnActionBarFromContextMessageStore()
+        {
+            // Set error messages based on the message store
+            var messages = editContext.GetValidationMessages();
+            if (messages.Any())
+            {
+                SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
+            }
+            else
+            {
+                ClearErrorMessage();
+            }
+        }
+
+        /// <summary>
+        /// Add custom message to the message store about the line manager
+        /// </summary>
+        /// <returns></returns>
+        private bool CheckLineManagerSet()
+        {
+            if (personModel.LineManager == null)
+            {
+                messageStore.Add(() => personModel.LineManager, "Person must have a line manager set!");
+                return false;
+            }
+            return true;
         }
 
         /// <summary>

@@ -1,14 +1,17 @@
-using System.Collections.Generic;
-using System.Linq;
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser")]
+    [Authorize(Roles = "Superuser")]
     public partial class AddInnateCode : DataGridPage<InnateCodeTask>
     {
         [Parameter]
@@ -17,23 +20,40 @@ namespace PPMTool.Pages
         [Inject]
         private InnateCodeService InnateCodeService { get; set; }
 
-        private InnateCode innateCode;
+        [Inject]
+        private TimesheetService TimesheetService { get; set; }
 
-        protected override void OnInitialized()
+        private InnateCode innateCode;
+        private List<int> tasksWithBookings = new List<int>();
+
+        /// <summary>
+        /// Represents a duty and its text string representation for dropdown sources.
+        /// Probably can make this avialable elsewhere too.
+        /// </summary>
+        /// <param name="Value"></param>
+        /// <param name="Text"></param>
+        public record DutyOption(Duty Value, string Text);
+        private IEnumerable<DutyOption> duties =
+            Enum.GetValues<Duty>().Select(d => new DutyOption(d, d.GetDescription()));
+
+        protected override async Task OnInitializedAsync()
         {
-            base.OnInitialized();
+            await base.OnInitializedAsync();
 
             if (InnateCodeId > 0)
             {
                 innateCode = InnateCodeService.GetById(Context, InnateCodeId);
                 dataGridEntities = innateCode.Tasks.ToList();
+
+                // Check the booking status of the tasks and build list
+                tasksWithBookings = await TimesheetService.GetTaskIdsWithBookingsForCodeAsync(Context, InnateCodeId);
             }
             else
             {
                 innateCode = new InnateCode();
                 dataGridEntities = new List<InnateCodeTask>();
             }
-
+            SetDefaultActionBar(HandleValidSubmit, DiscardChanges);
             LogInformation($"Adding / Editing innate code {innateCode?.GetCodeAsString()}");
         }
 
@@ -48,7 +68,7 @@ namespace PPMTool.Pages
             if (innateCode != null)
             {
                 // Reset error message
-                ErrorMessage = null;
+                ClearErrorMessage();
 
                 // Write to the database
                 LogInformation($"Saving innate code {innateCode?.GetCodeAsString()} with tasks {string.Join(",", innateCode?.Tasks)}.");
@@ -60,10 +80,22 @@ namespace PPMTool.Pages
                     innateCode.Tasks.Add(task);
                 }
 
+                // Needs to have a name and code
+                if (string.IsNullOrWhiteSpace(innateCode.ActivityCode))
+                {
+                    SetErrorMessage(new StatusMessage("Codes must have an activity code!", StatusMessage.MessageType.Error));
+                    return;
+                }
+                if (string.IsNullOrWhiteSpace(innateCode.ActivityName))
+                {
+                    SetErrorMessage(new StatusMessage("Codes must have an activity name!", StatusMessage.MessageType.Error));
+                    return;
+                }
+
                 // Has to have at least one task
                 if (innateCode.Tasks.Count == 0)
                 {
-                    ErrorMessage = new StatusMessage("Codes must have at least one task!", StatusMessage.MessageType.Error);
+                    SetErrorMessage(new StatusMessage("Codes must have at least one task!", StatusMessage.MessageType.Error));
                     return;
                 }
 
@@ -80,7 +112,7 @@ namespace PPMTool.Pages
 
                 if (result == -1)
                 {
-                    ErrorMessage = new StatusMessage("Either the name or code duplicates another already in the database or multiple tasks have the same name", StatusMessage.MessageType.Error);
+                    SetErrorMessage(new StatusMessage("Either the name or code duplicates another already in the database or multiple tasks have the same name", StatusMessage.MessageType.Error));
                     return;
                 }
 
@@ -117,21 +149,36 @@ namespace PPMTool.Pages
             {
                 TaskName = "Management",
                 InnateCode = innateCode,
-                Duty = Enums.Duty.ProjectAndServiceMgmt
+                Duty = Duty.ProjectAndServiceMgmt
             });
             dataGridEntities.Add(new InnateCodeTask
             {
                 TaskName = "Development",
                 InnateCode = innateCode,
-                Duty = Enums.Duty.ProjectWork
+                Duty = Duty.ProjectWork
             });
             dataGridEntities.Add(new InnateCodeTask
             {
                 TaskName = "Maintenance",
                 InnateCode = innateCode,
-                Duty = Enums.Duty.ProjectWork
+                Duty = Duty.BAU
             });
             await dataGrid.Reload();
+        }
+
+        /// <summary>
+        /// Callback when the switch is changed
+        /// </summary>
+        private void ActivityActiveChanged(bool value)
+        {
+            // If setting to false then deactivate all the tasks
+            if (!value)
+            {
+                foreach (var entity in dataGridEntities)
+                {
+                    entity.IsActive = false;
+                }
+            }
         }
     }
 }

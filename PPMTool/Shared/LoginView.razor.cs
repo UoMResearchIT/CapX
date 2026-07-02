@@ -1,10 +1,16 @@
-﻿using System.Diagnostics;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool.Shared
 {
@@ -15,6 +21,12 @@ namespace PPMTool.Shared
 
         [Inject]
         private ILogger Logger { get; set; }
+
+        [Inject]
+        private ILocalStorageService LocalStorage { get; set; }
+
+        [Inject]
+        private CssVariableService CssVariableService { get; set; }
 
         private string displayName;
         private IEnumerable<User> users;
@@ -69,11 +81,32 @@ namespace PPMTool.Shared
                 int count = Regex.Matches(loginLink, "returnUrl").Count;
                 if (notLoggedIn && count == 1)
                 {
-#if !LOCAL
+#if RELEASE
                     Logger.LogInformation($"User not logged in -- auto-redirecting to {loginLink}...");
                     Navigation.NavigateTo(loginLink, true);
 #endif
                 }
+            }
+        }
+
+        /// <summary>
+        /// Method for toggling the app theme
+        /// </summary>
+        /// <returns></returns>
+        private async Task ToggleThemeAsync()
+        {
+            var isCurrentlyDark = ThemeService.IsDarkTheme();
+            Logger.LogInformation($"Dark mode currently set to {isCurrentlyDark}");
+
+            // Toggle
+            await ThemeService.SetDarkLightAsync(!isCurrentlyDark, SettingsService, CssVariableService);
+
+            // Stash the setting in local storatge
+            var storageValue = await LocalStorage.GetItemAsync<bool>("useDarkMode");
+            if (storageValue == isCurrentlyDark)
+            {
+                Logger.LogInformation($"Updating local storage value to {!isCurrentlyDark}");
+                await LocalStorage.SetItemAsync("useDarkMode", !isCurrentlyDark);
             }
         }
 

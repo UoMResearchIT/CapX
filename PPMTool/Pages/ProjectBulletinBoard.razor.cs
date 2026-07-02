@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
 using System.Data;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
+using PPMTool.Models;
 using PPMTool.Services;
 using Radzen;
 
@@ -95,7 +95,7 @@ namespace PPMTool.Pages
                 }
             }
 
-            /// First time through, initialise the skills
+            // First time through, initialise the skills
             if (!skillsInitialised)
             {
                 foreach (var projWithSkills in allProjectsWithSkills)

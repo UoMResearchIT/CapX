@@ -1,13 +1,18 @@
-﻿using System.Diagnostics;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Data.Helpers;
-using PPMTool.Enums;
 using PPMTool.Services;
 using Radzen;
+using static PPMTool.Data.StatusMessage;
 
 namespace PPMTool.Pages
 {
@@ -41,21 +46,30 @@ namespace PPMTool.Pages
         [Inject]
         private FundingSourceService FundingSourceService { get; set; } = null!;
 
+        [Inject]
+        private FacultyService FacultyService { get; set; }
+
+        [Inject]
+        private SchoolService SchoolService { get; set; }
+
         [Parameter]
         public int ProjectId { get; set; }
 
         private Project projectModel = new Project();
         private bool gotoDetails = false;
         private bool discardChanges = true;
+        private bool showOrgUnitsRequiredWarning = false;
         private IEnumerable<InnateCode> innateActivities = new List<InnateCode>();
         private IQueryable<InnateCode> innateActivityQuery;
         private IEnumerable<Person> projectManagers = new List<Person>();
         private IEnumerable<Faculty> faculties = new List<Faculty>();
         private IEnumerable<School> schools = new List<School>();
         private IEnumerable<ProjectStatus> statuses = new List<ProjectStatus>();
+        private IEnumerable<CostModel> costModels = new List<CostModel>();
         private ValidationMessageStore messageStore;
         private EditContext editContext;
         private double fundsReceived;
+        private Faculty chosenFaculty;
         private IEnumerable<FundingSource> availableFundingSources = new List<FundingSource>();
 
         protected override void OnAfterRender(bool firstRender)
@@ -68,6 +82,9 @@ namespace PPMTool.Pages
             {
                 projectModel = ProjectService.GetById(Context, ProjectId);
 
+                // Populate faculty
+                chosenFaculty = projectModel.School?.Faculty;
+
                 // Get funds received
                 fundsReceived = PaymentService.GetFundsReceived(Context, projectModel?.ProjectId ?? 0);
 
@@ -75,26 +92,43 @@ namespace PPMTool.Pages
                 EditAuthorised = ActiveUserRoleType == RoleType.Superuser || projectModel.ProjectManager.PersonId == ActiveUser?.Person?.PersonId;
 
                 // Populate school list
-                schools = DropdownHelper.GetSchoolsForFaculty(projectModel.Faculty);
+                schools = SchoolService.GetSchoolsForFaculty(Context, projectModel.School.Faculty.FacultyId);
 
                 // Populate funding source list
                 availableFundingSources = FundingSourceService.GetFundingSources(Context, ProjectId);
             }
             else
             {
-                projectModel.DayRate = GlobalDefaults.DayRateDefault;
+                projectModel.DayRate = GetSetting(SettingType.DayRateDefault, 0f);
 
                 // Auto generate the RTP number based on the highest in the DB
                 projectModel.RTP = ProjectService.GetAll(Context).Select(x => x.RTP).DefaultIfEmpty(0).Max() + 1;
 
                 // Set the active user as the PM by default
                 projectModel.ProjectManager = ActiveUser?.Person;
+
+                // Specific check for when Finance feature has not been enabled and a new
+                // project is being added, as Faculties/Schools are required
+                if (!FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance))
+                {
+                    // If we have any active Schools then it means we have active Faculties too
+                    showOrgUnitsRequiredWarning = !SchoolService.GetAllActive(Context).Any();
+                }
+
+                // Set the selected school to null or the dropdown placeholder won't work
+                projectModel.School = null;
             }
+
+            // Add default buttons with handlers
+            SetDefaultActionBar(
+                () => { gotoDetails = true; discardChanges = false; HandleSubmit(); },
+                () => { gotoDetails = ProjectId > 0; discardChanges = true; HandleSubmit(); }
+            );
 
             // Initially load data
             innateActivityQuery = InnateCodeService.GetAll(Context).AsQueryable();
             innateActivities = innateActivityQuery.ToList();
-            faculties = Enum.GetValues<Faculty>().ToList();
+            faculties = FacultyService.GetAllActive(Context).ToList();
             statuses = Enum.GetValues<ProjectStatus>().ToList();
             var people = PersonService.GetAll(Context).OrderBy(x => x.Name).ToList();
             var users = UserService.GetAll(Context)
@@ -103,6 +137,7 @@ namespace PPMTool.Pages
                     && x.Person != null
                 );
             projectManagers = people.Where(x => users.Any(y => y.Person.PersonId == x.PersonId)).ToList();
+            costModels = DisplayOrderHelper.GetOrderListOfCostModels();
 
             // Create edit context and message store
             editContext = new EditContext(projectModel);
@@ -110,7 +145,7 @@ namespace PPMTool.Pages
 
             Loading = false;
             StateHasChanged();
-            LogInformation(projectModel.ProjectId > 0 ? $"Editing project {projectModel?.GetFullName()}" : $"Adding new project");
+            LogInformation(projectModel.ProjectId > 0 ? $"Editing project {projectModel?.GetSensibleObjectName()}" : $"Adding new project");
         }
 
         /// <summary>
@@ -132,6 +167,11 @@ namespace PPMTool.Pages
             InvokeAsync(StateHasChanged);
         }
 
+        /// <summary>
+        /// Helper method to call the nice string method of the enum
+        /// </summary>
+        /// <param name="x"></param>
+        /// <returns></returns>
         private string GetNiceString(Enum x)
         {
             return x.ToNiceString();
@@ -143,13 +183,20 @@ namespace PPMTool.Pages
         /// <param name="value"></param>
         private void OnFacultyChosen(object value)
         {
-            Faculty? faculty = value as Faculty?;
+            Faculty faculty = value as Faculty;
             if (faculty != null)
             {
-                schools = DropdownHelper.GetSchoolsForFaculty(faculty ?? Faculty.Internal);
+                schools = SchoolService.GetSchoolsForFaculty(Context, faculty.FacultyId);
+
+                // Reset the school so the placeholder shows again
+                projectModel.School = null;
             }
         }
 
+        /// <summary>
+        /// Callback after a PM is chosen in the dropdown
+        /// </summary>
+        /// <param name="value"></param>
         private void OnProjectManagerChosen(object value)
         {
             Person pm = value as Person;
@@ -161,20 +208,34 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Fired when the save button is clicked
+        /// </summary>
         private void HandleSubmit()
         {
-            // Form valid?
+            // Clear the action bar messages
+            ClearErrorMessage();
+
+            // Clear any manual messages
             messageStore.Clear();
+            editContext.NotifyValidationStateChanged();
+
+            // Validate the form again
             if (editContext.Validate())
             {
                 if (!discardChanges)
                 {
-                    // Further validation
-                    if (!CheckProjectManagerSet()) return;
+                    // Further validation not picked up by model annotations
+                    if (!CheckProjectManagerSet() || !CheckSchoolAndFacultySet())
+                    {
+                        UpdateErrorOnActionBarFromContextMessageStore();
+                        return;
+                    }
 
                     // Update the project summary values
-                    var finrefs = FinancialReferenceService.GetAll(Context);
-                    projectModel.UpdateProjectMetaData(true, finrefs);
+                    var finrefs = FinancialReferenceService.GetAllOrDefault(Context);
+                    var bauTopSlicePercentage = GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+                    projectModel.UpdateProjectMetaData(true, finrefs, bauTopSlicePercentage);
 
                     if (ProjectId > 0)
                     {
@@ -182,6 +243,7 @@ namespace PPMTool.Pages
                         // Leave resources on completed projects so we have a historical record.
                         if (projectModel.ProjectStatus.IsCancelled())
                         {
+                            Logger.LogInformation("Removing resources as cancelled!");
                             foreach (SubTask t in projectModel.SubTasks)
                             {
                                 t.AssignedResources.Clear();
@@ -191,7 +253,7 @@ namespace PPMTool.Pages
                         // If the project is marked as cancelled or finished then remove the followers
                         if (projectModel.ProjectStatus.IsFinishedOrCancelled())
                         {
-
+                            Logger.LogInformation("Removing followers as finished or cancelled!");
                             projectModel.Followers.Clear();
                         }
 
@@ -206,33 +268,23 @@ namespace PPMTool.Pages
                             projectModel.ActualsLastUpdated = DateTime.Now.ToString("R");
                         }
 
-                        LogInformation($"Saving project {projectModel?.GetFullName()}...");
-
+                        LogInformation($"Saving project {projectModel?.GetSensibleObjectName()}...");
                         var res = ProjectService.Update(Context, projectModel);
-                        if (!CheckResultOfAddOrUpdate(res)) return;
+                        CheckResultOfAddOrUpdate(res);
                     }
                     else
                     {
                         LogInformation("Adding new project...");
                         var res = ProjectService.Add(Context, projectModel);
-                        if (!CheckResultOfAddOrUpdate(res)) return;
-
-                        // Make sure that super users automatically follow the project
-                        var superusers = UserService.GetAll(Context).Where(x => x.RoleType == RoleType.Superuser).Select(x => x.Person);
-                        foreach (var s in superusers)
-                        {
-                            if (s == null) throw new InvalidOperationException("Superuser role found without a person attached to it!");
-
-                            if (projectModel.ProjectManager != s && !projectModel.Followers.Contains(s))
-                            {
-                                projectModel.Followers.Add(s);
-                            }
-                        }
-                        ProjectService.Update(Context, projectModel);
+                        CheckResultOfAddOrUpdate(res);
                     }
                 }
 
-                NavigatePostSubmit();
+                // Only navigate away if no validation failures at DB add/update
+                if (!editContext.GetValidationMessages().Any())
+                {
+                    NavigatePostSubmit();
+                }
             }
 
             // Form invalid
@@ -242,29 +294,59 @@ namespace PPMTool.Pages
                 {
                     LogInformation($"Discarding project changes!");
                     NavigatePostSubmit();
+                    return;
                 }
+            }
+
+            // Update with errors
+            UpdateErrorOnActionBarFromContextMessageStore();
+        }
+
+        /// <summary>
+        /// Method to set the error message on the action bar from the edit context
+        /// </summary>
+        private void UpdateErrorOnActionBarFromContextMessageStore()
+        {
+            // Set error messages based on the message store
+            var messages = editContext.GetValidationMessages();
+            if (messages.Any())
+            {
+                SetErrorMessage(new StatusMessage(messages.First(), MessageType.Error));
+            }
+            else
+            {
+                ClearErrorMessage();
             }
         }
 
+        /// <summary>
+        /// Checks the results of a DB add or update and adds message to message store
+        /// </summary>
+        /// <param name="res"></param>
+        /// <returns></returns>
         private bool CheckResultOfAddOrUpdate(int res)
         {
             if (res < 0)
             {
                 // Duplicate found so show error message
-                LogWarning($"Duplicate project found with {(res == -1 ? $"name {projectModel?.Name}" : $"RTP-{projectModel?.RTP}")}!");
+                LogWarning($"Duplicate project found with {(res == -1 ? $"name {projectModel?.Name}" : $"{GetSetting(SettingType.ProjectAbbreviation)}-{projectModel?.RTP}")}!");
                 if (res == -1)
                 {
                     messageStore.Add(() => projectModel.Name, "Duplicate project name found!");
                 }
                 else
                 {
-                    messageStore.Add(() => projectModel.RTP, "Duplicate RTP number found!");
+                    messageStore.Add(() => projectModel.RTP, $"Duplicate {GetSetting(SettingType.ProjectAbbreviation)} number found!");
                 }
                 return false;
             }
             return true;
         }
 
+        /// <summary>
+        /// Check the PM is set
+        /// </summary>
+        /// <returns></returns>
         private bool CheckProjectManagerSet()
         {
             if (projectModel.ProjectManager == null)
@@ -275,6 +357,24 @@ namespace PPMTool.Pages
             return true;
         }
 
+        /// <summary>
+        /// Check the faculty and school are set
+        /// </summary>
+        /// <returns></returns>
+        private bool CheckSchoolAndFacultySet()
+        {
+            // Not faculty or school objects or placeholder objects
+            if (projectModel.School == null || projectModel.School?.Faculty == null || projectModel.School?.SchoolId == 0 || projectModel.School?.Faculty?.FacultyId == 0)
+            {
+                messageStore.Add(() => projectModel.School, $"Project must have a {GetSetting(SettingType.OrgUnitUpper)} and {GetSetting(SettingType.OrgUnitLower)} set!");
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Perform navigation to the appropriate page depending on where the user cam from
+        /// </summary>
         private void NavigatePostSubmit()
         {
             if (gotoDetails)
@@ -287,12 +387,15 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Delete the project from the DB after confirmation dialog
+        /// </summary>
         private async void DeleteProject()
         {
             if (ProjectId > 0)
             {
                 // Prompt
-                bool confirmed = await DialogService.Confirm($"You are about to delete project {projectModel.GetFullName()}. " +
+                bool confirmed = await DialogService.Confirm($"You are about to delete project {ProjectService.GetFullName(projectModel)}. " +
                     $"If this project was cancelled or didn't get funded then do not delete it but change its status instead so we can keep a record of unfunded projects.",
                     "Delete Project") ?? false;
                 if (confirmed)
@@ -309,7 +412,7 @@ namespace PPMTool.Pages
                         }
                     }
 
-                    LogInformation($"Deleting project {projectModel.GetFullName()}, ID {projectModel.ProjectId}");
+                    LogInformation($"Deleting project {projectModel.GetSensibleObjectName()}, ID {projectModel.ProjectId}");
 
                     // Delete the project from the database
                     ProjectService.Delete(Context, projectModel);

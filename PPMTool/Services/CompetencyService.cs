@@ -1,4 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.EntityFrameworkCore;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -6,6 +11,10 @@ namespace PPMTool.Services
 {
     public class CompetencyService : BaseEntityService<Competency>
     {
+        public CompetencyService(ILogger<CompetencyService> logger) : base(logger)
+        {
+        }
+
         /// <inheritdoc />
         public override int Add(PPMToolContext context, Competency entity, bool commitChanges = true)
         {
@@ -23,7 +32,7 @@ namespace PPMTool.Services
 
         /// <summary>
         /// We probably don't ever want to delete a competency as it would be messy if associated with past competency 
-        /// assessments so it ought to be a soft delete by setting the <see cref="Competency.IsActive"> property to false.
+        /// assessments so it ought to be a soft delete by setting the <see cref="Competency.IsActive" /> property to false.
         /// </summary>
         /// <param name="context"></param>
         /// <param name="entity"></param>
@@ -107,7 +116,7 @@ namespace PPMTool.Services
             {
                 return false;
             }
-            var legacyId = entity?.LegacyId.Trim().ToLower();
+            var legacyId = entity?.LegacyId.Clean();
             return context.Competencies.Any(x => x.CompetencyId != entity.CompetencyId && x.LegacyId.Trim().ToLower() == legacyId);
         }
 

@@ -1,9 +1,18 @@
-﻿@using PPMTool.Data
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@using PPMTool.Data
+@using PPMTool.Models
 @using PPMTool.Data.Context
 @using PPMTool.Data.Entities
-@using PPMTool.Enums
+@using PPMTool.Data.Enums
 @using System.ComponentModel.DataAnnotations
 @using PPMTool.Services
+@inject FeatureService FeatureService
+@inject SettingsService SettingsService
 
 <h2>Project Summary</h2>
 @if (FinanceSummaryItem == null)
@@ -11,93 +20,171 @@
     <p class="lead">No data to show</p>
 }
 else
-{
+{    
+    bool FinanceEnabled = FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance);
+
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
                 <tr>
                     <th>Dates</th>
                     <th>PI</th>
-                    <th>School (Faculty)</th>
+                    <th>@($"{SettingsService.GetSetting(SettingType.OrgUnitLower)} ({SettingsService.GetSetting(SettingType.OrgUnitUpper)})")</th>
                     <th>PM</th>
-                    <th>Cost Model</th>
-                    @if (FinanceSummaryItem.CostModel == CostModel.DayRate)
+                    @if (FinanceEnabled)
                     {
-                        <th>Day Rate</th>
+                        <th>Cost Model</th>
+                        @if (FinanceSummaryItem.CostModel == CostModel.DayRate)
+                        {
+                            <th>Day Rate</th>
+                        }
+                        <th>
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                <span>Agreed Budget</span>
+                                <RadzenIcon Icon="info" IconStyle="IconStyle.Info" title="The sum of all funding sources attached to the project." />
+                            </RadzenStack>
+                        </th>
+                        <th>
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                <span>Planned Cost</span>
+                                <RadzenIcon Icon="info" IconStyle="IconStyle.Info" title="The estimated cost of the planned tasks based on effort and resources assigned. Computed using mid-grade salary estimates or the day rate depending on the project cost model." />
+                            </RadzenStack>
+                        </th>
+                        <th>
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                <span>Actual Cost (Hours)</span>
+                                <RadzenIcon Icon="info" IconStyle="IconStyle.Info" title="The estimated value delivered based on CapX timesheet entries. Computed using mid-grade salary estimates or the day rate depending on the project cost model." />
+                            </RadzenStack>
+                        </th>
+                        <th>
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                <span>Funds Requested</span>
+                                <RadzenIcon Icon="info" IconStyle="IconStyle.Info" title="For DI and DA, equal to Agreed Budget. For Other, the sum of all invoice amounts." />
+                            </RadzenStack>
+                        </th>
+                        <th>
+                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                <span>Funds Received</span>
+                                <RadzenIcon Icon="info" IconStyle="IconStyle.Info" title="For DI and DA, equal to Agreed Budget. For Other, the sum of all payment amounts." />
+                            </RadzenStack>
+                        </th>
+                        <th>Funding Sources</th>
                     }
-                    <th>Agreed Budget</th>
-                    <th>Planned Cost</th>
-                    <th>Actual Cost (Hours)</th>
-                    <th>Funds Requested</th>
-                    <th>Funds Received</th>
-                    <th>Funding Sources</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>@($"{FinanceSummaryItem.StartDate.ToShortDateString()} - {FinanceSummaryItem.EndDate.ToShortDateString()}")</td>
+                    <td>
+                        @if (FinanceSummaryItem.StartDate == @DateTime.MaxValue)
+                        {
+                            <StatusMessageComponent Message="@(new StatusMessage("No tasks!", StatusMessage.MessageType.Error))" />
+                        }
+                        else
+                        {
+                            @($"{FinanceSummaryItem.StartDate.ToShortDateString()} - {FinanceSummaryItem.EndDate.ToShortDateString()}")
+                        }
+                    </td>
                     <td>@FinanceSummaryItem.ProjectPI</td>
-                    <td>@($"{FinanceSummaryItem.School.ToNiceString()} ({FinanceSummaryItem.Faculty.ToNiceString()})")</td>
+                    <td>@($"{FinanceSummaryItem.School.Name} ({FinanceSummaryItem.Faculty.Name})")</td>
                     <td>@FinanceSummaryItem.ProjectPM</td>
-                    <td>@(FinanceSummaryItem.CostModel.GetAttribute<DisplayAttribute>().Name)</td>
-                    @if (FinanceSummaryItem.CostModel == CostModel.DayRate)
+                    @if (FinanceEnabled)
                     {
-                        <td>@FinanceSummaryItem.DayRate.ToString("C0")</td>
+                        <td>@(FinanceSummaryItem.CostModel.GetAttribute<DisplayAttribute>().Name)</td>
+                        @if (FinanceSummaryItem.CostModel == CostModel.DayRate)
+                        {
+                            <td>@FinanceSummaryItem.DayRate.ToString("C0")</td>
+                        }
+                        <td>
+                            @if (FinanceSummaryItem.CostModel.HasIndirects())
+                            {
+                                @((MarkupString)$"<span>Total:</span>&nbsp;<span>{FinanceSummaryItem.Budget.ToString("C0")}</span>")
+                                <br />
+                                @((MarkupString)$"<span>Directs:</span>&nbsp;<span>{(FinanceSummaryItem.Budget - FinanceSummaryItem.BudgetIndirectCosts).ToString("C0")}</span>")
+                                <br />
+                                @((MarkupString)$"<span>Indirects:</span>&nbsp;<span>{FinanceSummaryItem.BudgetIndirectCosts.ToString("C0")}</span>")
+                            }
+                            else
+                            {
+                                @FinanceSummaryItem.Budget.ToString("C0")
+                            }
+                        </td>
+                        <td>
+                            @if (!FinanceSummaryItem.CostModel.HasIndirects() && !FinanceSummaryItem.CostModel.HasLeadership())
+                            {
+                                <span style="color:@FinanceSummaryItem.PlannedCostColour">
+                                    @FinanceSummaryItem.PlannedTotalCost.ToString("C0")
+                                </span>
+                            }
+                            else
+                            {
+                                @* Total and technical always visible *@
+                                @((MarkupString)$"<span>Total:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.PlannedCostColour}\">{FinanceSummaryItem.PlannedTotalCost.ToString("C0")}</span>")
+                                <br />
+                                @((MarkupString)$"<span>Technical:</span>&nbsp;<span>{FinanceSummaryItem.GetTechPlannedCosts().ToString("C0")}</span>")
+
+                                @* Show leadership line *@
+                                @if (FinanceSummaryItem.CostModel.HasLeadership())
+                                {
+                                    <br />
+                                    @((MarkupString)$"<span>Leadership:</span>&nbsp;<span>{FinanceSummaryItem.PlannedLeadershipCosts.ToString("C0")}</span>")
+                                }
+
+                                @* Show indirects line *@
+                                @if (FinanceSummaryItem.CostModel.HasIndirects())
+                                {
+                                    <br />
+                                    @((MarkupString)$"<span>Indirects:</span>&nbsp;<span>{FinanceSummaryItem.PlannedIndirectCosts.ToString("C0")}</span>")
+                                }
+                            }
+                        </td>
+                        <td>
+                            @if (!FinanceSummaryItem.CostModel.HasIndirects() && !FinanceSummaryItem.CostModel.HasLeadership())
+                            {
+                                <span style="color:@FinanceSummaryItem.ActualCostColour">
+                                    @FinanceSummaryItem.ActualTotalCost.ToString("C0")
+                                </span>
+                            }
+                            else
+                            {
+                                @((MarkupString)$"<span>Total:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.ActualCostColour}\">{FinanceSummaryItem.ActualTotalCost.ToString("C0")}</span>")
+                                <br />
+                                @((MarkupString)$"<span>Technical:</span>&nbsp;<span>{FinanceSummaryItem.GetTechActualCosts().ToString("C0")}</span>")
+
+                                @if (FinanceSummaryItem.CostModel.HasLeadership())
+                                {
+                                    <br />
+                                    @((MarkupString)$"<span>Leadership:</span>&nbsp;<span>{FinanceSummaryItem.ActualLeadershipCosts.ToString("C0")}</span>")
+                                }
+
+                                @if (FinanceSummaryItem.CostModel.HasIndirects())
+                                {
+                                    <br />
+                                    @((MarkupString)$"<span>Indirects:</span>&nbsp;<span>{FinanceSummaryItem.ActualIndirectCosts.ToString("C0")}</span>")
+                                }
+                            }
+                            <br />
+                            @($" (Hours: {FinanceSummaryItem.ActualHours.ToString("F2")})")
+                        </td>
+                        <td>
+                            @((MarkupString)$"<span>Total:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.FundsRequestedColour}\">{FinanceSummaryItem.GetAllRequested().ToString("C0")}</span>")
+                            <br />
+                            @((MarkupString)$"<span>DI:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.FundsDIColour}\">{FinanceSummaryItem.FundsDI.ToString("C0")}</span>")
+                            <br />
+                            @((MarkupString)$"<span>DA:</span>&nbsp;<span>{FinanceSummaryItem.FundsDA.ToString("C0")}</span>")
+                            <br />
+                            @((MarkupString)$"<span>Other:</span>&nbsp;<span>{FinanceSummaryItem.FundsRequestedOther.ToString("C0")}</span>")
+                        </td>
+                        <td>
+                            @((MarkupString)$"<span>Total:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.FundsReceivedColour}\">{FinanceSummaryItem.GetAllReceived().ToString("C0")}</span>")
+                            <br />
+                            @((MarkupString)$"<span>DI:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.FundsDIColour}\">{FinanceSummaryItem.GetReceivedDI().ToString("C0")}</span>")
+                            <br />
+                            @((MarkupString)$"<span>DA:</span>&nbsp;<span>{FinanceSummaryItem.FundsDA.ToString("C0")}</span>")
+                            <br />
+                            @((MarkupString)$"<span>Other:</span>&nbsp;<span>{FinanceSummaryItem.FundsReceivedOther.ToString("C0")}</span>")
+                        </td>
+                        <td>@FinanceSummaryItem.ListOfFundingSources</td>
                     }
-                    <td>@FinanceSummaryItem.Budget.ToString("C0")</td>
-                    <td>
-                        @if (FinanceSummaryItem.CostModel == CostModel.TechAndLeadership)
-                        {
-                            @((MarkupString)$"<span>Total:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.PlannedCostColour}\">{FinanceSummaryItem.PlannedCost.ToString("C0")}</span>")
-                            <br />
-                            @((MarkupString)$"<span>Technical:</span>&nbsp;<span>{(FinanceSummaryItem.PlannedCost - FinanceSummaryItem.PlannedLeadershipCosts).ToString("C0")}</span>")
-                            <br />
-                            @((MarkupString)$"<span>Leadership:</span>&nbsp;<span>{FinanceSummaryItem.PlannedLeadershipCosts.ToString("C0")}</span>")
-                        }
-                        else
-                        {
-                            <span style="color:@FinanceSummaryItem.PlannedCostColour">
-                                @FinanceSummaryItem.PlannedCost.ToString("C0")
-                            </span>
-                        }
-                    </td>
-                    <td>
-                        @if (FinanceSummaryItem.CostModel == CostModel.TechAndLeadership)
-                        {
-                            @((MarkupString)$"<span>Total:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.ActualCostColour}\">{FinanceSummaryItem.ActualCost.ToString("C0")}</span>")
-                            <br />
-                            @((MarkupString)$"<span>Technical:</span>&nbsp;<span>{(FinanceSummaryItem.ActualCost - FinanceSummaryItem.ActualLeadershipCosts).ToString("C0")}</span>")
-                            <br />
-                            @((MarkupString)$"<span>Leadership:</span>&nbsp;<span>{FinanceSummaryItem.ActualLeadershipCosts.ToString("C0")}</span>")
-                        }
-                        else
-                        {
-                            <span style="color:@FinanceSummaryItem.ActualCostColour">
-                                @FinanceSummaryItem.ActualCost.ToString("C0")
-                            </span>
-                        }
-                        <br />
-                        @($" ({FinanceSummaryItem.ActualHours.ToString("F2")})")                        
-                    </td>
-                    <td>
-                        @((MarkupString)$"<span>Total:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.FundsRequestedColour}\">{FinanceSummaryItem.GetAllRequested().ToString("C0")}</span>")
-                        <br />
-                        @((MarkupString)$"<span>DI:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.FundsDIColour}\">{FinanceSummaryItem.FundsDI.ToString("C0")}</span>")
-                        <br />
-                        @((MarkupString)$"<span>DA:</span>&nbsp;<span>{FinanceSummaryItem.FundsDA.ToString("C0")}</span>")
-                        <br />
-                        @((MarkupString)$"<span>Other:</span>&nbsp;<span>{FinanceSummaryItem.FundsRequestedOther.ToString("C0")}</span>")
-                    </td>
-                    <td>
-                        @((MarkupString)$"<span>Total:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.FundsReceivedColour}\">{FinanceSummaryItem.GetAllReceived().ToString("C0")}</span>")
-                        <br />
-                        @((MarkupString)$"<span>DI:</span>&nbsp;<span style=\"color:{FinanceSummaryItem.FundsDIColour}\">{FinanceSummaryItem.GetReceivedDI().ToString("C0")}</span>")
-                        <br />
-                        @((MarkupString)$"<span>DA:</span>&nbsp;<span>{FinanceSummaryItem.FundsDA.ToString("C0")}</span>")
-                        <br />
-                        @((MarkupString)$"<span>Other:</span>&nbsp;<span>{FinanceSummaryItem.FundsReceivedOther.ToString("C0")}</span>")
-                    </td>
-                    <td>@FinanceSummaryItem.ListOfFundingSources</td>
                 </tr>
             </tbody>
         </table>

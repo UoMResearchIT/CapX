@@ -1,7 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
 using Microsoft.AspNetCore.Authorization;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
@@ -25,6 +25,8 @@ namespace PPMTool.Pages
             {
                 dataGridEntities = new List<WorkloadModelChange>();
             }
+            EditAuthorised = IsSuperuserOrLineManagerOfThisPerson(personModel);
+            SetDefaultActionBar(HandleValidSubmit, DiscardChanges);
 
             LogInformation($"Viewing workload model changes for {personModel?.Name}");
         }
@@ -52,12 +54,12 @@ namespace PPMTool.Pages
                 if (dataGridEntities.DistinctBy(x => x.ChangeDate).Count() != dataGridEntities.Count())
                 {
                     LogWarning($"Availability change duplicates a change date!");
-                    ErrorMessage = new StatusMessage("You cannot have multiple changes in availability on the same day!", StatusMessage.MessageType.Error);
+                    SetErrorMessage(new StatusMessage("You cannot have multiple changes in availability on the same day!", StatusMessage.MessageType.Error));
                     return;
                 }
                 else
                 {
-                    ErrorMessage = null;
+                    ClearErrorMessage();
                 }
 
                 // Update the person model, save to database, refresh the list and reset the model

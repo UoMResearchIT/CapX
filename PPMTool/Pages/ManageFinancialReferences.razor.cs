@@ -1,9 +1,12 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -24,7 +27,7 @@ namespace PPMTool.Pages
                 .ToList();
 
             // Only superusers can edit financial references
-            EditAuthorised = ActiveUserRoleType == Enums.RoleType.Superuser;
+            EditAuthorised = ActiveUserRoleType == RoleType.Superuser;
             LogInformation($"Viewing finref grid");
         }
 
@@ -46,7 +49,7 @@ namespace PPMTool.Pages
                 dataGridEntities.Remove(entity);
                 dataGrid.Reload();
                 Reset();
-                ErrorMessage = new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error);
+                SetErrorMessage(new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error));
                 return;
             }
             LogInformation($"Added finref {entity.GetSensibleObjectName()}");
@@ -59,7 +62,7 @@ namespace PPMTool.Pages
             if (result == -1)
             {
                 CancelEdit(entity);
-                ErrorMessage = new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error);
+                SetErrorMessage(new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error));
                 return;
             }
             LogInformation($"Updated finref {entity.GetSensibleObjectName()}");

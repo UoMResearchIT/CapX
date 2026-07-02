@@ -1,6 +1,12 @@
-﻿@using PPMTool.Data
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@using PPMTool.Models
 @using PPMTool.Enums
-<div class="card">
+<RadzenCard>
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.SpaceBetween" Gap="1.5rem">
         @if (MainColourScale == ColourScale.Capacity)
         {
@@ -74,7 +80,7 @@
             </RadzenStack>
         }
     </RadzenStack>
-</div>
+</RadzenCard>
 
 @code {
     [Parameter]

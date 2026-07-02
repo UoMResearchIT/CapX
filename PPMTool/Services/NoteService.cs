@@ -1,4 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -6,6 +10,10 @@ namespace PPMTool.Services
 {
     public class NoteService : BaseEntityService<Note>
     {
+        public NoteService(ILogger<NoteService> logger) : base(logger)
+        {
+        }
+
         public override int Add(PPMToolContext context, Note entity, bool commitChanges = true)
         {
             context.Notes.Add(entity);

@@ -1,4 +1,8 @@
-﻿function toggleAutocompletePopup(visible, suggestions, razorComponentReference) {
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+function toggleAutocompletePopup(visible, suggestions, razorComponentReference) {
     console.log('Toggling autocomplete...')
     const magicBar = document.getElementById('magic-bar');
     let popup = document.getElementById('autocomplete-popup');
@@ -11,8 +15,8 @@
             popup = document.createElement('div');
             popup.id = 'autocomplete-popup';
             popup.style.position = 'absolute';
-            popup.style.border = '1px solid #ccc';
-            popup.style.backgroundColor = '#fff';
+            popup.style.border = 'var(--rz-card-border)';
+            popup.style.backgroundColor = 'var(--rz-card-background-color)';
             popup.style.zIndex = '1000';
             popup.style.overflowY = 'auto';
             document.body.appendChild(popup);
@@ -37,7 +41,6 @@
             item.textContent = suggestion;
             item.style.padding = '5px';
             item.style.cursor = 'pointer';
-            item.classList.add('autocomplete-item');
             item.addEventListener('click', () => {
                 if (!popup) return;
                 console.log(`Selected: ${suggestion}`);
@@ -50,6 +53,7 @@
         destroyAutocompletePopup();
     }
 }
+
 function destroyAutocompletePopup() {
     console.log('Hiding autocomplete...')
     let popup = document.getElementById('autocomplete-popup');

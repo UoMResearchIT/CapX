@@ -1,0 +1,108 @@
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@page "/managesettings"
+@inherits DataGridPage<Setting>
+@using PPMTool.Data.Entities
+@using PPMTool.Data.Enums
+@using PPMTool.Pages.Components
+@using Radzen
+
+<PageTitle>Manage Settings - CapX</PageTitle>
+
+<div class="container">
+    <div class="row">
+        <div class="col py-2">
+            <h2>Manage Settings</h2>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col py-2">
+            <RadzenText Text="Manage settings, values, strings and colours used in the app." />
+        </div>
+    </div>
+    @if (ErrorMessage != null)
+    {
+        <StatusMessageComponent Message="ErrorMessage" />
+    }
+    <hr />
+
+    @if (Loading)
+    {
+        <LoadingComponent />
+    }
+    else
+    {
+        @if (dataGridEntities != null)
+        {
+            <RadzenDataGrid @ref="dataGrid"
+                            AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
+                            AllowPaging="false"
+                            EmptyText="No settings to show"
+                            AllowSorting="true"
+                            EditMode="DataGridEditMode.Single"
+                            FilterMode="FilterMode.Simple"
+                            Data="@dataGridEntities"
+                            TItem="Setting"
+                            RowUpdate="@OnUpdateRow"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                <Columns>
+                    <RadzenDataGridColumn TItem="Setting" Property="SettingTypeAsText" Title="Name" MinWidth="10px" Width="15rem" />
+                    <RadzenDataGridColumn TItem="Setting" Property="SettingValue" Title="Value" MinWidth="10px" Width="20rem">
+                        <Template Context="settingView">
+                            @if (settingView.SettingType.IsOrganisationLogo())
+                            {
+                                @if (!string.IsNullOrWhiteSpace(settingView.SettingValue))
+                                {
+                                    
+                                    var backgroundColour = SettingsService.GetSetting(
+                                        settingView.SettingType == SettingType.OrganisationLogoLight ?
+                                        SettingType.AppPrimaryColourLight :
+                                        SettingType.AppPrimaryColourDark,
+                                        "unset"
+                                    );
+                                    <img src="@settingView.SettingValue" alt="Organisational Logo" style="max-width: 18rem; max-height: 10rem; padding: 1rem; background-color: @backgroundColour" />
+                                }
+                            }
+                            else
+                            {
+                                @settingView.SettingValue
+                            }
+                        </Template>
+                        <EditTemplate Context="setting">
+                            @if (setting.SettingType.IsOrganisationLogo())
+                            {
+                                <RadzenFileInput Title="Organisation Logo"
+                                                 Placeholder="Upload your logo..."
+                                                 Accept="image/png"
+                                                 MaxFileSize="@(1024 * 1024)"
+                                                 @bind-Value=@logo
+                                                 TValue="string"
+                                                 Style="width: 100%"
+                                                 InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})"
+                                                 Error="@(args => OnLogoUploadError(args))"/>
+                            }
+                            else
+                            {
+                                <RadzenTextBox class="no-margin" @bind-Value="setting.SettingValue" />
+                            }
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="Setting" Property="Description" Title="Description" MinWidth="10px" Width="35rem" />
+                    <RadzenDataGridColumn TItem="Setting" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
+                        <Template Context="setting">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(setting))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
+                        </Template>
+                        <EditTemplate Context="setting">
+                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(setting))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
+                            <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(setting))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        }
+    }
+</div>

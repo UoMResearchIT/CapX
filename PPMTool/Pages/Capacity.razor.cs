@@ -1,10 +1,16 @@
-﻿using System.Data;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Data;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Data.Helpers;
+using PPMTool.Data.Enums;
 using PPMTool.Enums;
+using PPMTool.Helpers;
+using PPMTool.Models;
 using Radzen;
 
 namespace PPMTool.Pages
@@ -35,6 +41,13 @@ namespace PPMTool.Pages
 
             if (!firstRender) return;
 
+            // Navigate away if feature not enabled
+            if (!FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
+            {
+                Navigation.NavigateTo("people");
+                return;
+            }
+
             // Certain roles can use the dropdowns and save manager settings so need to reload
             if (EditAuthorised || ActiveUserRoleType == RoleType.Reader)
             {
@@ -47,9 +60,6 @@ namespace PPMTool.Pages
                 {
                     await ReloadDropDownSourcesAsync();
                 }
-
-                // Load the chart source based on the current configuration
-                await ConfigureChartSource();
             }
             else
             {
@@ -62,6 +72,9 @@ namespace PPMTool.Pages
                 // Will automatically load the chart source
                 await PeopleSelectionChangedAsync(chosenPeople);
             }
+
+            // Load the chart source based on the current configuration
+            await ConfigureChartSourceAsync();
 
             LogInformation($"Viewing capacity page");
         }
@@ -170,9 +183,7 @@ namespace PPMTool.Pages
             // Reload the people to include just those working on projects that PM manages
             await ReloadDropDownSourcesAsync();
 
-            // Reconfigure the chart
-            await ConfigureChartSource();
-
+            // Log selection
             LogInformation($"Selected manager: {item?.Name}");
         }
 
@@ -195,11 +206,11 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Wrapper for the chart configuration event that sets the optional paramters relevant for this page
+        /// Wrapper for the chart configuration event that sets the optional parameters relevant for this page
         /// </summary>
-        private async Task ConfigureChartSource()
+        private async Task ConfigureChartSourceAsync()
         {
-            await ConfigureChartSource(
+            await ConfigureChartSourceAsync(
                 customChartTitleGenerator: (name) => $"Load for {(!string.IsNullOrEmpty(name) ? name : "All")} {(ManagerChosen() ? " with manager " + ChosenManager.Name : "")}",
                 projectModeCondition: () => ManagerChosen()
             );
@@ -233,20 +244,15 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override IEnumerable<ChartItem> GetPersonModeChartItemsFromAssignments(
             Person person,
-            IEnumerable<BaseAssignment> assignments,
+            IEnumerable<Assignment> assignments,
             DateTime startDate,
             DateTime endDate)
         {
             return ChartHelper.ConvertAssignmentsToChartItems(
                 assignments,
-                (assignments, currentDay) =>
-                {
-                    return assignments.RoundedSum(assignment =>
-                    {
-                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.Name == person.Name);
-                        return resource?.AssignmentFTE ?? 0;
-                    });
-                },
+                // Value 1 function
+                (assignments, currentDay) => assignments.RoundedSum(assignment => assignment.SubTask.GetAssignmentValueForPerson(person)),
+                // Colour function
                 (value1, value2, isHatched) =>
                 {
                     return ChartItem.GetColourStringFTE(value1, value2);
@@ -255,21 +261,14 @@ namespace PPMTool.Pages
                 startDate,
                 endDate,
                 person,
-                assignments =>
-                {
-                    return assignments.Any(assignment =>
-                    {
-                        // If any resources are marked as provisional or the project owning the task
-                        // is not funded, active or in maintenance
-                        return
-                            assignment.ProjectStatus.IsUnconfirmed() ||
-                            ((assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.PersonId == person.PersonId).IsProvisional ?? true);
-                    });
-                },
+                // Hatched function -- If any resources are marked as provisional or the project owning the task is not funded, active or in maintenance i.e. unconfirmed.
+                assignments => assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed() || assignment.SubTask.IsProvisionalResource(person)),
+                // Value 2 function
                 (assignments, value1, currentDay) =>
                 {
                     return person.GetProjectWorkAvailabilityOnDate(currentDay);
                 },
+                // Gap filler function
                 (assignments, gapStart, gapEnd) =>
                 {
                     return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(
@@ -279,7 +278,7 @@ namespace PPMTool.Pages
                         gapEnd,
                         wlm => 0,
                         wlm => wlm?.ProjectWorkFTE ?? 0,
-                        (value1, value2, isHatched) => ChartItem.GetColourStringFTE(value1, value2)
+                        (double value1, double value2, bool isHatched) => ChartItem.GetColourStringFTE(value1, value2)
                     );
                 },
                 assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
@@ -298,7 +297,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
             string seriesName,
-            KeyValuePair<object, IEnumerable<BaseAssignment>> groupedAssignments,
+            KeyValuePair<object, IEnumerable<Assignment>> groupedAssignments,
             DateTime startDate,
             DateTime endDate,
             Person person,
@@ -308,15 +307,7 @@ namespace PPMTool.Pages
             return ChartHelper.ConvertAssignmentsToChartItems(
                 groupedAssignments.Value,
                 // Value 1 for each block
-                (assignments, currentDay) =>
-                {
-                    return assignments.RoundedSum(assignment =>
-                    {
-                        // Value is the effort of the chosen person
-                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.PersonId == person.PersonId);
-                        return resource?.AssignmentFTE ?? 0;
-                    });
-                },
+                (assignments, currentDay) => assignments.RoundedSum(assignment => assignment.SubTask.GetAssignmentValueForPerson(person)),
                 // Colour function
                 (value1, value2, isHatched) =>
                 {
@@ -329,18 +320,7 @@ namespace PPMTool.Pages
                 // Providing the person truncates the blocks to the person's start and end dates which we want for the total row
                 person: isTotalRow ? person : null,
                 // Hatched function
-                hatchedFunction: assignments =>
-                {
-                    return assignments.Any(assignment =>
-                    {
-                        // Get the set of resources to check the condition against
-                        var resource = (assignment as Assignment)?.SubTask.AssignedResources.First(x => x.Person.PersonId == person.PersonId);
-
-                        // If resource is marked as provisional or the project owning the task
-                        // is not funded, active or in maintenance
-                        return assignment.ProjectStatus.IsUnconfirmed() || resource.IsProvisional;
-                    });
-                },
+                hatchedFunction: assignments => assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed() || assignment.SubTask.IsProvisionalResource(person)),
                 // Value 2 for each block
                 value2Function: (assignments, value1, currentDay) =>
                 {
@@ -362,10 +342,10 @@ namespace PPMTool.Pages
                         messages += $"PM: {projectForRow.ProjectManager?.Name ?? "Not Set"}";
 
                         // Check whether this project has unmet demand on the tasks to which this person is assigned
-                        var assignedWithinBlockWithChosenPerson = assignmentsWithinBlock.Where(x => (x as Assignment)?.SubTask.AssignedResources.Any(x => x.Person.PersonId == person.PersonId) ?? false);
-                        if (assignedWithinBlockWithChosenPerson.Any(x => (x as Assignment)?.SubTask.HasUnmetDemand() ?? false))
+                        var assignedWithinBlockWithChosenPerson = assignmentsWithinBlock.Where(x => x?.SubTask.AssignedResources.Any<Resource>(x => x.Person.PersonId == person.PersonId) ?? false);
+                        if (assignedWithinBlockWithChosenPerson.Any(x => x?.SubTask.HasUnmetDemand() ?? false))
                         {
-                            var unmetDemand = assignedWithinBlockWithChosenPerson.RoundedSum(x => (x as Assignment)?.SubTask.UnmetDemand ?? 0);
+                            var unmetDemand = assignedWithinBlockWithChosenPerson.RoundedSum(x => x?.SubTask.UnmetDemand ?? 0);
                             messages += $"<h3 class=\"me-1 text-danger\"> &#x26A0; [UNMET DEMAND ({unmetDemand} FTE)]</h3>";
                         }
                     }
@@ -386,12 +366,12 @@ namespace PPMTool.Pages
         /// <param name="personOfInterest"></param>
         /// <param name="messages"></param>
         /// <returns></returns>
-        protected override string GenerateTooltipMessages(IEnumerable<BaseAssignment> assignmentsWithinBlock, Person personOfInterest, string messages)
+        protected override string GenerateTooltipMessages(IEnumerable<Assignment> assignmentsWithinBlock, Person personOfInterest, string messages)
         {
             messages = base.GenerateTooltipMessages(assignmentsWithinBlock, personOfInterest, messages);
 
             // Add the provisional resource warning to the tooltip if chosen person is provisional on the project
-            if (assignmentsWithinBlock.Any(x => (x as Assignment)?.SubTask.AssignedResources.Any(x => x.Person.PersonId == personOfInterest.PersonId && x.IsProvisional) ?? true))
+            if (assignmentsWithinBlock.Any(x => x?.SubTask.AssignedResources.Any(x => x.Person.PersonId == personOfInterest.PersonId && x.IsProvisional) ?? true))
             {
                 messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>";
             }

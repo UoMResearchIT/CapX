@@ -1,4 +1,10 @@
-﻿@page "/people/addavailabilitychange/{PersonId:int}"
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@page "/people/addavailabilitychange/{PersonId:int}"
 @inherits AddPersonProperty<WorkloadModelChange>
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
@@ -10,24 +16,17 @@
         <h1>Workload Model Changes</h1>
         <RadzenText Text="@personModel.Name" TextStyle="TextStyle.DisplayH5" />
         <hr />
-        <div class="card">
-            <EditForm Model="@personModel" OnValidSubmit="@HandleValidSubmit">
+        <RadzenCard>
+            <EditForm Model="@personModel">
                 <DataAnnotationsValidator />
-                <ValidationSummary />
                 <div class="row">
-                    <div class="col">
-                        <h2>Current Changes to Default Availability</h2>
-                    </div>
-                    <div class="col-auto" style="align-content: center">
-                        <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || !IsSuperuserOrLineManagerOfThisPerson(personModel)) />
+                    <div class="col align-content-center mb-2">
+                        <RadzenButton class="float-right" Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || !EditAuthorised) />
                     </div>
                 </div>
                 <RadzenDataGrid @ref="dataGrid"
                                 AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
-                                AllowPaging="true"
-                                PageSize="15"
                                 AllowSorting="true"
-                                ShowPagingSummary="true"
                                 EditMode="DataGridEditMode.Single"
                                 FilterMode="FilterMode.Simple"
                                 Data="@dataGridEntities"
@@ -44,61 +43,61 @@
                                 <RadzenDatePicker @bind-Value="c.ChangeDate" ShowTime="false" DateFormat="dd/MM/yyyy" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="Grade" Title="Grade" Width="80px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="Grade" Title="Grade" Width="7rem" MinWidth="10px">
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="int" Min="4" Step="1" Max="9" @bind-Value="c.Grade" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectWorkFTE" Title="Project" Width="80px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectWorkFTE" Title="Project" Width="7rem" MinWidth="10px">
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ProjectWorkFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="BusinessAsUsualFTE" Title="BAU" Width="80px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="BusinessAsUsualFTE" Title="BAU" Width="7rem" MinWidth="10px">
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.BusinessAsUsualFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="PersonalDevelopmentFTE" Title="PD" Width="80px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="PersonalDevelopmentFTE" Title="PD" Width="7rem" MinWidth="10px">
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.PersonalDevelopmentFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="StaffManagementFTE" Title="Staff" Width="80px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="StaffManagementFTE" Title="Staff" Width="7rem" MinWidth="10px">
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.StaffManagementFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectManagementFTE" Title="PM" Width="80px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectManagementFTE" Title="PM" Width="7rem" MinWidth="10px">
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ProjectManagementFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ServiceManagementFTE" Title="SM" Width="80px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ServiceManagementFTE" Title="SM" Width="7rem" MinWidth="10px">
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ServiceManagementFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectAndServiceManagementFTE" Title="PSM" Width="80px" MinWidth="10px" />
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ArchitectureFTE" Title="RSA" Width="80px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectAndServiceManagementFTE" Title="PSM" Width="7rem" MinWidth="10px" />
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ArchitectureFTE" Title="Tech Lead" Width="7rem" MinWidth="10px">
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ArchitectureFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Title="Total" Width="80px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Title="Total" Width="7rem" MinWidth="10px">
                             <Template Context="c">
                                 @c.Total().ToString("F1")
                             </Template>
                             </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="Notes" Title="Notes" Width="350px" MinWidth="10px">
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="Notes" Title="Notes" Width="30rem" MinWidth="10px">
                             <EditTemplate Context="c">
-                                <RadzenTextBox class="no-margin" TValue="string" @bind-Value="c.Notes" />
+                                <RadzenTextBox class="no-margin" @bind-Value="c.Notes" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Filterable="false" Sortable="false" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
                             <Template Context="c">
-                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="@(!IsSuperuserOrLineManagerOfThisPerson(personModel))" />
-                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="@(!IsSuperuserOrLineManagerOfThisPerson(personModel))" />
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="@(!EditAuthorised)" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(c))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="@(!EditAuthorised)" />
                             </Template>
                             <EditTemplate Context="c">
                                 <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(c))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
@@ -107,19 +106,7 @@
                         </RadzenDataGridColumn>
                     </Columns>
                 </RadzenDataGrid>
-                <hr />
-                <div class="row">
-                    <div class="col">
-                        <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="check" Disabled="@(!IsSuperuserOrLineManagerOfThisPerson(personModel))" />
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="DiscardChanges" Text="Discard" Icon="close" />
-                    </div>
-                </div>
-                @if (ErrorMessage != null)
-                {
-                    <br />
-                    <StatusMessageComponent Message=@ErrorMessage />
-                }
             </EditForm>
-        </div>
+        </RadzenCard>
     }
 </div>

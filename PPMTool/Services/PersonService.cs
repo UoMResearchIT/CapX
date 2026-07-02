@@ -1,4 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -6,11 +10,11 @@ namespace PPMTool.Services
 {
     public class PersonService : BaseEntityService<Person>
     {
-        /// <summary>
-        /// Adds a person to the DB.
-        /// </summary>
-        /// <param name="personModel"></param>
-        /// <returns>False if an entry with the same name exists already.</returns>
+        public PersonService(ILogger<PersonService> logger) : base(logger)
+        {
+        }
+
+        /// <inheritdoc />
         public override int Add(PPMToolContext context, Person personModel, bool commitChanges = true)
         {
             if (DuplicateDetected(context, personModel))
@@ -37,7 +41,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, Person entity)
         {
-            return context.People.Any(p => p.Name.ToLower().Trim() == entity.Name.ToLower().Trim() && p.PersonId != entity.PersonId);
+            return context.People.Any(p => p.Name.Trim().ToLower() == entity.Name.Trim().ToLower() && p.PersonId != entity.PersonId);
         }
 
         /// <summary>
@@ -48,13 +52,10 @@ namespace PPMTool.Services
         /// <returns></returns>
         public bool DuplicateInitialsDetected(PPMToolContext context, Person entity)
         {
-            return context.People.Any(p => p.ShortName.ToLower().Trim() == entity.ShortName.ToLower().Trim() && p.PersonId != entity.PersonId);
+            return context.People.Any(p => p.ShortName.Trim().ToLower() == entity.ShortName.Trim().ToLower() && p.PersonId != entity.PersonId);
         }
 
-        /// <summary>
-        /// Get all the people
-        /// </summary>
-        /// <returns></returns>
+        /// <inheritdoc />
         public override IEnumerable<Person> GetAll(PPMToolContext context)
         {
             return context.People
@@ -88,11 +89,7 @@ namespace PPMTool.Services
             return GetAll(context).FirstOrDefault(x => x.PersonId == personId);
         }
 
-        /// <summary>
-        /// Update an exist person in the DB
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="personModel"></param>
+        /// <inheritdoc />
         public override int Update(PPMToolContext context, Person personModel, bool commitChanges = true)
         {
             if (DuplicateDetected(context, personModel))
@@ -116,6 +113,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="entity"></param>
+        /// <param name="commitChanges"></param>
         public override void Delete(PPMToolContext context, Person entity, bool commitChanges = true)
         {
             // Set project manager on all projects owned by person to null
@@ -182,7 +180,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal IEnumerable<Person> GetManagedStaff(PPMToolContext context, Person activeUser)
         {
-            return context.People.Where(x => activeUser == null ? false : x.LineManager.PersonId == activeUser.PersonId);
+            return context.People.Where(x => activeUser != null && x.LineManager != null && x.LineManager.PersonId == activeUser.PersonId);
         }
 
         /// <summary>
@@ -196,6 +194,69 @@ namespace PPMTool.Services
             return context.WorkloadModelChanges
                 .Include(x => x.Person)
                 .Where(x => x.Person.PersonId == personId);
+        }
+
+        /// <summary>
+        /// Get the people who are actively employed during the window given (inclusive dates)
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        internal async Task<IList<Person>> GetEmployedPeopleShallowAsync(PPMToolContext context, DateTime startDate, DateTime endDate)
+        {
+            var people = await GetAllShallowAsync(context);
+            return people
+                .Where(x => x.StartDate <= endDate && (x.EndDate == null || x.EndDate >= startDate))
+                .ToList();
+        }
+
+        /// <summary>
+        /// Get all people who have a Project Management allowance during the given window
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        public IEnumerable<Person> GetPeopleWithProjectManagementAllowanceDuringWindow(PPMToolContext context, DateTime startDate, DateTime endDate)
+        {
+            var employedPeople = context.People
+                .Where(x => x.StartDate.Date <= endDate && (x.EndDate == null || x.EndDate.Value.Date >= startDate))
+                .ToList();
+
+            return employedPeople
+                .Where(person =>
+                {
+                    // Get all WLM changes for this person ordered by date descending
+                    var allWlmChanges = context.WorkloadModelChanges
+                        .Where(w => w.Person.PersonId == person.PersonId)
+                        .OrderByDescending(w => w.ChangeDate)
+                        .ToList();
+
+                    // If none then return
+                    if (!allWlmChanges.Any())
+                        return false;
+
+                    // Get the last change before the window starts (applies at window start)
+                    var changeBeforeWindow = allWlmChanges
+                        .Where(w => w.ChangeDate.Date < startDate)
+                        .FirstOrDefault();
+
+                    // Get all changes that occur during the window
+                    var changesInWindow = allWlmChanges
+                        .Where(w => w.ChangeDate.Date >= startDate && w.ChangeDate.Date <= endDate)
+                        .ToList();
+
+                    // Concat them all into a single range
+                    var relevantChanges = new List<WorkloadModelChange>();
+                    if (changeBeforeWindow != null)
+                        relevantChanges.Add(changeBeforeWindow);
+                    relevantChanges.AddRange(changesInWindow);
+
+                    // Return true if any relevant change has Project Management allowance
+                    return relevantChanges.Any(w => w.ProjectManagementFTE > 0);
+                })
+                .ToList();
         }
     }
 }

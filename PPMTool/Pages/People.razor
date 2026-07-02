@@ -1,6 +1,12 @@
-﻿@page "/people"
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@page "/people"
 @inherits BasePage
-@using PPMTool.Enums
+@using PPMTool.Data.Enums
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
 <PageTitle>People - CapX</PageTitle>
@@ -19,7 +25,7 @@
         </div>
     </div>
     <hr />
-    <div class="card">
+    <RadzenCard>
         @if (Loading)
         {
             <LoadingComponent />
@@ -57,8 +63,8 @@
                             </span>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" Width="80px" FilterOperator="FilterOperator.StartsWith" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Person" Property="LineManager" Title="Line Manager" Filterable="false" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="Person" Property="ShortName" Title="Initials" Width="80px" FilterOperator="FilterOperator.Contains" MinWidth="10px" />
+                    <RadzenDataGridColumn TItem="Person" Property="LineManager.Name" Title="Line Manager" FilterProperty="LineManager.Name" SortProperty="LineManager.Name" MinWidth="10px">
                         <Template Context="p">
                             <span style="display: flex; align-items: center">
                                 @if (p.LineManager?.IsCurrentlyAbsent() ?? false)
@@ -69,28 +75,32 @@
                             </span>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" Width="80px" FormatString="{0:d}" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Person" Property="EndDate" Title="Left" Width="80px" FormatString="{0:d}" MinWidth="10px" />
-                    <RadzenDataGridColumn TItem="Person" Property="WorkloadModelChanges" Title="Current Project Work FTE" Width="50px" MinWidth="10px" Sortable="false">
+                    <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" Width="80px" FormatString="{0:d}" MinWidth="10px" Filterable="false" />
+                    <RadzenDataGridColumn TItem="Person" Property="EndDate" Title="Left" Width="80px" FormatString="{0:d}" MinWidth="10px" Filterable="false" />
+                    <RadzenDataGridColumn TItem="Person" Property="WorkloadModelChanges" Title="Current Project Work FTE" Width="50px" MinWidth="10px" Sortable="false" Filterable="false">
                         <Template Context="p">
                             @p.WorkloadModelChanges.Where(x => x.ChangeDate <= DateTime.Today).OrderBy(x => x.ChangeDate).LastOrDefault()?.ProjectWorkFTE
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Person" Property="WorkloadModelChanges" Title="Current Grade" Width="50px" MinWidth="10px" Sortable="false">
+                    <RadzenDataGridColumn TItem="Person" Property="CurrentGrade" Title="Current Grade" Width="50px" MinWidth="10px" Sortable="false" TextAlign="TextAlign.Center">
                         <Template Context="p">
-                            @p.WorkloadModelChanges.Where(x => x.ChangeDate <= DateTime.Today).OrderBy(x => x.ChangeDate).LastOrDefault()?.Grade
+                            @p.CurrentGrade
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills" Sortable="false" MinWidth="10px">
-                        <Template Context="p">
-                            @string.Join(", ", p.OwnedSkills.Select(t => t.SkillTag.Name).OrderBy(x => x))
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="Person" Property="SkillsCount" Title="Skill Count" Width="3rem" MinWidth="10px">
-                        <Template Context="p">
-                            @TagService.GetCountForPerson(Context, p.PersonId).ToString()
-                        </Template>
-                    </RadzenDataGridColumn>
+                    @if (skillsEnabled)
+                    {
+                        <RadzenDataGridColumn TItem="Person" Property="SkillTags" Title="Skills" Sortable="false" MinWidth="10px">
+                            <Template Context="p">
+                                @string.Join(", ", p.OwnedSkills.Select(t => t.SkillTag.Name).OrderBy(x => x))
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="Person" Property="SkillsCount" Title="Skill Count" Width="3rem" MinWidth="10px" Filterable="false">
+                            <Template Context="p">
+                                @TagService.GetCountForPerson(Context, p.PersonId).ToString()
+                            </Template>
+                        </RadzenDataGridColumn>
+                    }
                     <RadzenDataGridColumn TItem="Person" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                         <Template Context="p">
                             <EditOrViewButtonComponent CanViewOnly="@(ActiveUser?.Person?.PersonId == p.PersonId || (ActiveUserRoleType == RoleType.Manager && !IsSuperuserOrLineManagerOfThisPerson(p)))"
@@ -102,5 +112,5 @@
                 </Columns>
             </RadzenDataGrid>
         }
-    </div>
+    </RadzenCard>
 </div>

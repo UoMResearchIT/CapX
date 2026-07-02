@@ -1,5 +1,5 @@
 # GitHub Actions Workflow: Check Repository Ruleset
-# 
+#
 # This workflow ensures that the repository's branch protection rules
 # match the expected ruleset defined in the template repository.
 #
@@ -28,31 +28,18 @@ name: Check Repository Ruleset
 
 on:
   push:
-    branches:
-      - main
+    branches: [dev]
   pull_request:
 
+permissions:
+  contents: read
 jobs:
-  check-ruleset:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Fetch Standard RSE Ruleset
-        id: expected
-        uses: UoMResearchIT/actions/get-repo-ruleset@v0.3
-        with:
-          repository: UoMResearchIT/RSE-Repository-Template
-          token: ${{ secrets.ACTIONS_REPO_TOKEN || secrets.GITHUB_TOKEN }}
-
-      - name: Fetch This Repository's Ruleset
-        id: current
-        uses: UoMResearchIT/actions/get-repo-ruleset@v0.3
-
-      - name: Compare Rulesets
-        uses: UoMResearchIT/actions/check-ruleset-containment@v0.3
-        with:
-          current: ${{ steps.current.outputs.filename }}
-          expected: ${{ steps.expected.outputs.filename }}
+  check:
+    if: github.repository_owner == 'UoMResearchIT'
+    name: Check Ruleset
+    uses: UoMResearchIT/actions/.github/workflows/check-ruleset.yaml@c1106820e385a14b9cfa3c4682b1a1ac11354968 # main
+    with:
+      bot-id: ${{ vars.ORG_ACTIONS_BOT_APP_ID }}
+      ignore: '["require_code_owner_review"]'
+    secrets:
+      bot-key: ${{ secrets.ORG_ACTIONS_BOT_PRIVATE_KEY }}

@@ -1,8 +1,12 @@
-﻿using Blazored.SessionStorage;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 using Radzen;
 
@@ -43,7 +47,7 @@ namespace PPMTool.Pages
                     if (initialLoadComplete)
                     {
                         Loading = true;
-                        EnqueueLoadData(GenerateTask);
+                        _ = LoadDataAsync();
                     }
                 }
             }
@@ -62,7 +66,7 @@ namespace PPMTool.Pages
                     if (initialLoadComplete)
                     {
                         Loading = true;
-                        EnqueueLoadData(GenerateTask);
+                        _ = LoadDataAsync();
                     }
                 }
             }
@@ -96,7 +100,7 @@ namespace PPMTool.Pages
                     if (initialLoadComplete)
                     {
                         Loading = true;
-                        EnqueueLoadData(GenerateTask);
+                        _ = LoadDataAsync();
                     }
                 }
             }
@@ -122,37 +126,12 @@ namespace PPMTool.Pages
             if (temp != null) ShowSynopsis = temp ?? true;
             temp = await SessionStorage.GetItemAsync<bool?>("timesheets-superuser-showall");
             if (temp != null) SuperuserShowSynopsisForAllStaff = temp ?? true;
-            EnqueueLoadData(GenerateTask);
-        }
-
-        /// <summary>
-        /// Generates a task to load data
-        /// </summary>
-        /// <returns></returns>
-        private Task GenerateTask()
-        {
-            // TODO: Do away with this and just use the async/await on the main thread
-            return Task.Run(async () =>
-            {
-                await LoadDataAsync();
-            }).ContinueWith(t =>
-            {
-                InvokeAsync(() =>
-                {
-                    if (!initialLoadComplete)
-                    {
-                        initialLoadComplete = true;
-                    }
-                    Loading = false;
-                    StateHasChanged();
-                });
-            });
+            await LoadDataAsync();
         }
 
         /// <summary>
         /// Load in the timesheet data from the service
         /// </summary>
-        /// <param name="showAll"></param>
         private async Task LoadDataAsync()
         {
             // Get ALL timesheets for the user, then filter stuff out based the state of the ShowAll switch. 
@@ -221,6 +200,14 @@ namespace PPMTool.Pages
                 // Order the list, whatever it holds (but remove any New items as these haven't been submitted by the staff member yet!)
                 myStaffTimesheets = myStaffTimesheets.Where(t => t.Status != TimesheetStatus.New).OrderByDescending(t => t.StartDate).ToList();
             }
+
+            // Finish off
+            if (!initialLoadComplete)
+            {
+                initialLoadComplete = true;
+            }
+            Loading = false;
+            StateHasChanged();
         }
 
         /// <summary>

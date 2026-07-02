@@ -1,14 +1,21 @@
-﻿using System.Data;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Data;
 using System.Diagnostics;
 using System.Net.Mail;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Services
 {
+    /// <summary>
+    /// Service offering email sending capabilities
+    /// </summary>
     public class EmailService
     {
         public EmailService(
@@ -32,15 +39,17 @@ namespace PPMTool.Services
         public ProjectService ProjectService { get; }
         public UserService UserService { get; }
         public PersonService PersonService { get; }
-
         public IDbContextFactory<PPMToolContext> DbContextFactory { get; }
         public ILogger Logger { get; }
 
-        public void SendEmail(IEnumerable<string> to, string subject, string message)
+        /// <summary>
+        /// Send an email to the recipient provided.
+        /// </summary>
+        /// <param name="to"></param>
+        /// <param name="subject"></param>
+        /// <param name="message"></param>
+        public void SendEmail(string to, string subject, string message)
         {
-
-            var client = new SmtpClient(Configuration["Email:SmtpServer"]);
-
             var mailMessage = new MailMessage
             {
                 From = new MailAddress(Configuration["Email:From"]),
@@ -48,216 +57,274 @@ namespace PPMTool.Services
                 Body = message,
                 IsBodyHtml = true,
             };
+            mailMessage.To.Add(to);
 
-            foreach (var recipient in to)
-            {
-                mailMessage.To.Add(recipient);
-            }
+            Logger.LogInformation($"Sending email to {to}, subject {mailMessage.Subject}");
 
-            Logger.LogInformation($"Sending email to {string.Join(',', mailMessage.To)}, subject {mailMessage.Subject}");
-#if !LOCAL
-            try
+#if RELEASE
+            // Launch a background task to do the sending
+            Task.Run(() =>
             {
-                client.Send(mailMessage);
-            }
-            catch (Exception e)
-            {
-                Logger.LogError($"Failed to send email to {string.Join(',', mailMessage.To)}, subject {mailMessage.Subject}:\n{e}");
-            }
+                try
+                {
+                    // Send
+                    using var client = new SmtpClient(Configuration["Email:SmtpServer"]);
+                    client.Send(mailMessage);
+                }
+                catch (Exception e)
+                {
+                    Logger.LogInformation($"Failed to send email to {to}, subject {mailMessage.Subject}");
+                }
+            });
 #endif
         }
 
-        public void SendTimesheetSubmissionEmailNotification(Person staff, Timesheet timesheet)
+        /// <summary>
+        /// Send a timesheet submission email notification to the staff member's line manager
+        /// </summary>
+        /// <param name="staff"></param>
+        /// <param name="timesheet"></param>
+        public async Task SendTimesheetSubmissionEmailNotificationAsync(Person staff, Timesheet timesheet)
         {
             List<string> recipients = new List<string>();
 
-            Task.Run(() =>
+            // Run a background thread to do the sending and updating
+            await Task.Run(async () =>
             {
-                // Create context and get relevant details for the email
-                using (var context = DbContextFactory.CreateDbContext())
+                try
                 {
-                    Person lineManager = staff.LineManager;
-
-                    if (lineManager != staff) // No point in AH emailing himself about his timesheet. :)
+                    // Create context and get relevant details for the email
+                    using (var context = DbContextFactory.CreateDbContext())
                     {
-                        User lineManagerUser = UserService.GetAll(context).First(p => p.Person.PersonId == lineManager.PersonId);
-                        string lineManagerEmailAddress = (string.IsNullOrWhiteSpace(lineManagerUser.EmailAddress) ? $"{lineManagerUser.CASUserName}@manchester.ac.uk" : lineManagerUser.EmailAddress);
-                        recipients.Add(lineManagerEmailAddress);
+                        Person lineManager = staff.LineManager;
 
-                        // Create email
-                        var subject = $"{Configuration["Email:TimesheetSubmissionEmailSubject"]}. {staff.ShortName} [{timesheet.StartDate.ToString("dd/MM/yy")}]";
+                        if (lineManager != staff) // No point emailing someone about their own timesheet if they are their own line manager. :)
+                        {
+                            User lineManagerUser = UserService.GetAll(context).First(p => p.Person.PersonId == lineManager.PersonId);
+                            var lineManagerEmailAddresses = lineManagerUser.GetNormalisedEmailAddresses();
+                            if (lineManagerEmailAddresses.Any())
+                            {
+                                foreach (var lineManagerEmailAddress in lineManagerEmailAddresses)
+                                {
+                                    recipients.Add(lineManagerEmailAddress);
+                                }
+                            }
 
-                        StringBuilder body = new StringBuilder();
-                        body.Append($"<p>Dear {lineManager.Name},</p>");
-                        body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailBody"]} by {staff.Name} for the week commencing {timesheet.StartDate.ToString("dd/MM/yy")}.</p>");
-                        body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailEndBody"]}</p>");
-                        body.Append($"<p><a href=\"{Configuration["Authentication:HostUrl"]}/timesheets/addtimesheet/{timesheet.TimesheetId.ToString()}\">Review this timesheet on CapX</a></p>");
-                        body.Append("<p><em>Sent from CapX</em></p>");
+                            // Only build the email and send it if there are any email addresses
+                            if (recipients.Any())
+                            {
+                                // Create email
+                                var subject = $"{Configuration["Email:TimesheetSubmissionEmailSubject"]}. {staff.ShortName} [{timesheet.StartDate.ToString("dd/MM/yy")}]";
 
-                        // Send email
-                        Debug.WriteLine($"** Sending Timesheet Submission email to {lineManagerEmailAddress}");
-                        SendEmail(recipients, subject, body.ToString());
+                                StringBuilder body = new StringBuilder();
+                                body.Append($"<p>Dear {lineManager.Name},</p>");
+                                body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailBody"]} by {staff.Name} for the week commencing {timesheet.StartDate.ToString("dd/MM/yy")}.</p>");
+                                body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailEndBody"]}</p>");
+                                body.Append($"<p><a href=\"{Configuration["Authentication:HostUrl"]}/timesheets/addtimesheet/{timesheet.TimesheetId.ToString()}\">Review this timesheet on CapX</a></p>");
+                                body.Append("<p><em>Sent from CapX</em></p>");
+
+                                // Send email
+                                Debug.WriteLine($"** Sending Timesheet Submission email to {string.Join("|", recipients)}");
+                                foreach (var recipient in recipients)
+                                {
+                                    SendEmail(recipient, subject, body.ToString());
+                                    await Task.Delay(1000);
+                                }
+                            }
+                        }
                     }
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError($"Timesheet email failure: {e}");
                 }
             });
         }
 
-        public void SendAbsenceEmailNotifications(IEnumerable<Absence> newAbsences, IEnumerable<IGrouping<Absence, EntityDiff<Absence>>> modifiedAbsences, Dictionary<int, Absence> deletedAbsences)
+        /// <summary>
+        /// Send absence email notifications to relevant project managers
+        /// </summary>
+        /// <param name="personId">Manually supply the person ID as deletion may not have this info any more</param>
+        /// <param name="newAbsences"></param>
+        /// <param name="modifiedAbsences"></param>
+        /// <param name="deletedAbsences"></param>
+        public async Task SendAbsenceEmailNotificationsAsync(
+            int personId,
+            IEnumerable<Absence> newAbsences,
+            IEnumerable<IGrouping<Absence, EntityDiff<Absence>>> modifiedAbsences,
+            IEnumerable<Absence> deletedAbsences)
         {
-            Task.Run(() =>
+            // Run this task on a background thread
+            await Task.Run(async () =>
             {
-                // Create context and get people for lookup
-                using (var context = DbContextFactory.CreateDbContext())
+                try
                 {
-                    var people = UserService.GetAll(context).Select(x => x.Person).DistinctBy(x => x.Name);
-
-                    // Get various lists of relevant info
-                    var allUpdatedAbsences = newAbsences.Concat(modifiedAbsences.Select(x => x.Key)).Concat(deletedAbsences.Values);
-                    var updatedAbsentPeople = allUpdatedAbsences.Select(x => x.Person).Distinct();
-
-                    // Find projects where they have subtasks affected by the absence
-                    var affectedProjects = ProjectService.GetAll(context).Where(x => x.SubTasks.Any(x =>
+                    // Create context and get people for lookup
+                    using (var context = DbContextFactory.CreateDbContext())
                     {
-                        foreach (var absence in allUpdatedAbsences)
+                        // Get all people who are in the user list
+                        var people = UserService
+                            .GetAll(context)
+                            .Select(x => x.Person)
+                            .Where(p => p != null)
+                            .DistinctBy(x => x.Name);
+
+                        // Get name of the affected person
+                        var absentPerson = people.FirstOrDefault(x => x.PersonId == personId);
+                        var name = absentPerson?.Name;
+
+                        // Get various lists of relevant info
+                        var allUpdatedAbsences = newAbsences.Concat(modifiedAbsences.Select(x => x.Key)).Concat(deletedAbsences);
+
+                        // Find projects where they have subtasks affected by the absence
+                        var affectedProjects = ProjectService.GetAll(context).Where(x => x.SubTasks.Any(x =>
                         {
-                            // If a deletion, need to provide a person ID
-                            var kvp = deletedAbsences.FirstOrDefault(x => x.Value == absence);
-                            int? id = kvp.Key == 0 ? null : kvp.Key;
-                            if (x.IsAffectedByAbsence(absence, id))
-                            {
-                                return true;
-                            }
-                        }
-                        return false;
-                    }));
-
-                    // Get affected PMs
-                    var affectedPMs = affectedProjects.Select(x => x.ProjectManager).Distinct().ToList();
-
-                    // If any affected PM is currently absent then notify all PMs
-                    var managersToNotify = UserService.GetAll(context).Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser).Select(x => x.Person).DistinctBy(x => x.Name);
-                    var currentPMAbsences = PersonService.GetAbsencesForPeople(context, affectedPMs).Where(x => x.IsCurrentAbsence());
-
-                    // Just need to notify the affected if there are no affected PMs who are absent at the moment
-                    if (currentPMAbsences.Count() == 0)
-                    {
-                        managersToNotify = affectedPMs;
-                    }
-
-                    // Ensure superusers are in the list in any case
-                    var superusers = UserService.GetAll(context).Where(x => x.RoleType == RoleType.Superuser).Select(x => x.Person).DistinctBy(x => x.Name);
-                    foreach (var su in superusers)
-                    {
-                        if (!affectedPMs.Contains(su))
-                        {
-                            affectedPMs.Add(su);
-                        }
-                    }
-
-                    // For each manager to notify
-                    foreach (var pm in managersToNotify)
-                    {
-                        // Create email body
-                        StringBuilder body = new StringBuilder();
-                        body.Append($"<p>Dear {pm.Name},</p>");
-                        body.Append($"<p>{(affectedPMs.Contains(pm) ? Configuration["Email:AbsenceEmailBody"] : Configuration["Email:AbsenceEmailBodyNotAffected"])}</p>");
-
-                        // Initialise a list of absences have been previously mentioned
-                        var mentionedAbsences = new List<Absence>();
-
-                        // Get affected projects owned by this person
-                        var myProjects = affectedProjects.Where(x => x.ProjectManager == pm);
-
-                        // Loop over the projects
-                        foreach (var project in myProjects)
-                        {
-                            // Find absences related to this project
-                            var relevantAbsences = new List<Absence>();
                             foreach (var absence in allUpdatedAbsences)
                             {
-                                var kvp = deletedAbsences.FirstOrDefault(x => x.Value == absence);
-                                int? id = kvp.Key == 0 ? null : kvp.Key;
-                                if (project.SubTasks.Any(x => x.IsAffectedByAbsence(absence, id)))
+                                if (x.IsAffectedByAbsence(absence, personId))
                                 {
-                                    relevantAbsences.Add(absence);
+                                    return true;
+                                }
+                            }
+                            return false;
+                        }));
+
+                        // Get affected PMs based on projects they currently own
+                        var affectedPMs = affectedProjects.Select(x => x.ProjectManager).Distinct().ToList();
+
+                        // Get all PMs based on their current WLM
+                        var managersToNotify = UserService
+                            .GetAll(context)
+                            .Where(x => x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
+                            .Select(x => x.Person)
+                            .DistinctBy(x => x.Name)
+                            .Where(x => x.GetWorkloadModelOnDate(DateTime.Today)?.ProjectManagementFTE > 0);
+
+                        // Check to see whether any PMs are currently absent
+                        var currentPMAbsences = PersonService
+                            .GetAbsencesForPeople(context, affectedPMs)
+                            .Where(x => x.IsCurrentAbsence());
+
+                        // Just need to notify the affected if there are no affected PMs who are absent at the moment
+                        // Otherwise leave the managers to notfy as all PMs
+                        if (currentPMAbsences.Count() == 0)
+                        {
+                            managersToNotify = affectedPMs;
+                        }
+                        // Log that we are choosing to notify all managers due to the current absence of at least one affected PM
+                        else
+                        {
+                            Logger.LogInformation($"Following affected PMs are currently absent. Notifying all managers... {string.Join(", ", currentPMAbsences.Select(x => $"{x.Person.Name} ({x.StartDate.ToShortDateString()} to {x.EndDate?.ToShortDateString() ?? "present"})"))}");
+                        }
+
+                        // Do not notify a manager if it is their own absence
+                        if (managersToNotify.Any(x => x.PersonId == personId))
+                        {
+                            managersToNotify = managersToNotify.Where(x => x.PersonId != personId).ToList();
+                        }
+
+                        // For each manager to notify
+                        foreach (var pm in managersToNotify)
+                        {
+                            // Create email body
+                            StringBuilder body = new StringBuilder();
+                            body.Append($"<p>Dear {pm.Name},</p>");
+                            body.Append($"<p>{(affectedPMs.Any(x => x.PersonId == pm.PersonId) ? Configuration["Email:AbsenceEmailBody"] : Configuration["Email:AbsenceEmailBodyNotAffected"])}</p>");
+
+                            // Initialise a list of absences have been previously mentioned
+                            var mentionedAbsences = new List<Absence>();
+
+                            // Get affected projects owned by this person
+                            var myProjects = affectedProjects.Where(x => x.ProjectManager?.PersonId == pm?.PersonId);
+
+                            // Loop over the projects
+                            foreach (var project in myProjects)
+                            {
+                                // Find absences related to this project
+                                var relevantAbsences = new List<Absence>();
+                                foreach (var absence in allUpdatedAbsences)
+                                {
+                                    if (project.SubTasks.Any(x => x.IsAffectedByAbsence(absence, personId)))
+                                    {
+                                        relevantAbsences.Add(absence);
+                                    }
+                                }
+
+                                // Add to email for this project
+                                if (relevantAbsences.Count > 0)
+                                {
+                                    body.Append($"<h4>{ProjectService.GetFullName(project)}</h4>");
+                                    foreach (var ab in relevantAbsences)
+                                    {
+                                        // Add to the mentioned absences if not already there
+                                        if (!mentionedAbsences.Contains(ab))
+                                        {
+                                            mentionedAbsences.Add(ab);
+                                        }
+
+                                        // Decide on the state of the absence
+                                        var state = GetAbsenceState(ab, newAbsences, modifiedAbsences, deletedAbsences);
+
+                                        // Write absence info
+                                        body.Append(GetFormattedAbsenceLine(ab, state, name));
+
+                                    }
                                 }
                             }
 
-                            // Add to email for this project
-                            if (relevantAbsences.Count > 0)
+                            // Any absences that remain in the list are therefore not related to any projects
+                            var notProjectRelatedAbsences = allUpdatedAbsences.Except(mentionedAbsences);
+                            if (notProjectRelatedAbsences.Count() > 0)
                             {
-                                body.Append($"<h4>{project.GetFullName()}</h4>");
-                                foreach (var ab in relevantAbsences)
+                                // Only add this text if there were projects mentioned higher up
+                                if (mentionedAbsences.Count > 0)
                                 {
-                                    // Add to the mentioned absences if not already there
-                                    if (!mentionedAbsences.Contains(ab))
-                                    {
-                                        mentionedAbsences.Add(ab);
-                                    }
+                                    body.Append($"<p>{Configuration["Email:AbsenceEmailSomeAffectedEndBody"]}</p>");
+                                }
 
+                                foreach (var ab in notProjectRelatedAbsences)
+                                {
                                     // Decide on the state of the absence
-                                    var state = GetAbsenceState(ab, newAbsences, modifiedAbsences, deletedAbsences.Select(x => x.Value));
-
-                                    // If absence is deletion need to pass name
-                                    string name = null;
-                                    if (deletedAbsences.ContainsValue(ab))
-                                    {
-                                        var id = deletedAbsences.FirstOrDefault(x => x.Value == ab).Key;
-                                        name = people.FirstOrDefault(x => x.PersonId == id)?.Name;
-                                    }
+                                    var state = GetAbsenceState(ab, newAbsences, modifiedAbsences, deletedAbsences);
 
                                     // Write absence info
                                     body.Append(GetFormattedAbsenceLine(ab, state, name));
-
                                 }
                             }
-                        }
 
-                        // Any absences that remain in the list are therefore not related to any projects
-                        var notProjectRelatedAbsences = allUpdatedAbsences.Except(mentionedAbsences);
-                        if (notProjectRelatedAbsences.Count() > 0)
-                        {
-                            // Only add this text if there were projects mentioned higher up
-                            if (mentionedAbsences.Count > 0)
+                            // Add closing statement
+                            if (affectedPMs.Any(x => x.PersonId == pm.PersonId))
                             {
-                                body.Append($"<p>{Configuration["Email:AbsenceEmailSomeAffectedEndBody"]}</p>");
+                                body.Append($"<p>{Configuration["Email:AbsenceEmailEndBody"]}</p>");
                             }
+                            body.Append("<p><i>Sent from CapX</i></p>");
 
-                            foreach (var ab in notProjectRelatedAbsences)
+                            // Send email
+                            var subject = Configuration["Email:AbsenceEmailSubject"];
+                            var users = UserService.GetAll(context).Where(x => x.Person == pm);
+                            var recipients = new List<string>();
+                            foreach (var user in users)
                             {
-                                // Decide on the state of the absence
-                                var state = GetAbsenceState(ab, newAbsences, modifiedAbsences, deletedAbsences.Select(x => x.Value));
-
-                                // If absence is deletion need to pass name
-                                string name = null;
-                                if (deletedAbsences.ContainsValue(ab))
+                                var lineManagerEmailAddresses = user.GetNormalisedEmailAddresses();
+                                if (!lineManagerEmailAddresses.Any())
                                 {
-                                    var id = deletedAbsences.FirstOrDefault(x => x.Value == ab).Key;
-                                    name = people.FirstOrDefault(x => x.PersonId == id)?.Name;
+                                    lineManagerEmailAddresses.Add($"{user.CASUserName}@manchester.ac.uk");
                                 }
+                                recipients.AddRange(lineManagerEmailAddresses);
+                            }
 
-                                // Write absence info
-                                body.Append(GetFormattedAbsenceLine(ab, state, name));
+                            Debug.WriteLine($"** Sending email to {string.Join(',', recipients)}");
+                            foreach (var recipient in recipients)
+                            {
+                                SendEmail(recipient, subject, body.ToString());
+                                await Task.Delay(1000);
                             }
                         }
-
-                        // Add closing statement
-                        if (affectedPMs.Contains(pm))
-                        {
-                            body.Append($"<p>{Configuration["Email:AbsenceEmailEndBody"]}</p>");
-                        }
-                        body.Append("<p><i>Sent from CapX</i></p>");
-
-                        // Send email
-                        var subject = Configuration["Email:AbsenceEmailSubject"];
-                        var users = UserService.GetAll(context).Where(x => x.Person == pm);
-                        IEnumerable<string> recipients = users
-                            .Select(x => string.IsNullOrWhiteSpace(x.EmailAddress) ?
-                                $"{x.CASUserName}@manchester.ac.uk" : x.EmailAddress);
-                        Debug.WriteLine($"** Sending email to {string.Join(',', recipients)}");
-                        SendEmail(recipients, subject, body.ToString());
-                        Task.Delay(1000);
                     }
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError($"Absence email failure: {e}");
                 }
             });
         }
@@ -294,101 +361,132 @@ namespace PPMTool.Services
             return "New";
         }
 
+        /// <summary>
+        /// Format the absence information suitable for the email body
+        /// </summary>
+        /// <param name="absence"></param>
+        /// <param name="state"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
         private string GetFormattedAbsenceLine(Absence absence, string state, string name = null)
         {
             return $"<p>{name ?? absence.Person.Name} is absent from {absence.StartDate.ToShortDateString()} to {absence.EndDate?.ToShortDateString() ?? "present"} (<b>{state}</b>).</p>";
         }
 
-        internal void SendMentionAndOwnerEmailNotifications(Note note, IList<Person> mentions, IList<EntityDiff<Note>> listOfChanges = null)
+        /// <summary>
+        /// Send an email to the people mentioned in a note and the project owner
+        /// </summary>
+        /// <param name="note"></param>
+        /// <param name="mentions"></param>
+        /// <param name="listOfChanges"></param>
+        internal async Task SendMentionAndOwnerEmailNotificationsAsync(Note note, IList<Person> mentions, IList<EntityDiff<Note>> listOfChanges = null)
         {
-            Task.Run(() =>
+            await Task.Run(async () =>
             {
-                // Create context and get roles (ignoring externals)
-                using (var context = DbContextFactory.CreateDbContext())
+                try
                 {
-                    var users = UserService.GetAll(context).Where(x => x.Person != null).DistinctBy(x => x.Person.PersonId);
-
-                    // Start with those mentioned in the note
-                    var peopleToBeNotfied = mentions;
-
-                    // Add the PM
-                    if (!peopleToBeNotfied.Contains(note.Project.ProjectManager))
+                    // Create context and get roles (ignoring externals)
+                    using (var context = DbContextFactory.CreateDbContext())
                     {
-                        peopleToBeNotfied.Add(note.Project.ProjectManager);
-                    }
+                        var users = UserService.GetAll(context).Where(x => x.Person != null).DistinctBy(x => x.Person.PersonId);
 
-                    // Add those who are following
-                    foreach (var p in note.Project.Followers)
-                    {
-                        if (!peopleToBeNotfied.Contains(p))
+                        // Start with those mentioned in the note
+                        var peopleToBeNotfied = mentions;
+
+                        // Add the PM
+                        if (!peopleToBeNotfied.Contains(note.Project.ProjectManager))
                         {
-                            peopleToBeNotfied.Add(p);
+                            peopleToBeNotfied.Add(note.Project.ProjectManager);
                         }
-                    }
 
-                    // Remove the author or the editor
-                    if (note.Editor != null)
-                    {
-                        peopleToBeNotfied.Remove(note.Editor.Person);
-                    }
-                    else
-                    {
-                        peopleToBeNotfied.Remove(note.Author.Person);
-                    }
-
-                    // Create the emails and send
-                    foreach (var m in peopleToBeNotfied)
-                    {
-                        // Create email body
-                        StringBuilder body = new StringBuilder();
-
-                        // Inject the CSS for styling
-                        body.Append($"{Configuration["Email:EmailBadgeStyling"]}");
-
-                        // Write intro
-                        body.Append($"<p>Dear {m.Name},</p>");
-                        var content = listOfChanges != null ? Configuration["Email:MentionEmailBodyUpdate"] : Configuration["Email:MentionEmailBodyNew"];
-                        body.Append($"<p>{content}</p>");
-                        body.Append("<hr />");
-
-                        // Include author info as bold
-                        body.Append($"<b>{note.GetNoteAuthorText()}</b>{(note.IsFinanceInfo ? " [Finance Info]" : "")} {(note.DueDate != null ? $"Due Date: {note.DueDate?.ToShortDateString()}" : "")} {(note.CompletedDate != null ? $"Completed: {note.CompletedDate?.ToShortDateString()}" : "")}");
-
-                        // Include the full message from the note
-                        body.Append($"<p>{note.HtmlContent}</p>");
-
-                        // Include editor info as italics
-                        body.Append($"<br /><i>{note.GetNoteEditorText()}</i>");
-                        body.Append("<hr />");
-
-                        // State changes
-                        if (listOfChanges != null)
+                        // Add those who are following
+                        foreach (var p in note.Project.Followers)
                         {
-                            body.Append("<p><b>Changes</b></p>");
-
-                            // Write each change one and a time
-                            foreach (var diff in listOfChanges
-                                .Where(x => x.PropertyName != "EditorPersonId" && x.PropertyName != nameof(Note.EditedDate))
-                            )
+                            if (!peopleToBeNotfied.Contains(p))
                             {
-                                body.Append($"<p><b><i>{diff.PropertyName}:</i></b></p> <p>{diff.OriginalValue ?? "None"}<br/><b>&hArr;</b> {diff.CurrentValue ?? "None"}</p>");
+                                peopleToBeNotfied.Add(p);
                             }
-                            body.Append("<hr />");
                         }
 
-                        // Add footer
-                        body.Append($"<p>{Configuration["Email:MentionEmailEndBody"]}</p><p><i>Sent from CapX</i></p>");
-                        body.Append($"<br /><a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails?rtp={note.Project.RTP}&filteredNote={note.NoteId}\">View this note on CapX</a>");
+                        // Remove the author or the editor
+                        if (note.Editor != null)
+                        {
+                            peopleToBeNotfied.Remove(note.Editor.Person);
+                        }
+                        else
+                        {
+                            peopleToBeNotfied.Remove(note.Author.Person);
+                        }
 
-                        // Send email
-                        var subject = $"{Configuration["Email:MentionEmailSubject"]} - {note.Project.GetFullName()}";
-                        var user = users.Where(x => x.Person.PersonId == m.PersonId);
-                        IEnumerable<string> recipients = user
-                            .Select(x => string.IsNullOrWhiteSpace(x.EmailAddress) ?
-                                $"{x.CASUserName}@manchester.ac.uk" : x.EmailAddress);
-                        SendEmail(recipients, subject, body.ToString());
-                        Task.Delay(1000);
+                        // Create the emails and send
+                        foreach (var m in peopleToBeNotfied)
+                        {
+                            // Create email body
+                            StringBuilder body = new StringBuilder();
+
+                            // Inject the CSS for styling
+                            body.Append($"{Configuration["Email:EmailBadgeStyling"]}");
+
+                            // Write intro
+                            body.Append($"<p>Dear {m.Name},</p>");
+                            var content = listOfChanges != null ? Configuration["Email:MentionEmailBodyUpdate"] : Configuration["Email:MentionEmailBodyNew"];
+                            body.Append($"<p>{content}</p>");
+                            body.Append("<hr />");
+
+                            // Include author info as bold
+                            body.Append($"<b>{note.GetNoteAuthorText()}</b>{(note.IsFinanceInfo ? " [Finance Info]" : "")} {(note.DueDate != null ? $"Due Date: {note.DueDate?.ToShortDateString()}" : "")} {(note.CompletedDate != null ? $"Completed: {note.CompletedDate?.ToShortDateString()}" : "")}");
+
+                            // Include the full message from the note
+                            body.Append($"<p>{note.HtmlContent}</p>");
+
+                            // Include editor info as italics
+                            body.Append($"<br /><i>{note.GetNoteEditorText()}</i>");
+                            body.Append("<hr />");
+
+                            // State changes
+                            if (listOfChanges != null)
+                            {
+                                body.Append("<p><b>Changes</b></p>");
+
+                                // Write each change one and a time
+                                foreach (var diff in listOfChanges
+                                    .Where(x => x.PropertyName != "EditorPersonId" && x.PropertyName != nameof(Note.EditedDate))
+                                )
+                                {
+                                    body.Append($"<p><b><i>{diff.PropertyName}:</i></b></p> <p>{diff.OriginalValue ?? "None"}<br/><b>&hArr;</b> {diff.CurrentValue ?? "None"}</p>");
+                                }
+                                body.Append("<hr />");
+                            }
+
+                            // Add footer
+                            body.Append($"<p>{Configuration["Email:MentionEmailEndBody"]}</p><p><i>Sent from CapX</i></p>");
+                            body.Append($"<br /><a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails?rtp={note.Project.RTP}&filteredNote={note.NoteId}\">View this note on CapX</a>");
+
+                            // Send email
+                            var subject = $"{Configuration["Email:MentionEmailSubject"]} - {ProjectService.GetFullName(note.Project)}";
+                            var pmUsers = users.Where(x => x.Person.PersonId == m.PersonId);
+                            var recipients = new List<string>();
+                            foreach (var u in pmUsers)
+                            {
+                                var lineManagerEmailAddresses = u.GetNormalisedEmailAddresses();
+                                if (!lineManagerEmailAddresses.Any())
+                                {
+                                    lineManagerEmailAddresses.Add($"{u.CASUserName}@manchester.ac.uk");
+                                }
+                                recipients.AddRange(lineManagerEmailAddresses);
+                            }
+                            Debug.WriteLine($"** Sending email to {string.Join(',', recipients)}");
+                            foreach (var recipient in recipients)
+                            {
+                                SendEmail(recipient, subject, body.ToString());
+                                await Task.Delay(1000);
+                            }
+                        }
                     }
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError($"Mention email failure: {e}");
                 }
             });
         }

@@ -1,8 +1,12 @@
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
-using PPMTool.Enums;
+using PPMTool.Data.Enums;
 using PPMTool.Services;
 
 namespace PPMTool.Pages
@@ -39,6 +43,8 @@ namespace PPMTool.Pages
                 competency = new Competency();
             }
 
+            SetDefaultActionBar(HandleValidSubmit, DiscardChanges);
+
             LogInformation($"Adding / Editing competency {competency?.GetSensibleObjectName()}");
         }
 
@@ -56,17 +62,17 @@ namespace PPMTool.Pages
                 LogInformation($"Saving competency {competency?.GetSensibleObjectName()}.");
 
                 // Try to add or update
-                ErrorMessage = null;
+                ClearErrorMessage();
 
                 // Validate
                 if (competency.Grade < 5 || competency.Grade > 7)
                 {
-                    ErrorMessage = new StatusMessage("Competency framework only supports grades 5-7 at the moment!", StatusMessage.MessageType.Error);
+                    SetErrorMessage(new StatusMessage("Competency framework only supports grades 5-7 at the moment!", StatusMessage.MessageType.Error));
                     return;
                 }
                 if (string.IsNullOrWhiteSpace(competency.Description) || string.IsNullOrWhiteSpace(competency.Objective))
                 {
-                    ErrorMessage = new StatusMessage("Every competency needs a description and an objective!", StatusMessage.MessageType.Error);
+                    SetErrorMessage(new StatusMessage("Every competency needs a description and an objective!", StatusMessage.MessageType.Error));
                     return;
                 }
 
@@ -85,7 +91,7 @@ namespace PPMTool.Pages
 
                 if (result == -1)
                 {
-                    ErrorMessage = new StatusMessage("Competency with the same Legacy ID exists already!", StatusMessage.MessageType.Error);
+                    SetErrorMessage(new StatusMessage("Competency with the same Legacy ID exists already!", StatusMessage.MessageType.Error));
                     return;
                 }
 

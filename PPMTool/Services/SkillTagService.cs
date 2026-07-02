@@ -1,12 +1,21 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Services
 {
     public class SkillTagService : BaseEntityService<SkillTag>
     {
+        public SkillTagService(ILogger<SkillTagService> logger) : base(logger)
+        {
+        }
+
         /// <summary>
         /// Returns all skill tags in the DB
         /// </summary>
@@ -17,11 +26,7 @@ namespace PPMTool.Services
             return context.SkillTags;
         }
 
-        /// <summary>
-        /// Updates the tag in the DB
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="tag"></param>
+        /// <inheritdoc />
         public override int Update(PPMToolContext context, SkillTag tag, bool commitChanges = true)
         {
             if (DuplicateDetected(context, tag))
@@ -44,22 +49,14 @@ namespace PPMTool.Services
             return context.Entry(tag);
         }
 
-        /// <summary>
-        /// Deletes a tag from the DB
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="tag"></param>
+        /// <inheritdoc />
         public override void Delete(PPMToolContext context, SkillTag tag, bool commitChanges = true)
         {
             context.Remove(tag);
             if (commitChanges) CommitChanges(context);
         }
 
-        /// <summary>
-        /// Adds a new tag to the DB
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="tag"></param>
+        /// <inheritdoc />
         public override int Add(PPMToolContext context, SkillTag tag, bool commitChanges = true)
         {
             if (DuplicateDetected(context, tag))
@@ -123,6 +120,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context"></param>
         /// <param name="entity"></param>
+        /// <param name="commitChanges"></param>
         public void DeleteOwnedSkillsAssociatedWithTag(PPMToolContext context, SkillTag entity, bool commitChanges = true)
         {
             var ownedSkillsToRemove = context.OwnedSkills.Where(x => x.SkillTag.SkillTagId == entity.SkillTagId);
@@ -134,7 +132,8 @@ namespace PPMTool.Services
         /// Get the rareness of the provided skill tag based on how many people own instances of it
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="skillTagId"></param>
+        /// <param name="entity"></param>
+        /// <param name="commitChanges"></param>
         /// <returns></returns>
         public void UpdateSkillTagRareness(PPMToolContext context, SkillTag entity, bool commitChanges = true)
         {
@@ -165,7 +164,8 @@ namespace PPMTool.Services
             // Find all the subtasks for the project
             var subtasks = context.SubTasks
                 .Include(x => x.OwningProject)
-                .Where(x => x.OwningProject.ProjectId == projectId);
+                .Where(x => x.OwningProject.ProjectId == projectId)
+                .ToList();
 
             var skills = new List<SkillTag>();
             foreach (var subtask in subtasks)
@@ -203,12 +203,12 @@ namespace PPMTool.Services
         /// <param name="context"></param>
         /// <param name="activeUserId"></param>
         /// <returns></returns>
-        public int GetIncompleteRecordCount(PPMToolContext context, int activeUserId)
+        public async Task<int> GetIncompleteRecordCountAsync(PPMToolContext context, int activeUserId)
         {
-            var recordsForUser = context.OwnedSkills
+            var recordsForUser = await context.OwnedSkills
                 .Include(x => x.Owner)
                 .Where(x => x.Owner.PersonId == activeUserId)
-                .ToList();
+                .ToListAsync();
             return recordsForUser
                 .Where(x => !x.RecordComplete())
                 .Count();
@@ -277,7 +277,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         internal async Task<List<SkillTag>> GetAllPendingAsync(PPMToolContext context)
         {
-            return await context.SkillTags.Where(x => x.HasValidWikiLink == Enums.LinkCheckState.Pending).ToListAsync();
+            return await context.SkillTags.Where(x => x.HasValidWikiLink == LinkCheckState.Pending).ToListAsync();
         }
     }
 }

@@ -1,0 +1,315 @@
+<!--
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+-->
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CapX — Maintenance in Progress</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="color-scheme" content="dark light" />
+  <style>
+    :root {
+      /* Brand & design tokens */
+      --brand: #609;                 /* #660099 */
+      --brand-600: #660099;
+      --brand-500: #7b22ad;
+      --brand-400: #9446bd;
+      --brand-300: #ad6bd0;
+
+      --bg-0: #0b0b10;
+      --text-0: #eef0ff;
+      --text-1: #cfd3ff;
+      --muted: #a6a8c3;
+
+      --card-bg: rgba(255, 255, 255, 0.06);
+      --card-stroke: rgba(255, 255, 255, 0.18);
+      --glow: 0 0 24px rgba(102, 0, 153, 0.45);
+
+      --radius-2xl: 22px;
+      --radius-full: 999px;
+
+      --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.35);
+      --shadow-lift: 0 30px 80px rgba(102, 0, 153, 0.25);
+
+      /* Motion durations */
+      --dur-1: 16s;
+      --dur-2: 8s;
+      --dur-3: 3.2s; /* cog spin */
+    }
+
+    /* Reset + base */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      color: var(--text-0);
+      background: radial-gradient(1200px 800px at 20% 10%, rgba(102,0,153,0.15), transparent 60%),
+                  radial-gradient(800px 600px at 80% 90%, rgba(148,70,189,0.18), transparent 60%),
+                  linear-gradient(180deg, #0b0b10 0%, #0b0b10 100%);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    /* Animated ambient blobs (pure CSS, no images) */
+    .ambient {
+      position: fixed;
+      inset: -15vmax;
+      filter: blur(40px) saturate(130%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .blob {
+      position: absolute;
+      width: 40vmax; height: 40vmax;
+      background: radial-gradient(circle at 30% 30%, rgba(102,0,153,0.65), rgba(123,34,173,0.25) 45%, transparent 70%);
+      border-radius: 50%;
+      mix-blend-mode: screen;
+      animation: drift var(--dur-1) linear infinite;
+    }
+    .blob.b2 {
+      left: 55%; top: 40%;
+      background: radial-gradient(circle at 60% 40%, rgba(148,70,189,0.5), rgba(102,0,153,0.25) 50%, transparent 70%);
+      animation-duration: calc(var(--dur-1) * 1.25);
+      animation-direction: reverse;
+    }
+    .blob.b3 {
+      left: 10%; top: 65%;
+      background: radial-gradient(circle at 40% 60%, rgba(102,0,153,0.35), rgba(173,107,208,0.25) 50%, transparent 75%);
+      animation-duration: calc(var(--dur-1) * 0.85);
+    }
+    @keyframes drift {
+      0%   { transform: translate3d(0,0,0) rotate(0deg) scale(1); }
+      50%  { transform: translate3d(-4vmax, 3vmax, 0) rotate(120deg) scale(1.08); }
+      100% { transform: translate3d(0,0,0) rotate(360deg) scale(1); }
+    }
+
+    /* Card */
+    .wrap {
+      position: relative;
+      z-index: 1;
+      width: min(92vw, 860px);
+      padding: clamp(18px, 3vw, 28px);
+    }
+    .card {
+      position: relative;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+      border: 1px solid var(--card-stroke);
+      box-shadow: var(--shadow-soft), var(--shadow-lift), var(--glow);
+      border-radius: var(--radius-2xl);
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .card::before {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(102,0,153,0.18), transparent 35%, rgba(148,70,189,0.12) 65%, transparent 85%);
+      pointer-events: none;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: clamp(18px, 3.5vw, 28px);
+      align-items: center;
+      padding: clamp(22px, 4vw, 38px);
+    }
+    @media (max-width: 560px) {
+      .content { grid-template-columns: 1fr; text-align: center; }
+    }
+
+    /* Icon area */
+    .badge {
+      width: 120px; height: 120px;
+      display: grid; place-items: center;
+      border-radius: 28px;
+      background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.22), rgba(255,255,255,0.08) 60%, rgba(255,255,255,0.02) 80%);
+      border: 1px solid rgba(255,255,255,0.16);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 10px 30px rgba(102,0,153,0.35);
+    }
+
+    /* Headings & text */
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: clamp(1.4rem, 2vw + 1rem, 2.2rem);
+      line-height: 1.2;
+      letter-spacing: 0.2px;
+      font-weight: 700;
+    }
+    p.lead {
+      margin: 0 0 14px 0;
+      color: var(--text-1);
+      font-size: clamp(1rem, 0.6vw + 0.9rem, 1.15rem);
+      line-height: 1.55;
+    }
+    .muted {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    /* Progress / pulse bar */
+    .progress {
+      position: relative;
+      height: 10px;
+      border-radius: var(--radius-full);
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .progress .ind {
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent, var(--brand-400), var(--brand-600), transparent);
+      animation: sweep var(--dur-2) ease-in-out infinite;
+      opacity: 0.9;
+    }
+    @keyframes sweep {
+      0%   { transform: translateX(-100%); }
+      50%  { transform: translateX(0%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* CTA line */
+    .cta {
+      margin-top: 18px;
+      display: flex; flex-wrap: wrap; gap: 10px;
+      align-items: center;
+    }
+    .btn {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(135deg, var(--brand-600), var(--brand-400));
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      box-shadow: 0 8px 20px rgba(102,0,153,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+      transition: transform 0.15s ease, filter 0.2s ease;
+      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .btn:hover { transform: translateY(-1px); filter: saturate(1.15); }
+    .btn:active { transform: translateY(0px) scale(0.99); }
+    .hint { color: var(--muted); }
+
+    /* SVG motion */
+    .spin-slow { animation: spin var(--dur-3) linear infinite; transform-origin: 50% 50%; }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* Respect reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .blob, .spin-slow, .progress .ind { animation: none !important; }
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 10px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Ambient animated background -->
+  <div class="ambient" aria-hidden="true">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+  </div>
+
+  <main class="wrap" role="main">
+    <section class="card" aria-labelledby="title">
+      <div class="content">
+        <!-- Simple spinning cog -->
+        <div class="badge" aria-hidden="true">
+          <svg width="88" height="88" viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <!-- Single cog: hub + ring + 12 teeth -->
+            <g class="spin-slow">
+              <!-- Outer ring -->
+              <circle cx="44" cy="44" r="24" fill="none" stroke="url(#gCog)" stroke-width="6" opacity="0.95"/>
+              <!-- Teeth -->
+              <g fill="url(#gCog)" opacity="0.95">
+                <!-- 12 rectangles around a circle -->
+                <g transform="translate(44,44)">
+                  <!-- one tooth at 0deg, then rotate copies -->
+                  <rect x="-3" y="-34" width="6" height="12" rx="2" />
+                  <rect x="-3" y="-34" width="6" height="12" rx="2" transform="rotate(30)"/>
+                  <rect x="-3" y="-34" width="6" height="12" rx="2" transform="rotate(60)"/>
+                  <rect x="-3" y="-34" width="6" height="12" rx="2" transform="rotate(90)"/>
+                  <rect x="-3" y="-34" width="6" height="12" rx="2" transform="rotate(120)"/>
+                  <rect x="-3" y="-34" width="6" height="12" rx="2" transform="rotate(150)"/>
+                  <rect x="-3" y="-34" width="6" height="12" rx="2" transform="rotate(180)"/>
+                  <rect x="-3" y="-34" width="6" height="12" rx="2" transform="rotate(210)"/>
+                  <rect x="-3" y="-34" width="6" height="12" rx="2" transform="rotate(240)"/>
+                  <rect x="-3" y="-34" width="6" height="12" rx="2" transform="rotate(270)"/>
+                  <rect x="-3" y="-34" width="6" height="12" rx="2" transform="rotate(300)"/>
+                  <rect x="-3" y="-34" width="6" height="12" rx="2" transform="rotate(330)"/>
+                </g>
+              </g>
+              <!-- Inner hub -->
+              <circle cx="44" cy="44" r="9" fill="url(#gHub)" />
+            </g>
+
+            <defs>
+              <linearGradient id="gCog" x1="0" y1="0" x2="88" y2="88" gradientUnits="userSpaceOnUse">
+                <stop offset="0%"  stop-color="#660099"/>
+                <stop offset="60%" stop-color="#9446bd"/>
+                <stop offset="100%" stop-color="#ad6bd0"/>
+              </linearGradient>
+              <linearGradient id="gHub" x1="35" y1="35" x2="53" y2="53" gradientUnits="userSpaceOnUse">
+                <stop offset="0%"  stop-color="#ad6bd0"/>
+                <stop offset="100%" stop-color="#660099"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <!-- Textual content -->
+        <div>
+          <h1 id="title">CapX is undergoing maintenance</h1>
+          <p class="lead">
+            We're making CapX less CrapX right now! Thanks for your patience—this usually only takes a short while. Enjoy these amazing visuals while you wait.
+          </p>
+
+          <div class="progress" role="progressbar" aria-valuetext="Maintenance in progress">
+            <div class="ind"></div>
+          </div>
+
+          <div class="cta">
+            <a class="btn" href="" onclick="location.reload(); return false;" aria-label="Reload the page">
+              <!-- Refresh icon -->
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M21 12a9 9 0 1 1-2.64-6.36" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M21 3v6h-6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Reload
+            </a>
+            <span class="hint">If the page doesn’t load, please check back in a few minutes.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      © <span id="year"></span> CapX · University of Manchester
+    </footer>
+  </main>
+
+  <script>
+    // Set current year
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

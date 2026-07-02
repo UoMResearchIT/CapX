@@ -1,10 +1,65 @@
-﻿using System.ComponentModel;
-using System.Reflection;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Diagnostics;
+using PPMTool.Data.Enums;
+using PPMTool.Services;
+using Radzen;
 
 namespace PPMTool
 {
     public static class Extensions
     {
+        /// <summary>
+        /// Sets to material dark or light mode with WCAG colours
+        /// </summary>
+        /// <param name="themeService"></param>
+        /// <param name="darkMode"></param>
+        /// <param name="settingsService"></param>
+        /// <param name="cssVarService"></param>
+        public static async Task SetDarkLightAsync(
+            this ThemeService themeService,
+            bool darkMode,
+            SettingsService settingsService,
+            CssVariableService cssVarService
+        )
+        {
+            // Check if we need to do anything
+            if (themeService.IsDarkTheme() != darkMode)
+            {
+                Debug.WriteLine($"** Setting theme. Dark mode = {darkMode}");
+                themeService.SetTheme(new ThemeOptions
+                {
+                    Theme = darkMode ? "material-dark" : "material",
+                    Wcag = true,
+                    TriggerChange = true,
+                    RightToLeft = false
+                });
+
+                // Small delay to give the theme a chance to apply
+                await Task.Yield();
+            }
+
+            // Get the appropriate colour from the settings
+            var colour = darkMode
+                ? settingsService.GetSetting(SettingType.AppPrimaryColourDark)
+                : settingsService.GetSetting(SettingType.AppPrimaryColourLight);
+
+            // Set the colour in the DOM
+            await cssVarService.SetPrimaryColor(colour);
+        }
+
+        /// <summary>
+        /// Whether the current theme is a dark theme. Assumes that dark themes have "dark" in the name.
+        /// </summary>
+        /// <param name="themeService"></param>
+        /// <returns></returns>
+        public static bool IsDarkTheme(this ThemeService themeService)
+        {
+            return themeService.Theme.ToLowerInvariant().Contains("dark");
+        }
+
         /// <summary>
         /// Extension method to get all messages from an exception and its inner exceptions.
         /// </summary>
@@ -23,57 +78,6 @@ namespace PPMTool
             while (innerException != null);
 
             return message;
-        }
-
-        /// <summary>
-        /// Extension method to get enum value from description attribute
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="myEnum"></param>
-        /// <param name="description"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
-        /// <exception cref="ArgumentException"></exception>
-        public static T GetValueFromDescription<T>(this T myEnum, string description) where T : Enum
-        {
-            var type = typeof(T);
-            if (!type.IsEnum) throw new InvalidOperationException();
-            foreach (var field in type.GetFields())
-            {
-                var attribute = Attribute.GetCustomAttribute(field,
-                    typeof(DescriptionAttribute)) as DescriptionAttribute;
-                if (attribute != null)
-                {
-                    if (attribute.Description == description)
-                        return (T)field.GetValue(null);
-                }
-                else
-                {
-                    if (field.Name == description)
-                        return (T)field.GetValue(null);
-                }
-            }
-            throw new ArgumentException("Not found", nameof(description));
-        }
-
-        /// <summary>
-        /// Extension method to get the description attribute of an enum value
-        /// </summary>
-        /// <param name="GenericEnum"></param>
-        /// <returns></returns>
-        public static string GetDescription(this Enum GenericEnum)
-        {
-            Type genericEnumType = GenericEnum.GetType();
-            MemberInfo[] memberInfo = genericEnumType.GetMember(GenericEnum.ToString());
-            if ((memberInfo != null && memberInfo.Length > 0))
-            {
-                var _Attribs = memberInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
-                if ((_Attribs != null && _Attribs.Count() > 0))
-                {
-                    return ((DescriptionAttribute)_Attribs.ElementAt(0)).Description;
-                }
-            }
-            return GenericEnum.ToString();
         }
     }
 }

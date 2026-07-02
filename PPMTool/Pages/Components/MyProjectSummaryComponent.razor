@@ -1,0 +1,139 @@
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@using Microsoft.EntityFrameworkCore
+@using PPMTool.Data.Context
+@using PPMTool.Data.Enums
+@using PPMTool.Data.Entities
+@using PPMTool.Services
+@using System.Diagnostics
+
+<RadzenCard>
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween" Gap="0rem" Wrap="FlexWrap.Wrap">
+        <RadzenStack class="col-5 p-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.4rem">
+            <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0rem">
+                <RadzenText TextStyle="TextStyle.H5" Text="@ProjectService.GetFullName(Project)" />
+                <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
+            </RadzenStack>
+            <StatusMessageSummaryComponent Messages="Project.GetLatestStatusMessages()" />
+        </RadzenStack>
+        @if (NextDueDate != null)
+        {
+            <RadzenStack class="@($"col-3 p-2 rounded-frame {borderClass}")" Orientation="Radzen.Orientation.Vertical" Gap="0.2rem">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="flag" IconStyle="IconStyle.Primary" />
+                        <RadzenText Text="Actions Due:" TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center" Style="margin-bottom: -0.1rem;" />
+                    </RadzenStack>
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@OverDueNoteCount.ToString()" Style="font-size: 1rem" />
+                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@DueNoteCount.ToString()" Style="font-size: 1rem" />
+                    </RadzenStack>
+                </RadzenStack>
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenIcon Icon="event" IconStyle="IconStyle.Primary" />
+                        <RadzenText Text="@($"Next Due: {NextDueDate?.ToShortDateString()}")" TextStyle="TextStyle.Subtitle1" TextAlign="TextAlign.Center" Style="margin-bottom: -0.1rem;" />
+                    </RadzenStack>
+                    <RadzenButton ButtonStyle="@buttonStyle" Text="View" Click="@(args => DueButtonClicked?.Invoke(Project))" class="align-self-center" />
+                </RadzenStack>
+            </RadzenStack>
+        }
+        <RadzenStack class="col-4 p-1" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.End" Gap="0.3rem" Wrap="FlexWrap.Wrap">
+            <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Icon="info" Click="@(item => DetailsButtonClicked(item, Project))">
+                <ChildContent>
+                    <RadzenSplitButtonItem Text="Details in New Tab" Value="NewWindow" />
+                </ChildContent>
+            </RadzenSplitButton>
+            <RadzenButton Click=@(args => EditProject(Project)) Icon="edit" Disabled="@(!EditAuthorised)" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Edit Project"))" />
+            @if (financeEnabled)
+            {
+                <RadzenButton Click="@(args => EditFinance(Project))" Icon="payments" Disabled="@(!EditAuthorised)" MouseEnter="@(args => ShowTooltip?.Invoke(args, "Finance"))" />
+            }
+            <RequestAndScrumButtonsComponent Project="@Project" ShowTooltip="ShowTooltip" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+
+    [Parameter]
+    public Project Project { get; set; }
+
+    [Parameter]
+    public bool EditAuthorised { get; set; }
+
+    [Parameter]
+    public Action<RadzenSplitButtonItem, Project> DetailsButtonClicked { get; set; }
+
+    [Parameter]
+    public Action<Project> DueButtonClicked { get; set; }
+
+    [Parameter]
+    public Action<ElementReference, string> ShowTooltip { get; set; }
+
+    [Parameter]
+    public int DueNoteCount { get; set; }
+
+    [Parameter]
+    public int OverDueNoteCount { get; set; }
+
+    [Parameter]
+    public DateTime? NextDueDate { get; set; }
+
+    [Inject]
+    private NavigationManager Navigation { get; set; }
+
+    [Inject] 
+    private FeatureService FeatureService { get; set; }
+
+    [Inject]
+    private ProjectService ProjectService { get; set; }
+
+    private bool financeEnabled;
+    private string borderClass;
+    private ButtonStyle buttonStyle;
+
+    override protected void OnInitialized()
+    {
+        base.OnInitialized();
+        financeEnabled = FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance);
+
+        if (OverDueNoteCount > 0)
+        {
+            borderClass = "rz-border-danger";
+            buttonStyle = ButtonStyle.Danger;
+        }
+        else if (DueNoteCount > 0)
+        {
+            borderClass = "rz-border-warning";
+            buttonStyle = ButtonStyle.Warning;
+        }
+        else
+        {
+            borderClass = "rz-border-base-400";
+            buttonStyle = ButtonStyle.Light;
+        }
+    }
+
+    /// <summary>
+    /// Navigate to the edit project page for that project
+    /// </summary>
+    /// <param name="project"></param>
+    private void EditProject(Project project)
+    {
+        Navigation.NavigateTo($"projects/addproject/{project.ProjectId}");
+    }
+
+    /// <summary>
+    /// Navigate to the finance page for that project
+    /// </summary>
+    /// <param name="project"></param>
+    private void EditFinance(Project project)
+    {
+        Navigation.NavigateTo($"managefinancialitems?rtp={project?.RTP}");
+    }
+}

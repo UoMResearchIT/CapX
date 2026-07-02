@@ -5,45 +5,41 @@ name: C# .NET
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [dev]
   pull_request:
-    branches: [ "dev" ]
 
 jobs:
-  format_check:
+  format-check:
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./PPMTool
+    permissions:
+      contents: read
+
     steps:
-    - uses: actions/checkout@v5
-      with:
-        submodules: 'true'
-        token: ${{ secrets.ACTIONS_REPO_TOKEN }}
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v5
-      with:
-        dotnet-version: 8.0.x
-    - name: Format
-      run: dotnet format PPMTool.sln --exclude ../Blazor-ApexCharts/src/Blazor-ApexCharts.csproj --verify-no-changes --no-restore --verbosity detailed
-      
-  build:
-    if: github.actor != 'dependabot[bot]'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./PPMTool
-    steps:
-    - uses: actions/checkout@v5
-      with:
-        submodules: 'true'
-        token: ${{ secrets.ACTIONS_REPO_TOKEN }}
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v5
-      with:
-        dotnet-version: 8.0.x
-    - name: Restore dependencies
-      run: dotnet restore --verbosity detailed
-    - name: Build
-      run: dotnet build --no-restore
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.ORG_ACTIONS_BOT_APP_ID }}
+          private-key: ${{ secrets.ORG_ACTIONS_BOT_PRIVATE_KEY }}
+          owner: UoMResearchIT
+          # NB: No current submodules; the .gitmodules file is empty
+          repositories: CapX
+          permission-contents: read
+
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: 'true'
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Format
+        run: dotnet format PPMTool.sln --verify-no-changes --no-restore --verbosity detailed
