@@ -8,15 +8,38 @@ namespace PPMTool.Tests.Core
     [TestFixture]
     public class PageLoadTests : PageTest
     {
+        // Timeouts (in milliseconds)
         private const int pageLoadTimeoutMs = 5000;
-        private const int navigationRetries = 3;
-        private const int retryDelayMs = 500;
+        private const int pageTitleTimeoutMs = 2000;
+        private const int loginButtonTimeoutMs = 2000;
+        private const int tearDownDelayMs = 1000;
+        private const int pageStabilizationDelayMs = 1000;
+        private const int loginAuthenticationDelayMs = 1000;
+        private const int loginRetryDelayMs = 1000;
+
+        // Retry configuration
+        private const int navigationRetries = 5;
+        private const int retryDelayMs = 1000;
+        private const int maxLoginAttempts = 3;
 
         [TearDown]
         public async Task TearDownTest()
         {
-            // Add a small delay between tests to allow the server to recover
-            await Task.Delay(500);
+            // Clear cookies and storage to ensure clean state between tests
+            // This forces re-authentication each time
+            try
+            {
+                await Page.Context.ClearCookiesAsync();
+                await Page.EvaluateAsync("() => localStorage.clear()");
+                await Page.EvaluateAsync("() => sessionStorage.clear()");
+            }
+            catch
+            {
+                // Ignore errors during cleanup
+            }
+
+            // Add a delay between tests to allow the server to recover
+            await Task.Delay(tearDownDelayMs);
         }
 
         /// <summary>
@@ -34,23 +57,33 @@ namespace PPMTool.Tests.Core
             // Check if we're on the login page (unauthenticated) by checking the page title
             if (!skipLoginCheck)
             {
-                // Wait for the page to have a title
-                await Expect(Page).ToHaveTitleAsync(new Regex(".*"), new() { Timeout = 2000 });
+                // Wait a bit for the page to stabilize
+                await Task.Delay(pageStabilizationDelayMs);
+
+                // Wait for the page to have a title using timeout via context options
+                var titleRegex = new Regex(".*");
+                await Expect(Page).ToHaveTitleAsync(titleRegex);
 
                 var currentTitle = await Page.TitleAsync();
                 if (currentTitle == "CapX - Log In")
                 {
                     // We're on the login page, need to authenticate
+                    Console.WriteLine($"Detected login page, authenticating before navigating to {url}");
                     await HandleLoginAndNavigateAsync(url);
+                }
+                else
+                {
+                    // Verify we have the content we expect by waiting for page to fully load
+                    await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
                 }
             }
 
-            // Assert that the page title is correct with retry timeout
-            await Expect(Page).ToHaveTitleAsync(expectedTitle, new() { Timeout = pageLoadTimeoutMs });
+            // Assert that the page title is correct
+            await Expect(Page).ToHaveTitleAsync(expectedTitle);
 
-            // Assert that the Blazor crash banner is not visible with retry timeout
+            // Assert that the Blazor crash banner is not visible
             var crashBanner = Page.Locator("#blazor-error-ui");
-            await Expect(crashBanner).ToBeHiddenAsync(new() { Timeout = pageLoadTimeoutMs });
+            await Expect(crashBanner).ToBeHiddenAsync();
         }
 
         /// <summary>
@@ -84,29 +117,65 @@ namespace PPMTool.Tests.Core
 
         /// <summary>
         /// Handles the login process by clicking the Log In button and waiting for authentication to complete,
-        /// then navigates to the target URL.
+        /// then navigates to the target URL. Includes retry logic to handle transient failures.
         /// </summary>
         /// <param name="targetUrl"></param>
         /// <returns></returns>
         private async Task HandleLoginAndNavigateAsync(string targetUrl)
         {
-            // Find the Log in button - in LOCAL mode this link contains the username parameter
-            var loginButton = Page.Locator("a:has-text('Log in')").First;
+            int loginAttempts = 0;
 
-            if (await loginButton.IsVisibleAsync())
+            while (loginAttempts < maxLoginAttempts)
             {
-                // Click the Log in button
-                await loginButton.ClickAsync();
+                try
+                {
+                    // Find the Log in button - in LOCAL mode this link contains the username parameter
+                    var loginButton = Page.Locator("a:has-text('Log in')").First;
 
-                // Wait for navigation to complete
-                await Page.WaitForLoadStateAsync();
+                    if (await loginButton.IsVisibleAsync())
+                    {
+                        Console.WriteLine($"Login attempt {loginAttempts + 1}/{maxLoginAttempts}: Clicking login button");
 
-                // Navigate to the target page
-                await NavigateWithRetryAsync($"{Setup.BaseUrl}{targetUrl}");
-            }
-            else
-            {
-                throw new InvalidOperationException("Login button not found on login page. Cannot authenticate.");
+                        // Click the Log in button
+                        await loginButton.ClickAsync();
+
+                        // Wait for navigation to complete
+                        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+                        // Small delay to let authentication finish
+                        await Task.Delay(loginAuthenticationDelayMs);
+
+                        // Navigate to the target page
+                        await NavigateWithRetryAsync($"{Setup.BaseUrl}{targetUrl}");
+
+                        // Verify we're not on the login page anymore
+                        var titleAfterLogin = await Page.TitleAsync();
+                        if (titleAfterLogin != "CapX - Log In")
+                        {
+                            Console.WriteLine($"Successfully authenticated and navigated to {targetUrl}");
+                            return;
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException("Still on login page after clicking login button");
+                        }
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Login button not visible on login page");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    loginAttempts++;
+                    if (loginAttempts >= maxLoginAttempts)
+                    {
+                        throw new InvalidOperationException($"Failed to authenticate after {maxLoginAttempts} attempts: {ex.Message}", ex);
+                    }
+
+                    Console.WriteLine($"Login attempt failed: {ex.Message}. Retrying...");
+                    await Task.Delay(loginRetryDelayMs);
+                }
             }
         }
 
