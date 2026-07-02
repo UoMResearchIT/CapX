@@ -27,6 +27,12 @@ namespace PPMTool.Tests.API
             return client;
         }
 
+        [OneTimeSetUp]
+        public virtual void OneTimeSetup()
+        {
+            SetupForAPI();
+        }
+
         public void SetupForAPI()
         {
             // Get the API key to use from the database
@@ -80,5 +86,20 @@ namespace PPMTool.Tests.API
                 throw new Exception("No valid API keys found for a manager with a report in the database. Please create one for testing.");
             }
         }
+
+        /// <summary>
+        /// Gets the start date for a date range query (one month ago).
+        /// </summary>
+        protected static string GetStartDate() => DateTime.Now.AddMonths(-1).ToString("yyyy-MM-dd");
+
+        /// <summary>
+        /// Gets the end date for a date range query (today).
+        /// </summary>
+        protected static string GetEndDate() => DateTime.Now.ToString("yyyy-MM-dd");
+
+        /// <summary>
+        /// Gets the current year for year-based queries.
+        /// </summary>
+        protected static int GetCurrentYear() => DateTime.Now.Year;
     }
 }
