@@ -29,7 +29,7 @@ SPDX-License-Identifier: apache-2.0
 	</PackageReference>
 	<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.9" />
 	<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
-	<PackageReference Include="Radzen.Blazor" Version="10.4.9" />
+	<PackageReference Include="Radzen.Blazor" Version="11.0.4" />
   </ItemGroup>
 
 </Project>
