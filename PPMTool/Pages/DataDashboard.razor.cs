@@ -1254,22 +1254,26 @@ namespace PPMTool.Pages
                             {
                                 var proj = projectData[i];
 
-                                // Column A: Project name
+                                // Column A: Project ID
                                 cell = worksheetProjects.Cell(2 + i, 1);
-                                cell.Value = $"{GetSetting(SettingType.ProjectAbbreviation)}-{proj.ProjectId} {proj.ProjectName}";
+                                cell.Value = proj.ProjectId;
 
-                                // Column B: PlannedCosts
+                                // Column B: Project name
                                 cell = worksheetProjects.Cell(2 + i, 2);
+                                cell.Value = proj.ProjectName;
+
+                                // Column C: PlannedCosts
+                                cell = worksheetProjects.Cell(2 + i, 3);
                                 cell.Value = proj.PlannedCosts;
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
-                                // Column C: RecoveredCosts
-                                cell = worksheetProjects.Cell(2 + i, 3);
+                                // Column D: RecoveredCosts
+                                cell = worksheetProjects.Cell(2 + i, 4);
                                 cell.Value = proj.RecoveredCosts;
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
-                                // Column D: Formula = C - B (relative R1C1, no anchors)
-                                cell = worksheetProjects.Cell(2 + i, 4);
+                                // Column E: Formula = C - B (relative R1C1, no anchors)
+                                cell = worksheetProjects.Cell(2 + i, 5);
                                 cell.FormulaR1C1 = "=RC[-1]-RC[-2]";
                                 cell.Style.NumberFormat.Format = moneyFormat;
                             }
