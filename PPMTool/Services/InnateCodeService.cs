@@ -13,6 +13,10 @@ namespace PPMTool.Services
 {
     public class InnateCodeService : BaseEntityService<InnateCode>
     {
+        public InnateCodeService(ILogger<InnateCodeService> logger) : base(logger)
+        {
+        }
+
         /// <inheritdoc />
         public override int Add(PPMToolContext context, InnateCode entity, bool commitChanges = true)
         {
@@ -152,7 +156,7 @@ namespace PPMTool.Services
 
                         // Project is cancelled or finished more than 28 days ago
                         ((int)p.ProjectStatus > (int)ProjectStatus.Finished ||
-                        (p.ProjectStatus == ProjectStatus.Finished && p.EndDate <= DateTime.UtcNow.AddDays(-28)))
+                        (p.ProjectStatus == ProjectStatus.Finished && p.EndDate <= DateTime.Today.AddDays(-28)))
                     )
                 )
                 .ToListAsync();

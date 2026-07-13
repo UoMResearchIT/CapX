@@ -10,6 +10,10 @@ namespace PPMTool.Services
 {
     public class NoteService : BaseEntityService<Note>
     {
+        public NoteService(ILogger<NoteService> logger) : base(logger)
+        {
+        }
+
         public override int Add(PPMToolContext context, Note entity, bool commitChanges = true)
         {
             context.Notes.Add(entity);

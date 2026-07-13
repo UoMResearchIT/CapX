@@ -30,25 +30,17 @@ using ILogger = Microsoft.Extensions.Logging.ILogger;
 #if RELEASE
 using GSS.Authentication.CAS.AspNetCore;
 using GSS.Authentication.CAS.Validation;
-using Serilog;
 #endif
 
 // Add environment variables to the configuration
 var builder = WebApplication.CreateBuilder(args);
 EnvironmentHelper.LoadEnvironmentVariables(builder);
 
-#if RELEASE
-// Configure logging
-builder.Logging.AddSerilog(new LoggerConfiguration()
-    .WriteTo.Console()
-    .WriteTo.File(
-        path: builder.Configuration.GetValue<string>("LogPath"),
-        rollingInterval: RollingInterval.Day,
-        retainedFileCountLimit: null,
-        retainedFileTimeLimit: TimeSpan.FromDays(30)
-    )
-.CreateLogger());
+// Configure logging -- use console logging only
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
+#if RELEASE
 // Configure Sentry
 SentrySdk.Init(o =>
 {
@@ -353,6 +345,11 @@ if (dbProvider == "sqlite")
     }
 }
 
+// Set default culture
+var cultureInfo = new CultureInfo("en-GB");
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
 // Set dummy data seed flag
 // This is intended for development and testing purposes only and should be used with caution as it will delete existing data.
 var shouldSeed = builder.Configuration.GetValue<bool>("DeveloperSettings:SeedDummyData");
@@ -365,58 +362,58 @@ using (var context = dbContextFactory.CreateDbContext())
     // Delete existing DB if seeding to ensure a clean slate
     if (shouldSeed)
     {
-        context.Database.EnsureDeleted();
+        await context.Database.EnsureDeletedAsync();
     }
 
-    // Run migrations
-    context.Database.Migrate();
+    // MigrateAsync rather than Migrate: Npgsql 10 does not support synchronous command
+    // execution (throws InvalidCastException: PoolingDataSource -> MultiplexingDataSource),
+    // so the synchronous overload silently fails on PostgreSQL, leaving the schema out of date.
+    await context.Database.MigrateAsync();
+
+    // Seed the default superuser from the settings if it doesn't already exist
+    SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
+
+    // Seed features
+    SeedHelper.SeedFeatures(scope.ServiceProvider);
+
+    // If seeding run the dummy data seeding methods
+    if (shouldSeed)
+    {
+        // Seed tables with suitable values -- Note that competencies are already seeded by migrations
+        SeedHelper.SeedPeople(scope.ServiceProvider);
+        SeedHelper.SeedAbsences(scope.ServiceProvider);
+        SeedHelper.SeedUsers(scope.ServiceProvider);
+        SeedHelper.SeedWorkloadModelChanges(scope.ServiceProvider);
+        SeedHelper.SeedSkillTags(scope.ServiceProvider);
+        SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);
+        SeedHelper.SeedCompetencyAssessments(scope.ServiceProvider);
+        SeedHelper.SeedInnateCodesAndTasks(scope.ServiceProvider);
+        SeedHelper.SeedFinancialReferences(scope.ServiceProvider);
+        SeedHelper.SeedOrganisationalUnits(scope.ServiceProvider);
+        SeedHelper.SeedProjects(scope.ServiceProvider);
+        SeedHelper.SeedFundingSources(scope.ServiceProvider);
+        SeedHelper.SeedSubTasks(scope.ServiceProvider);
+        SeedHelper.SeedResources(scope.ServiceProvider);
+        SeedHelper.SeedNotes(scope.ServiceProvider);
+        SeedHelper.SeedInvoicesAndPayments(scope.ServiceProvider);
+        SeedHelper.SeedTimesheets(scope.ServiceProvider);
+    }
+
+    // Initialise the settings cache
+    var settingsService = app.Services.GetRequiredService<SettingsService>();
+    await settingsService.IntialiseServiceCacheAsync(context);
+
+    // Initialise the feature cache
+    var featureService = app.Services.GetRequiredService<FeatureService>();
+    await featureService.IntialiseServiceCacheAsync(context);
+
+    // Update the project meta data for all projects in the database
+    var projectService = scope.ServiceProvider.GetRequiredService<ProjectService>();
+    projectService.UpdateAllProjectMetaData(context);
 }
-
-// Seed the default superuser from the settings if it doesn't already exist
-SeedHelper.SeedSuperUserIfNotExist(scope.ServiceProvider);
-
-// Seed features
-SeedHelper.SeedFeatures(scope.ServiceProvider);
-
-// If seeding run the dummy data seeding methods
-if (shouldSeed)
-{
-    // Seed tables with suitable values -- Note that competencies are already seeded by migrations
-    SeedHelper.SeedPeople(scope.ServiceProvider);
-    SeedHelper.SeedAbsences(scope.ServiceProvider);
-    SeedHelper.SeedUsers(scope.ServiceProvider);
-    SeedHelper.SeedWorkloadModelChanges(scope.ServiceProvider);
-    SeedHelper.SeedSkillTags(scope.ServiceProvider);
-    SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);
-    SeedHelper.SeedCompetencyAssessments(scope.ServiceProvider);
-    SeedHelper.SeedInnateCodesAndTasks(scope.ServiceProvider);
-    SeedHelper.SeedFinancialReferences(scope.ServiceProvider);
-    SeedHelper.SeedOrganisationalUnits(scope.ServiceProvider);
-    SeedHelper.SeedProjects(scope.ServiceProvider);
-    SeedHelper.SeedFundingSources(scope.ServiceProvider);
-    SeedHelper.SeedSubTasks(scope.ServiceProvider);
-    SeedHelper.SeedResources(scope.ServiceProvider);
-    SeedHelper.SeedNotes(scope.ServiceProvider);
-    SeedHelper.SeedInvoicesAndPayments(scope.ServiceProvider);
-    SeedHelper.SeedTimesheets(scope.ServiceProvider);
-}
-
-// Set default culture
-var cultureInfo = new CultureInfo("en-GB");
-CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
-CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Clean local application file path
 FileHelper.CleanLocalApplicationFilePath(logger);
-
-// Initialise feature service cache
-using (var context = dbContextFactory.CreateDbContext())
-{
-    var settingsService = app.Services.GetRequiredService<SettingsService>();
-    _ = settingsService.IntialiseServiceCacheAsync(context);
-    var featureService = app.Services.GetRequiredService<FeatureService>();
-    _ = featureService.IntialiseServiceCacheAsync(context);
-}
 
 // Run the app
 app.Run();

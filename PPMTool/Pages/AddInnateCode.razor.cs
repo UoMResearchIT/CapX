@@ -20,7 +20,11 @@ namespace PPMTool.Pages
         [Inject]
         private InnateCodeService InnateCodeService { get; set; }
 
+        [Inject]
+        private TimesheetService TimesheetService { get; set; }
+
         private InnateCode innateCode;
+        private List<int> tasksWithBookings = new List<int>();
 
         /// <summary>
         /// Represents a duty and its text string representation for dropdown sources.
@@ -32,14 +36,17 @@ namespace PPMTool.Pages
         private IEnumerable<DutyOption> duties =
             Enum.GetValues<Duty>().Select(d => new DutyOption(d, d.GetDescription()));
 
-        protected override void OnInitialized()
+        protected override async Task OnInitializedAsync()
         {
-            base.OnInitialized();
+            await base.OnInitializedAsync();
 
             if (InnateCodeId > 0)
             {
                 innateCode = InnateCodeService.GetById(Context, InnateCodeId);
                 dataGridEntities = innateCode.Tasks.ToList();
+
+                // Check the booking status of the tasks and build list
+                tasksWithBookings = await TimesheetService.GetTaskIdsWithBookingsForCodeAsync(Context, InnateCodeId);
             }
             else
             {
@@ -154,9 +161,24 @@ namespace PPMTool.Pages
             {
                 TaskName = "Maintenance",
                 InnateCode = innateCode,
-                Duty = Duty.ProjectWork
+                Duty = Duty.BAU
             });
             await dataGrid.Reload();
+        }
+
+        /// <summary>
+        /// Callback when the switch is changed
+        /// </summary>
+        private void ActivityActiveChanged(bool value)
+        {
+            // If setting to false then deactivate all the tasks
+            if (!value)
+            {
+                foreach (var entity in dataGridEntities)
+                {
+                    entity.IsActive = false;
+                }
+            }
         }
     }
 }

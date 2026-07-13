@@ -12,6 +12,10 @@ namespace PPMTool.Services
 {
     public class SkillTagService : BaseEntityService<SkillTag>
     {
+        public SkillTagService(ILogger<SkillTagService> logger) : base(logger)
+        {
+        }
+
         /// <summary>
         /// Returns all skill tags in the DB
         /// </summary>
@@ -160,7 +164,8 @@ namespace PPMTool.Services
             // Find all the subtasks for the project
             var subtasks = context.SubTasks
                 .Include(x => x.OwningProject)
-                .Where(x => x.OwningProject.ProjectId == projectId);
+                .Where(x => x.OwningProject.ProjectId == projectId)
+                .ToList();
 
             var skills = new List<SkillTag>();
             foreach (var subtask in subtasks)

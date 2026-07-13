@@ -65,6 +65,9 @@ SPDX-License-Identifier: apache-2.0
     private ProjectService ProjectService { get; set; }
 
     [Inject]
+    private PersonService PersonService { get; set; }
+
+    [Inject]
     private IJSRuntime JSRuntime { get; set; }
 
     private ChartModel chartModel;
@@ -166,7 +169,7 @@ SPDX-License-Identifier: apache-2.0
 
         Task.Run(() =>
         {
-            Debug.WriteLine($"** Running query {TaskModel.StartDate.ToShortDateString()} - {TaskModel.EndDate.ToShortDateString()} @ {TaskModel.UnmetDemand} with skills {string.Join('|', TaskModel?.SkillsRequired?.Select(x => x.Name) ?? new List<string>())}...");
+            Debug.WriteLine($"** Running {(TaskModel.IsLeadershipTask ? "leadership" : "non-leadership")} resource query {TaskModel.StartDate.ToShortDateString()} - {TaskModel.EndDate.ToShortDateString()} @ {TaskModel.UnmetDemand} with skills {string.Join('|', TaskModel?.SkillsRequired?.Select(x => x.Name) ?? new List<string>())}...");
 
             // Re-initialise the results
             chartModel = null;
@@ -183,10 +186,22 @@ SPDX-License-Identifier: apache-2.0
             // Start query state
             Logger.LogInformation("Looking for resource suggestions...");
 
-            // Find people with at least one matching skill tag
             var context = DbContextFactory.CreateDbContext();
-            var matchingPeople = SkillTagService.GetPeopleWithAtLeastOneMatch(context, TaskModel.SkillsRequired);
-            Debug.WriteLine($"** Found {matchingPeople.Count()} people with at least one matching skill");
+            IEnumerable<Person> candidatePeople;
+
+            // Different logic for leadership vs non-leadership tasks when getting candidate people
+            if (TaskModel.IsLeadershipTask)
+            {
+                // For leadership tasks, find all people with PSM allowance
+                candidatePeople = PersonService.GetPeopleWithProjectManagementAllowanceDuringWindow(context, TaskModel.StartDate.Date, TaskModel.EndDate.Date);
+                Debug.WriteLine($"** Found {candidatePeople.Count()} people with PSM allowance");
+            }
+            else
+            {
+                // For non-leadership tasks, find people with at least one matching skill tag
+                candidatePeople = SkillTagService.GetPeopleWithAtLeastOneMatch(context, TaskModel.SkillsRequired);
+                Debug.WriteLine($"** Found {candidatePeople.Count()} people with at least one matching skill");
+            }
 
             // Get projects that run during this task
             var validProjects = ProjectService
@@ -202,7 +217,7 @@ SPDX-License-Identifier: apache-2.0
             var endDate = TaskModel.EndDate.Date;
 
             // Just consider those employed during the task
-            var matchingPeopleEmployedDuringTask = matchingPeople
+            var matchingPeopleEmployedDuringTask = candidatePeople
                 .Where(x => x.StartDate.Date <= endDate && (x.EndDate == null || x.EndDate.Value.Date >= startDate));
 
             // Go through the people
@@ -215,9 +230,10 @@ SPDX-License-Identifier: apache-2.0
                 var assignments = new List<Assignment>();
                 foreach (var project in validProjects)
                 {
-                    foreach (var subTask in project.SubTasks)
+                    // Filter tasks based on whether they are leadership or not
+                    foreach (var subTask in project.SubTasks.Where(x => TaskModel.IsLeadershipTask == x.IsLeadershipTask))
                     {
-                        // Don't use the task model from the DB list but instead use the current resource settings
+                        // Don't use the task model from the DB list but instead use the current model as it might not have been saved yet
                         if (subTask.SubTaskId == TaskModel.SubTaskId)
                         {
                             // Add the datagrid entities to the TaskModel
@@ -248,7 +264,9 @@ SPDX-License-Identifier: apache-2.0
                     assignments,
                     (assignments, currentDay) =>
                     {
-                        var available = person.GetProjectWorkAvailabilityOnDate(currentDay);
+                        var available = TaskModel.IsLeadershipTask 
+                            ? person.GetProjectManagementCapacityOnDate(currentDay)
+                            : person.GetProjectWorkAvailabilityOnDate(currentDay);
                         var assignmentsOnDay = assignments.Sum(assignment =>
                         {
                             var resource = (assignment as Assignment)?.SubTask.AssignedResources
@@ -286,8 +304,10 @@ SPDX-License-Identifier: apache-2.0
                     (assignments, value1, currentDay) =>
                     {
                         // Compute what the remaining demand would be if the person's provisional assignments were removed
-                        var available = person.GetProjectWorkAvailabilityOnDate(currentDay);
-                        var assignmentsOnDay = assignments.Sum(assignment =>
+                        var available = TaskModel.IsLeadershipTask
+                            ? person.GetProjectManagementCapacityOnDate(currentDay)
+                            : person.GetProjectWorkAvailabilityOnDate(currentDay);
+                        var confirmedAssignmentsOnDay = assignments.Sum(assignment =>
                             {
                                 if ((assignment as Assignment)?.ProjectStatus.IsUnconfirmed() ?? true)
                                 {
@@ -298,8 +318,27 @@ SPDX-License-Identifier: apache-2.0
                                 return resource?.AssignmentFTE ?? 0;
                             });
 
-                        var unassigned = available - assignmentsOnDay;
+                        var unassigned = available - confirmedAssignmentsOnDay;
                         return Math.Round(unassigned, 3);
+                    },
+                    gapFillingFunction: (person, gapStart, gapEnd) =>
+                    {
+                        // Logic varies for gaps based on whether this is leaderhsip task or not
+                        Func<WorkloadModelChange, double> fteFunctionValue = 
+                            TaskModel.IsLeadershipTask ?
+                            (wlm => Math.Round(wlm?.ProjectManagementFTE ?? 0, 3)) :
+                            (wlm => Math.Round(wlm?.ProjectWorkFTE ?? 0, 3));
+
+                        return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(
+                            person,
+                            PersonService.GetWorkloadModelChanges(context, person.PersonId),
+                            gapStart,
+                            gapEnd,
+                            fteFunctionValue,
+                            fteFunctionValue,
+                            (value1, value2, isHatched) => GetColourOfBlock(value1, value2, isHatched),
+                            p => GenerateTooltipMessages(p)
+                        );
                     },
                     tooltipMessageFormatter: assignments =>
                     {

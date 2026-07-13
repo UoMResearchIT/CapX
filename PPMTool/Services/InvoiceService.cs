@@ -16,6 +16,10 @@ namespace PPMTool.Services
     /// </summary>
     public class InvoiceService : BaseEntityService<Invoice>
     {
+        public InvoiceService(ILogger<InvoiceService> logger) : base(logger)
+        {
+        }
+
         public override int Add(PPMToolContext context, Invoice entity, bool commitChanges = true)
         {
             context.Invoices.Add(entity);

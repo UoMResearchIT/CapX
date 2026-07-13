@@ -16,6 +16,10 @@ namespace PPMTool.Services
     /// </summary>
     public class SettingsService : BaseEntityService<Setting>
     {
+        public SettingsService(ILogger<SettingsService> logger) : base(logger)
+        {
+        }
+
         // The state of the settings should be cached in memory as well as the DB for performance
         private IDictionary<SettingType, string> SettingStates { get; set; } = new Dictionary<SettingType, string>();
 
@@ -218,7 +222,7 @@ namespace PPMTool.Services
         /// <inheritdoc />
         public override IEnumerable<Setting> GetAll(PPMToolContext context)
         {
-            return GetAllSettingsAsync(context).Result;
+            return context.Settings.ToList();
         }
 
         /// <summary>

@@ -21,7 +21,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.7")
+                .HasAnnotation("ProductVersion", "10.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -35,13 +35,13 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AbsenceId"));
 
                     b.Property<DateTime?>("EndDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("PersonId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("AbsenceId");
 
@@ -66,7 +66,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Key")
                         .IsRequired()
@@ -338,6 +338,9 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                     b.Property<int>("InnateCodeId")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("TaskName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -369,7 +372,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("KeyDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("ProjectId")
                         .HasColumnType("integer");
@@ -399,16 +402,16 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("CompletedDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("DueDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("EditedDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int?>("EditorUserId")
                         .HasColumnType("integer");
@@ -446,7 +449,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<DateTime>("LastUsed")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("OwnerPersonId")
                         .HasColumnType("integer");
@@ -482,7 +485,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("KeyDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("ProjectId")
                         .HasColumnType("integer");
@@ -513,7 +516,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PersonId"));
 
                     b.Property<DateTime?>("EndDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<double>("FTE")
                         .HasColumnType("double precision");
@@ -530,7 +533,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("TimesheetTemplateData")
                         .HasColumnType("text");
@@ -582,7 +585,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int?>("InnateActivityInnateCodeId")
                         .HasColumnType("integer");
@@ -627,7 +630,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("ProjectId");
 
@@ -810,7 +813,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("HasFixedEndDate")
                         .HasColumnType("boolean");
@@ -847,7 +850,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("TaskType")
                         .HasColumnType("integer");
@@ -873,10 +876,10 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TimesheetId"));
 
                     b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("DateStatusChanged")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Info")
                         .HasColumnType("text");
@@ -885,7 +888,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -997,7 +1000,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         .HasColumnType("double precision");
 
                     b.Property<DateTime>("ChangeDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("Grade")
                         .HasColumnType("integer");

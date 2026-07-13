@@ -11,6 +11,10 @@ namespace PPMTool.Services
 {
     public class FacultyService : BaseEntityService<Faculty>
     {
+        public FacultyService(ILogger<FacultyService> logger) : base(logger)
+        {
+        }
+
         /// <summary>
         /// Returns all faculties in the DB
         /// </summary>

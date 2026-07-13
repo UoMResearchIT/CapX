@@ -112,87 +112,45 @@ namespace PPMTool.Pages
                 query = query.Where(x => ActiveUser.Person != null && x.PersonId == ActiveUser.Person!.PersonId);
             }
 
-            // Now apply the custom filters (pattern matching syntax for non-null object)
-            if (args.Filters is { } filters && filters.Any())
+            // ---- GRID FILTERING ----
+            if (!string.IsNullOrWhiteSpace(args.Filter))
             {
-                // Filter on Skill Tags
-                var filter = args.Filters.FirstOrDefault(x => x.Property == "SkillTags");
-                var filterValue = filter?.FilterValue as string;
-                if (filter != null && filterValue != null)
-                {
-                    query = query.Where(x => x.OwnedSkills.Any(x => x.SkillTag.Name.Trim().ToLower().Contains(filterValue.Trim().ToLower())));
-                }
-
-                // Add filter on Line Manager
-                filter = filters.FirstOrDefault(f => f.Property == "LineManager");
-                filterValue = (filter?.FilterValue as string)?.Trim();
-                if (!string.IsNullOrEmpty(filterValue))
-                {
-                    var filterValueLower = filterValue.ToLower();
-                    query = query.Where(x =>
-                        x.LineManager != null &&
-                        (x.LineManager.Name ?? "").Trim().ToLower().Contains(filterValueLower));
-                }
-
-                // Add any filters than are none of the special ones
-                var stdFilters = args.Filters.Where(x => x.Property != "SkillTags" && x.Property != "LineManager");
-                if (stdFilters.Any())
-                {
-                    // Filter via the Where method
-                    query = query.Where(args.Filter);
-                }
+                query = query.Where(args.Filter);
             }
 
-            // Sorting needed
-            if (!string.IsNullOrEmpty(args.OrderBy))
+            // ---- SORTING ----
+            if (args.Sorts != null && args.Sorts.Count() > 0)
             {
-                // Check details of the sort
-                if (args.Sorts is { } sorts && sorts.Any())
-                {
-                    var sort = args.Sorts?.First();
-                    if (sort.Property == "SkillsCount")
-                    {
-                        // Apply the ordering process on skills count manually
-                        if (sort.SortOrder == SortOrder.Ascending)
-                        {
-                            query = query.OrderBy(x => TagService.GetCountForPerson(Context, x.PersonId));
-                        }
-                        else
-                        {
-                            query = query.OrderByDescending(x => TagService.GetCountForPerson(Context, x.PersonId));
-                        }
-                    }
-                    else if (sort.Property == "LineManager")
-                    {
-                        query = sort.SortOrder == SortOrder.Ascending ?
-                            query.OrderBy(x => x.LineManager != null ? x.LineManager.Name : "") :
-                            query.OrderByDescending(x => x.LineManager != null ? x.LineManager.Name : "");
-                    }
+                var sort = args.Sorts.First();
 
-                    // No special handling required
-                    else
-                    {
-                        // Sort via the OrderBy method
-                        query = query.OrderBy(args.OrderBy);
-                    }
+                // Special-case sort
+                if (sort.Property == "SkillsCount")
+                {
+                    query = sort.SortOrder == SortOrder.Ascending
+                        ? query.OrderBy(x => x.OwnedSkills.Count())
+                        : query.OrderByDescending(x => x.OwnedSkills.Count());
+                }
+                else
+                {
+                    query = query.OrderBy(args.OrderBy);
                 }
             }
-
-            // Important!!! Make sure the Count property of RadzenDataGrid is set.
-            var data = query.ToList();
-            count = data.Count();
-
-            // Perform paging via Skip and Take.
-            if (args.Skip == null)
+            else if (!string.IsNullOrWhiteSpace(args.OrderBy))
             {
-                people = data.Take(pageCount).ToList();
-            }
-            else
-            {
-                people = data.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+                query = query.OrderBy(args.OrderBy);
             }
 
-            Debug.WriteLine($"** {data.Count()} people loaded. {people.Count()} displayed.");
+            // ---- COUNT BEFORE PAGING ----
+            count = query.Count();
+
+            // ---- PAGING ----
+            var skip = args.Skip ?? 0;
+            var take = args.Top ?? pageCount;
+
+            people = query.Skip(skip).Take(take).ToList();
+
+            Debug.WriteLine($"** {count} people loaded. {people.Count()} displayed.");
         }
+
     }
 }

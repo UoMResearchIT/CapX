@@ -137,6 +137,14 @@ namespace PPMTool.Data.Entities
         public virtual ICollection<FundingSource> FundingSources { get; set; } = new List<FundingSource>();
 
         /// <summary>
+        /// Shadow property to allow easy filtering on FundsReceived in datagrids.
+        /// Requires additional logic in the service layer to populate this property when retrieving projects from the database.
+        /// </summary>
+        /// <returns></returns>
+        [NotMapped]
+        public double FundsReceived { get; set; }
+
+        /// <summary>
         /// Constructor also adds default status messages
         /// </summary>
         public Project()
@@ -325,6 +333,7 @@ namespace PPMTool.Data.Entities
         /// <param name="recomputeSubTaskCosts">Whether to update the subtask costs and save to database</param>
         /// <param name="financialReferences">If necessary a set of financial references</param>
         /// <param name="indirectsPercentage">The percentage of top slice to apply from the settings</param>
+        /// <exception cref="Exception">When no financial references are available in the DB with which to update the costs</exception>
         public void UpdateProjectMetaData(bool recomputeSubTaskCosts, IEnumerable<FinancialReference> financialReferences, float indirectsPercentage)
         {
             // Check conditions for cost update

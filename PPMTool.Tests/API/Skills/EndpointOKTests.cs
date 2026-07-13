@@ -16,5 +16,25 @@ namespace PPMTool.Tests.API.Skills
                 Assert.That(response.IsSuccessStatusCode);
             }
         }
+
+        [Test]
+        public async Task GetAllSkillsForPersonShouldReturnOK()
+        {
+            using (var client = GetClientAsManager())
+            {
+                var response = await client.GetAsync("/skills/getAllForPerson");
+                Assert.That(response.IsSuccessStatusCode);
+            }
+        }
+
+        [Test]
+        public async Task GetAllSkillsGroupedShouldReturnOK()
+        {
+            using (var client = GetClientAsManager())
+            {
+                var response = await client.GetAsync("/skills/getAllGrouped");
+                Assert.That(response.IsSuccessStatusCode);
+            }
+        }
     }
 }

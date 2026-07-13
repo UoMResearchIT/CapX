@@ -12,6 +12,20 @@ namespace PPMTool.Services
     public abstract class BaseEntityService<T> : IEntityService<T>
     {
         /// <summary>
+        /// Logger for logging service interactions
+        /// </summary>
+        protected readonly ILogger logger;
+
+        /// <summary>
+        /// Constructor but with DI
+        /// </summary>
+        /// <param name="logger"></param>
+        public BaseEntityService(ILogger logger)
+        {
+            this.logger = logger;
+        }
+
+        /// <summary>
         /// Method to restore a model to its unmodified state in the database after local modification.
         /// Doesn't have to be the same type as the service that extends this class 
         /// (not sure that satisfies separation of conerns though!)
