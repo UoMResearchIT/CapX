@@ -33,7 +33,7 @@ SPDX-License-Identifier: apache-2.0
     <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="DocX" Version="5.2.0" />
     <PackageReference Include="FluentDateTime" Version="3.0.0" />
-    <PackageReference Include="GitInfo" Version="3.6.0">
+    <PackageReference Include="GitInfo" Version="3.6.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -45,10 +45,10 @@ SPDX-License-Identifier: apache-2.0
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Identity.Web" Version="4.10.0" />
+    <PackageReference Include="Microsoft.Identity.Web" Version="4.12.1" />
 	<PackageReference Include="MySql.Data" Version="9.7.0" />
     <PackageReference Include="Sentry.AspNetCore" Version="6.6.0" />
-	<PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.1" />
+	<PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
   </ItemGroup>
 
   <ItemGroup>
