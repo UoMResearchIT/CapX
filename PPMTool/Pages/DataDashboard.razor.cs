@@ -1254,22 +1254,26 @@ namespace PPMTool.Pages
                             {
                                 var proj = projectData[i];
 
-                                // Column A: Project name
+                                // Column A: Project ID
                                 cell = worksheetProjects.Cell(2 + i, 1);
-                                cell.Value = $"{GetSetting(SettingType.ProjectAbbreviation)}-{proj.ProjectId} {proj.ProjectName}";
+                                cell.Value = proj.ProjectId;
 
-                                // Column B: PlannedCosts
+                                // Column B: Project name
                                 cell = worksheetProjects.Cell(2 + i, 2);
+                                cell.Value = proj.ProjectName;
+
+                                // Column C: PlannedCosts
+                                cell = worksheetProjects.Cell(2 + i, 3);
                                 cell.Value = proj.PlannedCosts;
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
-                                // Column C: RecoveredCosts
-                                cell = worksheetProjects.Cell(2 + i, 3);
+                                // Column D: RecoveredCosts
+                                cell = worksheetProjects.Cell(2 + i, 4);
                                 cell.Value = proj.RecoveredCosts;
                                 cell.Style.NumberFormat.Format = moneyFormat;
 
-                                // Column D: Formula = C - B (relative R1C1, no anchors)
-                                cell = worksheetProjects.Cell(2 + i, 4);
+                                // Column E: Formula = C - B (relative R1C1, no anchors)
+                                cell = worksheetProjects.Cell(2 + i, 5);
                                 cell.FormulaR1C1 = "=RC[-1]-RC[-2]";
                                 cell.Style.NumberFormat.Format = moneyFormat;
                             }
@@ -1317,7 +1321,7 @@ namespace PPMTool.Pages
                             AddSummaryRow(ws, 6, "How much we could recover (if all work we do as assignments is paid for)", moneyFormat, $"=Costs!V{totalRow}");
                             AddSummaryRow(ws, 7, "How much we can't recover as money ran out (i.e. work we did for free)", moneyFormat, $"=Costs!W{totalRow} - Costs!V{totalRow}");
                             AddSummaryRow(ws, 8, "How much we actually can recover (based on money in the project budgets)", moneyFormat, null, "=R[-2]C + R[-1]C");
-                            AddSummaryRow(ws, 9, "Actual surplus against cost recovery target due to combination of working for free and under assignment", moneyFormat, null, "=R[-1]C - R[-4]C");
+                            AddSummaryRow(ws, 9, "Surplus against WLM-based cost recovery target if recharge actioned as expected (salary estimate)", moneyFormat, null, "=R[-1]C - R[-4]C");
                             AddSummaryRow(ws, 10, "How much ITS give us (baseline budget)", moneyFormat, null, "=R[-8]C * R[-7]C / 12");
                             AddSummaryRow(ws, 11, "Surplus against the budget provided by ITS to cover current operation (salary estimate)", moneyFormat, null, "=R[-1]C - (R[-7]C - R[-3]C)");
                             AddSummaryRow(ws, 12, "How much we actually cost (from tracker)", moneyFormat, $"Costs!D{totalRow}");
