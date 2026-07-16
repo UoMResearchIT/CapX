@@ -68,12 +68,21 @@ namespace PPMTool.API.Helpers
             Debug.WriteLine($"** {assignmentChunks.Count()} assignment entries generated!");
 
             // Map the result to DTOs
-            var assignmentDTOs = assignmentChunks.Select(chunk => new AssignmentDTO(
+            var assignmentDTOs = assignmentChunks.Select(chunk =>
+                new AssignmentDTO(
 
-                // Map properties from chunk to AssignmentDTO
-
-
-                )).ToList();
+                    // Map properties from chunk to AssignmentDTO
+                    ProjectId: chunk.ProjectId,
+                    ProjectName: chunk.ProjectName,
+                    PersonName: chunk.EmployeeName,
+                    Grade: chunk.Grade,
+                    FTE: chunk.FTE,
+                    TaskName: chunk.TaskName,
+                    StartDate: chunk.StartDate,
+                    EndDate: chunk.EndDate,
+                    LeadershipTask: chunk.IsLeadershipAssignment
+                )
+            ).ToList();
 
             // Return the DTOs
             return new List<AssignmentDTO>();
