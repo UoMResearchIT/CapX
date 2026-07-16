@@ -20,7 +20,7 @@ namespace PPMTool.Tests.API.WorkloadModelAnalysis
                 // 200 OK if successful
                 // 400 Bad Request if parameters are invalid
                 // We verify the endpoint is accessible and returns a valid response
-                Assert.That(response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.BadRequest);
+                Assert.That(response.IsSuccessStatusCode);
             }
         }
 
@@ -31,7 +31,7 @@ namespace PPMTool.Tests.API.WorkloadModelAnalysis
             {
                 var response = await client.GetAsync($"/wlm/getAnalysis?personNames=&startDate={GetStartDate()}&endDate={GetEndDate()}&compareToWLM=true&normalisedByTotalHours=true");
 
-                Assert.That(response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.BadRequest);
+                Assert.That(response.IsSuccessStatusCode);
             }
         }
     }

@@ -14,13 +14,13 @@ namespace PPMTool.Tests.API.Assignments
             {
                 // Query requires personNames parameter
                 // Use empty string to get data for the API key owner by default
-                var response = await client.GetAsync($"/wlm/getAnalysis?personNames=&startDate={GetStartDate()}&endDate={GetEndDate()}");
+                var response = await client.GetAsync($"/assignments/getAssignments?startDate={GetStartDate()}&endDate={GetEndDate()}");
 
                 // The endpoint can return various status codes depending on parameters:
                 // 200 OK if successful
                 // 400 Bad Request if parameters are invalid
                 // We verify the endpoint is accessible and returns a valid response
-                Assert.That(response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.BadRequest);
+                Assert.That(response.IsSuccessStatusCode);
             }
         }
 

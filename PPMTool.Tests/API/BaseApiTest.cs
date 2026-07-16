@@ -84,12 +84,13 @@ namespace PPMTool.Tests.API
 
                 // Get developer keys
                 var developerKey = keys
-                    .Where(k => k.Owner.RoleType == RoleType.Developer);
+                    .FirstOrDefault(k => k.Owner.RoleType == RoleType.Developer);
 
-                if (developerKey.Count() == 0)
+                if (developerKey == null)
                 {
                     throw new Exception("No valid API keys found for a developer in the database. Please create one for testing.");
                 }
+                DeveloperApiKey = developerKey.Key;
 
                 // Get the first report of a manager
                 foreach (var key in managerKey)
