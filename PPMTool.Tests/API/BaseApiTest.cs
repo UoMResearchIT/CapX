@@ -14,6 +14,7 @@ namespace PPMTool.Tests.API
         public static string? ManagerApiKey { get; private set; }
         public static string? ManagerName { get; private set; }
         public static string? ManagerReport { get; private set; }
+        public static string? DeveloperApiKey { get; private set; }
 
         /// <summary>
         /// Provides a configured HttpClient for making requests to the API with an API key for a manager.
@@ -27,12 +28,28 @@ namespace PPMTool.Tests.API
             return client;
         }
 
+        /// <summary>
+        /// Provides a configured HttpClient for making requests to the API with an API key for a developer.
+        /// </summary>
+        /// <returns></returns>
+        public static HttpClient GetClientAsDeveloper()
+        {
+            var client = new HttpClient();
+            client.BaseAddress = new Uri(Setup.BaseUrl);
+            client.DefaultRequestHeaders.Add("x-api-key", new List<string> { DeveloperApiKey! });
+            return client;
+        }
+
         [OneTimeSetUp]
         public virtual void OneTimeSetup()
         {
             SetupForAPI();
         }
 
+        /// <summary>
+        /// Setup for API tests. Retrieved the API keys for a manager and developer from the database and sets them for use in tests.
+        /// </summary>
+        /// <exception cref="Exception"></exception>
         public void SetupForAPI()
         {
             // Get the API key to use from the database
@@ -63,6 +80,15 @@ namespace PPMTool.Tests.API
                 if (managerKey.Count() == 0)
                 {
                     throw new Exception("No valid API keys found for a manager in the database. Please create one for testing.");
+                }
+
+                // Get developer keys
+                var developerKey = keys
+                    .Where(k => k.Owner.RoleType == RoleType.Developer);
+
+                if (developerKey.Count() == 0)
+                {
+                    throw new Exception("No valid API keys found for a developer in the database. Please create one for testing.");
                 }
 
                 // Get the first report of a manager
