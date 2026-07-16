@@ -18,7 +18,7 @@ namespace PPMTool.Data.Helpers
         /// </summary>
         /// <param name="person">The person whose assignments should be considered</param>
         /// <param name="projectsInWindow">The projects in the window to be considered</param>
-        /// <param name="finrefs">Financial references to use</param>
+        /// <param name="finrefs">Financial references to use for cost estimates</param>
         /// <param name="startDate">Window start date. If not provided, uses earliest project start.</param>
         /// <param name="endDate">Window end date. If not provided, uses latest project end.</param>
         /// <param name="tasksInWindow">The tasks in the window for assginments to be extract. If not provided, extracts subtasks from the projects in the window.</param>
@@ -28,7 +28,7 @@ namespace PPMTool.Data.Helpers
         public static IEnumerable<AssignmentChunk> GetAssignmentChunks(
             Person person,
             IEnumerable<Project> projectsInWindow,
-            IEnumerable<FinancialReference> finrefs,
+            IEnumerable<FinancialReference>? finrefs = null,
             DateTime? startDate = null,
             DateTime? endDate = null,
             IEnumerable<SubTask>? tasksInWindow = null,
@@ -302,11 +302,14 @@ namespace PPMTool.Data.Helpers
                 data.AddRange(taskChunks);
             }
 
-            // Add the mid-grade salary estimates and overwrite the planned costs if necessary
-            foreach (var chunk in data)
+            // Add the mid-grade salary estimates and overwrite the planned costs if necessary or possible
+            if (finrefs != null)
             {
-                // Cost estimate based on mid-grade salaries
-                chunk.RecomputeChunkCosts(finrefs, shouldCalculateCosts);
+                foreach (var chunk in data)
+                {
+                    // Cost estimate based on mid-grade salaries
+                    chunk.RecomputeChunkCosts(finrefs, shouldCalculateCosts);
+                }
             }
 
             return data;
