@@ -766,6 +766,11 @@ namespace PPMTool.Pages
                 {
                     try
                     {
+                        // Set the report length
+                        var startDate = this.startDate.Date;
+                        var endDate = this.startDate.Date.AddMonths(monthsAhead).AddDays(-1);
+
+                        // Get the projects and financial references from the database
                         var allProjects = ProjectService.GetAll(context);
                         var realProjects = allProjects
                             .Where(x => !x.ProjectStatus.IsCancelled());
@@ -774,18 +779,19 @@ namespace PPMTool.Pages
                         // Create blank list of data
                         var assignmentChunks = new List<AssignmentChunk>();
 
-                        // Set the report length
-                        var startDate = this.startDate.Date;
-                        var endDate = this.startDate.Date.AddMonths(monthsAhead).AddDays(-1);
-
                         // Filter list of projects to those running during the window
                         var projectsInWindow = realProjects
                             .Where(x => x.IsWithin(startDate, endDate));
                         Debug.WriteLine($"** {projectsInWindow.Count()} projects running during the window.");
 
-                        // Get the breakdown of budget details for the tasks/resources in the projects we care about
-                        var projectBudgetDetails = FinanceHelper.GetProjectBudgetDetail(projects);
-                        Debug.WriteLine($"** Built {projectBudgetDetails.Count()} budget details.");
+                        // If we are using the project finance feature
+                        IDictionary<string, AssignmentBudgetDetail> projectBudgetDetails = null;
+                        if (FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance))
+                        {
+                            // Get the breakdown of budget details for the tasks/resources in the projects we care about
+                            projectBudgetDetails = FinanceHelper.GetProjectBudgetDetail(projects);
+                            Debug.WriteLine($"** Built {projectBudgetDetails.Count()} budget details.");
+                        }
 
                         // Get data for each person active in the window
                         var peopleActive = await PersonService.GetEmployedPeopleShallowAsync(Context, startDate, endDate);
