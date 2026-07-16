@@ -27,7 +27,7 @@ public static class Assignments
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public static async Task<IResult> GetAssignmentData(
+    public static async Task<IResult> GetAssignmentDataAsync(
         PPMToolContext context,
         ILogger logger,
         HttpContext http,

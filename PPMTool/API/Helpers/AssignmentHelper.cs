@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: apache-2.0
 
 using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
 using PPMTool.Data;
 using PPMTool.Data.Context;
@@ -25,19 +26,29 @@ namespace PPMTool.API.Helpers
         /// <returns></returns>
         internal static async Task<IList<AssignmentDTO>> GetAssignmentChunksAsync(PPMToolContext context, DateTime? start, DateTime? end)
         {
+            // Validate the date range
+            if (start is null)
+            {
+                start = DateTime.MinValue;
+            }
+            if (end is null)
+            {
+                end = DateTime.MaxValue;
+            }
+
             // Get the projects and financial references from the database
             var projectsInWindow = context.Projects
-                .Where(x => !x.ProjectStatus.IsCancelled() && x.IsWithin(start, end));
+                .Where(x => !x.ProjectStatus.IsCancelled() && x.IsWithin(start.Value, end.Value));
             Debug.WriteLine($"** {projectsInWindow.Count()} projects running during the window.");
 
             // Create blank list of data
             var assignmentChunks = new List<AssignmentChunk>();
 
             // Get data for each person active in the window
-            var peopleActive = context.People
+            var peopleActive = await context.People
                 .Where(x => x.StartDate <= end && (x.EndDate == null || x.EndDate >= start))
                 .OrderBy(x => x.Name)
-                .ToList();
+                .ToListAsync();
 
             // Build tasks for each person
             foreach (var person in peopleActive)
@@ -47,7 +58,7 @@ namespace PPMTool.API.Helpers
                     .SelectMany(x => x.SubTasks)
                     .Where(x => x.AssignedResources
                         .Any(x => x.Person.PersonId == person.PersonId) &&
-                        x.IsWithin(start, end)
+                        x.IsWithin(start.Value, end.Value)
                     );
                 Debug.WriteLine($"** {tasksInWindow.Count()} tasks within window for {person.Name}");
 
