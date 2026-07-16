@@ -2,8 +2,12 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+using System.Diagnostics;
 using PPMTool.API.DTOs;
+using PPMTool.Data;
 using PPMTool.Data.Context;
+using PPMTool.Data.Enums;
+using PPMTool.Data.Helpers;
 
 namespace PPMTool.API.Helpers
 {
@@ -21,7 +25,57 @@ namespace PPMTool.API.Helpers
         /// <returns></returns>
         internal static async Task<IList<AssignmentDTO>> GetAssignmentChunksAsync(PPMToolContext context, DateTime? start, DateTime? end)
         {
-            // TODO
+            // Get the projects and financial references from the database
+            var projectsInWindow = context.Projects
+                .Where(x => !x.ProjectStatus.IsCancelled() && x.IsWithin(start, end));
+            Debug.WriteLine($"** {projectsInWindow.Count()} projects running during the window.");
+
+            // Create blank list of data
+            var assignmentChunks = new List<AssignmentChunk>();
+
+            // Get data for each person active in the window
+            var peopleActive = context.People
+                .Where(x => x.StartDate <= end && (x.EndDate == null || x.EndDate >= start))
+                .OrderBy(x => x.Name)
+                .ToList();
+
+            // Build tasks for each person
+            foreach (var person in peopleActive)
+            {
+                // Filter list of tasks to just those assigned to this person
+                var tasksInWindow = projectsInWindow
+                    .SelectMany(x => x.SubTasks)
+                    .Where(x => x.AssignedResources
+                        .Any(x => x.Person.PersonId == person.PersonId) &&
+                        x.IsWithin(start, end)
+                    );
+                Debug.WriteLine($"** {tasksInWindow.Count()} tasks within window for {person.Name}");
+
+                // Represent the assignments in the window as chunks.
+                var data = AssignmentHelper.GetAssignmentChunks(
+                    person,
+                    projectsInWindow,
+                    finrefs: null,
+                    start,
+                    end,
+                    tasksInWindow
+                );
+
+                Debug.WriteLine($"** Built {data.Count()} rows for {person.Name}");
+                assignmentChunks.AddRange(data);
+            }
+            assignmentChunks.Sort((x, y) => x.EmployeeName.CompareTo(y.EmployeeName));
+            Debug.WriteLine($"** {assignmentChunks.Count()} assignment entries generated!");
+
+            // Map the result to DTOs
+            var assignmentDTOs = assignmentChunks.Select(chunk => new AssignmentDTO(
+
+                // Map properties from chunk to AssignmentDTO
+
+
+                )).ToList();
+
+            // Return the DTOs
             return new List<AssignmentDTO>();
         }
     }
