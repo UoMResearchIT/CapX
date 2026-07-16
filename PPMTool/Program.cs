@@ -316,6 +316,7 @@ api.MapGet($"/timesheets/getEntries", Timesheets.GetTimesheetEntriesForPersonFor
 api.MapGet($"/timesheets/getByCodeTask", Timesheets.GetTimesheetBookingsByCodeAndTask);
 api.MapGet($"/wlm/getAnalysis", WorkloadModelAnalysis.GetWorkloadAnalysisData);
 api.MapGet($"/leavebookings/getForSelfAndStaff", LeaveBookings.GetStaffBookingsForYearAsync);
+api.MapGet($"/assignments/getAssignments", Assignments.GetAssignmentDataAsync);
 
 // API middleware -- conditional on /api routes only
 app.UseWhen(
