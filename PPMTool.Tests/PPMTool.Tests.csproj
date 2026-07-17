@@ -13,6 +13,7 @@ SPDX-License-Identifier: apache-2.0
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <UserSecretsId>a302c2f5-524e-4ea6-acbd-a36efa011527</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +21,9 @@ SPDX-License-Identifier: apache-2.0
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.9" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
     <PackageReference Include="Microsoft.Playwright.NUnit" Version="1.61.0" />
     <PackageReference Include="NUnit" Version="4.6.1" />
