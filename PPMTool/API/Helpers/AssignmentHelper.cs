@@ -51,6 +51,9 @@ namespace PPMTool.API.Helpers
             // Get the projects and financial references from the database
             // Use explicit expressions here so they are LINQ-SQL translatable
             var projectsInWindow = await context.Projects
+                .Include(x => x.SubTasks)
+                    .ThenInclude(x => x.AssignedResources)
+                        .ThenInclude(x => x.Person)
                 .Where(x => !cancelledStatuses.Contains(x.ProjectStatus) &&
                             x.StartDate.Date <= endValue.Date &&
                             x.EndDate.Date >= startValue.Date)
@@ -62,6 +65,7 @@ namespace PPMTool.API.Helpers
 
             // Get data for each person active in the window
             var peopleActive = await context.People
+                .Include(x => x.WorkloadModelChanges)
                 .Where(x => x.StartDate <= endValue && (x.EndDate == null || x.EndDate >= startValue))
                 .OrderBy(x => x.Name)
                 .ToListAsync();
