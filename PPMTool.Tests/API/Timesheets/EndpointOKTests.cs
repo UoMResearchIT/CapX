@@ -22,7 +22,7 @@ namespace PPMTool.Tests.API.Timesheets
         {
             using (var client = GetClientAsManager())
             {
-                var response = await client.GetAsync($"timesheets/getByCodeTask?startDate={GetStartDate()}&endDate={GetEndDate()}");
+                var response = await client.GetAsync($"timesheets/getByCodeTask?code={TimesheetCode}&startDate={GetStartDate()}&endDate={GetEndDate()}");
                 Assert.That(response.IsSuccessStatusCode);
             }
         }
