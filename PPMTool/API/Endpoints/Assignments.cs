@@ -82,7 +82,8 @@ public static class Assignments
             var assignmentChunkDTOs = await AssignmentsHelper.GetAssignmentChunksAsync(
                 context,
                 start,
-                end);
+                end,
+                logger);
 
             logger.LogInformation($"API: GetAssignmentData: Returned {assignmentChunkDTOs.Count} assignment records.");
 

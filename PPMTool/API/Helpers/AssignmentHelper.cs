@@ -34,7 +34,7 @@ namespace PPMTool.API.Helpers
         /// <param name="end"></param>
         /// <param name="logger"></param>
         /// <returns></returns>
-        internal static async Task<IList<AssignmentDTO>> GetAssignmentChunksAsync(PPMToolContext context, DateTime? start, DateTime? end, ILogger<AssignmentHelper> logger = null)
+        internal static async Task<IList<AssignmentDTO>> GetAssignmentChunksAsync(PPMToolContext context, DateTime? start, DateTime? end, ILogger logger = null)
         {
             // Validate the date range
             if (start is null)
