@@ -29,7 +29,8 @@ namespace PPMTool.Tests.API
                 ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
             };
             var client = new HttpClient(handler);
-            client.BaseAddress = new Uri($"{Setup.BaseUrl}/api");
+            // IMPORTANT: Trailing slash MUST be preserved in BaseAddress to ensure relative paths are appended correctly
+            client.BaseAddress = new Uri($"{Setup.BaseUrl}/api/");
             client.DefaultRequestHeaders.Add("x-api-key", ManagerApiKey!);
             return client;
         }
@@ -45,7 +46,7 @@ namespace PPMTool.Tests.API
                 ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
             };
             var client = new HttpClient(handler);
-            client.BaseAddress = new Uri($"{Setup.BaseUrl}/api");
+            client.BaseAddress = new Uri($"{Setup.BaseUrl}/api/");
             client.DefaultRequestHeaders.Add("x-api-key", DeveloperApiKey!);
             return client;
         }
