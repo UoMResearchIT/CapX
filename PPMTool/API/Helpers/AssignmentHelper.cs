@@ -118,7 +118,7 @@ namespace PPMTool.API.Helpers
             ).ToList();
 
             // Return the DTOs
-            return new List<AssignmentDTO>();
+            return assignmentDTOs;
         }
     }
 }
