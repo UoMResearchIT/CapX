@@ -4,6 +4,8 @@
 
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Enums;
 
@@ -22,7 +24,11 @@ namespace PPMTool.Tests.API
         /// <returns></returns>
         protected static HttpClient GetClientAsManager()
         {
-            var client = new HttpClient();
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+            };
+            var client = new HttpClient(handler);
             client.BaseAddress = new Uri($"{Setup.BaseUrl}/api");
             client.DefaultRequestHeaders.Add("x-api-key", ManagerApiKey!);
             return client;
@@ -34,7 +40,11 @@ namespace PPMTool.Tests.API
         /// <returns></returns>
         protected static HttpClient GetClientAsDeveloper()
         {
-            var client = new HttpClient();
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+            };
+            var client = new HttpClient(handler);
             client.BaseAddress = new Uri($"{Setup.BaseUrl}/api");
             client.DefaultRequestHeaders.Add("x-api-key", DeveloperApiKey!);
             return client;
@@ -52,15 +62,30 @@ namespace PPMTool.Tests.API
         /// <exception cref="Exception"></exception>
         protected void SetupForAPI()
         {
-            // Get the API key to use from the database
-            // TODO: This needs to use the DbProvider options in the environment variables instead of hardcoding the path and provider
-            var dbPath = Path.Combine(AppContext.BaseDirectory, "../../../../PPMTool/PPMTool.db");
-            var options = new DbContextOptionsBuilder<PPMToolContext>()
-                .UseSqlite($"Data Source={dbPath};Cache=Shared;")
-                .Options;
-            Debug.WriteLine($"** Using DB at: {dbPath}");
+            // Build configuration from user secrets and environment variables
+            var config = new ConfigurationBuilder()
+                .AddUserSecrets<Setup>(optional: true)
+                .AddEnvironmentVariables()
+                .Build();
 
-            using (var context = new PPMToolContext(options))
+            // Get the connection string and db provider from configuration
+            var connectionString = config.GetConnectionString("PPMToolContextConnection");
+            var dbProvider = (config.GetValue<string>("DbProvider") ?? "sqlite").ToLower();
+
+            // If no connection string is configured, fall back to local SQLite database
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                var dbPath = Path.Combine(AppContext.BaseDirectory, "../../../../PPMTool/PPMTool.db");
+                connectionString = $"Data Source={dbPath};Cache=Shared;";
+            }
+
+            Debug.WriteLine($"** Using DB Provider: {dbProvider}");
+            Debug.WriteLine($"** Using Connection String: {connectionString}");
+
+            var options = new DbContextOptionsBuilder<PPMToolContext>();
+            options.AddDbProvider(connectionString, dbProvider);
+
+            using (var context = new PPMToolContext(options.Options))
             {
                 // Get valid API keys with related owner and person data
                 var keys = context.ApiKeys
