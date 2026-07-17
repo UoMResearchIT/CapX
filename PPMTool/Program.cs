@@ -22,6 +22,7 @@ using PPMTool.API.Filters;
 using PPMTool.API.Services;
 using PPMTool.Data;
 using PPMTool.Data.Context;
+using PPMTool.Data.Enums;
 using PPMTool.Helpers;
 using PPMTool.Services;
 using Radzen;
@@ -409,8 +410,11 @@ using (var context = dbContextFactory.CreateDbContext())
     await featureService.IntialiseServiceCacheAsync(context);
 
     // Update the project meta data for all projects in the database
-    var projectService = scope.ServiceProvider.GetRequiredService<ProjectService>();
-    projectService.UpdateAllProjectMetaData(context);
+    if (featureService.IsFeatureEnabled(FeatureType.ProjectFinance))
+    {
+        var projectService = scope.ServiceProvider.GetRequiredService<ProjectService>();
+        projectService.UpdateAllProjectMetaData(context);
+    }
 }
 
 // Clean local application file path
