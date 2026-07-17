@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
 using PPMTool.Data;
@@ -32,9 +33,8 @@ namespace PPMTool.API.Helpers
         /// <param name="context"></param>
         /// <param name="start"></param>
         /// <param name="end"></param>
-        /// <param name="logger"></param>
         /// <returns></returns>
-        internal static async Task<IList<AssignmentDTO>> GetAssignmentChunksAsync(PPMToolContext context, DateTime? start, DateTime? end, ILogger<AssignmentHelper> logger = null)
+        internal static async Task<IList<AssignmentDTO>> GetAssignmentChunksAsync(PPMToolContext context, DateTime? start, DateTime? end)
         {
             // Validate the date range
             if (start is null)
@@ -58,7 +58,7 @@ namespace PPMTool.API.Helpers
                             x.StartDate.Date <= endValue.Date &&
                             x.EndDate.Date >= startValue.Date)
                 .ToListAsync();
-            logger?.LogInformation($"** {projectsInWindow.Count} projects running during the window.");
+            Debug.WriteLine($"** {projectsInWindow.Count} projects running during the window.");
 
             // Create blank list of data
             var assignmentChunks = new List<AssignmentChunk>();
@@ -69,7 +69,6 @@ namespace PPMTool.API.Helpers
                 .Where(x => x.StartDate <= endValue && (x.EndDate == null || x.EndDate >= startValue))
                 .OrderBy(x => x.Name)
                 .ToListAsync();
-            logger?.LogInformation($"** {peopleActive.Count} people active during the window.");
 
             // Build tasks for each person
             foreach (var person in peopleActive)
@@ -82,7 +81,7 @@ namespace PPMTool.API.Helpers
                                 x.StartDate.Date <= endValue.Date &&
                                 x.EndDate.Date >= startValue.Date)
                     .ToList();
-                logger?.LogInformation($"** {tasksInWindow.Count} tasks within window for {person.Name}");
+                Debug.WriteLine($"** {tasksInWindow.Count} tasks within window for {person.Name}");
 
                 // Represent the assignments in the window as chunks.
                 var data = AssignmentHelper.GetAssignmentChunks(
@@ -94,11 +93,11 @@ namespace PPMTool.API.Helpers
                     tasksInWindow
                 );
 
-                logger?.LogInformation($"** Built {data.Count()} rows for {person.Name}");
+                Debug.WriteLine($"** Built {data.Count()} rows for {person.Name}");
                 assignmentChunks.AddRange(data);
             }
             assignmentChunks.Sort((x, y) => x.EmployeeName.CompareTo(y.EmployeeName));
-            logger?.LogInformation($"** {assignmentChunks.Count()} assignment entries generated!");
+            Debug.WriteLine($"** {assignmentChunks.Count()} assignment entries generated!");
 
             // Map the result to DTOs
             var assignmentDTOs = assignmentChunks.Select(chunk =>
