@@ -11,20 +11,20 @@ namespace PPMTool.Tests.API
 {
     public abstract class BaseApiTest
     {
-        public static string? ManagerApiKey { get; private set; }
-        public static string? ManagerName { get; private set; }
-        public static string? ManagerReport { get; private set; }
-        public static string? DeveloperApiKey { get; private set; }
+        protected static string? ManagerApiKey { get; private set; }
+        protected static string? ManagerName { get; private set; }
+        protected static string? ManagerReport { get; private set; }
+        protected static string? DeveloperApiKey { get; private set; }
 
         /// <summary>
         /// Provides a configured HttpClient for making requests to the API with an API key for a manager.
         /// </summary>
         /// <returns></returns>
-        public static HttpClient GetClientAsManager()
+        protected static HttpClient GetClientAsManager()
         {
             var client = new HttpClient();
-            client.BaseAddress = new Uri(Setup.BaseUrl);
-            client.DefaultRequestHeaders.Add("x-api-key", new List<string> { ManagerApiKey! });
+            client.BaseAddress = new Uri($"{Setup.BaseUrl}/api");
+            client.DefaultRequestHeaders.Add("x-api-key", ManagerApiKey!);
             return client;
         }
 
@@ -32,16 +32,16 @@ namespace PPMTool.Tests.API
         /// Provides a configured HttpClient for making requests to the API with an API key for a developer.
         /// </summary>
         /// <returns></returns>
-        public static HttpClient GetClientAsDeveloper()
+        protected static HttpClient GetClientAsDeveloper()
         {
             var client = new HttpClient();
-            client.BaseAddress = new Uri(Setup.BaseUrl);
-            client.DefaultRequestHeaders.Add("x-api-key", new List<string> { DeveloperApiKey! });
+            client.BaseAddress = new Uri($"{Setup.BaseUrl}/api");
+            client.DefaultRequestHeaders.Add("x-api-key", DeveloperApiKey!);
             return client;
         }
 
         [OneTimeSetUp]
-        public virtual void OneTimeSetup()
+        protected virtual void OneTimeSetup()
         {
             SetupForAPI();
         }
@@ -50,7 +50,7 @@ namespace PPMTool.Tests.API
         /// Setup for API tests. Retrieved the API keys for a manager and developer from the database and sets them for use in tests.
         /// </summary>
         /// <exception cref="Exception"></exception>
-        public void SetupForAPI()
+        protected void SetupForAPI()
         {
             // Get the API key to use from the database
             // TODO: This needs to use the DbProvider options in the environment variables instead of hardcoding the path and provider

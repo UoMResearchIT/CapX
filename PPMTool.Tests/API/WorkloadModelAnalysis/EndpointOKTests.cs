@@ -14,7 +14,7 @@ namespace PPMTool.Tests.API.WorkloadModelAnalysis
             {
                 // Query requires personNames parameter
                 // Use empty string for personNames to get data for the API key owner by default
-                var response = await client.GetAsync($"/wlm/getAnalysis?personNames=&startDate={GetStartDate()}&endDate={GetEndDate()}");
+                var response = await client.GetAsync($"wlm/getAnalysis?personNames=&startDate={GetStartDate()}&endDate={GetEndDate()}");
 
                 // We verify the endpoint is accessible and returns a valid response
                 Assert.That(response.IsSuccessStatusCode);
@@ -27,7 +27,7 @@ namespace PPMTool.Tests.API.WorkloadModelAnalysis
             using (var client = GetClientAsManager())
             {
                 // Check additional parameters for comparison and normalisation are accepted and return a valid response
-                var response = await client.GetAsync($"/wlm/getAnalysis?personNames=&startDate={GetStartDate()}&endDate={GetEndDate()}&compareToWLM=true&normalisedByTotalHours=true");
+                var response = await client.GetAsync($"wlm/getAnalysis?personNames=&startDate={GetStartDate()}&endDate={GetEndDate()}&compareToWLM=true&normalisedByTotalHours=true");
 
                 Assert.That(response.IsSuccessStatusCode);
             }

@@ -13,7 +13,7 @@ namespace PPMTool.Tests.API.Assignments
             using (var client = GetClientAsManager())
             {
                 // Just confirm that the endpoint is reachable and returns a 200 OK status code for a manager
-                var response = await client.GetAsync($"/assignments/getAssignments?startDate={GetStartDate()}&endDate={GetEndDate()}");
+                var response = await client.GetAsync($"assignments/getAssignments?startDate={GetStartDate()}&endDate={GetEndDate()}");
                 Assert.That(response.IsSuccessStatusCode);
             }
         }
@@ -24,7 +24,7 @@ namespace PPMTool.Tests.API.Assignments
             using (var client = GetClientAsDeveloper())
             {
                 // Just confirm that the endpoint is reachable and returns a 401 Unauthorized status code for a non-manager
-                var response = await client.GetAsync($"/assignments/getAssignments?startDate={GetStartDate()}&endDate={GetEndDate()}");
+                var response = await client.GetAsync($"assignments/getAssignments?startDate={GetStartDate()}&endDate={GetEndDate()}");
                 Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
             }
         }

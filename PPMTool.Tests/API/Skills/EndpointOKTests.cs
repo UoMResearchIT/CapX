@@ -12,7 +12,7 @@ namespace PPMTool.Tests.API.Skills
         {
             using (var client = GetClientAsManager())
             {
-                var response = await client.GetAsync("/skills/getAll");
+                var response = await client.GetAsync("skills/getAll");
                 Assert.That(response.IsSuccessStatusCode);
             }
         }
@@ -22,7 +22,7 @@ namespace PPMTool.Tests.API.Skills
         {
             using (var client = GetClientAsManager())
             {
-                var response = await client.GetAsync("/skills/getAllForPerson");
+                var response = await client.GetAsync("skills/getAllForPerson");
                 Assert.That(response.IsSuccessStatusCode);
             }
         }
@@ -32,7 +32,7 @@ namespace PPMTool.Tests.API.Skills
         {
             using (var client = GetClientAsManager())
             {
-                var response = await client.GetAsync("/skills/getAllGrouped");
+                var response = await client.GetAsync("skills/getAllGrouped");
                 Assert.That(response.IsSuccessStatusCode);
             }
         }
