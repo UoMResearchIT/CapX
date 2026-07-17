@@ -18,6 +18,16 @@ namespace PPMTool.API.Helpers
     internal class AssignmentsHelper
     {
         /// <summary>
+        /// Defines which project statuses should be excluded from queries.
+        /// </summary>
+        private static readonly ProjectStatus[] cancelledStatuses = new[]
+        {
+            ProjectStatus.CancelledByCustomer,
+            ProjectStatus.CancelledBidFailed,
+            ProjectStatus.CancelledNoResource
+        };
+
+        /// <summary>
         /// Uses the methods used by the finance export to construct assignments for all people in the system in the date range.
         /// </summary>
         /// <param name="context"></param>
@@ -35,18 +45,24 @@ namespace PPMTool.API.Helpers
             {
                 end = DateTime.MaxValue;
             }
+            var startValue = start.Value;
+            var endValue = end.Value;
 
             // Get the projects and financial references from the database
-            var projectsInWindow = context.Projects
-                .Where(x => !x.ProjectStatus.IsCancelled() && x.IsWithin(start.Value, end.Value));
-            Debug.WriteLine($"** {projectsInWindow.Count()} projects running during the window.");
+            // Use explicit expressions here so they are LINQ-SQL translatable
+            var projectsInWindow = await context.Projects
+                .Where(x => !cancelledStatuses.Contains(x.ProjectStatus) &&
+                            x.StartDate.Date <= endValue.Date &&
+                            x.EndDate.Date >= startValue.Date)
+                .ToListAsync();
+            Debug.WriteLine($"** {projectsInWindow.Count} projects running during the window.");
 
             // Create blank list of data
             var assignmentChunks = new List<AssignmentChunk>();
 
             // Get data for each person active in the window
             var peopleActive = await context.People
-                .Where(x => x.StartDate <= end && (x.EndDate == null || x.EndDate >= start))
+                .Where(x => x.StartDate <= endValue && (x.EndDate == null || x.EndDate >= startValue))
                 .OrderBy(x => x.Name)
                 .ToListAsync();
 
@@ -54,21 +70,22 @@ namespace PPMTool.API.Helpers
             foreach (var person in peopleActive)
             {
                 // Filter list of tasks to just those assigned to this person
+                // Using LINQ-to-objects on already-loaded projects/tasks
                 var tasksInWindow = projectsInWindow
                     .SelectMany(x => x.SubTasks)
-                    .Where(x => x.AssignedResources
-                        .Any(x => x.Person.PersonId == person.PersonId) &&
-                        x.IsWithin(start.Value, end.Value)
-                    );
-                Debug.WriteLine($"** {tasksInWindow.Count()} tasks within window for {person.Name}");
+                    .Where(x => x.AssignedResources.Any(ar => ar.Person.PersonId == person.PersonId) &&
+                                x.StartDate.Date <= endValue.Date &&
+                                x.EndDate.Date >= startValue.Date)
+                    .ToList();
+                Debug.WriteLine($"** {tasksInWindow.Count} tasks within window for {person.Name}");
 
                 // Represent the assignments in the window as chunks.
                 var data = AssignmentHelper.GetAssignmentChunks(
                     person,
                     projectsInWindow,
                     finrefs: null,
-                    start,
-                    end,
+                    startValue,
+                    endValue,
                     tasksInWindow
                 );
 
