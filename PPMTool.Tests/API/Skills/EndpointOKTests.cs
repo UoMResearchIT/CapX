@@ -22,7 +22,7 @@ namespace PPMTool.Tests.API.Skills
         {
             using (var client = GetClientAsManager())
             {
-                var response = await client.GetAsync("skills/getAllForPerson");
+                var response = await client.GetAsync($"skills/getAllForPerson?name={PersonName}");
                 Assert.That(response.IsSuccessStatusCode);
             }
         }

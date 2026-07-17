@@ -17,6 +17,7 @@ namespace PPMTool.Tests.API
         protected static string? ManagerName { get; private set; }
         protected static string? ManagerReport { get; private set; }
         protected static string? DeveloperApiKey { get; private set; }
+        protected static string? PersonName { get; private set; }
 
         /// <summary>
         /// Provides a configured HttpClient for making requests to the API with an API key for a manager.
@@ -134,6 +135,9 @@ namespace PPMTool.Tests.API
                         return;
                     }
                 }
+
+                // Get the name of the first person in the database replacing spaces with underscores so it can be used as a test parameter in API calls
+                PersonName = context.People.FirstOrDefault()?.Name?.Replace(" ", "_");
 
                 // If no report found then error
                 throw new Exception("No valid API keys found for a manager with a report in the database. Please create one for testing.");
