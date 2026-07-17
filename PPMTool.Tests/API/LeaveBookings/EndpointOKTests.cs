@@ -17,8 +17,7 @@ namespace PPMTool.Tests.API.LeaveBookings
                 // We just verify that the endpoint is accessible and returns a valid response
                 Assert.That(
                     response.StatusCode == System.Net.HttpStatusCode.OK ||
-                    response.StatusCode == System.Net.HttpStatusCode.InternalServerError ||
-                    response.StatusCode == System.Net.HttpStatusCode.BadRequest
+                    response.StatusCode == System.Net.HttpStatusCode.InternalServerError
                 );
             }
         }

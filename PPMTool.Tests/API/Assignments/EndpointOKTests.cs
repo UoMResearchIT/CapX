@@ -12,14 +12,8 @@ namespace PPMTool.Tests.API.Assignments
         {
             using (var client = GetClientAsManager())
             {
-                // Query requires personNames parameter
-                // Use empty string to get data for the API key owner by default
+                // Just confirm that the endpoint is reachable and returns a 200 OK status code for a manager
                 var response = await client.GetAsync($"/assignments/getAssignments?startDate={GetStartDate()}&endDate={GetEndDate()}");
-
-                // The endpoint can return various status codes depending on parameters:
-                // 200 OK if successful
-                // 400 Bad Request if parameters are invalid
-                // We verify the endpoint is accessible and returns a valid response
                 Assert.That(response.IsSuccessStatusCode);
             }
         }
@@ -29,8 +23,8 @@ namespace PPMTool.Tests.API.Assignments
         {
             using (var client = GetClientAsDeveloper())
             {
+                // Just confirm that the endpoint is reachable and returns a 401 Unauthorized status code for a non-manager
                 var response = await client.GetAsync($"/assignments/getAssignments?startDate={GetStartDate()}&endDate={GetEndDate()}");
-
                 Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
             }
         }
