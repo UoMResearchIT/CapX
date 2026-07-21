@@ -106,6 +106,7 @@ namespace PPMTool.API.Helpers
                     // Map properties from chunk to AssignmentDTO
                     ProjectId: chunk.ProjectId,
                     ProjectName: chunk.ProjectName,
+                    ProjectStatus: projectsInWindow.FirstOrDefault(x => x.RTP == chunk.ProjectId)?.ProjectStatus.GetDescription() ?? string.Empty,
                     PersonName: chunk.EmployeeName,
                     Grade: chunk.Grade,
                     FTE: chunk.FTE,
