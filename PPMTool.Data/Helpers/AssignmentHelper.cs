@@ -147,7 +147,7 @@ namespace PPMTool.Data.Helpers
                     FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.Description) ? "None" : fundingSource?.Description,
                     AmountCovered = amountCovered,
                     BudgetStatus = budgetStatus,
-                    IsLeadershipAssignment = task.IsLeadershipTask
+                    AssignmentType = task.TaskDuty.GetDescription()
                 };
                 IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>()
                 {

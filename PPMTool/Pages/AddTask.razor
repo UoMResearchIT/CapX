@@ -94,7 +94,7 @@ SPDX-License-Identifier: apache-2.0
 
                     <div class="row">
                         <!-- Choice of task type affects options -->
-                        <div class="col-4">
+                        <div class="col-3">
                             <RadzenLabel class="radzen-form-label" Text="Task Type" /><br />
                             <RadzenDropDown class="radzen-dropdown" TValue="TaskType" @bind-Value="TaskModel.TaskType" Data="@taskTypes">
                                 <Template Context="x">
@@ -103,7 +103,7 @@ SPDX-License-Identifier: apache-2.0
                             </RadzenDropDown>
                         </div>
 
-                        <div class="col-3">
+                        <div class="col-4">
                             @if (ProjectModel?.SubTasks?.Count > 0)
                             {
                                 <RadzenLabel class="radzen-form-label" Text="Predecessor" />
@@ -119,18 +119,20 @@ SPDX-License-Identifier: apache-2.0
                             }
                         </div>
 
-                        <div class="col-3">
+                        <div class="col-2">
                             <RadzenLabel class="radzen-form-label" Text="Lag" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Only available when a predecessor is set" Visible="@(selectedPredecessorId == null)" /><br />
                             <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Step="1" Placeholder="0" @bind-Value="TaskModel.Lag" Disabled="@(selectedPredecessorId == null)" />
                         </div>
 
-                        <div class="col-2">
-                            <RadzenLabel class="radzen-form-label" Component="LeadershipTask" Text="Is Leadership Task" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Turn this on if the task is a leadership task (affects PM demand and leadership costs if support by the cost model)" /><br />
-                            <div class="align-items-center p-1">
-                                <div style="display: flex">
-                                    <RadzenSwitch @bind-value="TaskModel.IsLeadershipTask" Name="LeadershipTask" Change="@(_ => UpdatePeopleDropdownSource(new LoadDataArgs()))" />
-                                </div>
-                            </div>
+                        <div class="col-3">
+                            <RadzenLabel class="radzen-form-label" Component="TaskDutyDropDown" Text="Task Duty" />
+                            <RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Select the duty the demand for this task should be reflected in (affects PM demand and leadership costs if support by the cost model)" />
+                            <br />
+                            <RadzenDropDown class="radzen-dropdown" Name="TaskDutyDropDown" @bind-Value="@TaskModel.TaskDuty" Data="@allowedTaskDuties" Change="@(_ => UpdatePeopleDropdownSource(new LoadDataArgs()))">
+                                <Template Context="x">
+                                    @($"{x.GetDescription()})")
+                                </Template>
+                            </RadzenDropDown>
                         </div>
                     </div>
 

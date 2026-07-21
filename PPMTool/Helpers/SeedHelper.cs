@@ -2026,7 +2026,7 @@ namespace PPMTool.Helpers
         /// <param name="leadershipFTE"></param>
         private static void CreateLeadershipSubTask(this Project project, double leadershipFTE = 0.05)
         {
-            if (!project.SubTasks.Any(x => !x.IsLeadershipTask)) return;
+            if (!project.SubTasks.Any(x => x.TaskDuty != Duty.ProjectAndServiceMgmt)) return;
 
             var startDate = project.SubTasks.Min(x => x.StartDate);
             var endDate = project.SubTasks.Max(x => x.EndDate);
@@ -2041,7 +2041,7 @@ namespace PPMTool.Helpers
                 StartDate = startDate,
                 TaskType = TaskType.FixedDuration,
                 UnmetDemand = 0,
-                IsLeadershipTask = true
+                TaskDuty = Duty.ProjectAndServiceMgmt
             };
             subTask.Schedule();
             project.SubTasks.Add(subTask);
@@ -2328,8 +2328,8 @@ namespace PPMTool.Helpers
         /// <param name="project"></param>
         private static void AddProjectManagerToLeadershipTasks(this Project project)
         {
-            if (!project.SubTasks.Any(x => x.IsLeadershipTask)) return;
-            foreach (var task in project.SubTasks.Where(x => x.IsLeadershipTask))
+            if (!project.SubTasks.Any(x => x.TaskDuty == Duty.ProjectAndServiceMgmt)) return;
+            foreach (var task in project.SubTasks.Where(x => x.TaskDuty == Duty.ProjectAndServiceMgmt))
             {
                 var resource = new Resource
                 {

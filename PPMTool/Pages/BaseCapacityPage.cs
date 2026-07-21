@@ -279,11 +279,11 @@ namespace PPMTool.Pages
             // Filter again
             if (taskSet == TaskSubset.TechOnly)
             {
-                subTasks = subTasks.Where(x => !x.IsLeadershipTask);
+                subTasks = subTasks.Where(x => x.TaskDuty != Duty.ProjectAndServiceMgmt);
             }
             else if (taskSet == TaskSubset.LeadershipOnly)
             {
-                subTasks = subTasks.Where(x => x.IsLeadershipTask);
+                subTasks = subTasks.Where(x => x.TaskDuty == Duty.ProjectAndServiceMgmt);
             }
             return subTasks;
         }

@@ -191,7 +191,7 @@ SPDX-License-Identifier: apache-2.0
                                                          XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
                                                          YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
                                                          YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
-                                                         PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
+                                                         PointColor="@(e => e.BlockDuty != Duty.ProjectWork ? e.BlockDuty.GetBackgroundColourCode() : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
 
                                         <ApexRangeSeries TItem="GanttBlock"
                                                          Items="provisionalBlocks"
@@ -199,7 +199,7 @@ SPDX-License-Identifier: apache-2.0
                                                          XValue="@(e => groupLinkedTasks ? e.PredecessorGroupName : e.Task.Name)"
                                                          YMinValue="@(e => e.Task.StartDate.ToUnixTimeMilliseconds())"
                                                          YMaxValue="@(e => e.IsFake() ? e.Task.EndDate.ToUnixTimeMilliseconds() : e.Task.EndDate.AddDays(1).ToUnixTimeMilliseconds())"
-                                                         PointColor="@(e => e.IsLeadershipTask ? "#609" : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
+                                                         PointColor="@(e => e.BlockDuty != Duty.ProjectWork ? e.BlockDuty.GetBackgroundColourCode() : ChartItem.GetColourStringPercentage(100 + (int)e.Task.GetPercentageUnmetDemand()))" />
                                     </ChildContent>
                                     <ApexPointTooltip>
                                         <div class="m-2">
@@ -207,7 +207,7 @@ SPDX-License-Identifier: apache-2.0
                                                 var point = (ListPoint<GanttBlock>)context.DataPoint;
                                                 <div class="m-0 p-3">
                                                     <RadzenText Text="@point.Items.FirstOrDefault()?.Task.Name" TextStyle="TextStyle.Subtitle1" />
-                                                    @if (!point.Items.FirstOrDefault()?.IsLeadershipTask ?? false)
+                                                    @if (point.Items.FirstOrDefault() is not null && point.Items.FirstOrDefault()!.BlockDuty != Duty.ProjectAndServiceMgmt)
                                                     {
                                                         @if (point.Items.FirstOrDefault()?.Task.HasUnmetDemand() ?? false)
                                                         {
@@ -229,7 +229,7 @@ SPDX-License-Identifier: apache-2.0
                                                     <h4>@string.Join(" | ", point.Items.FirstOrDefault()?.Task.AssignedResources.Select(x => $"{x.Person.Name} [{Math.Round(x.AssignmentFTE, 3)}]"))</h4>
                                                     <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
                                                     <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
-                                                    @if ((!point.Items.FirstOrDefault()?.IsLeadershipTask ?? false) && skillsEnabled)
+                                                    @if ((point.Items.FirstOrDefault() is not null && point.Items.FirstOrDefault()!.BlockDuty != Duty.ProjectAndServiceMgmt) && skillsEnabled)
                                                     {
                                                         var taskId = point.Items.FirstOrDefault()?.Task.SubTaskId ?? 0;
                                                         var skillsList = SkillTagService.GetSkillsForSubTask(Context, taskId);
@@ -346,9 +346,9 @@ SPDX-License-Identifier: apache-2.0
                                 {
                                     <RadzenDataGridColumn TItem="SubTask" Property="ActualCost" Title="@($"Actual Cost {(project.CostModel.HasIndirects() ? "(inc. Indirects)" : "")}")" FormatString="{0:C0}" Filterable="false" MinWidth="10px" />
                                 }
-                                <RadzenDataGridColumn TItem="SubTask" Property="IsLeadershipTask" Title="Leadership Task" Width="8rem" MinWidth="10px">
+                                <RadzenDataGridColumn TItem="SubTask" Property="TaskDuty" Title="Duty" Width="10rem" MinWidth="10px">
                                     <Template Context="t">
-                                        <RadzenSwitch @bind-Value="t.IsLeadershipTask" Disabled="true" />
+                                        @t.TaskDuty.GetDescription()
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="SubTask" Property="StartDate" Title="Start Date" FormatString="{0:d}" Width="8rem" MinWidth="10px" />

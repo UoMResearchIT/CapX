@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Services
 {
@@ -115,7 +116,7 @@ namespace PPMTool.Services
         internal bool IsUniqueTaskNameInProject(Project projectModel, SubTask taskModel)
         {
             // Leadership tasks have a fixed name
-            if (taskModel.IsLeadershipTask) return true;
+            if (taskModel.TaskDuty == Duty.ProjectAndServiceMgmt) return true;
 
             // Check other tasks
             var subSet = projectModel.SubTasks.Where(x => x.SubTaskId != taskModel.SubTaskId);
