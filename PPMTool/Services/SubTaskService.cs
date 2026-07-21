@@ -12,6 +12,10 @@ namespace PPMTool.Services
 {
     public class SubTaskService : BaseEntityService<SubTask>
     {
+        public SubTaskService(ILogger<SubTaskService> logger) : base(logger)
+        {
+        }
+
         /// <inheritdoc />
         public override int Add(PPMToolContext context, SubTask taskModel, bool commitChanges = true)
         {

@@ -77,6 +77,9 @@ Docker Compose runs a single container with a single volume containing the datab
 The application and the container requires serveral environment variables to be set in order to run correctly.
 To set this up, create a `.env` file in the repository root with the following required variables:
 
+> [!TIP]
+> You do not have to create a `.env` file in the root. You can name it whatever you want and put it wherever you want on the system. However, you must then pass the path to this file with the `--env-file` flag whenever you call a docker compose command.
+
 | Variable | Description |
 |----------|-------------|
 | `ASPNETCORE_ENVIRONMENT` | ASP.NET Core runtime environment. Valid values: `Development` or `Production`. This determines which `appsettings.*.json` file is loaded at runtime. |
@@ -120,6 +123,12 @@ Build and bring up the container:
 docker compose up --build
 ```
 
+or if you have named your `.env` file something custom and placed it in a custom location:
+
+```bash
+docker compose --env-file /path/to/env/file up --build
+```
+
 You can then access:
 - The web application at `http://localhost:3000` (or your configured `CAPX_HTTP_PORT`)
 - The API at `http://localhost:3000/api` (or your configured `CAPX_HTTP_PORT`)
@@ -153,7 +162,7 @@ TBC
 
 ---
 
-## CapX @ The University of Manchester
+## CapX @ The University of Manchester RSE Department
 The production version of CapX is currently deployed to [balex.itservices.manchester.ac.uk](https://balex.itservices.manchester.ac.uk) built from the `release` branch in the repo. This machine is on the UoM private network so users will need to be on the VPN to access.
 
 There is a development version of CapX deployed to [balextest.itservices.manchester.ac.uk](https://balextest.itservices.manchester.ac.uk) which is a build of the `dev` branch and showcases new features but might not be entirely stable. This is also on the private network.

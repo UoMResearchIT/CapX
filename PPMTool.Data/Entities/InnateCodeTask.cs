@@ -4,11 +4,10 @@
 
 using System.ComponentModel.DataAnnotations;
 using PPMTool.Data.Enums;
-using PPMTool.Data.Interfaces;
 
 namespace PPMTool.Data.Entities
 {
-    public class InnateCodeTask : ILoggableObject
+    public class InnateCodeTask : BaseBookableItem
     {
         public int InnateCodeTaskId { get; set; }
 
@@ -26,8 +25,9 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         public virtual InnateCode InnateCode { get; set; } = null!;
+        public int InnateCodeId { get; set; }
 
-        public string GetSensibleObjectName()
+        public override string GetSensibleObjectName()
         {
             return $"{InnateCode?.GetSensibleObjectName()} | {TaskName}";
         }

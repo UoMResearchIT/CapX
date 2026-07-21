@@ -23,6 +23,10 @@ namespace PPMTool.Services
         /// </summary>
         public bool HasStaffTimesheetActions { get; private set; }
 
+        public TimesheetService(ILogger<TimesheetService> logger) : base(logger)
+        {
+        }
+
         /// <summary>
         /// Adds a timesheet. If duplicate found does not add but returns -1 otherwise returns ID of added timesheet.
         /// </summary>
@@ -255,12 +259,12 @@ namespace PPMTool.Services
                 InnateCodeTask task = tasks.FirstOrDefault(x => x.InnateCodeTaskId == taskId);
 
                 // If task is no-longer in the DB or if the task is no-longer associated with an active code then remove from template
-                if (task == null || !task.InnateCode.IsActive)
+                if (task == null || !task.IsActive || !task.InnateCode.IsActive)
                 {
                     // Remove from template
                     if (task != null) DeleteFromTemplate(context, person, task);
 
-                    Debug.WriteLine($"** Removing task from template as no longer in DB or code is inactive: {task?.GetSensibleObjectName()}");
+                    logger.LogInformation($"Removing task from template as no longer in DB or code is inactive: {task?.GetSensibleObjectName()}");
                 }
                 else
                 {
@@ -269,7 +273,7 @@ namespace PPMTool.Services
                     entry.InnateCodeTask = task;
                     timesheet.TimesheetEntries.Add(entry);
 
-                    Debug.WriteLine($"** Adding new task to the timesheet : {task.InnateCode.GetSensibleObjectName()} : {task.GetSensibleObjectName()}");
+                    logger.LogInformation($"Adding new task to the timesheet : {task.InnateCode.GetSensibleObjectName()} : {task.GetSensibleObjectName()}");
                 }
             }
             CommitChanges(context);
@@ -361,6 +365,47 @@ namespace PPMTool.Services
                 .Include(x => x.InnateCodeTask)
                 .ThenInclude(x => x.InnateCode)
                 .ToListAsync();
+        }
+
+        /// <summary>
+        /// Get the list of IDs of timesheet code tasks that have bookings against them in the system's timesheets
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="innateCodeId"></param>
+        /// <returns></returns>
+        public async Task<List<int>> GetTaskIdsWithBookingsForCodeAsync(PPMToolContext context, int innateCodeId)
+        {
+            var taskIds = await context.InnateCodeTasks
+                .Where(t => t.InnateCodeId == innateCodeId)
+                .Select(t => t.InnateCodeTaskId)
+                .Distinct()
+                .ToListAsync();
+
+            if (taskIds.Count == 0)
+            {
+                return new List<int>();
+            }
+
+            return await context.TimesheetEntries
+                .Where(e => taskIds.Contains(e.InnateCodeTaskId))
+                .Select(e => e.InnateCodeTaskId)
+                .Distinct()
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Gets the list of IDs of timesheet codes that have bookings against at least on of their tasks in the system's timesheets
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public async Task<List<int>> GetCodeIdsWithBookingsAsync(PPMToolContext context)
+        {
+            // Get the list of code IDs that have bookings against them
+            var bookedCodeIds = context.TimesheetEntries
+                .Include(x => x.InnateCodeTask)
+                .Select(x => x.InnateCodeTask.InnateCode.InnateCodeId)
+                .Distinct();
+            return await bookedCodeIds.ToListAsync();
         }
     }
 }

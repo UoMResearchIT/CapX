@@ -126,6 +126,7 @@ namespace PPMTool.Pages
 
             // Initialise the project list -- developers can only see projects to which they are assigned
             IQueryable<Project> query = ProjectService.GetAll(Context).OrderBy(x => x.RTP).AsQueryable();
+
             if (ActiveUserRoleType == RoleType.Developer)
             {
                 query = query.Where(x => ActiveUser.Person != null && x.SubTasks.Any(x => x.AssignedResources.Any(x => x.Person.PersonId == ActiveUser.Person!.PersonId)));
@@ -141,45 +142,34 @@ namespace PPMTool.Pages
                 query = query.Where(args.Filter);
             }
 
-            // Filter on Faculty and School
-            if (args.Filters is { } filters && filters.Any())
-            {
-                var filter = filters.FirstOrDefault(f => f.Property == "Faculty");
-                var filterValue = (filter?.FilterValue as string)?.Trim();
-                if (!string.IsNullOrEmpty(filterValue))
-                {
-                    var filterValueLower = filterValue.ToLower();
-                    query = query.Where(x =>
-                        x.School != null &&
-                        x.School.Faculty != null &&
-                        ((x.School.Faculty.Code ?? "").Trim().ToLower()).Contains(filterValueLower));
-                }
-
-                filter = filters.FirstOrDefault(f => f.Property == "School");
-                filterValue = (filter?.FilterValue as string)?.Trim();
-                if (!string.IsNullOrEmpty(filterValue))
-                {
-                    var filterValueLower = filterValue.ToLower();
-                    query = query.Where(x =>
-                        x.School != null &&
-                        ((x.School.Code ?? "").Trim().ToLower()).Contains(filterValueLower));
-                }
-            }
-
             query = ApplySorting(query, args);
-
 
             // Assign to grid source
             var data = query.ToList();
             count = data.Count;
+
+            List<Project> projectsToDisplay;
             if (args.Skip == null)
             {
-                projects = data.Take(pageCount).ToList();
+                projectsToDisplay = data.Take(pageCount).ToList();
             }
             else
             {
-                projects = data.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+                projectsToDisplay = data.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
             }
+
+            // Load FundsReceived for displayed projects only (after filtering and paging)
+            var projectIds = projectsToDisplay.Select(p => p.ProjectId).ToList();
+            var fundsReceivedLookup = PaymentService.GetFundsReceivedForProjects(Context, projectIds);
+
+            // Populate FundsReceived from the lookup
+            foreach (var project in projectsToDisplay)
+            {
+                project.FundsReceived = fundsReceivedLookup.TryGetValue(project.ProjectId, out var funds) ? funds : 0;
+            }
+
+            // Now assign to bound variable for display
+            projects = projectsToDisplay;
 
             Debug.WriteLine($"** {data.Count()} projects loaded. {projects.Count()} displayed.");
         }

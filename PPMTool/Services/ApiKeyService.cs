@@ -13,6 +13,10 @@ namespace PPMTool.Services
     /// </summary>
     public class ApiKeyService : BaseEntityService<ApiKey>
     {
+        public ApiKeyService(ILogger<ApiKeyService> logger) : base(logger)
+        {
+        }
+
         public override int Add(PPMToolContext context, ApiKey entity, bool commitChanges = true)
         {
             context.ApiKeys.Add(entity);

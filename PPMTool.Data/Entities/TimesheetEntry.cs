@@ -35,6 +35,7 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [Required]
         public virtual InnateCodeTask InnateCodeTask { get; set; } = null!;
+        public int InnateCodeTaskId { get; set; }
 
         /// <summary>
         /// Represents the number of hours spent on the task on Monday.
@@ -72,24 +73,34 @@ namespace PPMTool.Data.Entities
         public double SundayHours { get; set; }
 
         /// <summary>
-        /// Total hours for the week for this entry
+        /// Total hours for the week for this entry. This must be explicitly updated with the <see cref="UpdateTotalHours"/> method.
         /// </summary>
         [NotMapped]
         public double TotalHours { get; private set; }
 
         /// <summary>
-        /// Represents whether this task is part of the user's template
+        /// Represents whether this task is part of the user's template. This must be explicitly set with the <see cref="SetIsInTemplate(bool)"/> method.
         /// </summary>
         [NotMapped]
-        public bool IsInTemplate { get; set; }
+        public bool IsInTemplate { get; private set; }
 
         /// <summary>
-        /// Method to sum up the hours in the entry
+        /// Method to sum up the hours in the entry and update the TotalHours property.
+        /// This should be called whenever the hours for any day are modified.
         /// </summary>
         /// <returns></returns>
         public void UpdateTotalHours()
         {
             TotalHours = MondayHours + TuesdayHours + WednesdayHours + ThursdayHours + FridayHours + SaturdayHours + SundayHours;
+        }
+
+        /// <summary>
+        /// Sets the IsInTemplate property to indicate whether this task is part of the user's template.
+        /// </summary>
+        /// <param name="isInTemplate"></param>
+        public void SetIsInTemplate(bool isInTemplate)
+        {
+            IsInTemplate = isInTemplate;
         }
 
         /// <summary>

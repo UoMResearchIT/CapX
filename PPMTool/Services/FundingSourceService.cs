@@ -13,6 +13,10 @@ namespace PPMTool.Services
     /// </summary>
     public class FundingSourceService : BaseEntityService<FundingSource>
     {
+        public FundingSourceService(ILogger<FundingSourceService> logger) : base(logger)
+        {
+        }
+
         public override int Add(PPMToolContext context, FundingSource entity, bool commitChanges = true)
         {
             context.FundingSources.Add(entity);

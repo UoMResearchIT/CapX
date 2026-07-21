@@ -11,13 +11,10 @@ namespace PPMTool.Services
 {
     public class UserService : BaseEntityService<User>
     {
-
-        private ILogger<UserService> logger;
         private IDbContextFactory<PPMToolContext> contextFactory;
 
-        public UserService(ILogger<UserService> logger, IDbContextFactory<PPMToolContext> contextFactory)
+        public UserService(ILogger<UserService> logger, IDbContextFactory<PPMToolContext> contextFactory) : base(logger)
         {
-            this.logger = logger;
             this.contextFactory = contextFactory;
         }
 
@@ -131,6 +128,38 @@ namespace PPMTool.Services
                 .Include(x => x.Person)
                 .Where(x => (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser) && x.Person != null)
                 .Select(x => x.Person.PersonId);
+        }
+
+        /// <summary>
+        /// Update the display name for all users linked to the given person model
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="personModel"></param>
+        internal void UpdateDisplayName(PPMToolContext context, Person personModel)
+        {
+            // If person model is null then there is nothing to update
+            if (personModel == null) { return; }
+
+            // Find linked users
+            var linkedUsers =
+                context.Users
+                    .Include(x => x.Person)
+                    .Where(x => x.Person != null && x.Person!.PersonId == personModel.PersonId);
+
+            // If there is a person linked to this user
+            if (linkedUsers.Count() > 0)
+            {
+                // Update the display name for all users linked to this person
+                foreach (var user in linkedUsers)
+                {
+                    if (user.Name != personModel.Name)
+                    {
+                        logger.LogInformation($"Updating display name for {personModel.Name}");
+                        user.Name = personModel.Name;
+                        Update(context, user);
+                    }
+                }
+            }
         }
     }
 }
