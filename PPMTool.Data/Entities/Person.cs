@@ -310,6 +310,24 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// Method to return BAU capacity for a person based on the WLM active on the provided date
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        public double GetBAUAvailability(DateTime date)
+        {
+            // If person hasn't started on day then return zero
+            if (StartDate > date) return 0;
+
+            // If the person has left before this day then return zero
+            if (EndDate != null && EndDate < date) return 0;
+
+            // Get WLM in play on date
+            var wlm = GetWorkloadModelOnDateOrDefault(date);
+            return wlm.BusinessAsUsualFTE;
+        }
+
+        /// <summary>
         /// Shadow property to store a comma-separated list of the person's skill tag names.
         /// Used for filtering on the Manage People page.
         /// </summary>

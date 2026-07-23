@@ -523,6 +523,12 @@ namespace PPMTool.Pages
             return people.Where(x => users.Any(y => y.Person.PersonId == x.PersonId)).ToList();
         }
 
+        protected IEnumerable<Person> GetPeopleWithAssignmentsOfDuty(IEnumerable<Person> cachedPeople, Duty[] duties)
+        {
+            // TODO: Be able to run a query here to get people from DB that have/had assignments with the given duty
+            return cachedPeople;
+        }
+
         /// <summary>
         /// Method to reload the dropdown sources on the page
         /// </summary>

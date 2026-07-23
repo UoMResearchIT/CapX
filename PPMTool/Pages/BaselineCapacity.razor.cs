@@ -23,6 +23,10 @@ namespace PPMTool.Pages
 
             if (!firstRender) return;
 
+            // Update the cached people to just contain people with BAU assignments
+            cachedPeople = GetPeopleWithAssignmentsOfDuty(cachedPeople, [Duty.BAU]);
+            await ReloadDropDownSourcesAsync();
+
             // Certain roles can use the dropdowns and save manager settings so need to reload
             if (!EditAuthorised && (ActiveUserRoleType != RoleType.Manager || ActiveUserRoleType != RoleType.Superuser))
             {
@@ -76,7 +80,7 @@ namespace PPMTool.Pages
                 // Value 2 function
                 (assignments, value1, currentDay) =>
                 {
-                    return person.GetProjectWorkAvailabilityOnDate(currentDay);
+                    return person.GetBAUAvailability(currentDay);
                 },
                 // Gap filler function
                 (assignments, gapStart, gapEnd) =>
@@ -87,7 +91,7 @@ namespace PPMTool.Pages
                         gapStart,
                         gapEnd,
                         wlm => 0,
-                        wlm => wlm?.ProjectWorkFTE ?? 0,
+                        wlm => wlm?.BusinessAsUsualFTE ?? 0,
                         (double value1, double value2, bool isHatched) => ChartItem.GetColourStringFTE(value1, value2)
                     );
                 },
