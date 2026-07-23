@@ -97,7 +97,7 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            GetPageCountSettingAsync();
+            _ = GetPageCountSettingAsync();
             Layout?.Reset();
 
             // Not sure why this happens but worth noting
