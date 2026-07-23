@@ -47,6 +47,8 @@ namespace PPMTool.Pages
         [SupplyParameterFromQuery(Name = "filterid")]
         public int? FilterPersonId { get; set; }
 
+        protected bool IsDeveloper() => ActiveUserRoleType == RoleType.Developer;
+
         protected CancellationTokenSource configureChartTaskCancellationTokenSource = null;
         protected Task configureChartTask = null;
         protected IList<ChartModel> chartModels = new List<ChartModel>();
@@ -190,6 +192,12 @@ namespace PPMTool.Pages
             if (assignmentsWithinBlock.Any(x => x.ProjectStatus.IsUnconfirmed()))
             {
                 messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROJECT UNCONFIRMED]</h3>";
+            }
+
+            // Add the provisional resource warning to the tooltip if chosen person is provisional on the project
+            if (assignmentsWithinBlock.Any(x => x?.SubTask.AssignedResources.Any(x => x.Person.PersonId == personOfInterest.PersonId && x.IsProvisional) ?? true))
+            {
+                messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>";
             }
 
             return messages;
@@ -564,6 +572,13 @@ namespace PPMTool.Pages
             await base.OnAfterRenderAsync(firstRender);
 
             if (!firstRender) return;
+
+            // Navigate away if feature not enabled
+            if (!FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
+            {
+                Navigation.NavigateTo("people");
+                return;
+            }
 
             // Get all projects not finished or cancelled
             cachedProjects = ProjectService.GetAll(Context).Where(x => !x.ProjectStatus.IsCancelled());

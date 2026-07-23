@@ -41,13 +41,6 @@ namespace PPMTool.Pages
 
             if (!firstRender) return;
 
-            // Navigate away if feature not enabled
-            if (!FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
-            {
-                Navigation.NavigateTo("people");
-                return;
-            }
-
             // Certain roles can use the dropdowns and save manager settings so need to reload
             if (EditAuthorised || ActiveUserRoleType == RoleType.Reader)
             {
@@ -80,8 +73,6 @@ namespace PPMTool.Pages
         }
 
         protected override string GetSessionStorageTag() => "capacity";
-
-        private bool IsDeveloper() => ActiveUserRoleType == RoleType.Developer;
 
         /// <summary>
         /// Method to setup the dropdown sources
@@ -357,26 +348,6 @@ namespace PPMTool.Pages
                 },
                 ignoreZeroValue1Entries: !isTotalRow
             );
-        }
-
-        /// <summary>
-        /// Method to generate tooltip messages for the chart blocks
-        /// </summary>
-        /// <param name="assignmentsWithinBlock"></param>
-        /// <param name="personOfInterest"></param>
-        /// <param name="messages"></param>
-        /// <returns></returns>
-        protected override string GenerateTooltipMessages(IEnumerable<Assignment> assignmentsWithinBlock, Person personOfInterest, string messages)
-        {
-            messages = base.GenerateTooltipMessages(assignmentsWithinBlock, personOfInterest, messages);
-
-            // Add the provisional resource warning to the tooltip if chosen person is provisional on the project
-            if (assignmentsWithinBlock.Any(x => x?.SubTask.AssignedResources.Any(x => x.Person.PersonId == personOfInterest.PersonId && x.IsProvisional) ?? true))
-            {
-                messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>";
-            }
-
-            return messages;
         }
     }
 }
