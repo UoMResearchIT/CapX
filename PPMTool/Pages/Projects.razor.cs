@@ -25,7 +25,6 @@ namespace PPMTool.Pages
         private IEnumerable<Project> projects;
         private RadzenDataGrid<Project> dataGrid;
         private int count;
-        private int pageCount = 15;
 
         private bool includeFinished;
         public bool IncludeFinished
@@ -151,7 +150,7 @@ namespace PPMTool.Pages
             List<Project> projectsToDisplay;
             if (args.Skip == null)
             {
-                projectsToDisplay = data.Take(pageCount).ToList();
+                projectsToDisplay = data.Take(PageCount).ToList();
             }
             else
             {
