@@ -435,17 +435,11 @@ span.mention {
     justify-self: center;
 }
 
-/* Hides paging details in datagrid header */
-.rz-has-pager .rz-pager:first-of-type .rz-pager-pages {
-    display: none;
-}
-
-/* Hides paging number dropdown in datagrid footer */
-.rz-has-pager .rz-pager:last-of-type .rz-dropdown {
-    display: none;
-}
-
-/* Hides paging number dropdown label in datagrid footer */
+/* Hide paging details & summary in datagrid header 
+   and the paging count dropdown and label in the footer */
+.rz-has-pager .rz-pager:first-of-type .rz-pager-pages,
+.rz-has-pager .rz-pager:first-of-type .rz-pager-summary,
+.rz-has-pager .rz-pager:last-of-type .rz-dropdown,
 .rz-has-pager .rz-pager:last-of-type .rz-pagesize-text {
     display: none;
 }
@@ -461,5 +455,6 @@ span.mention {
 .rz-pager .rz-dropdown {
     width: 6rem;
 }
+
 
 
