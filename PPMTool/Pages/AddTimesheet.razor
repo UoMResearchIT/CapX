@@ -407,7 +407,14 @@ SPDX-License-Identifier: apache-2.0
                                 }
                                 @if ((timesheet?.IsOwner(ActiveUser) ?? false) && !(timesheet?.IsLineManager(ActiveUser) ?? false))
                                 {
-                                    <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { newStatus = TimesheetStatus.Submitted; })" Disabled="@(totalHours == 0 || entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true))" Style="margin-right: 0.5rem;" />
+                                    if (timesheet.Status == TimesheetStatus.Submitted)
+                                    {
+                                        <RadzenButton ButtonType="ButtonType.Submit" Text="Retract timesheet" Icon="sync" ButtonStyle="ButtonStyle.Warning" Click="@(() => { newStatus = TimesheetStatus.New; })" Disabled="@(entityToInsert != null || entityToUpdate != null)" Style="margin-right: 0.5rem;" />
+                                    }
+                                    else
+                                    {
+                                        <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { newStatus = TimesheetStatus.Submitted; })" Disabled="@(totalHours == 0 || entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true))" Style="margin-right: 0.5rem;" />
+                                    }
                                 }
                             </div>
                         </RadzenStack>

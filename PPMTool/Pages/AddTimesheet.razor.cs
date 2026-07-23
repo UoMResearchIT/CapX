@@ -56,6 +56,7 @@ namespace PPMTool.Pages
             { "sun", "var(--rz-warning-lighter)" }
         };
         private TimesheetStatus newStatus;
+        private bool isRetractingTimesheet = false;
         private Timesheet previousTimesheet;
         private Timesheet nextTimesheet;
         private WorkloadModelChange currentWLM;
@@ -428,9 +429,19 @@ namespace PPMTool.Pages
                 }
             }
 
-            // Prompt to change of status
-            var confirmed = await DialogService.Confirm($"By continuing you will change the status of this timesheet to \"{newStatus}\".",
-                "Change Timesheet Status") ?? false;
+            // Prompt to change of status. Give a different message if retracting a timesheet.
+            var confirmed = false;
+            if (timesheet.Status == TimesheetStatus.Submitted && newStatus == TimesheetStatus.New)
+            {
+                confirmed = await DialogService.Confirm($"By continuing you will reopen this timesheet up for editing and resubmission.",
+                    "Retracting Submitted Timesheet") ?? false;
+                isRetractingTimesheet = true;
+            }
+            else
+            {
+                confirmed = await DialogService.Confirm($"By continuing you will change the status of this timesheet to \"{newStatus}\".",
+                    "Change Timesheet Status") ?? false;
+            }
             if (!confirmed) return;
             timesheet.Status = newStatus;
 
@@ -474,7 +485,7 @@ namespace PPMTool.Pages
             }
 
             // Set status changed information
-            if (timesheet.Status != TimesheetStatus.New)
+            if (timesheet.Status != TimesheetStatus.New || isRetractingTimesheet)
             {
                 timesheet.DateStatusChanged = DateTime.Now;
                 timesheet.StatusChangedBy = ActiveUser?.Person;
