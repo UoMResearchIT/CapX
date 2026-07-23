@@ -47,8 +47,12 @@ SPDX-License-Identifier: apache-2.0
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                             LogicalFilterOperator="LogicalFilterOperator.And"
                             AllowPaging="true"
-                            PageSize="@pageCount"
+                            PageSize="@PageCount"
                             ShowPagingSummary="true"
+                            PageSizeOptions="@PageSizeOptions"
+                            PagerHorizontalAlign="HorizontalAlign.Left"
+                            PagerPosition="PagerPosition.TopAndBottom"
+                            PageSizeChanged="@OnPageSizeChanged"
                             Count="@count"
                             LoadData="@LoadData">
                 <Columns>
