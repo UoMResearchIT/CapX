@@ -108,7 +108,6 @@ namespace PPMTool.Pages
 
             // Editing only permitted by managers and superusers by default
             EditAuthorised = ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser;
-            
         }
 
         private async Task GetPageCountSettingAsync()
