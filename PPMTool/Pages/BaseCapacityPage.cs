@@ -10,7 +10,6 @@ using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
-using PPMTool.Enums;
 using PPMTool.Helpers;
 using PPMTool.Models;
 using PPMTool.Services;
@@ -209,12 +208,12 @@ namespace PPMTool.Pages
         /// <param name="projects"></param>
         /// <param name="people"></param>
         /// <param name="isPersonMode"></param>
-        /// <param name="taskSet">What subset of the tasks should be used to populate the dictionary</param>
+        /// <param name="dutySet">What subset of the tasks should be used to populate the dictionary based on the duty associated with the demand</param>
         protected virtual void PopulateGroupedAssignmentsForPeople(
             IEnumerable<Project> projects,
             IEnumerable<Person> people,
             bool isPersonMode,
-            TaskSubset taskSet = TaskSubset.TechOnly)
+            Duty[] dutySet = null)
         {
             // Reset existing dictionary
             groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
@@ -234,7 +233,7 @@ namespace PPMTool.Pages
                     var assignments = new List<Assignment>();
                     foreach (var project in projects)
                     {
-                        var subTasks = GetFilteredSubTasks(project, person, taskSet);
+                        var subTasks = GetFilteredSubTasks(project, person, dutySet);
 
                         // Build assignments
                         foreach (var subTask in subTasks)
@@ -256,7 +255,7 @@ namespace PPMTool.Pages
                 foreach (var project in projects)
                 {
                     var assignments = new List<Assignment>();
-                    var subTasks = GetFilteredSubTasks(project, person, taskSet);
+                    var subTasks = GetFilteredSubTasks(project, person, dutySet);
 
                     foreach (var subTask in subTasks)
                     {
@@ -274,9 +273,9 @@ namespace PPMTool.Pages
         /// </summary>
         /// <param name="project"></param>
         /// <param name="person"></param>
-        /// <param name="taskSet"></param>
+        /// <param name="dutySet"></param>
         /// <returns></returns>
-        private IEnumerable<SubTask> GetFilteredSubTasks(Project project, Person person, TaskSubset taskSet)
+        private IEnumerable<SubTask> GetFilteredSubTasks(Project project, Person person, Duty[] dutySet)
         {
             // Filter list
             var subTasks = project.SubTasks
@@ -284,14 +283,10 @@ namespace PPMTool.Pages
                     .Any(z => z.Person.PersonId == person.PersonId)
                 );
 
-            // Filter again
-            if (taskSet == TaskSubset.TechOnly)
+            // Filter again if there is a subset indicated
+            if (dutySet is not null && dutySet.Any())
             {
-                subTasks = subTasks.Where(x => x.TaskDuty != Duty.ProjectAndServiceMgmt);
-            }
-            else if (taskSet == TaskSubset.LeadershipOnly)
-            {
-                subTasks = subTasks.Where(x => x.TaskDuty == Duty.ProjectAndServiceMgmt);
+                subTasks = subTasks.Where(x => dutySet.Contains(x.TaskDuty));
             }
             return subTasks;
         }

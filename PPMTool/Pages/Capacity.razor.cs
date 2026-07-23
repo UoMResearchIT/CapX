@@ -349,5 +349,15 @@ namespace PPMTool.Pages
                 ignoreZeroValue1Entries: !isTotalRow
             );
         }
+
+        /// <inheritdoc />
+        protected override void PopulateGroupedAssignmentsForPeople(
+            IEnumerable<Project> projects,
+            IEnumerable<Person> people,
+            bool isPersonMode,
+            Duty[] dutySet = null)
+        {
+            base.PopulateGroupedAssignmentsForPeople(projects, people, isPersonMode, [Duty.ProjectWork]);
+        }
     }
 }
