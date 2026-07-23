@@ -19,6 +19,10 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 UPDATE SubTasks
                 SET TaskDuty = 5
                 WHERE TaskDuty = 1;
+
+                UPDATE SubTasks
+                SET TaskDuty = 1
+                WHERE TaskDuty = 0;
             ");
 
         }
@@ -28,6 +32,10 @@ namespace PPMTool.Migrations.Sqlite.Migrations
         {
 
             migrationBuilder.Sql(@"
+                UPDATE SubTasks
+                SET TaskDuty = 0
+                WHERE TaskDuty = 1;
+
                 UPDATE SubTasks
                 SET TaskDuty = 1
                 WHERE TaskDuty = 5;

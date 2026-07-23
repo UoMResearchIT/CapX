@@ -21,6 +21,10 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 UPDATE ""SubTasks""
                 SET ""TaskDuty"" = 5
                 WHERE ""IsLeadershipTask"" = TRUE;
+
+                UPDATE ""SubTasks""
+                SET ""TaskDuty"" = 1
+                WHERE ""IsLeadershipTask"" = FALSE;
             ");
 
             migrationBuilder.DropColumn(
@@ -42,6 +46,10 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 UPDATE ""SubTasks""
                 SET ""IsLeadershipTask"" = TRUE
                 WHERE ""TaskDuty"" = 5;
+
+                UPDATE ""SubTasks""
+                SET ""IsLeadershipTask"" = FALSE
+                WHERE ""TaskDuty"" = 1;
             ");
 
             migrationBuilder.DropColumn(

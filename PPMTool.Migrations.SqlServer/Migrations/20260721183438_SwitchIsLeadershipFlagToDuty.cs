@@ -21,6 +21,10 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                 UPDATE SubTasks
                 SET TaskDuty = 5
                 WHERE IsLeadershipTask = 1;
+
+                UPDATE SubTasks
+                SET TaskDuty = 1
+                WHERE IsLeadershipTask = 0;
             ");
 
             migrationBuilder.DropColumn(
@@ -42,6 +46,10 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                 UPDATE SubTasks
                 SET IsLeadershipTask = 1
                 WHERE TaskDuty = 5;
+
+                UPDATE SubTasks
+                SET IsLeadershipTask = 0
+                WHERE TaskDuty = 1;
             ");
 
             migrationBuilder.DropColumn(
