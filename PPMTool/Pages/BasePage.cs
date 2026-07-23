@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
@@ -31,6 +32,9 @@ namespace PPMTool.Pages
         }
 
         [Inject]
+        protected ISessionStorageService SessionStorage { get; set; }
+
+        [Inject]
         protected ILogger Logger { get; set; }
 
         [Inject]
@@ -45,6 +49,10 @@ namespace PPMTool.Pages
         [Inject]
         protected FeatureService FeatureService { get; set; }
 
+        // Datagrid variables for results paging
+        public int PageCount;
+        public readonly int[] PageSizeOptions = new[] { 5, 10, 25, 50, 100 };
+
         private bool loading = true;
         [CascadingParameter]
         public bool Loading
@@ -58,6 +66,12 @@ namespace PPMTool.Pages
                 }
             }
         }
+
+        public async Task OnPageSizeChanged(int value)
+        {
+            await SessionStorage.SetItemAsync("PageCount", value);
+        }
+
 
         [CascadingParameter]
         public MainLayout Layout { get; set; }
@@ -83,6 +97,7 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            GetPageCountSettingAsync();
             Layout?.Reset();
 
             // Not sure why this happens but worth noting
@@ -93,6 +108,12 @@ namespace PPMTool.Pages
 
             // Editing only permitted by managers and superusers by default
             EditAuthorised = ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser;
+            
+        }
+
+        private async Task GetPageCountSettingAsync()
+        {
+            PageCount = await SessionStorage.GetItemAsync<int?>("PageCount") ?? 15;
         }
 
         /// <summary>
