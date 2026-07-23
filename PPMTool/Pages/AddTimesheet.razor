@@ -409,7 +409,7 @@ SPDX-License-Identifier: apache-2.0
                                 {
                                     if (timesheet.Status == TimesheetStatus.Submitted)
                                     {
-                                        <RadzenButton ButtonType="ButtonType.Submit" Text="Retract timesheet" Icon="sync" ButtonStyle="ButtonStyle.Warning" Click="@(() => { newStatus = TimesheetStatus.New; })" Disabled="@(entityToInsert != null || entityToUpdate != null)" Style="margin-right: 0.5rem;" />
+                                        <RadzenButton ButtonType="ButtonType.Submit" Text="Retract timesheet" Icon="undo" ButtonStyle="ButtonStyle.Warning" Click="@(() => { newStatus = TimesheetStatus.New; })" Disabled="@(entityToInsert != null || entityToUpdate != null)" Style="margin-right: 0.5rem;" />
                                     }
                                     else
                                     {
