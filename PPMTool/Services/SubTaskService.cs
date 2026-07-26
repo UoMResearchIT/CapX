@@ -213,10 +213,20 @@ namespace PPMTool.Services
         internal IEnumerable<Person> GetPeopleWithAssignmentsWithDuty(PPMToolContext context, IEnumerable<Person> cachedPeople, Duty[] duties)
         {
             // Find all subtasks that belong to that duty
+            var subtasks = context.SubTasks
+                .Include(x => x.AssignedResources)
+                    .ThenInclude(x => x.Person)
+                .Where(x => duties.Contains(x.TaskDuty))
+                .ToList();
 
             // Get the resources people on them
+            var people = subtasks
+                .SelectMany(st => st.AssignedResources)
+                .Select(ar => ar.Person.PersonId)
+                .Distinct();
 
             // Filter the list
+            return cachedPeople.Where(p => people.Contains(p.PersonId));
         }
     }
 }
