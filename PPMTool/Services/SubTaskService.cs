@@ -202,5 +202,21 @@ namespace PPMTool.Services
                 .SubTasks?
                 .RoundedSum(x => x.ActualWorkHours) ?? 0;
         }
+
+        /// <summary>
+        /// Filters the given list of people to just those with assignments that match the duties given
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="cachedPeople"></param>
+        /// <param name="duties"></param>
+        /// <returns></returns>
+        internal IEnumerable<Person> GetPeopleWithAssignmentsWithDuty(PPMToolContext context, IEnumerable<Person> cachedPeople, Duty[] duties)
+        {
+            // Find all subtasks that belong to that duty
+
+            // Get the resources people on them
+
+            // Filter the list
+        }
     }
 }

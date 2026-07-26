@@ -24,7 +24,7 @@ namespace PPMTool.Pages
             if (!firstRender) return;
 
             // Update the cached people to just contain people with BAU assignments
-            cachedPeople = GetPeopleWithAssignmentsOfDuty(cachedPeople, [Duty.BAU]);
+            cachedPeople = GetPeopleWithAssignmentsWithDuty(cachedPeople, [Duty.BAU]);
             await ReloadDropDownSourcesAsync();
 
             // Certain roles can use the dropdowns and save manager settings so need to reload

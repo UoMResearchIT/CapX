@@ -37,6 +37,9 @@ namespace PPMTool.Pages
         protected ProjectService ProjectService { get; set; }
 
         [Inject]
+        protected SubTaskService SubTaskService { get; set; }
+
+        [Inject]
         protected IJSRuntime JSRuntime { get; set; }
 
         [Inject]
@@ -523,10 +526,16 @@ namespace PPMTool.Pages
             return people.Where(x => users.Any(y => y.Person.PersonId == x.PersonId)).ToList();
         }
 
-        protected IEnumerable<Person> GetPeopleWithAssignmentsOfDuty(IEnumerable<Person> cachedPeople, Duty[] duties)
+        /// <summary>
+        /// Filters the cached people to just those with assignments with the duties listed
+        /// </summary>
+        /// <param name="cachedPeople"></param>
+        /// <param name="duties"></param>
+        /// <returns></returns>
+        protected IEnumerable<Person> GetPeopleWithAssignmentsWithDuty(IEnumerable<Person> cachedPeople, Duty[] duties)
         {
-            // TODO: Be able to run a query here to get people from DB that have/had assignments with the given duty
-            return cachedPeople;
+            // Ask the subtask service to filter based on assigned resources and duties
+            return SubTaskService.GetPeopleWithAssignmentsWithDuty(Context, cachedPeople, duties);
         }
 
         /// <summary>
