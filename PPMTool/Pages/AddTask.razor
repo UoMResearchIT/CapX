@@ -6,12 +6,9 @@ SPDX-License-Identifier: apache-2.0
 
 @page "/projects/addtask/{projectID:int}/{taskId:int}"
 @inherits DataGridPage<Resource>
-@using PPMTool.Data
 @using PPMTool.Data.Enums
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
-@using System.Diagnostics
-@using static PPMTool.Data.Entities.Project
 <PageTitle>Add Task - CapX</PageTitle>
 
 <FeatureCheckComponent Feature="FeatureType.ProjectsAndCapacity">
@@ -128,9 +125,9 @@ SPDX-License-Identifier: apache-2.0
                             <RadzenLabel class="radzen-form-label" Component="TaskDutyDropDown" Text="Task Duty" />
                             <RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Select the duty the demand for this task should be reflected in (affects PM demand and leadership costs if support by the cost model)" />
                             <br />
-                            <RadzenDropDown class="radzen-dropdown" Name="TaskDutyDropDown" @bind-Value="@TaskModel.TaskDuty" Data="@allowedTaskDuties" Change="@(_ => UpdatePeopleDropdownSource(new LoadDataArgs()))">
+                            <RadzenDropDown class="radzen-dropdown" Name="TaskDutyDropDown" @bind-Value="@TaskModel.TaskDuty" TValue="Duty" Data="@allowedTaskDuties" Change="@(_ => UpdatePeopleDropdownSource(new LoadDataArgs()))">
                                 <Template Context="x">
-                                    @($"{x.GetDescription()})")
+                                    @(PPMTool.Data.Enums.Extensions.GetDescription(x))
                                 </Template>
                             </RadzenDropDown>
                         </div>
