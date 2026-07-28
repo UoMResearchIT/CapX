@@ -33,8 +33,9 @@ namespace PPMTool.API.Helpers
         /// <param name="context"></param>
         /// <param name="start"></param>
         /// <param name="end"></param>
+        /// <param name="projectId">Optional parameter to filter by project ID</param>
         /// <returns></returns>
-        internal static async Task<IList<AssignmentDTO>> GetAssignmentChunksAsync(PPMToolContext context, DateTime? start, DateTime? end)
+        internal static async Task<IList<AssignmentDTO>> GetAssignmentChunksAsync(PPMToolContext context, DateTime? start, DateTime? end, int? projectId = null)
         {
             // Validate the date range
             if (start is null)
@@ -56,9 +57,22 @@ namespace PPMTool.API.Helpers
                         .ThenInclude(x => x.Person)
                 .Where(x => !cancelledStatuses.Contains(x.ProjectStatus) &&
                             x.StartDate.Date <= endValue.Date &&
-                            x.EndDate.Date >= startValue.Date)
+                            x.EndDate.Date >= startValue.Date &&
+                            (!projectId.HasValue || x.RTP == projectId.Value))
                 .ToListAsync();
             Debug.WriteLine($"** {projectsInWindow.Count} projects running during the window.");
+
+            // Build lookups for fast metadata mapping when converting assignment chunks to DTOs
+            var projectStatusLookup = projectsInWindow
+                .ToDictionary(x => x.RTP, x => x.ProjectStatus.GetDescription());
+
+            var resourceMetaLookup = projectsInWindow
+                .SelectMany(x => x.SubTasks)
+                .SelectMany(x => x.AssignedResources)
+                .GroupBy(x => x.GenerateUniqueResourceKey())
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.First());
 
             // Create blank list of data
             var assignmentChunks = new List<AssignmentChunk>();
@@ -101,21 +115,25 @@ namespace PPMTool.API.Helpers
 
             // Map the result to DTOs
             var assignmentDTOs = assignmentChunks.Select(chunk =>
-                new AssignmentDTO(
+            {
+                resourceMetaLookup.TryGetValue(chunk.UniqueResourceKey, out var resource);
+                var task = resource?.SubTask;
 
-                    // Map properties from chunk to AssignmentDTO
+                return new AssignmentDTO(
                     ProjectId: chunk.ProjectId,
                     ProjectName: chunk.ProjectName,
-                    ProjectStatus: projectsInWindow.FirstOrDefault(x => x.RTP == chunk.ProjectId)?.ProjectStatus.GetDescription() ?? string.Empty,
+                    ProjectStatus: projectStatusLookup.TryGetValue(chunk.ProjectId, out var status) ? status : string.Empty,
+                    PersonId: resource?.Person?.PersonId ?? 0,
                     PersonName: chunk.EmployeeName,
                     Grade: chunk.Grade,
                     FTE: chunk.FTE,
+                    TaskId: task?.SubTaskId ?? 0,
                     TaskName: chunk.TaskName,
                     StartDate: chunk.StartDate,
                     EndDate: chunk.EndDate,
                     AssignmentType: chunk.AssignmentType
-                )
-            ).ToList();
+                );
+            }).ToList();
 
             // Return the DTOs
             return assignmentDTOs;

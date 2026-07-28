@@ -23,6 +23,7 @@ public static class Assignments
     /// <param name="http"></param>
     /// <param name="startDate">Optional start date of the query window in the format yyyy-MM-dd.</param>
     /// <param name="endDate">Optional end date of the query window in the format yyyy-MM-dd.</param>
+    /// <param name="projectId">Optional project RTP ID to filter assignment rows to a single project.</param>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<AssignmentDTO>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -32,10 +33,12 @@ public static class Assignments
         ILogger logger,
         HttpContext http,
         [FromQuery] string startDate = null,
-        [FromQuery] string endDate = null)
+        [FromQuery] string endDate = null,
+        [FromQuery] int? projectId = null)
     {
         try
         {
+            // Parse dates
             DateTime? start = null;
             DateTime? end = null;
 
@@ -63,10 +66,18 @@ public static class Assignments
                 end = parsedEnd.Date;
             }
 
+            // Validate date range
             if (start.HasValue && end.HasValue && end.Value < start.Value)
             {
                 logger.LogWarning($"API: GetAssignmentData: End date {endDate} is before start date {startDate}");
                 return Results.BadRequest("End date must be on or after start date.");
+            }
+
+            // Validate ID
+            if (projectId.HasValue && projectId.Value <= 0)
+            {
+                logger.LogWarning($"API: GetAssignmentData: Invalid projectId {projectId}");
+                return Results.BadRequest("Project ID must be greater than zero.");
             }
 
             // Authorisation check -- only managers can pull the data for now.
@@ -82,7 +93,8 @@ public static class Assignments
             var assignmentChunkDTOs = await AssignmentsHelper.GetAssignmentChunksAsync(
                 context,
                 start,
-                end);
+                end,
+                projectId);
 
             logger.LogInformation($"API: GetAssignmentData: Returned {assignmentChunkDTOs.Count} assignment records.");
 

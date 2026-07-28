@@ -310,14 +310,18 @@ app.MapBlazorHub();
 
 // Map API endpoints
 var api = app.MapGroup("/api");
-api.MapGet($"/skills/getAll", Skills.GetAllSkillTagsAsync);
-api.MapGet($"/skills/getAllForPerson", Skills.GetAllSkillsTagsForPersonAsync);
-api.MapGet($"/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
-api.MapGet($"/timesheets/getEntries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
-api.MapGet($"/timesheets/getByCodeTask", Timesheets.GetTimesheetBookingsByCodeAndTask);
-api.MapGet($"/wlm/getAnalysis", WorkloadModelAnalysis.GetWorkloadAnalysisData);
-api.MapGet($"/leavebookings/getForSelfAndStaff", LeaveBookings.GetStaffBookingsForYearAsync);
-api.MapGet($"/assignments/getAssignments", Assignments.GetAssignmentDataAsync);
+api.MapGet("/skills/getAll", Skills.GetAllSkillTagsAsync);
+api.MapGet("/skills/getAllForPerson", Skills.GetAllSkillsTagsForPersonAsync);
+api.MapGet("/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
+api.MapGet("/timesheets/getEntries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
+api.MapGet("/timesheets/getByCodeTask", Timesheets.GetTimesheetBookingsByCodeAndTask);
+api.MapGet("/wlm/getAnalysis", WorkloadModelAnalysis.GetWorkloadAnalysisData);
+api.MapGet("/leavebookings/getForSelfAndStaff", LeaveBookings.GetStaffBookingsForYearAsync);
+api.MapGet("/assignments/getAssignments", Assignments.GetAssignmentDataAsync);
+api.MapGet("/projects/getAll", Projects.GetAllProjectsAsync);
+api.MapGet("/projects/getById", Projects.GetProjectByIdAsync);
+api.MapGet("/people/getAll", People.GetAllPeopleAsync);
+api.MapGet("/people/getById", People.GetPersonByIdAsync);
 
 // API middleware -- conditional on /api routes only
 app.UseWhen(

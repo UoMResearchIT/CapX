@@ -18,6 +18,8 @@ namespace PPMTool.Tests.API
         protected static string? ManagerReport { get; private set; }
         protected static string? DeveloperApiKey { get; private set; }
         protected static string? PersonName { get; private set; }
+        protected static int PersonId { get; private set; }
+        protected static int ProjectId { get; private set; }
         protected static string? TimesheetCode { get; private set; }
 
         /// <summary>
@@ -120,8 +122,13 @@ namespace PPMTool.Tests.API
                 }
                 DeveloperApiKey = developerKey.Key;
 
-                // Get the name of the first person in the database replacing spaces with underscores so it can be used as a test parameter in API calls
-                PersonName = context.People.FirstOrDefault(x => !string.IsNullOrEmpty(x.Name))?.Name?.Replace(" ", "_");
+                // Get a person from the database for API tests
+                var firstPerson = context.People.FirstOrDefault(x => !string.IsNullOrEmpty(x.Name));
+                PersonName = firstPerson?.Name?.Replace(" ", "_");
+                PersonId = firstPerson?.PersonId ?? 0;
+
+                // Get a project RTP ID from the database for API tests
+                ProjectId = context.Projects.OrderBy(x => x.RTP).Select(x => x.RTP).FirstOrDefault();
 
                 // Set a timesheet code to be used for the timesheet tests
                 TimesheetCode = context.InnateCodes.FirstOrDefault()?.ActivityCode;

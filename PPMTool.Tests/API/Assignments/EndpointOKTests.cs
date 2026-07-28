@@ -28,5 +28,16 @@ namespace PPMTool.Tests.API.Assignments
                 Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
             }
         }
+
+        [Test]
+        public async Task GetAssignmentDataForSingleProjectShouldReturnOK()
+        {
+            using (var client = GetClientAsManager())
+            {
+                // Confirm the optional project filter is accepted for manager calls
+                var response = await client.GetAsync($"assignments/getAssignments?startDate={GetStartDate()}&endDate={GetEndDate()}&projectId={ProjectId}");
+                Assert.That(response.IsSuccessStatusCode);
+            }
+        }
     }
 }
