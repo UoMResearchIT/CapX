@@ -19,7 +19,7 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                 table: "SubTasks",
                 type: "int",
                 nullable: false,
-                defaultValue: 0);
+                defaultValue: 1);
 
             migrationBuilder.Sql(@"
                 UPDATE SubTasks
