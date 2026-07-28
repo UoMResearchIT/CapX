@@ -37,12 +37,7 @@ namespace PPMTool.Migrations.Sqlite.Migrations
 
             migrationBuilder.Sql(@"
                 UPDATE SubTasks
-                SET TaskDuty = 0
-                WHERE TaskDuty = 1;
-
-                UPDATE SubTasks
-                SET TaskDuty = 1
-                WHERE TaskDuty = 5;
+                SET TaskDuty = CASE WHEN TaskDuty = 5 THEN 1 ELSE 0 END;
             ");
 
             migrationBuilder.RenameColumn(
