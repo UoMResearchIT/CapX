@@ -21,7 +21,7 @@ namespace PPMTool.Migrations.SqlServer.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.8")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -821,9 +821,6 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                     b.Property<bool>("HasFixedStart")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsLeadershipTask")
-                        .HasColumnType("bit");
-
                     b.Property<int>("Lag")
                         .HasColumnType("int");
 
@@ -851,6 +848,9 @@ namespace PPMTool.Migrations.SqlServer.Migrations
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("TaskDuty")
+                        .HasColumnType("int");
 
                     b.Property<int>("TaskType")
                         .HasColumnType("int");

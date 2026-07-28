@@ -489,12 +489,12 @@ namespace PPMTool.Pages
                 }
 
                 // Add to the list of blocks
-                allBlocks.Add(new GanttBlock(t, groupName, isLeadershipTask: t.IsLeadershipTask));
+                allBlocks.Add(new GanttBlock(t, groupName, duty: t.TaskDuty));
             }
 
-            // leadership first (true before false), each group by StartDate ascending
+            // Block duty grouped then each group by StartDate ascending
             allBlocks = allBlocks
-                .OrderByDescending(x => x.IsLeadershipTask)
+                .OrderBy(x => x.BlockDuty.GetGanttSortOrder())
                 .ThenBy(x => x.Task.StartDate)
                 .ToList();
 

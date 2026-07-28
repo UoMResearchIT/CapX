@@ -12,7 +12,7 @@ using static PPMTool.Pages.Components.TaskConfigurationComponent;
 
 namespace PPMTool.Pages
 {
-    [Authorize(Roles = "Manager,Superuser")]
+    [Authorize(Roles = "Manager,Superuser,Finance")]
     public partial class EstimateCost : BasePage
     {
         [Inject]

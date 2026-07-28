@@ -4,19 +4,19 @@ SPDX-FileCopyrightText: 2026 University of Manchester
 SPDX-License-Identifier: apache-2.0
 *@
 
-@page "/capacity"
+@page "/baselinecapacity"
 @inherits BaseCapacityPage
 @using PPMTool.Data.Enums
 @using PPMTool.Pages.Components
 @using PPMTool.Data
-<PageTitle>Capacity - CapX</PageTitle>
+<PageTitle>Baseline Capacity - CapX</PageTitle>
 
 <FeatureCheckComponent Feature="FeatureType.ProjectsAndCapacity">
 
     <div class="container">
         <div class="row">
             <div class="col">
-                <h1>Capacity</h1>
+                <h1>Baseline Capacity</h1>
             </div>
         </div>
         <hr />
@@ -44,24 +44,6 @@ SPDX-License-Identifier: apache-2.0
                                         Style="width: 100%; max-width: 400px;"
                                         Change="@(async args => await PeopleSelectionChangedAsync(args))"
                                         LoadData="@LoadFilteredPeople"
-                                        Disabled=@(IsDeveloper() || Loading) />
-                        @if (HasStaffInList())
-                        {
-                            <RadzenButton Text="My Staff" Click="FilterToMyStaffAsync" />
-                        }
-                        <RadzenDropDown @bind-Value=@chosenManager
-                                        Data=@filteredManagers
-                                        TextProperty="Name"
-                                        Multiple=false
-                                        AllowClear=true
-                                        Placeholder="Filter Project Manager"
-                                        Chips=true
-                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                        FilterOperator="StringFilterOperator.Contains"
-                                        AllowFiltering="true"
-                                        Style="width: 100%; max-width: 400px;"
-                                        Change="@(async args => await ManagerSelectionChangedAsync(args))"
-                                        LoadData="@LoadFilteredManagers"
                                         Disabled=@(IsDeveloper() || Loading) />
                         <CapacityChartControlComponent FinishedSwitchChanged="@(async value => await FinishedSwitchChangedAsync(value))"
                                                        LeaversSwitchChanged="@(async value => await LeaversSwitchChangedAsync(value))"
