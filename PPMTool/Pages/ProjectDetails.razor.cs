@@ -494,7 +494,7 @@ namespace PPMTool.Pages
 
             // Block duty grouped then each group by StartDate ascending
             allBlocks = allBlocks
-                .OrderByDescending(x => x.BlockDuty.GetGanttSortOrder())
+                .OrderBy(x => x.BlockDuty.GetGanttSortOrder())
                 .ThenBy(x => x.Task.StartDate)
                 .ToList();
 
