@@ -93,6 +93,27 @@ public static class GeneralHelpers
     }
 
     /// <summary>
+    /// Whether the caller is a manager or super-user or matches the person ID given.
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="http"></param>
+    /// <param name="personId"></param>
+    /// <returns></returns>
+    internal static bool IsSuperUserOrManagerOrSelf(PPMToolContext context, HttpContext http, int personId)
+    {
+        var caller = GetCurrentUser(http);
+        var callerPersonId = caller.Person?.PersonId ?? 0;
+
+        // Self?
+        var isSelf = callerPersonId != 0 && callerPersonId == personId;
+
+        // Manager or SU?
+        var isSUorMan = IsSuperUserOrManager(caller);
+
+        return isSelf || isSUorMan;
+    }
+
+    /// <summary>
     /// Determines if a caller can view sensitive timesheet data for a specific person.
     /// Sensitive data can only be viewed by superusers, the person themselves, or their direct line manager.
     /// </summary>

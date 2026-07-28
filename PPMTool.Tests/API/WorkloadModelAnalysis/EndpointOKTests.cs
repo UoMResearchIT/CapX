@@ -13,14 +13,11 @@ namespace PPMTool.Tests.API.WorkloadModelAnalysis
             using (var client = GetClientAsManager())
             {
                 // Query requires personNames parameter
-                // Use empty string to get data for the API key owner by default
-                var response = await client.GetAsync($"/wlm/getAnalysis?personNames=&startDate={GetStartDate()}&endDate={GetEndDate()}");
+                // Use empty string for personNames to get data for the API key owner by default
+                var response = await client.GetAsync($"wlm/getAnalysis?personNames={PersonName}&startDate={GetStartDate()}&endDate={GetEndDate()}");
 
-                // The endpoint can return various status codes depending on parameters:
-                // 200 OK if successful
-                // 400 Bad Request if parameters are invalid
                 // We verify the endpoint is accessible and returns a valid response
-                Assert.That(response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.BadRequest);
+                Assert.That(response.IsSuccessStatusCode);
             }
         }
 
@@ -29,9 +26,10 @@ namespace PPMTool.Tests.API.WorkloadModelAnalysis
         {
             using (var client = GetClientAsManager())
             {
-                var response = await client.GetAsync($"/wlm/getAnalysis?personNames=&startDate={GetStartDate()}&endDate={GetEndDate()}&compareToWLM=true&normalisedByTotalHours=true");
+                // Check additional parameters for comparison and normalisation are accepted and return a valid response
+                var response = await client.GetAsync($"wlm/getAnalysis?personNames={PersonName}&startDate={GetStartDate()}&endDate={GetEndDate()}&compareToWLM=true&normalisedByTotalHours=true");
 
-                Assert.That(response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.BadRequest);
+                Assert.That(response.IsSuccessStatusCode);
             }
         }
     }

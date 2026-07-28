@@ -157,12 +157,6 @@ namespace PPMTool.Pages
                 InnateCode = innateCode,
                 Duty = Duty.ProjectWork
             });
-            dataGridEntities.Add(new InnateCodeTask
-            {
-                TaskName = "Maintenance",
-                InnateCode = innateCode,
-                Duty = Duty.BAU
-            });
             await dataGrid.Reload();
         }
 

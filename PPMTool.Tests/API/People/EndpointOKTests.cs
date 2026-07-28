@@ -2,38 +2,38 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
-namespace PPMTool.Tests.API.Skills
+namespace PPMTool.Tests.API.People
 {
     [TestFixture]
     public class EndpointOKTests : BaseApiTest
     {
         [Test]
-        public async Task GetAllSkillsShouldReturnOK()
+        public async Task GetAllPeopleShouldReturnOK()
         {
             using (var client = GetClientAsManager())
             {
-                var response = await client.GetAsync("skills/getAll");
+                var response = await client.GetAsync("people/getAll");
                 Assert.That(response.IsSuccessStatusCode);
             }
         }
 
         [Test]
-        public async Task GetAllSkillsForPersonShouldReturnOK()
+        public async Task GetPersonByIdShouldReturnOK()
         {
             using (var client = GetClientAsManager())
             {
-                var response = await client.GetAsync($"skills/getAllForPerson?name={PersonName}");
+                var response = await client.GetAsync($"people?personId={PersonId}");
                 Assert.That(response.IsSuccessStatusCode);
             }
         }
 
         [Test]
-        public async Task GetAllSkillsGroupedShouldReturnOK()
+        public async Task GetAllPeopleAsNonManagerShouldReturnUnauthorised()
         {
-            using (var client = GetClientAsManager())
+            using (var client = GetClientAsDeveloper())
             {
-                var response = await client.GetAsync("skills/getAllGrouped");
-                Assert.That(response.IsSuccessStatusCode);
+                var response = await client.GetAsync("people/getAll");
+                Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
             }
         }
     }

@@ -24,6 +24,10 @@ SPDX-License-Identifier: apache-2.0
         {
             <LoadingComponent />
         }
+        else if(pageUnavailable)
+        {
+            <StatusMessageComponent Message="@(new StatusMessage("You do not have any assignments as part of a core team so there is nothing to show!", StatusMessage.MessageType.Error))" />
+        }
         else
         {
             <h2>Charts</h2>
