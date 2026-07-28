@@ -163,9 +163,9 @@ namespace PPMTool.Data.Entities
         public virtual IList<SkillTag> SkillsRequired { get; set; } = new List<SkillTag>();
 
         /// <summary>
-        /// Whether this task is a leadership task which would mean it comes out of PSMT allowance instead of ProjectWork allowance
+        /// Which duty the demand for this task should be reflected in. By default, assumes development tasks which will be reflected in the <see cref="Duty.ProjectWork"/> duty.
         /// </summary>
-        public bool IsLeadershipTask { get; set; }
+        public Duty TaskDuty { get; set; } = Duty.ProjectWork;
 
         /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task

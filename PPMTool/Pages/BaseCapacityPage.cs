@@ -10,7 +10,6 @@ using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
-using PPMTool.Enums;
 using PPMTool.Helpers;
 using PPMTool.Models;
 using PPMTool.Services;
@@ -38,6 +37,9 @@ namespace PPMTool.Pages
         protected ProjectService ProjectService { get; set; }
 
         [Inject]
+        protected SubTaskService SubTaskService { get; set; }
+
+        [Inject]
         protected IJSRuntime JSRuntime { get; set; }
 
         [Inject]
@@ -46,6 +48,14 @@ namespace PPMTool.Pages
         [Parameter]
         [SupplyParameterFromQuery(Name = "filterid")]
         public int? FilterPersonId { get; set; }
+
+        protected bool IsDeveloper() => ActiveUserRoleType == RoleType.Developer;
+
+        /// <summary>
+        /// Whether the user can change the dropdown selections and click the generate button to update the chart.
+        /// </summary>
+        /// <returns></returns>
+        protected bool CanCustomise() => EditAuthorised || ActiveUserRoleType == RoleType.Reader;
 
         protected CancellationTokenSource configureChartTaskCancellationTokenSource = null;
         protected Task configureChartTask = null;
@@ -192,6 +202,12 @@ namespace PPMTool.Pages
                 messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROJECT UNCONFIRMED]</h3>";
             }
 
+            // Add the provisional resource warning to the tooltip if chosen person is provisional on the project
+            if (assignmentsWithinBlock.Any(x => x?.SubTask.AssignedResources.Any(x => x.Person.PersonId == personOfInterest.PersonId && x.IsProvisional) ?? false))
+            {
+                messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>";
+            }
+
             return messages;
         }
 
@@ -201,12 +217,12 @@ namespace PPMTool.Pages
         /// <param name="projects"></param>
         /// <param name="people"></param>
         /// <param name="isPersonMode"></param>
-        /// <param name="taskSet">What subset of the tasks should be used to populate the dictionary</param>
+        /// <param name="dutySet">What subset of the tasks should be used to populate the dictionary based on the duty associated with the demand</param>
         protected virtual void PopulateGroupedAssignmentsForPeople(
             IEnumerable<Project> projects,
             IEnumerable<Person> people,
             bool isPersonMode,
-            TaskSubset taskSet = TaskSubset.TechOnly)
+            Duty[] dutySet = null)
         {
             // Reset existing dictionary
             groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
@@ -226,7 +242,7 @@ namespace PPMTool.Pages
                     var assignments = new List<Assignment>();
                     foreach (var project in projects)
                     {
-                        var subTasks = GetFilteredSubTasks(project, person, taskSet);
+                        var subTasks = GetFilteredSubTasks(project, person, dutySet);
 
                         // Build assignments
                         foreach (var subTask in subTasks)
@@ -248,7 +264,7 @@ namespace PPMTool.Pages
                 foreach (var project in projects)
                 {
                     var assignments = new List<Assignment>();
-                    var subTasks = GetFilteredSubTasks(project, person, taskSet);
+                    var subTasks = GetFilteredSubTasks(project, person, dutySet);
 
                     foreach (var subTask in subTasks)
                     {
@@ -266,9 +282,9 @@ namespace PPMTool.Pages
         /// </summary>
         /// <param name="project"></param>
         /// <param name="person"></param>
-        /// <param name="taskSet"></param>
+        /// <param name="dutySet"></param>
         /// <returns></returns>
-        private IEnumerable<SubTask> GetFilteredSubTasks(Project project, Person person, TaskSubset taskSet)
+        private IEnumerable<SubTask> GetFilteredSubTasks(Project project, Person person, Duty[] dutySet)
         {
             // Filter list
             var subTasks = project.SubTasks
@@ -276,14 +292,10 @@ namespace PPMTool.Pages
                     .Any(z => z.Person.PersonId == person.PersonId)
                 );
 
-            // Filter again
-            if (taskSet == TaskSubset.TechOnly)
+            // Filter again if there is a subset indicated
+            if (dutySet is not null && dutySet.Any())
             {
-                subTasks = subTasks.Where(x => !x.IsLeadershipTask);
-            }
-            else if (taskSet == TaskSubset.LeadershipOnly)
-            {
-                subTasks = subTasks.Where(x => x.IsLeadershipTask);
+                subTasks = subTasks.Where(x => dutySet.Contains(x.TaskDuty));
             }
             return subTasks;
         }
@@ -521,6 +533,18 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Filters the cached people to just those with assignments with the duties listed
+        /// </summary>
+        /// <param name="cachedPeople"></param>
+        /// <param name="duties"></param>
+        /// <returns></returns>
+        protected IEnumerable<Person> GetPeopleWithAssignmentsWithDuty(IEnumerable<Person> cachedPeople, Duty[] duties)
+        {
+            // Ask the subtask service to filter based on assigned resources and duties
+            return SubTaskService.GetPeopleWithAssignmentsWithDuty(Context, cachedPeople, duties);
+        }
+
+        /// <summary>
         /// Method to reload the dropdown sources on the page
         /// </summary>
         protected virtual Task ReloadDropDownSourcesAsync()
@@ -564,6 +588,13 @@ namespace PPMTool.Pages
             await base.OnAfterRenderAsync(firstRender);
 
             if (!firstRender) return;
+
+            // Navigate away if feature not enabled
+            if (!FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
+            {
+                Navigation.NavigateTo("people");
+                return;
+            }
 
             // Get all projects not finished or cancelled
             cachedProjects = ProjectService.GetAll(Context).Where(x => !x.ProjectStatus.IsCancelled());
