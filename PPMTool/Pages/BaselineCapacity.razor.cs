@@ -141,7 +141,7 @@ namespace PPMTool.Pages
                     var peo = people.Where(y => y == person);
 
                     // The total availability of the person becomes value 2
-                    return peo.RoundedSum(y => y.GetProjectWorkAvailabilityOnDate(currentDay));
+                    return peo.RoundedSum(y => y.GetBAUAvailability(currentDay));
                 },
                 // Accepts list of assignments for the block to determine tooltip messages for the block
                 tooltipMessageFormatter: assignmentsWithinBlock =>
