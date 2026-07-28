@@ -203,7 +203,7 @@ namespace PPMTool.Pages
             }
 
             // Add the provisional resource warning to the tooltip if chosen person is provisional on the project
-            if (assignmentsWithinBlock.Any(x => x?.SubTask.AssignedResources.Any(x => x.Person.PersonId == personOfInterest.PersonId && x.IsProvisional) ?? true))
+            if (assignmentsWithinBlock.Any(x => x?.SubTask.AssignedResources.Any(x => x.Person.PersonId == personOfInterest.PersonId && x.IsProvisional) ?? false))
             {
                 messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>";
             }
