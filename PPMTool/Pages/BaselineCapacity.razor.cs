@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: apache-2.0
 
 using System.Data;
-using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
@@ -16,45 +15,20 @@ using Radzen;
 namespace PPMTool.Pages
 {
     [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
-    public partial class Capacity : BaseCapacityPage
+    public partial class BaselineCapacity : BaseCapacityPage
     {
-        private Person chosenManager;
-        public Person ChosenManager
-        {
-            get => chosenManager;
-            set
-            {
-                if (chosenManager != value)
-                {
-                    chosenManager = value;
-                    SaveManagerState();
-                }
-            }
-        }
-
-        private IList<Person> managers;
-        private IList<Person> filteredManagers;
-
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
 
             if (!firstRender) return;
 
-            // Certain roles can use the dropdowns and save manager settings so need to reload
-            if (CanCustomise())
-            {
-                // Load settings
-                var managerName = await SessionStorage.GetItemAsync<string>($"{GetSessionStorageTag()}-chosen-manager");
-                ChosenManager = managers.FirstOrDefault(x => x.Name == managerName);
+            // Update the cached people to just contain people with BAU assignments
+            cachedPeople = GetPeopleWithAssignmentsWithDuty(cachedPeople, [Duty.BAU]);
+            await ReloadDropDownSourcesAsync();
 
-                // Reload the dropdown sources if a manager has been chosen
-                if (ChosenManager != null)
-                {
-                    await ReloadDropDownSourcesAsync();
-                }
-            }
-            else
+            // Certain roles can use the dropdowns and save manager settings so need to reload
+            if (!CanCustomise())
             {
                 // Choose the person automatically if not a manager
                 chosenPeople = new List<string>
@@ -69,161 +43,10 @@ namespace PPMTool.Pages
             // Load the chart source based on the current configuration
             await ConfigureChartSourceAsync();
 
-            LogInformation($"Viewing capacity page");
+            LogInformation($"Viewing baseline capacity page");
         }
 
-        protected override string GetSessionStorageTag() => "capacity";
-
-        /// <summary>
-        /// Method to setup the dropdown sources
-        /// </summary>
-        protected override async Task ReloadDropDownSourcesAsync()
-        {
-            Debug.WriteLine("** Reloading dropdown sources...");
-            people = cachedPeople.ToList();
-
-            // Filter if PM selected
-            if (chosenManager != null)
-            {
-                var validProjects = GetValidProjects();
-
-                // Get flattened list of all resources for the valid projects
-                people = validProjects.SelectMany(x => x.SubTasks.SelectMany(x => x.AssignedResources.Select(x => x.Person)))
-                    .DistinctBy(x => x.PersonId)
-                    .OrderBy(x => x.Name)
-                    .ToList();
-            }
-
-            // Add managers
-            managers = GetManagers(cachedPeople);
-
-            // Filter out leavers if necessary
-            if (!includeLeavers)
-            {
-                people = people
-                    .Where(x => x.EndDate == null || x.EndDate >= DateTime.Today)
-                    .OrderBy(x => x.Name)
-                    .ToList();
-
-                managers = managers
-                    .Where(x => x.EndDate == null || x.EndDate >= DateTime.Today)
-                    .OrderBy(x => x.Name)
-                    .ToList();
-            }
-
-            // Apply autocomplete box filters
-            LoadFilteredPeople(new LoadDataArgs());
-            LoadFilteredManagers(new LoadDataArgs());
-
-            // Remove any people not in the dropdown source from the selected people list
-            if (chosenPeople != null && chosenPeople.Count() > 0)
-            {
-                var temp = new List<string>();
-                foreach (var p in chosenPeople)
-                {
-                    if (filteredPeople.Any(x => x.Name == p))
-                    {
-                        temp.Add(p);
-                    }
-                }
-                chosenPeople = temp;
-
-                // Update the session storage
-                await SavePeopleStateAsync();
-            }
-        }
-
-        /// <summary>
-        /// Determine whether a manager has been chosen
-        /// </summary>
-        /// <returns></returns>
-        private bool ManagerChosen() => ChosenManager != null;
-
-        /// <summary>
-        /// Save the chosen manager to session storage
-        /// </summary>
-        private void SaveManagerState() => SessionStorage.SetItemAsync($"{GetSessionStorageTag()}-chosen-manager", chosenManager == null ? null : chosenManager.Name);
-
-        /// <summary>
-        /// Use the master list of managers to filter the data source for the dropdown based on user typing
-        /// </summary>
-        /// <param name="args"></param>
-        void LoadFilteredManagers(LoadDataArgs args)
-        {
-            var temp = managers.AsQueryable();
-            if (!string.IsNullOrEmpty(args.Filter))
-            {
-                temp = temp.Where(p => p.Name.ToLower().Contains(args.Filter.ToLower()));
-            }
-            filteredManagers = temp.ToList();
-            InvokeAsync(StateHasChanged);
-        }
-
-        /// <summary>
-        /// Manager selected from the dropdown
-        /// </summary>
-        /// <param name="selectedOptions"></param>
-        private async Task ManagerSelectionChangedAsync(object selectedOptions)
-        {
-            var item = selectedOptions as Person;
-            Debug.WriteLine($"** Selected Manager: {item?.Name}");
-
-            // Save the new state
-            SaveManagerState();
-
-            // Reload the people to include just those working on projects that PM manages
-            await ReloadDropDownSourcesAsync();
-
-            // Log selection
-            LogInformation($"Selected manager: {item?.Name}");
-        }
-
-        /// <summary>
-        /// Quickly select those people in the available list that the active user manages
-        /// </summary>
-        private async Task FilterToMyStaffAsync()
-        {
-            chosenPeople = people.Where(x => x.LineManager?.PersonId == ActiveUser?.Person?.PersonId).Select(x => x.Name);
-            await PeopleSelectionChangedAsync(chosenPeople);
-        }
-
-        /// <summary>
-        /// Does the active user manage staff that are in the available list
-        /// </summary>
-        /// <returns></returns>
-        private bool HasStaffInList()
-        {
-            return people.Any(x => x.LineManager?.PersonId == ActiveUser?.Person?.PersonId);
-        }
-
-        /// <summary>
-        /// Wrapper for the chart configuration event that sets the optional parameters relevant for this page
-        /// </summary>
-        private async Task ConfigureChartSourceAsync()
-        {
-            await ConfigureChartSourceAsync(
-                customChartTitleGenerator: (name) => $"Load for {(!string.IsNullOrEmpty(name) ? name : "All")} {(ManagerChosen() ? " with manager " + ChosenManager.Name : "")}",
-                projectModeCondition: () => ManagerChosen()
-            );
-        }
-
-        /// <summary>
-        /// Takes the cached projects on the page and filters them based on the state of the switches and dropdowns
-        /// </summary>
-        /// <returns></returns>
-        protected override IEnumerable<Project> GetValidProjects()
-        {
-            var validProjects = base.GetValidProjects();
-
-            // Filter the project source if a manager selected
-            if (ChosenManager != null)
-            {
-                Debug.WriteLine("** Removing projects not belonging to selected manager...");
-                validProjects = validProjects.Where(x => x.ProjectManager.PersonId == ChosenManager.PersonId);
-            }
-
-            return validProjects;
-        }
+        protected override string GetSessionStorageTag() => "baseline";
 
         /// <summary>
         /// Only called in person mode per person to generate chart items
@@ -257,7 +80,7 @@ namespace PPMTool.Pages
                 // Value 2 function
                 (assignments, value1, currentDay) =>
                 {
-                    return person.GetProjectWorkAvailabilityOnDate(currentDay);
+                    return person.GetBAUAvailability(currentDay);
                 },
                 // Gap filler function
                 (assignments, gapStart, gapEnd) =>
@@ -268,7 +91,7 @@ namespace PPMTool.Pages
                         gapStart,
                         gapEnd,
                         wlm => 0,
-                        wlm => wlm?.ProjectWorkFTE ?? 0,
+                        wlm => wlm?.BusinessAsUsualFTE ?? 0,
                         (double value1, double value2, bool isHatched) => ChartItem.GetColourStringFTE(value1, value2)
                     );
                 },
@@ -318,7 +141,7 @@ namespace PPMTool.Pages
                     var peo = people.Where(y => y == person);
 
                     // The total availability of the person becomes value 2
-                    return peo.RoundedSum(y => y.GetProjectWorkAvailabilityOnDate(currentDay));
+                    return peo.RoundedSum(y => y.GetBAUAvailability(currentDay));
                 },
                 // Accepts list of assignments for the block to determine tooltip messages for the block
                 tooltipMessageFormatter: assignmentsWithinBlock =>
@@ -357,7 +180,7 @@ namespace PPMTool.Pages
             bool isPersonMode,
             Duty[] dutySet = null)
         {
-            base.PopulateGroupedAssignmentsForPeople(projects, people, isPersonMode, [Duty.ProjectWork]);
+            base.PopulateGroupedAssignmentsForPeople(projects, people, isPersonMode, [Duty.BAU]);
         }
     }
 }

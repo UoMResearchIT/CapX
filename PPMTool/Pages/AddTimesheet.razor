@@ -397,13 +397,13 @@ SPDX-License-Identifier: apache-2.0
                     <div class="col">
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="float: left;">
                             <div>
-                                @if ((timesheet?.IsLineManager(ActiveUser) ?? false) && timesheet.Status != TimesheetStatus.Approved)
+                                @if (((timesheet?.IsLineManager(ActiveUser) ?? false) || ActiveUser.RoleType == RoleType.Superuser) && timesheet.Status != TimesheetStatus.Approved)
                                 {
-                                    <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(()=> { newStatus = TimesheetStatus.Approved; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" Style="margin-right: 0.5rem;"/>
+                                    <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(() => { newStatus = TimesheetStatus.Approved; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" Style="margin-right: 0.5rem;" />
                                 }
-                                @if ((timesheet?.IsLineManagerButNotOwner(ActiveUser) ?? false) || (timesheet?.IsSelfApprover(ActiveUser) ?? false))
+                                @if (((timesheet?.IsLineManagerButNotOwner(ActiveUser) ?? false) || ActiveUser.RoleType == RoleType.Superuser) || (timesheet?.IsSelfApprover(ActiveUser) ?? false))
                                 {
-                                    <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(()=> { newStatus = TimesheetStatus.Rejected; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" Style="margin-right: 0.5rem;" />
+                                    <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(() => { newStatus = TimesheetStatus.Rejected; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" Style="margin-right: 0.5rem;" />
                                 }
                                 @if ((timesheet?.IsOwner(ActiveUser) ?? false) && !(timesheet?.IsLineManager(ActiveUser) ?? false))
                                 {
@@ -435,8 +435,10 @@ SPDX-License-Identifier: apache-2.0
                     <br />
                     <StatusMessageComponent Message=@ErrorMessage />
                 }
-                </EditForm>
+            </EditForm>
         }
     </div>
 
 </FeatureCheckComponent>
+
+

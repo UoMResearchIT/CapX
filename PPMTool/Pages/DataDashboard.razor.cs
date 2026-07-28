@@ -357,9 +357,8 @@ namespace PPMTool.Pages
                     var tasksOnCancelledProjectsThisWeek = projectsInDatabaseThisWeek
                         .Where(x => x.ProjectStatus.IsCancelled())
                             .SelectMany(x => x.SubTasks
-                                .Where(x => !x.IsLeadershipTask && x.IsWithin(currentWeekStart)
-                            )
-                        );
+                                .Where(x => x.TaskDuty != Duty.ProjectAndServiceMgmt && x.IsWithin(currentWeekStart))
+                            );
                     var cancelledDemand = (float)tasksOnCancelledProjectsThisWeek.RoundedSum(x => x.Demand);
 
 
@@ -375,7 +374,7 @@ namespace PPMTool.Pages
                     // Get all (technical only) tasks that run at the start of the week
                     var tasksOnActiveProjectsThisWeek = projectsThisWeekNotCancelled
                         .SelectMany(x => x.SubTasks
-                            .Where(x => !x.IsLeadershipTask && x.IsWithin(currentWeekStart))
+                            .Where(x => x.TaskDuty != Duty.ProjectAndServiceMgmt && x.IsWithin(currentWeekStart))
                         );
 
                     // Get demand totals from tasks
@@ -386,7 +385,7 @@ namespace PPMTool.Pages
                     // Get all (leadership only) tasks that run at the start of the week
                     var leadershipTasksOnActiveProjectsThisWeek = projectsThisWeekNotCancelled
                         .SelectMany(x => x.SubTasks
-                            .Where(x => x.IsLeadershipTask && x.IsWithin(currentWeekStart))
+                            .Where(x => x.TaskDuty == Duty.ProjectAndServiceMgmt && x.IsWithin(currentWeekStart))
                         );
 
                     // Get demand for leadership
@@ -416,7 +415,7 @@ namespace PPMTool.Pages
                     // Get tasks (excluding leadership tasks)
                     var tasksOnConfirmedProjectsThisWeek = projectsThisWeekConfirmed
                         .SelectMany(x => x.SubTasks
-                            .Where(x => !x.IsLeadershipTask && x.IsWithin(currentWeekStart))
+                            .Where(x => x.TaskDuty != Duty.ProjectAndServiceMgmt && x.IsWithin(currentWeekStart))
                         );
 
                     // Get met and unmet demand for this subset
@@ -439,7 +438,7 @@ namespace PPMTool.Pages
                     // Get tasks (excluding leadership tasks)
                     var tasksOnUnconfirmedProjectsThisWeek = projectsThisWeekUnconfirmed
                         .SelectMany(x => x.SubTasks
-                            .Where(x => !x.IsLeadershipTask && x.IsWithin(currentWeekStart))
+                            .Where(x => x.TaskDuty != Duty.ProjectAndServiceMgmt && x.IsWithin(currentWeekStart))
                         );
 
                     // Calculate the unconfirmed totals
@@ -798,8 +797,8 @@ namespace PPMTool.Pages
                                 .Where(x => x.AssignedResources
                                     .Any(x => x.Person.PersonId == person.PersonId) &&
                                     x.IsWithin(startDate, endDate) &&
-                                    (!x.IsLeadershipTask ||
-                                        (x.OwningProject.CostModel.HasLeadership() && x.IsLeadershipTask)
+                                    (x.TaskDuty != Duty.ProjectAndServiceMgmt ||
+                                        (x.OwningProject.CostModel.HasLeadership() && x.TaskDuty == Duty.ProjectAndServiceMgmt)
                                     )
                                 );
                             Debug.WriteLine($"** {tasksInWindow.Count()} tasks within window for {person.Name}");

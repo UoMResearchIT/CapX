@@ -261,5 +261,22 @@ namespace PPMTool.Data.Enums
         {
             return settingType == SettingType.OrganisationLogoLight || settingType == SettingType.OrganisationLogoDark;
         }
+
+        /// <summary>
+        /// When sorting blocks of assignments, this is the order that should be used to group assignments by duty in a consistent way.
+        /// </summary>
+        /// <param name="blockDuty"></param>
+        /// <returns></returns>
+        public static int GetGanttSortOrder(this Duty blockDuty)
+        {
+            switch (blockDuty)
+            {
+                case Duty.ProjectAndServiceMgmt:
+                    return 0;
+                case Duty.BAU:
+                    return 2;
+            }
+            return 1;
+        }
     }
 }

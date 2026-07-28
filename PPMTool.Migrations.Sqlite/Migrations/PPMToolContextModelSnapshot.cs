@@ -19,7 +19,7 @@ namespace PPMTool.Migrations.Sqlite.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.8");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
 
             modelBuilder.Entity("PPMTool.Data.Entities.Absence", b =>
                 {
@@ -774,9 +774,6 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                     b.Property<bool>("HasFixedStart")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsLeadershipTask")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("Lag")
                         .HasColumnType("INTEGER");
 
@@ -804,6 +801,9 @@ namespace PPMTool.Migrations.Sqlite.Migrations
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("TaskDuty")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("TaskType")
                         .HasColumnType("INTEGER");
