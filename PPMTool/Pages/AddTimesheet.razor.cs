@@ -56,7 +56,6 @@ namespace PPMTool.Pages
             { "sun", "var(--rz-warning-lighter)" }
         };
         private TimesheetStatus newStatus;
-        private bool isRetractingTimesheet = false;
         private Timesheet previousTimesheet;
         private Timesheet nextTimesheet;
         private WorkloadModelChange currentWLM;
@@ -476,7 +475,7 @@ namespace PPMTool.Pages
             }
 
             // Set status changed information
-            if (timesheet.Status != TimesheetStatus.New || isRetractingTimesheet)
+            if (timesheet.Status != TimesheetStatus.New)
             {
                 timesheet.DateStatusChanged = DateTime.Now;
                 timesheet.StatusChangedBy = ActiveUser?.Person;
