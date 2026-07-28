@@ -163,7 +163,7 @@ namespace PPMTool.Data.Entities
         public virtual IList<SkillTag> SkillsRequired { get; set; } = new List<SkillTag>();
 
         /// <summary>
-        /// Which duty the demand for this task should reflected in. By default, assumes development tasks which will be reflected in the <see cref="Duty.ProjectWork"> duty.
+        /// Which duty the demand for this task should be reflected in. By default, assumes development tasks which will be reflected in the <see cref="Duty.ProjectWork"/> duty.
         /// </summary>
         public Duty TaskDuty { get; set; } = Duty.ProjectWork;
 
