@@ -431,17 +431,8 @@ namespace PPMTool.Pages
 
             // Prompt to change of status. Give a different message if retracting a timesheet.
             var confirmed = false;
-            if (timesheet.Status == TimesheetStatus.Submitted && newStatus == TimesheetStatus.New)
-            {
-                confirmed = await DialogService.Confirm($"By continuing you will reopen this timesheet up for editing and resubmission.",
-                    "Retracting Submitted Timesheet") ?? false;
-                isRetractingTimesheet = true;
-            }
-            else
-            {
-                confirmed = await DialogService.Confirm($"By continuing you will change the status of this timesheet to \"{newStatus}\".",
-                    "Change Timesheet Status") ?? false;
-            }
+            confirmed = await DialogService.Confirm($"By continuing you will change the status of this timesheet to \"{newStatus}\".", "Change Timesheet Status") ?? false;
+
             if (!confirmed) return;
             timesheet.Status = newStatus;
 
