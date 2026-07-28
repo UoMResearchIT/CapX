@@ -19,7 +19,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                 table: "SubTasks",
                 type: "integer",
                 nullable: false,
-                defaultValue: 0);
+                defaultValue: 1);
 
             migrationBuilder.Sql(@"
                 UPDATE ""SubTasks""
