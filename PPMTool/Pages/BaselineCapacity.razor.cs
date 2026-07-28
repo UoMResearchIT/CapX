@@ -28,7 +28,7 @@ namespace PPMTool.Pages
             await ReloadDropDownSourcesAsync();
 
             // Certain roles can use the dropdowns and save manager settings so need to reload
-            if (!EditAuthorised && (ActiveUserRoleType != RoleType.Manager || ActiveUserRoleType != RoleType.Superuser))
+            if (!CanCustomise())
             {
                 // Choose the person automatically if not a manager
                 chosenPeople = new List<string>

@@ -51,6 +51,12 @@ namespace PPMTool.Pages
 
         protected bool IsDeveloper() => ActiveUserRoleType == RoleType.Developer;
 
+        /// <summary>
+        /// Whether the user can change the dropdown selections and click the generate button to update the chart.
+        /// </summary>
+        /// <returns></returns>
+        protected bool CanCustomise() => EditAuthorised || ActiveUserRoleType == RoleType.Reader;
+
         protected CancellationTokenSource configureChartTaskCancellationTokenSource = null;
         protected Task configureChartTask = null;
         protected IList<ChartModel> chartModels = new List<ChartModel>();

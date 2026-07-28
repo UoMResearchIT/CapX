@@ -42,7 +42,7 @@ namespace PPMTool.Pages
             if (!firstRender) return;
 
             // Certain roles can use the dropdowns and save manager settings so need to reload
-            if (EditAuthorised || ActiveUserRoleType == RoleType.Reader)
+            if (CanCustomise())
             {
                 // Load settings
                 var managerName = await SessionStorage.GetItemAsync<string>($"{GetSessionStorageTag()}-chosen-manager");
