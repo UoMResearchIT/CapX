@@ -407,7 +407,7 @@ SPDX-License-Identifier: apache-2.0
                                 }
                                 @if ((timesheet?.IsOwner(ActiveUser) ?? false) && !(timesheet?.IsLineManager(ActiveUser) ?? false))
                                 {
-                                    if (timesheet.Status == TimesheetStatus.Submitted)
+                                    @if (timesheet.Status == TimesheetStatus.Submitted)
                                     {
                                         <RadzenButton ButtonType="ButtonType.Submit" Text="Retract timesheet" Icon="undo" ButtonStyle="ButtonStyle.Warning" Click="@(() => { newStatus = TimesheetStatus.New; })" Disabled="@(entityToInsert != null || entityToUpdate != null)" Style="margin-right: 0.5rem;" />
                                     }
