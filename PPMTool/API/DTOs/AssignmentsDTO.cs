@@ -16,7 +16,7 @@ namespace PPMTool.API.DTOs
     /// <param name="TaskName">The name of the task.</param>
     /// <param name="StartDate">The start date of the assignment.</param>
     /// <param name="EndDate">The end date of the assignment.</param>
-    /// <param name="LeadershipTask">Whether this assignment is a leadership assignment.</param>
+    /// <param name="AssignmentType">The duty of the assignment.</param>
     /// 
     public sealed record AssignmentDTO(
         int ProjectId,
@@ -28,5 +28,5 @@ namespace PPMTool.API.DTOs
         string TaskName,
         DateTime StartDate,
         DateTime EndDate,
-        bool LeadershipTask);
+        string AssignmentType);
 }

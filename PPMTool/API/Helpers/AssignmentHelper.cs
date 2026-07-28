@@ -113,7 +113,7 @@ namespace PPMTool.API.Helpers
                     TaskName: chunk.TaskName,
                     StartDate: chunk.StartDate,
                     EndDate: chunk.EndDate,
-                    LeadershipTask: chunk.IsLeadershipAssignment
+                    AssignmentType: chunk.AssignmentType
                 )
             ).ToList();
 
