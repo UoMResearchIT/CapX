@@ -30,9 +30,9 @@ namespace PPMTool.Data.Entities
                 // Warning
                 new StatusMessage("Task has provisional resources!", StatusMessage.MessageType.Warning, () => HasProvisionalResources()),
                 new StatusMessage("Task is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemand()),
-                new StatusMessage("Task has zero demand but assigned resources!", StatusMessage.MessageType.Warning, () => HasZeroDemandButResourced()),
 
                 // Error
+                new StatusMessage("Task has zero demand but assigned resources!", StatusMessage.MessageType.Error, () => HasZeroDemandButResourced()),
                 new StatusMessage("Resource on this task has no associated funding source and task is in progress or ran in the past!", StatusMessage.MessageType.Error, () => HasResourceWithNoFundingSourceAndRunning(), FeatureType.ProjectFinance), // Finance
                 new StatusMessage("Task has resource(s) with zero FTE assignment!", StatusMessage.MessageType.Warning, () => HasResourceWithZeroFTE()),
                 
@@ -163,9 +163,9 @@ namespace PPMTool.Data.Entities
         public virtual IList<SkillTag> SkillsRequired { get; set; } = new List<SkillTag>();
 
         /// <summary>
-        /// Whether this task is a leadership task which would mean it comes out of PSMT allowance instead of ProjectWork allowance
+        /// Which duty the demand for this task should be reflected in. By default, assumes development tasks which will be reflected in the <see cref="Duty.ProjectWork"/> duty.
         /// </summary>
-        public bool IsLeadershipTask { get; set; }
+        public Duty TaskDuty { get; set; } = Duty.ProjectWork;
 
         /// <summary>
         /// Update the work, duration (and end date) or units based on the configuration of the task

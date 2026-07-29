@@ -357,9 +357,8 @@ namespace PPMTool.Pages
                     var tasksOnCancelledProjectsThisWeek = projectsInDatabaseThisWeek
                         .Where(x => x.ProjectStatus.IsCancelled())
                             .SelectMany(x => x.SubTasks
-                                .Where(x => !x.IsLeadershipTask && x.IsWithin(currentWeekStart)
-                            )
-                        );
+                                .Where(x => x.TaskDuty != Duty.ProjectAndServiceMgmt && x.IsWithin(currentWeekStart))
+                            );
                     var cancelledDemand = (float)tasksOnCancelledProjectsThisWeek.RoundedSum(x => x.Demand);
 
 
@@ -375,7 +374,7 @@ namespace PPMTool.Pages
                     // Get all (technical only) tasks that run at the start of the week
                     var tasksOnActiveProjectsThisWeek = projectsThisWeekNotCancelled
                         .SelectMany(x => x.SubTasks
-                            .Where(x => !x.IsLeadershipTask && x.IsWithin(currentWeekStart))
+                            .Where(x => x.TaskDuty != Duty.ProjectAndServiceMgmt && x.IsWithin(currentWeekStart))
                         );
 
                     // Get demand totals from tasks
@@ -386,7 +385,7 @@ namespace PPMTool.Pages
                     // Get all (leadership only) tasks that run at the start of the week
                     var leadershipTasksOnActiveProjectsThisWeek = projectsThisWeekNotCancelled
                         .SelectMany(x => x.SubTasks
-                            .Where(x => x.IsLeadershipTask && x.IsWithin(currentWeekStart))
+                            .Where(x => x.TaskDuty == Duty.ProjectAndServiceMgmt && x.IsWithin(currentWeekStart))
                         );
 
                     // Get demand for leadership
@@ -416,7 +415,7 @@ namespace PPMTool.Pages
                     // Get tasks (excluding leadership tasks)
                     var tasksOnConfirmedProjectsThisWeek = projectsThisWeekConfirmed
                         .SelectMany(x => x.SubTasks
-                            .Where(x => !x.IsLeadershipTask && x.IsWithin(currentWeekStart))
+                            .Where(x => x.TaskDuty != Duty.ProjectAndServiceMgmt && x.IsWithin(currentWeekStart))
                         );
 
                     // Get met and unmet demand for this subset
@@ -439,7 +438,7 @@ namespace PPMTool.Pages
                     // Get tasks (excluding leadership tasks)
                     var tasksOnUnconfirmedProjectsThisWeek = projectsThisWeekUnconfirmed
                         .SelectMany(x => x.SubTasks
-                            .Where(x => !x.IsLeadershipTask && x.IsWithin(currentWeekStart))
+                            .Where(x => x.TaskDuty != Duty.ProjectAndServiceMgmt && x.IsWithin(currentWeekStart))
                         );
 
                     // Calculate the unconfirmed totals
@@ -766,6 +765,11 @@ namespace PPMTool.Pages
                 {
                     try
                     {
+                        // Set the report length
+                        var startDate = this.startDate.Date;
+                        var endDate = this.startDate.Date.AddMonths(monthsAhead).AddDays(-1);
+
+                        // Get the projects and financial references from the database
                         var allProjects = ProjectService.GetAll(context);
                         var realProjects = allProjects
                             .Where(x => !x.ProjectStatus.IsCancelled());
@@ -774,18 +778,19 @@ namespace PPMTool.Pages
                         // Create blank list of data
                         var assignmentChunks = new List<AssignmentChunk>();
 
-                        // Set the report length
-                        var startDate = this.startDate.Date;
-                        var endDate = this.startDate.Date.AddMonths(monthsAhead).AddDays(-1);
-
                         // Filter list of projects to those running during the window
                         var projectsInWindow = realProjects
                             .Where(x => x.IsWithin(startDate, endDate));
                         Debug.WriteLine($"** {projectsInWindow.Count()} projects running during the window.");
 
-                        // Get the breakdown of budget details for the tasks/resources in the projects we care about
-                        var projectBudgetDetails = FinanceHelper.GetProjectBudgetDetail(projects);
-                        Debug.WriteLine($"** Built {projectBudgetDetails.Count()} budget details.");
+                        // If we are using the project finance feature
+                        IDictionary<string, AssignmentBudgetDetail> projectBudgetDetails = null;
+                        if (FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance))
+                        {
+                            // Get the breakdown of budget details for the tasks/resources in the projects we care about
+                            projectBudgetDetails = FinanceHelper.GetProjectBudgetDetail(projects);
+                            Debug.WriteLine($"** Built {projectBudgetDetails.Count()} budget details.");
+                        }
 
                         // Get data for each person active in the window
                         var peopleActive = await PersonService.GetEmployedPeopleShallowAsync(Context, startDate, endDate);
@@ -798,8 +803,8 @@ namespace PPMTool.Pages
                                 .Where(x => x.AssignedResources
                                     .Any(x => x.Person.PersonId == person.PersonId) &&
                                     x.IsWithin(startDate, endDate) &&
-                                    (!x.IsLeadershipTask ||
-                                        (x.OwningProject.CostModel.HasLeadership() && x.IsLeadershipTask)
+                                    (x.TaskDuty != Duty.ProjectAndServiceMgmt ||
+                                        (x.OwningProject.CostModel.HasLeadership() && x.TaskDuty == Duty.ProjectAndServiceMgmt)
                                     )
                                 );
                             Debug.WriteLine($"** {tasksInWindow.Count()} tasks within window for {person.Name}");

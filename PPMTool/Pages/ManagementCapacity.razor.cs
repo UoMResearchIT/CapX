@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Authorization;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
-using PPMTool.Enums;
 using PPMTool.Helpers;
 using PPMTool.Models;
 using Radzen;
@@ -200,9 +199,9 @@ namespace PPMTool.Pages
             IEnumerable<Project> projects,
             IEnumerable<Person> people,
             bool isPersonMode,
-            TaskSubset taskSet = TaskSubset.TechOnly)
+            Duty[] dutySet = null)
         {
-            base.PopulateGroupedAssignmentsForPeople(projects, people, isPersonMode, TaskSubset.LeadershipOnly);
+            base.PopulateGroupedAssignmentsForPeople(projects, people, isPersonMode, [Duty.ProjectAndServiceMgmt]);
         }
     }
 }

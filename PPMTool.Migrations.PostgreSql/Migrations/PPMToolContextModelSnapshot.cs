@@ -21,7 +21,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.8")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -821,9 +821,6 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                     b.Property<bool>("HasFixedStart")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsLeadershipTask")
-                        .HasColumnType("boolean");
-
                     b.Property<int>("Lag")
                         .HasColumnType("integer");
 
@@ -851,6 +848,9 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("TaskDuty")
+                        .HasColumnType("integer");
 
                     b.Property<int>("TaskType")
                         .HasColumnType("integer");

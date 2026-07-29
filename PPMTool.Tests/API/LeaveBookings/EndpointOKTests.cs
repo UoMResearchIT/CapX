@@ -12,13 +12,12 @@ namespace PPMTool.Tests.API.LeaveBookings
         {
             using (var client = GetClientAsManager())
             {
-                var response = await client.GetAsync($"/leavebookings/getForSelfAndStaff?year={GetCurrentYear()}");
+                var response = await client.GetAsync($"leavebookings/getForSelfAndStaff?year={GetCurrentYear()}");
                 // This endpoint may return 500 if the Leave Bookings database is not available
                 // We just verify that the endpoint is accessible and returns a valid response
                 Assert.That(
                     response.StatusCode == System.Net.HttpStatusCode.OK ||
-                    response.StatusCode == System.Net.HttpStatusCode.InternalServerError ||
-                    response.StatusCode == System.Net.HttpStatusCode.BadRequest
+                    response.StatusCode == System.Net.HttpStatusCode.InternalServerError
                 );
             }
         }

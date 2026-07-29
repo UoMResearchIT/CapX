@@ -50,7 +50,7 @@ SPDX-License-Identifier: apache-2.0
                                                    @bind-IncludeLeavers="@includeLeavers"
                                                    @bind-IncludeFinished="@includeFinished" />
                 </RadzenStack>
-                @if (ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser)
+                @if (CanCustomise())
                 {
                     <RadzenButton Text="Generate"
                                   Click="@(async () => await ConfigureChartSourceAsync())"

@@ -127,6 +127,7 @@ namespace PPMTool.Pages
         private IList<Person> people = new List<Person>();
         private IList<Person> filteredPeople = new List<Person>();
         private IEnumerable<Rate> availableRates = new List<Rate>();
+        private IEnumerable<Duty> allowedTaskDuties = new List<Duty>();
         private IEnumerable<FundingSource> availableSources = new List<FundingSource>();
         private bool startDateDisabled;
         private bool workDisabled;
@@ -234,6 +235,9 @@ namespace PPMTool.Pages
             availableTags = SkillTagService.GetAll(Context);
             availableRates = Enum.GetValues<Rate>().ToList();
             availableSources = FundingSourceService.GetFundingSources(Context, ProjectId ?? 0).ToList();
+
+            // Limit the number of task duties for now as this is a new feature and integral to a lot of the in-built calculations
+            allowedTaskDuties = new List<Duty>() { Duty.ProjectWork, Duty.BAU, Duty.ProjectAndServiceMgmt };
 
             // No project then stop initialising
             if (ProjectModel == null)
@@ -834,7 +838,7 @@ namespace PPMTool.Pages
             }
 
             // Check that assigned resources are managers
-            if (TaskModel.IsLeadershipTask)
+            if (TaskModel.TaskDuty == Duty.ProjectAndServiceMgmt)
             {
                 var managerIds = UserService.GetAllManagerPersonId(Context);
                 if (TaskModel.AssignedResources.Any(x => !managerIds.Contains(x.Person.PersonId)))
@@ -1003,7 +1007,7 @@ namespace PPMTool.Pages
         private void UpdatePeopleDropdownSource(LoadDataArgs args)
         {
             var temp = people.AsQueryable();
-            if (taskModel.IsLeadershipTask)
+            if (taskModel.TaskDuty == Duty.ProjectAndServiceMgmt)
             {
                 var managerId = UserService.GetAllManagerPersonId(Context);
                 temp = temp.Where(x => managerId.Contains(x.PersonId));

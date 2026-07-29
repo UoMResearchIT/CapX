@@ -1,0 +1,100 @@
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@page "/baselinecapacity"
+@inherits BaseCapacityPage
+@using PPMTool.Data.Enums
+@using PPMTool.Pages.Components
+@using PPMTool.Data
+<PageTitle>Baseline Capacity - CapX</PageTitle>
+
+<FeatureCheckComponent Feature="FeatureType.ProjectsAndCapacity">
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>Baseline Capacity</h1>
+            </div>
+        </div>
+        <hr />
+        @if (Loading)
+        {
+            <LoadingComponent />
+        }
+        else if(pageUnavailable)
+        {
+            <StatusMessageComponent Message="@(new StatusMessage("You do not have any assignments as part of a core team so there is nothing to show!", StatusMessage.MessageType.Error))" />
+        }
+        else
+        {
+            <h2>Charts</h2>
+            <RadzenCard>
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+                        <RadzenDropDown @bind-Value=@chosenPeople
+                                        Data=@filteredPeople
+                                        TextProperty="Name"
+                                        ValueProperty="Name"
+                                        Multiple=true
+                                        AllowClear=true
+                                        Placeholder="Filter RSE"
+                                        Chips=true
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                        FilterOperator="StringFilterOperator.Contains"
+                                        AllowFiltering="true"
+                                        Style="width: 100%; max-width: 400px;"
+                                        Change="@(async args => await PeopleSelectionChangedAsync(args))"
+                                        LoadData="@LoadFilteredPeople"
+                                        Disabled=@(IsDeveloper() || Loading) />
+                        <CapacityChartControlComponent FinishedSwitchChanged="@(async value => await FinishedSwitchChangedAsync(value))"
+                                                       LeaversSwitchChanged="@(async value => await LeaversSwitchChangedAsync(value))"
+                                                       UnFundedSwitchChanged="@(async value => await UnFundedSwitchChangedAsync(value))"
+                                                       SetZoomToMonthsAhead="@SetZoomToMonthsAhead"
+                                                       @bind-IncludeUnFunded="@includeUnFunded"
+                                                       @bind-IncludeLeavers="@includeLeavers"
+                                                       @bind-IncludeFinished="@includeFinished" />
+                    </RadzenStack>
+                    @if (CanCustomise())
+                    {
+                        <RadzenButton Text="Generate"
+                                      Click="@(async () => await ConfigureChartSourceAsync())"
+                                      Icon="refresh"
+                                      class="capacity-gen-button" />
+                    }
+                </RadzenStack>
+            </RadzenCard>
+    
+            @if (chartModels == null || chartModels.Count < 1)
+            {
+                <RadzenCard>
+                    <p class="lead">No data to show for the selected people</p>
+                </RadzenCard>
+            }
+            else
+            {
+                <!-- Legend -->
+                <div class="mt-2">
+                    <CapacityLegendComponent ShowProjectModeLegend="@(chosenPeople != null && chosenPeople.Count() > 0)" />
+                </div>
+
+                <!-- Chart -->
+                <div class="row">
+                    @for (int i = 0; i < chartModels.Count; ++i)
+                    {
+                        <div class="col" style="min-width: 50rem;">
+                            <div class="rz-card rz-variant-fill my-1">
+                                <CapacityChartComponent ChartModel=@chartModels[i]
+                                                        OnDataPointSelection="@(async item => await DataPointsSelectedAsync(item))"
+                                                        OnChartZoomed="@OnChartZoomed" />
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            <br />
+        }
+    </div>
+</FeatureCheckComponent>
