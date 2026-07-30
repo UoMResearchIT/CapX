@@ -19,9 +19,6 @@ namespace PPMTool.Pages
         private TimesheetService TimesheetService { get; set; }
 
         [Inject]
-        private ISessionStorageService SessionStorage { get; set; }
-
-        [Inject]
         private PersonService PersonService { get; set; }
 
         private bool showAllMyTimesheets;
