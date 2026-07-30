@@ -75,6 +75,7 @@ namespace PPMTool.Pages
         public async Task OnPageSizeChanged(int value)
         {
             await SessionStorage.SetItemAsync("PageCount", value);
+            PageCount = value;
         }
 
 

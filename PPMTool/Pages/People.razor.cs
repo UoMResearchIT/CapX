@@ -24,7 +24,6 @@ namespace PPMTool.Pages
 
         private IEnumerable<Person> people;
         private int count;
-        private int pageCount = 10;
         private bool skillsEnabled;
 
         private bool includeLeavers;
@@ -145,7 +144,7 @@ namespace PPMTool.Pages
 
             // ---- PAGING ----
             var skip = args.Skip ?? 0;
-            var take = args.Top ?? pageCount;
+            var take = args.Top ?? PageCount;
 
             people = query.Skip(skip).Take(take).ToList();
 
