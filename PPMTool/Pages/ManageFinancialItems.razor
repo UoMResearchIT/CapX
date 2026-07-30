@@ -90,8 +90,10 @@ SPDX-License-Identifier: apache-2.0
                                             FilterMode="FilterMode.Simple"
                                             AllowSorting="true"
                                             AllowFiltering="true"
-                                            PageSize="10"
                                             AllowPaging="true"
+                                            ShowPagingSummary="true"
+                                            PagerHorizontalAlign="HorizontalAlign.Left"
+                                            PagerPosition="PagerPosition.TopAndBottom"
                                             @ref="@dataGridInvoices">
                                 <Columns>
                                     <RadzenDataGridColumn TItem="Invoice" Property="InvoiceId" Title="Invoice ID" MinWidth="10px" Width="3rem" />
@@ -131,8 +133,10 @@ SPDX-License-Identifier: apache-2.0
                                             AllowSorting="true"
                                             AllowFiltering="true"
                                             class="white-space:pre-wrap"
-                                            PageSize="10"
                                             AllowPaging="true"
+                                            ShowPagingSummary="true"
+                                            PagerHorizontalAlign="HorizontalAlign.Left"
+                                            PagerPosition="PagerPosition.TopAndBottom"
                                             @ref="@dataGridPayments">
                                 <Columns>
                                     <RadzenDataGridColumn TItem="Payment" Property="PaymentId" Title="Payment ID" MinWidth="10px" Width="3rem" />
@@ -166,8 +170,10 @@ SPDX-License-Identifier: apache-2.0
                                             AllowSorting="true"
                                             AllowFiltering="true"
                                             class="white-space:pre-wrap"
-                                            PageSize="10"
                                             AllowPaging="true"
+                                            ShowPagingSummary="true"
+                                            PagerHorizontalAlign="HorizontalAlign.Left"
+                                            PagerPosition="PagerPosition.TopAndBottom"
                                             @ref="@dataGridSources">
                                 <Columns>
                                     <RadzenDataGridColumn TItem="FundingSource" Property="FundingSourceId" Title="Source ID" MinWidth="10px" Width="3rem" />
