@@ -15,9 +15,6 @@ namespace PPMTool.Pages
         protected ProjectService ProjectService { get; set; }
 
         [Inject]
-        protected ISessionStorageService SessionStorage { get; set; }
-
-        [Inject]
         protected IJSRuntime JSRuntime { get; set; }
 
         protected void NavigateToProjectDetails(int id, bool newWindow = false, bool filterDueNotes = false)

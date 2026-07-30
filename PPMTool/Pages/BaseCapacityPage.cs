@@ -42,9 +42,6 @@ namespace PPMTool.Pages
         [Inject]
         protected IJSRuntime JSRuntime { get; set; }
 
-        [Inject]
-        protected ISessionStorageService SessionStorage { get; set; }
-
         [Parameter]
         [SupplyParameterFromQuery(Name = "filterid")]
         public int? FilterPersonId { get; set; }
