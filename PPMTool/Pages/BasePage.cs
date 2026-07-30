@@ -67,6 +67,11 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Wired up to the pagesize dropdown on datagrids that need user specified paging
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public async Task OnPageSizeChanged(int value)
         {
             await SessionStorage.SetItemAsync("PageCount", value);
@@ -110,6 +115,10 @@ namespace PPMTool.Pages
             EditAuthorised = ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser;
         }
 
+        /// <summary>
+        /// Retrieves the currently set PageCount int from the session variable
+        /// </summary>
+        /// <returns></returns>
         private async Task GetPageCountSettingAsync()
         {
             PageCount = await SessionStorage.GetItemAsync<int?>("PageCount") ?? 15;
