@@ -76,6 +76,7 @@ namespace PPMTool.Pages
         {
             await SessionStorage.SetItemAsync("PageCount", value);
             PageCount = value;
+            StateHasChanged();
         }
 
 
@@ -103,8 +104,6 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            _ = GetPageCountSettingAsync();
-            Layout?.Reset();
 
             // Not sure why this happens but worth noting
             if (Layout == null)
@@ -116,6 +115,18 @@ namespace PPMTool.Pages
             EditAuthorised = ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser;
         }
 
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            await base.OnAfterRenderAsync(firstRender);
+
+            if (firstRender)
+            {
+                // Now it's safe to call JS-interop backed services like SessionStorage.
+                await GetPageCountSettingAsync();
+                StateHasChanged();
+            }
+        }
+
         /// <summary>
         /// Retrieves the currently set PageCount int from the session variable
         /// </summary>
@@ -123,6 +134,7 @@ namespace PPMTool.Pages
         private async Task GetPageCountSettingAsync()
         {
             PageCount = await SessionStorage.GetItemAsync<int?>("PageCount") ?? 15;
+            StateHasChanged();
         }
 
         /// <summary>
