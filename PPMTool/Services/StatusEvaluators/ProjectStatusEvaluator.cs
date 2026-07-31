@@ -28,16 +28,22 @@ namespace PPMTool.Services.StatusEvaluators
 
         protected override IReadOnlyList<StatusMessage> BuildCoreStatusMessages(Project project)
         {
+            // Compute some pre-requisites for the status messages that need to be retrieved from other services
             var today = DateTime.Today;
             var currentFY = FinancialReference.GetFinancialYear(today);
-            var shouldRunOtherFundingInvoiceChecks =
+
+            // Only run the other funding invoice checks if the project is not cancelled, has other funding sources, and it is between May and July
+            var shouldRunInvoiceChecks =
                 !project.ProjectStatus.IsCancelled()
                 && (project.FundingSources?.Any(x => x.FundingSourceType == FundingSourceType.Other) ?? false)
                 && today.Month is >= 5 and <= 7;
 
+            // These are the bits of information we need for the invoice status message
             var hasCurrentFYInvoice = true;
             var requestedThisFY = 0d;
-            if (shouldRunOtherFundingInvoiceChecks)
+
+            // Use the invoice service to get the information we need if we should run the checks
+            if (shouldRunInvoiceChecks)
             {
                 using var context = contextFactory.CreateDbContext();
                 hasCurrentFYInvoice = invoiceService.HasInvoiceInFinancialYear(context, project.ProjectId, currentFY);
@@ -57,8 +63,7 @@ namespace PPMTool.Services.StatusEvaluators
                 new StatusMessage("This project has started but has no link to a project board!", StatusMessage.MessageType.Warning, project.HasStartedButHasNoScrumProjectLink),
                 new StatusMessage("Task has resource(s) with zero FTE assignment!", StatusMessage.MessageType.Warning, project.HasResourceWithZeroFTE),
                 new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Warning, () => project.ProjectStatus.IsActive() && project.IsOverBudget(), FeatureType.ProjectFinance),
-                new StatusMessage("This project has Other funding sources but no invoice has been raised in the current financial year. Raise one by June to register funds requested.", StatusMessage.MessageType.Warning, () => project.InvoiceMissingForCurrentFY(hasCurrentFYInvoice, today), FeatureType.ProjectFinance),
-                new StatusMessage("Funds requested this financial year are significantly below planned costs to the end of this financial year for this project.", StatusMessage.MessageType.Warning, () => project.FundsRequestedBelowPlannedCostForFY(requestedThisFY, settingsService.GetSetting(SettingType.OverbudgetThreshold, 10d), today), FeatureType.ProjectFinance),
+                new StatusMessage("Funds requested this financial year are significantly below planned costs, has Other funding sources but no invoice in the current financial year. Raise one by June to request funds.", StatusMessage.MessageType.Warning, () => shouldRunInvoiceChecks ? !hasCurrentFYInvoice && project.FundsRequestedBelowPlannedCostForFY(requestedThisFY, settingsService.GetSetting(SettingType.UnderclaimedFundsThreshold, 10d), today) : false, FeatureType.ProjectFinance),
 
                 // Errors
                 new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Error, () => project.ProjectStatus.IsActive() && project.IsOverBudget(settingsService.GetSetting(SettingType.OverbudgetThreshold, 0d)), FeatureType.ProjectFinance),

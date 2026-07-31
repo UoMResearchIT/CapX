@@ -82,6 +82,10 @@ namespace PPMTool.Data.Enums
 
         [Description("The percentage overspend planned vs budget on a project permitted before overbudget warning becomes an error.")]
         [DefaultSettingValue("10")]
-        OverbudgetThreshold = 17
+        OverbudgetThreshold = 17,
+
+        [Description("The percentage of the planned cost that can be underclaimed (requested) for a given financial year.")]
+        [DefaultSettingValue("10")]
+        UnderclaimedFundsThreshold = 19
     }
 }
