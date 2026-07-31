@@ -9,6 +9,7 @@ using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
 using PPMTool.Services;
+using PPMTool.Services.StatusEvaluators;
 using Radzen;
 using static PPMTool.Data.StatusMessage;
 
@@ -22,6 +23,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private DialogService DialogService { get; set; }
+
+        [Inject]
+        private PersonStatusEvaluator PersonStatusEvaluator { get; set; }
 
         [Parameter]
         public int PersonId { get; set; }

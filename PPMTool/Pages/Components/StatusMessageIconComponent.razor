@@ -28,7 +28,7 @@ else if (FilteredMessages.Count() > 0)
 @code
 {
     [Parameter]
-    public IList<StatusMessage> Messages { get; set; }
+    public IEnumerable<StatusMessage> Messages { get; set; }
 
     [Parameter]
     public MessageType? Type { get; set; }
@@ -52,7 +52,7 @@ else if (FilteredMessages.Count() > 0)
 
         // Populate the filtered list of messages
         FilteredMessages.Clear();
-        foreach (StatusMessage item in Messages?.Where(x => x.Type == Type && x.Status))
+        foreach (StatusMessage item in (Messages ?? Enumerable.Empty<StatusMessage>()).Where(x => x.Type == Type && x.Status))
         {
             if (item.RelevantFeature == FeatureType.None || FeatureService.IsFeatureEnabled(item.RelevantFeature))
             {

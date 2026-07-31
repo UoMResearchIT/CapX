@@ -11,7 +11,7 @@ namespace PPMTool.Data.Entities
     /// <summary>
     /// Represents an RSE available for project work
     /// </summary>
-    public class Person : ObjectWithStatusMessages, IComparable
+    public class Person : IComparable
     {
         public int PersonId { get; set; }
 
@@ -110,15 +110,6 @@ namespace PPMTool.Data.Entities
         /// </summary>
         [JsonIgnore]
         public virtual ICollection<Person> PeopleManaged { get; set; } = new List<Person>();
-
-        public Person()
-        {
-            // Generate status messages to be maintained against a person
-            statusMessages = new List<StatusMessage>
-            {
-                new StatusMessage("This person is currently absent.", StatusMessage.MessageType.Info, IsCurrentlyAbsent)
-            };
-        }
 
         /// <summary>
         /// Checks whether this person is currently absent.
