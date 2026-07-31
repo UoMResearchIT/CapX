@@ -204,31 +204,8 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// When there are Other funding sources but no current FY invoice has been raised in time.
-        /// Invoice presence is provided by caller so this entity does not depend on invoice loading strategy.
-        /// </summary>
-        /// <param name="hasCurrentFYInvoice"></param>
-        /// <param name="today"></param>
-        /// <returns></returns>
-        public bool InvoiceMissingForCurrentFY(bool hasCurrentFYInvoice, DateTime? today = null)
-        {
-            var currentDate = (today ?? DateTime.Today).Date;
-            if (!IsInInvoiceWarningWindow(currentDate) || ProjectStatus.IsCancelled())
-            {
-                return false;
-            }
-
-            if (!(FundingSources?.Any(x => x.FundingSourceType == FundingSourceType.Other) ?? false))
-            {
-                return false;
-            }
-
-            return !hasCurrentFYInvoice;
-        }
-
-        /// <summary>
         /// When there are Other funding sources but the total funds requested for the current FY is below the planned cost for the FY by a given threshold percentage.
-        /// Requested funds value is provided by caller so this entity does not depend on invoice loading strategy.
+        /// Requested funds value is provided by caller so this entity does not have to deep load the invoices.
         /// </summary>
         /// <param name="requestedThisFY"></param>
         /// <param name="thresholdPercentage"></param>
@@ -237,18 +214,6 @@ namespace PPMTool.Data.Entities
         public bool FundsRequestedBelowPlannedCostForFY(double requestedThisFY, double thresholdPercentage, DateTime? today = null)
         {
             var currentDate = (today ?? DateTime.Today).Date;
-
-            // Only applies if we are in the invoice warning window and the project is not cancelled
-            if (!IsInInvoiceWarningWindow(currentDate) || ProjectStatus.IsCancelled())
-            {
-                return false;
-            }
-
-            // Doesn't apply if there are no Other funding sources
-            if (!(FundingSources?.Any(x => x.FundingSourceType == FundingSourceType.Other) ?? false))
-            {
-                return false;
-            }
 
             // Get planned costs in current financial year
             var currentFY = FinancialReference.GetFinancialYear(currentDate);
@@ -263,16 +228,6 @@ namespace PPMTool.Data.Entities
             var threshold = Math.Clamp(thresholdPercentage, 0d, 100d);
             var minimumExpectedRequestedFunds = plannedThisFY * (1d - (threshold / 100d));
             return requestedThisFY < minimumExpectedRequestedFunds;
-        }
-
-        /// <summary>
-        /// Checks whether the given date is within the invoice warning window (May to July inclusive)
-        /// </summary>
-        /// <param name="date"></param>
-        /// <returns></returns>
-        private static bool IsInInvoiceWarningWindow(DateTime date)
-        {
-            return date.Month is >= 5 and <= 7;
         }
 
         /// <summary>
