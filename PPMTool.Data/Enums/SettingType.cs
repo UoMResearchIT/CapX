@@ -78,6 +78,10 @@ namespace PPMTool.Data.Enums
 
         [Description("URL to documentation that provides help for the timesheet functionality.")]
         [DefaultSettingValue("")]
-        TimesheetHelpUrl = 16
+        TimesheetHelpUrl = 16,
+
+        [Description("The percentage overspend planned vs budget on a project permitted before overbudget warning becomes an error.")]
+        [DefaultSettingValue("10")]
+        OverbudgetThreshold = 17
     }
 }
