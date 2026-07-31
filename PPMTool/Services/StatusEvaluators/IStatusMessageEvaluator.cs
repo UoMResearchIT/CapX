@@ -12,7 +12,7 @@ namespace PPMTool.Services.StatusEvaluators
     public interface IStatusMessageEvaluator<in T>
     {
         /// <summary>
-        /// Evaluates the status messages for the given entity.
+        /// Evaluates the status messages for the given entity returning the active ones.
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>

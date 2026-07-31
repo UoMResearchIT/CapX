@@ -8,7 +8,39 @@ namespace PPMTool.Services.StatusEvaluators
 {
     public abstract class BaseStatusEvaluatorService<T> : IStatusMessageEvaluator<T>
     {
-        public abstract IReadOnlyList<StatusMessage> GetLatestStatusMessages(T entity);
+        /// <summary>
+        /// Builds the core status messages and their conditions for the entity.
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        protected abstract IReadOnlyList<StatusMessage> BuildCoreStatusMessages(T entity);
+
+        /// <inheritdoc />
+        public IReadOnlyList<StatusMessage> GetLatestStatusMessages(T entity)
+        {
+            // Build messages
+            var messages = BuildCoreStatusMessages(entity).ToList();
+
+            // Evaluate the conditions
+            foreach (var message in messages)
+            {
+                message.Update();
+            }
+
+            // If there are no active messages that are not of type Success, return a default success message
+            if (!messages.Any(x =>
+                x.Status &&
+                x.Type != StatusMessage.MessageType.Success))
+            {
+                return
+                [
+                    new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => true)
+                ];
+            }
+
+            // Otherwise return the messages
+            return messages;
+        }
 
         /// <summary>
         /// Checks if the entity has any active status messages that are not of type Success.

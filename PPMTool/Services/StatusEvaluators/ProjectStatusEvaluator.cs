@@ -17,32 +17,8 @@ namespace PPMTool.Services.StatusEvaluators
             this.settingsService = settingsService;
         }
 
-        public override IReadOnlyList<StatusMessage> GetLatestStatusMessages(Project project)
+        protected override IReadOnlyList<StatusMessage> BuildCoreStatusMessages(Project project)
         {
-            bool hasActiveMessages() => (project.SubTasks?.Any(x => x.WillStartWithinAMonth()) ?? false)
-                || (project.SubTasks?.Any(x => x.HasStartedInTheLastWeek()) ?? false)
-                || (project.SubTasks?.Any(x => x.HasAbsentResourcesAndStartsWithinAWeek()) ?? false)
-                || (project.SubTasks?.Any(x => x.HasProvisionalResources()) ?? false)
-                || project.HasUnmetDemandInWindow()
-                || project.HasStartedButHasNoScrumProjectLink()
-                || project.HasResourceWithZeroFTE()
-                || (project.ProjectStatus.IsActive() && project.IsOverBudget())
-                || (project.ProjectStatus.IsActive() && project.IsOverBudget(settingsService.GetSetting(SettingType.OverbudgetThreshold, 0d)))
-                || project.HasNoBudget()
-                || project.RunningTaskButInactive()
-                || project.ActiveButNoRunningTask()
-                || project.NotFinishedOrCancelledButNoPM()
-                || project.NotFinishedOrCancelledButNoInnateCodeAndUpcoming()
-                || project.RTP == 0
-                || project.HasNoRequestDocLink()
-                || project.HasNoDescription()
-                || project.SubTasks == null || project.SubTasks.Count == 0
-                || project.ActiveButNotHadActualsUpdatedForAMonth()
-                || project.HasNoFundingSourcesButRan()
-                || project.HasResourcesWithNoFundingSourceOnRunningTask()
-                || project.DayRateWithDIFunding()
-                || !(project.SubTasks?.Any(x => x.TaskDuty == Duty.ProjectAndServiceMgmt) ?? false);
-
             return new List<StatusMessage>
             {
                 // Info
@@ -74,8 +50,6 @@ namespace PPMTool.Services.StatusEvaluators
                 new StatusMessage("This project uses the Day Rate model but has a DI funding source which is not allowed! DI funding sources must use salary costs for recharge.", StatusMessage.MessageType.Error, () => project.DayRateWithDIFunding(), FeatureType.ProjectFinance),
                 new StatusMessage("This project does not have a project management task!", StatusMessage.MessageType.Error, () => !project.SubTasks?.Any(x => x.TaskDuty == Duty.ProjectAndServiceMgmt) ?? true),
 
-                // OK
-                new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !hasActiveMessages())
             };
         }
     }
