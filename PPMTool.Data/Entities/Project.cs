@@ -204,6 +204,114 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// When there are Other funding sources but no current FY invoice has been raised in time.
+        /// </summary>
+        /// <param name="today"></param>
+        /// <returns></returns>
+        public bool InvoiceMissingForCurrentFY(DateTime? today = null)
+        {
+            var currentDate = (today ?? DateTime.Today).Date;
+            if (!IsInInvoiceWarningWindow(currentDate) || ProjectStatus.IsCancelled())
+            {
+                return false;
+            }
+
+            if (!(FundingSources?.Any(x => x.FundingSourceType == FundingSourceType.Other) ?? false))
+            {
+                return false;
+            }
+
+            var currentFY = FinancialReference.GetFinancialYear(currentDate);
+            return !(Invoices?.Any(x => x.Status != InvoiceStatus.Cancelled && FinancialReference.GetFinancialYear(x.KeyDate) == currentFY) ?? false);
+        }
+
+        /// <summary>
+        /// When there are Other funding sources but the total funds requested for the current FY is below the planned cost for the FY by a given threshold percentage.
+        /// </summary>
+        /// <param name="thresholdPercentage"></param>
+        /// <param name="today"></param>
+        /// <returns></returns>
+        public bool FundsRequestedBelowPlannedCostForFY(double thresholdPercentage, DateTime? today = null)
+        {
+            var currentDate = (today ?? DateTime.Today).Date;
+
+            // Only applies if we are in the invoice warning window and the project is not cancelled
+            if (!IsInInvoiceWarningWindow(currentDate) || ProjectStatus.IsCancelled())
+            {
+                return false;
+            }
+
+            // Doesn't apply if there are no Other funding sources
+            if (!(FundingSources?.Any(x => x.FundingSourceType == FundingSourceType.Other) ?? false))
+            {
+                return false;
+            }
+
+            // Get the total requested funds for the current financial year
+            var currentFY = FinancialReference.GetFinancialYear(currentDate);
+            var requestedThisFY = Invoices?
+                .Where(x => x.Status != InvoiceStatus.Cancelled && FinancialReference.GetFinancialYear(x.KeyDate) == currentFY)
+                .Sum(x => x.Value) ?? 0d;
+
+            var financialYearStart = new DateTime(currentFY, 8, 1);
+            var financialYearEnd = new DateTime(currentFY + 1, 7, 31);
+            var plannedThisFY = GetPlannedCostInDateRange(financialYearStart, financialYearEnd);
+            if (plannedThisFY <= 0)
+            {
+                return false;
+            }
+
+            var threshold = Math.Clamp(thresholdPercentage, 0d, 100d);
+            var minimumExpectedRequestedFunds = plannedThisFY * (1d - (threshold / 100d));
+            return requestedThisFY < minimumExpectedRequestedFunds;
+        }
+
+        /// <summary>
+        /// Checks whether the given date is within the invoice warning window (May to July inclusive)
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        private static bool IsInInvoiceWarningWindow(DateTime date)
+        {
+            return date.Month is >= 5 and <= 7;
+        }
+
+        /// <summary>
+        /// Calculates the planned cost of the project within a given date range by summing the proportion of planned costs of each subtask that overlaps with the date range.
+        /// </summary>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        private double GetPlannedCostInDateRange(DateTime startDate, DateTime endDate)
+        {
+            if (startDate.Date > endDate.Date || SubTasks == null)
+            {
+                return 0;
+            }
+
+            double planned = 0;
+            foreach (var subTask in SubTasks.Where(x => x.IsWithin(startDate, endDate)))
+            {
+                var taskStart = subTask.StartDate.Date;
+                var taskEnd = subTask.EndDate.Date;
+                var overlapStart = taskStart > startDate.Date ? taskStart : startDate.Date;
+                var overlapEnd = taskEnd < endDate.Date ? taskEnd : endDate.Date;
+
+                if (overlapEnd < overlapStart)
+                {
+                    continue;
+                }
+
+                // Get proportion of planned costs of the task in the window
+                var taskDays = Math.Max(1d, taskEnd.Subtract(taskStart).TotalDays + 1d);
+                var overlapDays = overlapEnd.Subtract(overlapStart).TotalDays + 1d;
+                planned += subTask.PlannedCost * (overlapDays / taskDays);
+            }
+
+            return planned;
+        }
+
+        /// <summary>
         /// Whether this project is active and the actuals updated timestamp shows it hasn't been updated for a month or more
         /// </summary>
         /// <returns></returns>
