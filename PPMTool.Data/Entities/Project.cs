@@ -179,10 +179,27 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("This project has a task with a resource without a funding source and is currently running or has run in the past!", StatusMessage.MessageType.Error, () => HasResourcesWithNoFundingSourceOnRunningTask(), FeatureType.ProjectFinance), // Finance
                 new StatusMessage("This project uses the Day Rate model but has a DI funding source which is not allowed! DI funding sources must use salary costs for recharge.", StatusMessage.MessageType.Error, () => DayRateWithDIFunding(), FeatureType.ProjectFinance), // Finance
                 new StatusMessage("This project does not have a project management task!", StatusMessage.MessageType.Error, () => !SubTasks?.Any(x => x.TaskDuty == Duty.ProjectAndServiceMgmt) ?? true),
-                
+                new StatusMessage("This project has funding sources contributing to the budget that are not associated with task resources!", StatusMessage.MessageType.Error, () => HasFundingSourcesNotLinkedToResources(), FeatureType.ProjectFinance),
+
                 // Success
                 new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
             };
+        }
+
+        /// <summary>
+        /// Checks whether any funding sources are not linked to any resources in the subtasks
+        /// </summary>
+        /// <returns></returns>
+        private bool HasFundingSourcesNotLinkedToResources()
+        {
+            // If no tasks or no resources then return false
+            if (SubTasks == null || SubTasks?.Count == 0) return false;
+            if (SubTasks?.All(x => x.AssignedResources == null || x.AssignedResources?.Count == 0) ?? true) return false;
+
+            // Otherwise, check that all funding sources are linked to at least one resource in a subtask
+            var fundingSourceIds = FundingSources?.Select(x => x.FundingSourceId).ToList() ?? new List<int>();
+            var resourceFundingSourceIds = SubTasks?.SelectMany(t => t.AssignedResources?.Select(r => r.FundedFrom?.FundingSourceId ?? 0) ?? new List<int>()).ToList() ?? new List<int>();
+            return fundingSourceIds.Except(resourceFundingSourceIds).Any();
         }
 
         /// <summary>
