@@ -162,9 +162,10 @@ namespace PPMTool.Data.Entities
                 new StatusMessage("A current or future task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemandInWindow()),
                 new StatusMessage("This project has started but has no link to a project board!", StatusMessage.MessageType.Warning, () => HasStartedButHasNoScrumProjectLink()),
                 new StatusMessage("Task has resource(s) with zero FTE assignment!", StatusMessage.MessageType.Warning, () => HasResourceWithZeroFTE()),
+                new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Warning, () => ProjectStatus.IsActive() && IsOverBudget(), FeatureType.ProjectFinance), // Finance
 
                 // Error
-                new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Error, () => ProjectStatus.IsActive() && IsOverBudget(), FeatureType.ProjectFinance), // Finance
+                new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Error, () => ProjectStatus.IsActive() && IsOverBudget(GetSetting(SettingType.OverbudgetThreshold)), FeatureType.ProjectFinance), // Finance
                 new StatusMessage("This project has no agreed budget!", StatusMessage.MessageType.Error, () => HasNoBudget(), FeatureType.ProjectFinance), // Finance
                 new StatusMessage("A task in this project is running but the project is not active!", StatusMessage.MessageType.Error, () => RunningTaskButInactive()),
                 new StatusMessage("This project is active but has no currently running tasks!", StatusMessage.MessageType.Error, () => ActiveButNoRunningTask()),
@@ -207,10 +208,23 @@ namespace PPMTool.Data.Entities
         /// Determines whether the project is over budget based on planned costs.
         /// </summary>
         /// <returns></returns>
-        private bool IsOverBudget()
+        private bool IsOverBudget(double thresholdPercentage = 0)
         {
-            // Has to be more than £1 difference
-            return Math.Floor(PlannedCost - Budget) > 0;
+
+            // If no thresholdPercentage is zero then do direct comparison
+            if (thresholdPercentage == 0)
+            {
+                // Round to the nearest whole £1
+                return Math.Floor(PlannedCost - Budget) > 0;
+            }
+            else
+            {
+                // Avoid division by zero
+                if (Budget == 0) return false;
+
+                // Otherwise check the percentage overspend against the threshold
+                return Math.Floor((PlannedCost - Budget) * 100d / Budget) > thresholdPercentage;
+            }
         }
 
         /// <summary>
