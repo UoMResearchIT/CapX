@@ -145,52 +145,10 @@ namespace PPMTool.Data.Entities
         public double FundsReceived { get; set; }
 
         /// <summary>
-        /// Constructor also adds default status messages
-        /// </summary>
-        public Project()
-        {
-            // Generate status messages to be maintained against a project
-            statusMessages = new List<StatusMessage>
-            {
-                // Info
-                new StatusMessage("A task in this project will start soon.", StatusMessage.MessageType.Info, () => SubTasks?.Any(x => x.WillStartWithinAMonth()) ?? false),
-                new StatusMessage("A task in this project has recently started.", StatusMessage.MessageType.Info, () => SubTasks?.Any(x => x.HasStartedInTheLastWeek()) ?? false),
-                new StatusMessage("A task in this project has absent resources and has started or will start soon!", StatusMessage.MessageType.Info, () => SubTasks?.Any(x => x.HasAbsentResourcesAndStartsWithinAWeek()) ?? false, FeatureType.Absences),
-
-                // Warning
-                new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => SubTasks?.Any(x => x.HasProvisionalResources()) ?? false),
-                new StatusMessage("A current or future task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemandInWindow()),
-                new StatusMessage("This project has started but has no link to a project board!", StatusMessage.MessageType.Warning, () => HasStartedButHasNoScrumProjectLink()),
-                new StatusMessage("Task has resource(s) with zero FTE assignment!", StatusMessage.MessageType.Warning, () => HasResourceWithZeroFTE()),
-                new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Warning, () => ProjectStatus.IsActive() && IsOverBudget(), FeatureType.ProjectFinance), // Finance
-
-                // Error
-                new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Error, () => ProjectStatus.IsActive() && IsOverBudget(GetSetting(SettingType.OverbudgetThreshold)), FeatureType.ProjectFinance), // Finance
-                new StatusMessage("This project has no agreed budget!", StatusMessage.MessageType.Error, () => HasNoBudget(), FeatureType.ProjectFinance), // Finance
-                new StatusMessage("A task in this project is running but the project is not active!", StatusMessage.MessageType.Error, () => RunningTaskButInactive()),
-                new StatusMessage("This project is active but has no currently running tasks!", StatusMessage.MessageType.Error, () => ActiveButNoRunningTask()),
-                new StatusMessage("This project has no project manager set!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoPM()),
-                new StatusMessage("This project has no timesheet activity set and project has started or will start soon!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoInnateCodeAndUpcoming(), FeatureType.Timesheets), // Timesheets
-                new StatusMessage("This project has no project ID specified!", StatusMessage.MessageType.Error, () => RTP == 0),
-                new StatusMessage("This project has no link to a request document!", StatusMessage.MessageType.Error, () => HasNoRequestDocLink()),
-                new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, () => HasNoDescription()),
-                new StatusMessage("This project has no tasks!", StatusMessage.MessageType.Error, () => SubTasks == null || SubTasks.Count == 0),
-                new StatusMessage("This project is active but hasn't had its actuals updated for more than a month!", StatusMessage.MessageType.Error, () => ActiveButNotHadActualsUpdatedForAMonth(), FeatureType.Timesheets), // Timesheets
-                new StatusMessage("This project has no funding sources but is either finished or is active!", StatusMessage.MessageType.Error, () => HasNoFundingSourcesButRan(), FeatureType.ProjectFinance), // Finance
-                new StatusMessage("This project has a task with a resource without a funding source and is currently running or has run in the past!", StatusMessage.MessageType.Error, () => HasResourcesWithNoFundingSourceOnRunningTask(), FeatureType.ProjectFinance), // Finance
-                new StatusMessage("This project uses the Day Rate model but has a DI funding source which is not allowed! DI funding sources must use salary costs for recharge.", StatusMessage.MessageType.Error, () => DayRateWithDIFunding(), FeatureType.ProjectFinance), // Finance
-                new StatusMessage("This project does not have a project management task!", StatusMessage.MessageType.Error, () => !SubTasks?.Any(x => x.TaskDuty == Duty.ProjectAndServiceMgmt) ?? true),
-                
-                // Success
-                new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
-            };
-        }
-
-        /// <summary>
         /// Whether the project uses the day rate model and has a DI funding source
         /// </summary>
         /// <returns></returns>
-        private bool DayRateWithDIFunding()
+        public bool DayRateWithDIFunding()
         {
             return CostModel == CostModel.DayRate && (FundingSources?.Any(x => x.FundingSourceType == FundingSourceType.DI) ?? false);
         }
@@ -199,7 +157,7 @@ namespace PPMTool.Data.Entities
         /// Determines whether any resource in any subtask has an assignment FTE of zero
         /// </summary>
         /// <returns></returns>
-        private bool HasResourceWithZeroFTE()
+        public bool HasResourceWithZeroFTE()
         {
             return SubTasks?.Any(t => t.AssignedResources?.Any(r => r.AssignmentFTE == 0) ?? false) ?? false;
         }
@@ -208,7 +166,7 @@ namespace PPMTool.Data.Entities
         /// Determines whether the project is over budget based on planned costs.
         /// </summary>
         /// <returns></returns>
-        private bool IsOverBudget(double thresholdPercentage = 0)
+        public bool IsOverBudget(double thresholdPercentage = 0)
         {
 
             // If no thresholdPercentage is zero then do direct comparison
@@ -231,7 +189,7 @@ namespace PPMTool.Data.Entities
         /// Determines whether the project has no budget but is not a new request when it legitimately might not have budget
         /// </summary>
         /// <returns></returns>
-        private bool HasNoBudget()
+        public bool HasNoBudget()
         {
             return Budget == 0 && ProjectStatus != ProjectStatus.NewRequest && !ProjectStatus.IsCancelled();
         }
@@ -240,7 +198,7 @@ namespace PPMTool.Data.Entities
         /// Determine whether the project has any funding sources and is in an active, paused, maintenance or finished state
         /// </summary>
         /// <returns></returns>
-        private bool HasNoFundingSourcesButRan()
+        public bool HasNoFundingSourcesButRan()
         {
             return ProjectStatus.DidRun() && !(FundingSources?.Any() ?? false);
         }
@@ -249,7 +207,7 @@ namespace PPMTool.Data.Entities
         /// Whether this project is active and the actuals updated timestamp shows it hasn't been updated for a month or more
         /// </summary>
         /// <returns></returns>
-        private bool ActiveButNotHadActualsUpdatedForAMonth()
+        public bool ActiveButNotHadActualsUpdatedForAMonth()
         {
             if (ProjectStatus != ProjectStatus.Active) return false;
             DateTime lastUpdated = string.IsNullOrEmpty(ActualsLastUpdated) ? default : DateTime.ParseExact(ActualsLastUpdated, "R", CultureInfo.InvariantCulture);

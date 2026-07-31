@@ -4,8 +4,6 @@ SPDX-FileCopyrightText: 2026 University of Manchester
 SPDX-License-Identifier: apache-2.0
 *@
 
-@using PPMTool.Data.Entities
-@using PPMTool.Enums
 @using PPMTool.Data
 @using static PPMTool.Data.StatusMessage
 
@@ -33,7 +31,7 @@ else
 
 @code {
     [Parameter]
-    public IList<StatusMessage> Messages { get; set; }
+    public IReadOnlyList<StatusMessage> Messages { get; set; }
 
     [Parameter]
     public bool ShowMessages { get; set; } = true;

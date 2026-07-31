@@ -56,7 +56,7 @@ SPDX-License-Identifier: apache-2.0
                 </div>
             }
             <hr />
-            <StatusMessageSummaryComponent Messages="TaskModel.GetLatestStatusMessages()" />
+            <StatusMessageSummaryComponent Messages="@SubTaskStatusEvaluator.GetLatestStatusMessages(TaskModel)" />
             @if (!EditAuthorised)
             {
                 <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.1rem">
