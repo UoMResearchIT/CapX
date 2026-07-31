@@ -2,7 +2,9 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
 
@@ -11,14 +13,37 @@ namespace PPMTool.Services.StatusEvaluators
     public sealed class ProjectStatusEvaluator : BaseStatusEvaluatorService<Project>
     {
         private readonly SettingsService settingsService;
+        private readonly IDbContextFactory<PPMToolContext> contextFactory;
+        private readonly InvoiceService invoiceService;
 
-        public ProjectStatusEvaluator(SettingsService settingsService)
+        public ProjectStatusEvaluator(
+            SettingsService settingsService,
+            IDbContextFactory<PPMToolContext> contextFactory,
+            InvoiceService invoiceService)
         {
             this.settingsService = settingsService;
+            this.contextFactory = contextFactory;
+            this.invoiceService = invoiceService;
         }
 
         protected override IReadOnlyList<StatusMessage> BuildCoreStatusMessages(Project project)
         {
+            var today = DateTime.Today;
+            var currentFY = FinancialReference.GetFinancialYear(today);
+            var shouldRunOtherFundingInvoiceChecks =
+                !project.ProjectStatus.IsCancelled()
+                && (project.FundingSources?.Any(x => x.FundingSourceType == FundingSourceType.Other) ?? false)
+                && today.Month is >= 5 and <= 7;
+
+            var hasCurrentFYInvoice = true;
+            var requestedThisFY = 0d;
+            if (shouldRunOtherFundingInvoiceChecks)
+            {
+                using var context = contextFactory.CreateDbContext();
+                hasCurrentFYInvoice = invoiceService.HasInvoiceInFinancialYear(context, project.ProjectId, currentFY);
+                requestedThisFY = invoiceService.GetFundsRequestedForFinancialYear(context, project.ProjectId, currentFY);
+            }
+
             return new List<StatusMessage>
             {
                 // Info
@@ -32,8 +57,8 @@ namespace PPMTool.Services.StatusEvaluators
                 new StatusMessage("This project has started but has no link to a project board!", StatusMessage.MessageType.Warning, project.HasStartedButHasNoScrumProjectLink),
                 new StatusMessage("Task has resource(s) with zero FTE assignment!", StatusMessage.MessageType.Warning, project.HasResourceWithZeroFTE),
                 new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Warning, () => project.ProjectStatus.IsActive() && project.IsOverBudget(), FeatureType.ProjectFinance),
-                new StatusMessage("This project has Other funding sources but no invoice has been raised in the current financial year. Raise one by June to register funds requested.", StatusMessage.MessageType.Warning, () => project.InvoiceMissingForCurrentFY(), FeatureType.ProjectFinance),
-                new StatusMessage("Funds requested this financial year are significantly below planned costs to the end of this financial year for this project.", StatusMessage.MessageType.Warning, () => project.FundsRequestedBelowPlannedCostForFY(settingsService.GetSetting(SettingType.OverbudgetThreshold, 10d)), FeatureType.ProjectFinance),
+                new StatusMessage("This project has Other funding sources but no invoice has been raised in the current financial year. Raise one by June to register funds requested.", StatusMessage.MessageType.Warning, () => project.InvoiceMissingForCurrentFY(hasCurrentFYInvoice, today), FeatureType.ProjectFinance),
+                new StatusMessage("Funds requested this financial year are significantly below planned costs to the end of this financial year for this project.", StatusMessage.MessageType.Warning, () => project.FundsRequestedBelowPlannedCostForFY(requestedThisFY, settingsService.GetSetting(SettingType.OverbudgetThreshold, 10d), today), FeatureType.ProjectFinance),
 
                 // Errors
                 new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Error, () => project.ProjectStatus.IsActive() && project.IsOverBudget(settingsService.GetSetting(SettingType.OverbudgetThreshold, 0d)), FeatureType.ProjectFinance),

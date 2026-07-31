@@ -205,10 +205,12 @@ namespace PPMTool.Data.Entities
 
         /// <summary>
         /// When there are Other funding sources but no current FY invoice has been raised in time.
+        /// Invoice presence is provided by caller so this entity does not depend on invoice loading strategy.
         /// </summary>
+        /// <param name="hasCurrentFYInvoice"></param>
         /// <param name="today"></param>
         /// <returns></returns>
-        public bool InvoiceMissingForCurrentFY(DateTime? today = null)
+        public bool InvoiceMissingForCurrentFY(bool hasCurrentFYInvoice, DateTime? today = null)
         {
             var currentDate = (today ?? DateTime.Today).Date;
             if (!IsInInvoiceWarningWindow(currentDate) || ProjectStatus.IsCancelled())
@@ -221,17 +223,18 @@ namespace PPMTool.Data.Entities
                 return false;
             }
 
-            var currentFY = FinancialReference.GetFinancialYear(currentDate);
-            return !(Invoices?.Any(x => x.Status != InvoiceStatus.Cancelled && FinancialReference.GetFinancialYear(x.KeyDate) == currentFY) ?? false);
+            return !hasCurrentFYInvoice;
         }
 
         /// <summary>
         /// When there are Other funding sources but the total funds requested for the current FY is below the planned cost for the FY by a given threshold percentage.
+        /// Requested funds value is provided by caller so this entity does not depend on invoice loading strategy.
         /// </summary>
+        /// <param name="requestedThisFY"></param>
         /// <param name="thresholdPercentage"></param>
         /// <param name="today"></param>
         /// <returns></returns>
-        public bool FundsRequestedBelowPlannedCostForFY(double thresholdPercentage, DateTime? today = null)
+        public bool FundsRequestedBelowPlannedCostForFY(double requestedThisFY, double thresholdPercentage, DateTime? today = null)
         {
             var currentDate = (today ?? DateTime.Today).Date;
 
@@ -247,12 +250,8 @@ namespace PPMTool.Data.Entities
                 return false;
             }
 
-            // Get the total requested funds for the current financial year
+            // Get planned costs in current financial year
             var currentFY = FinancialReference.GetFinancialYear(currentDate);
-            var requestedThisFY = Invoices?
-                .Where(x => x.Status != InvoiceStatus.Cancelled && FinancialReference.GetFinancialYear(x.KeyDate) == currentFY)
-                .Sum(x => x.Value) ?? 0d;
-
             var financialYearStart = new DateTime(currentFY, 8, 1);
             var financialYearEnd = new DateTime(currentFY + 1, 7, 31);
             var plannedThisFY = GetPlannedCostInDateRange(financialYearStart, financialYearEnd);
