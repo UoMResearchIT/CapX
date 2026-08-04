@@ -52,6 +52,12 @@ namespace PPMTool.Pages
             LogInformation($"Viewing people grid");
         }
 
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            // Ensure base class OnAfterRenderAsync runs so BasePage can perform its first-render work
+            await base.OnAfterRenderAsync(firstRender);
+        }
+
         /// <summary>
         /// Generates a task to call the load data method
         /// </summary>

@@ -49,6 +49,8 @@ namespace PPMTool.Pages
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
+            await base.OnAfterRenderAsync(firstRender);
+
             // Load settings the first time
             if (firstRender)
             {

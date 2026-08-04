@@ -112,6 +112,8 @@ namespace PPMTool.Pages
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
+            await base.OnAfterRenderAsync(firstRender);
+
             if (!firstRender) return;
 
             // Load state from session storage and once finished, load the data
