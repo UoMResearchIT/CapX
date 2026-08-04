@@ -437,10 +437,10 @@ span.mention {
 
 /* Hide paging details & summary in datagrid header 
    and the paging count dropdown and label in the footer */
-.rz-has-pager .rz-pager:first-of-type .rz-pager-pages,
-.rz-has-pager .rz-pager:first-of-type .rz-pager-summary,
-.rz-has-pager .rz-pager:last-of-type .rz-dropdown,
-.rz-has-pager .rz-pager:last-of-type .rz-pagesize-text {
+.rz-has-pager .rz-pager:first-of-type:not(:only-of-type) .rz-pager-pages,
+.rz-has-pager .rz-pager:first-of-type:not(:only-of-type) .rz-pager-summary,
+.rz-has-pager .rz-pager:last-of-type:not(:only-of-type) .rz-dropdown,
+.rz-has-pager .rz-pager:last-of-type:not(:only-of-type) .rz-pagesize-text {
     display: none;
 }
 
