@@ -91,7 +91,10 @@ SPDX-License-Identifier: apache-2.0
                                             AllowSorting="true"
                                             AllowFiltering="true"
                                             AllowPaging="true"
+                                            PageSize="@PageCount"
                                             ShowPagingSummary="true"
+                                            PageSizeOptions="@PageSizeOptions"
+                                            PageSizeChanged="@OnPageSizeChanged"
                                             PagerHorizontalAlign="HorizontalAlign.Left"
                                             PagerPosition="PagerPosition.TopAndBottom"
                                             @ref="@dataGridInvoices">
@@ -134,7 +137,10 @@ SPDX-License-Identifier: apache-2.0
                                             AllowFiltering="true"
                                             class="white-space:pre-wrap"
                                             AllowPaging="true"
+                                            PageSize="@PageCount"
                                             ShowPagingSummary="true"
+                                            PageSizeOptions="@PageSizeOptions"
+                                            PageSizeChanged="@OnPageSizeChanged"
                                             PagerHorizontalAlign="HorizontalAlign.Left"
                                             PagerPosition="PagerPosition.TopAndBottom"
                                             @ref="@dataGridPayments">
@@ -171,9 +177,12 @@ SPDX-License-Identifier: apache-2.0
                                             AllowFiltering="true"
                                             class="white-space:pre-wrap"
                                             AllowPaging="true"
+                                            PageSize="@PageCount"
                                             ShowPagingSummary="true"
+                                            PageSizeOptions="@PageSizeOptions"
                                             PagerHorizontalAlign="HorizontalAlign.Left"
                                             PagerPosition="PagerPosition.TopAndBottom"
+                                            PageSizeChanged="@OnPageSizeChanged"
                                             @ref="@dataGridSources">
                                 <Columns>
                                     <RadzenDataGridColumn TItem="FundingSource" Property="FundingSourceId" Title="Source ID" MinWidth="10px" Width="3rem" />
