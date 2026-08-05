@@ -55,6 +55,7 @@ namespace PPMTool.Pages
             { "sat", "var(--rz-warning-lighter)" },
             { "sun", "var(--rz-warning-lighter)" }
         };
+        private TimesheetStatus oldStatus;
         private TimesheetStatus newStatus;
         private Timesheet previousTimesheet;
         private Timesheet nextTimesheet;
@@ -433,6 +434,8 @@ namespace PPMTool.Pages
             confirmed = await DialogService.Confirm($"By continuing you will change the status of this timesheet to \"{newStatus}\".", "Change Timesheet Status") ?? false;
 
             if (!confirmed) return;
+
+            oldStatus = timesheet.Status;
             timesheet.Status = newStatus;
 
             // Reset error message
@@ -475,7 +478,7 @@ namespace PPMTool.Pages
             }
 
             // Set status changed information
-            if (timesheet.Status != TimesheetStatus.New)
+            if (timesheet.Status != TimesheetStatus.New || oldStatus == TimesheetStatus.Submitted)
             {
                 timesheet.DateStatusChanged = DateTime.Now;
                 timesheet.StatusChangedBy = ActiveUser?.Person;
@@ -486,8 +489,9 @@ namespace PPMTool.Pages
             TimesheetService.Update(Context, timesheet);
             await TimesheetService.GetIssueCountAsync(Context, ActiveUser?.Person?.PersonId ?? 0);
 
-            // Send an email to the Line manager if it's the user submitting their timesheet (and not self approving)
-            if (timesheet.Owner == ActiveUser?.Person)
+            // Send an email to the Line manager if it's the user submitting their timesheet
+            // (and not self approving or retracting it)
+            if (timesheet.Owner == ActiveUser?.Person && oldStatus != TimesheetStatus.Submitted)
             {
                 Debug.Write("** Sending an email to the Line Manager...");
 
