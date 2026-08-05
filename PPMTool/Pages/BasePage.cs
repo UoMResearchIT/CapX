@@ -142,7 +142,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private async Task GetPageCountSettingAsync()
         {
-            if(CallingPage != null)
+            if (CallingPage != null)
             {
                 var pageCount = await SessionStorage.GetItemAsync<int?>($"PageCount-{CallingPage}");
                 if (pageCount.HasValue)
