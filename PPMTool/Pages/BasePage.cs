@@ -50,8 +50,10 @@ namespace PPMTool.Pages
         protected FeatureService FeatureService { get; set; }
 
         // Datagrid variables for results paging
-        public int PageCount;
+        public int PageCount = 15;
         public readonly int[] PageSizeOptions = new[] { 5, 10, 25, 50, 100 };
+
+        public string CallingPage { get; set; } = null;
 
         private bool loading = true;
         [CascadingParameter]
@@ -74,7 +76,11 @@ namespace PPMTool.Pages
         /// <returns></returns>
         public async Task OnPageSizeChanged(int value)
         {
-            await SessionStorage.SetItemAsync("PageCount", value);
+            if (CallingPage != null)
+            {
+                await SessionStorage.SetItemAsync($"PageCount-{CallingPage}", value);
+            }
+
             PageCount = value;
             StateHasChanged();
         }
@@ -123,18 +129,32 @@ namespace PPMTool.Pages
             {
                 // Now it's safe to call JS-interop backed services like SessionStorage.
                 await GetPageCountSettingAsync();
+                await Task.Delay(500); // Fixes the race condition when getting the paging size. Ugh!
                 StateHasChanged();
             }
         }
 
         /// <summary>
-        /// Retrieves the currently set PageCount int from the session variable
+        /// Retrieves the currently set PageCount int from the session variable.
+        /// If a page specific one has been set then that is returned.
+        /// The calling page needs to set the CallingPage property for this to work.
         /// </summary>
         /// <returns></returns>
         private async Task GetPageCountSettingAsync()
         {
-            PageCount = await SessionStorage.GetItemAsync<int?>("PageCount") ?? 15;
-            StateHasChanged();
+            if(CallingPage != null)
+            {
+                var pageCount = await SessionStorage.GetItemAsync<int?>($"PageCount-{CallingPage}");
+                if (pageCount.HasValue)
+                {
+                    PageCount = pageCount.Value;
+                }
+                else
+                {
+                    await SessionStorage.SetItemAsync($"PageCount-{CallingPage}", PageCount);
+                }
+                return;
+            }
         }
 
         /// <summary>
