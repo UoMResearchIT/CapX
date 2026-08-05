@@ -2,16 +2,27 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+using Microsoft.Extensions.Configuration;
+
 namespace PPMTool.Tests
 {
     [SetUpFixture]
     public class Setup
     {
-        public static string BaseUrl { get; } = "https://localhost:5001";
+        public static string BaseUrl { get; private set; } = null!;
 
         [OneTimeSetUp]
         public async Task SetupForAll()
         {
+            // Build a config from the user secrets and environment variables
+            var config = new ConfigurationBuilder()
+                        .AddUserSecrets<Setup>(optional: true)
+                        .AddEnvironmentVariables()
+                        .Build();
+
+            // Set the local values from the config, or use defaults if not set
+            BaseUrl = config["BaseUrl"] ?? "https://localhost:5001";
+
             // Wait for the server to be ready before running tests
             await WaitForServerAsync();
         }

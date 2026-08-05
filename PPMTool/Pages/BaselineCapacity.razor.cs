@@ -17,6 +17,8 @@ namespace PPMTool.Pages
     [Authorize(Roles = "Manager,Superuser,Developer,Reader")]
     public partial class BaselineCapacity : BaseCapacityPage
     {
+        private bool pageUnavailable = false;
+
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
@@ -30,14 +32,22 @@ namespace PPMTool.Pages
             // Certain roles can use the dropdowns and save manager settings so need to reload
             if (!CanCustomise())
             {
-                // Choose the person automatically if not a manager
-                chosenPeople = new List<string>
+                // If the person is not the list then mark as unavailable
+                if (!cachedPeople.Select(x => x.Name).Contains(ActiveUser.GetName()))
                 {
-                    ActiveUser.GetName()
-                };
+                    pageUnavailable = true;
+                }
+                else
+                {
+                    // Choose the person automatically if not a manager
+                    chosenPeople = new List<string>
+                    {
+                        ActiveUser.GetName()
+                    };
 
-                // Will automatically load the chart source
-                await PeopleSelectionChangedAsync(chosenPeople);
+                    // Will automatically load the chart source
+                    await PeopleSelectionChangedAsync(chosenPeople);
+                }
             }
 
             // Load the chart source based on the current configuration

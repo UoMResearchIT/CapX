@@ -30,9 +30,9 @@ namespace PPMTool.Data.Entities
                 // Warning
                 new StatusMessage("Task has provisional resources!", StatusMessage.MessageType.Warning, () => HasProvisionalResources()),
                 new StatusMessage("Task is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemand()),
-                new StatusMessage("Task has zero demand but assigned resources!", StatusMessage.MessageType.Warning, () => HasZeroDemandButResourced()),
 
                 // Error
+                new StatusMessage("Task has zero demand but assigned resources!", StatusMessage.MessageType.Error, () => HasZeroDemandButResourced()),
                 new StatusMessage("Resource on this task has no associated funding source and task is in progress or ran in the past!", StatusMessage.MessageType.Error, () => HasResourceWithNoFundingSourceAndRunning(), FeatureType.ProjectFinance), // Finance
                 new StatusMessage("Task has resource(s) with zero FTE assignment!", StatusMessage.MessageType.Warning, () => HasResourceWithZeroFTE()),
                 

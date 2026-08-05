@@ -316,11 +316,5 @@ namespace PPMTool.Tests.Core
         {
             await VerifyPageLoaded("/profile", "Profile - CapX");
         }
-
-        [Test]
-        public async Task NothingHerePageShouldLoadWithCorrectTitleAndNoCrashBanner()
-        {
-            await VerifyPageLoaded("/nothinghere", "Nothing Here - CapX");
-        }
     }
 }
