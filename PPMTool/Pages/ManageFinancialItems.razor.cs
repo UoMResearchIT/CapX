@@ -71,6 +71,8 @@ namespace PPMTool.Pages
                 ActiveUserRoleType == RoleType.Superuser ||
                 ActiveUserRoleType == RoleType.Manager ||
                 ActiveUserRoleType == RoleType.Finance;
+
+            CallingPage = "Finance";
         }
 
         protected override void OnAfterRender(bool firstRender)

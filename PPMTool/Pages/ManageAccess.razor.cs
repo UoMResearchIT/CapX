@@ -25,6 +25,7 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+            CallingPage = "AccessControl";
             dataGridEntityService = UserService;
             dataGridEntities = UserService.GetAll(Context).OrderBy(x => x.GetName()).ToList();
 

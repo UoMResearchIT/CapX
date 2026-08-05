@@ -45,6 +45,7 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             skillsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Skills);
+            CallingPage = "People";
 
             Loading = true;
             EnqueueLoadData(GetLoadTask);

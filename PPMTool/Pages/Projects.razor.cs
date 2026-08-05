@@ -74,6 +74,7 @@ namespace PPMTool.Pages
             costModelSortKey = DisplayOrderHelper.CreateOrderAttributeSortingExpression<Project, CostModel>(p => p.CostModel);
 
             Loading = true;
+            CallingPage = "Projects";
             EnqueueLoadData(() => GetLoadTask());
             LogInformation("Viewing project grid");
         }
