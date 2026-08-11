@@ -90,6 +90,7 @@ builder.Services.AddScoped<FundingSourceService>();
 builder.Services.AddScoped<FacultyService>();
 builder.Services.AddScoped<SchoolService>();
 builder.Services.AddScoped<HtmlContentSanitizerService>();
+builder.Services.AddScoped<ImportService>();
 builder.Services.AddScoped<CssVariableService>();
 builder.Services.AddSingleton<APIAuthService>();
 builder.Services.AddSingleton<FeatureService>();
@@ -346,6 +347,7 @@ api.MapGet("/faculties/getAll", Faculties.GetAllFacultiesAsync);
 api.MapGet("/faculties/getById", Faculties.GetFacultyByIdAsync);
 api.MapGet("/financialreferences/getAll", FinancialReferences.GetAllFinancialReferencesAsync);
 api.MapGet("/financialreferences/getByFinancialYear", FinancialReferences.GetFinancialReferenceByFinancialYearAsync);
+api.MapPost("/import/faculty", Import.CreateFaculty);
 
 // API middleware -- conditional on /api routes only
 app.UseWhen(
