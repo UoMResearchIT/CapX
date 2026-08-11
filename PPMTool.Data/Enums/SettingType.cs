@@ -110,6 +110,10 @@ namespace PPMTool.Data.Enums
 
         [Description("The model for the LLM API driving the AI chat functionality.")]
         [DefaultSettingValue("")]
-        LLMModel = 24
+        LLMModel = 24,
+
+        [Description("Whether the Superuser-only bulk-import API (/api/import/*) is enabled. Defaults to disabled -- these are write endpoints for programmatic data creation, meant to be turned on only while an active data migration is underway.")]
+        [DefaultSettingValue("false")]
+        ImportApiEnabled = 25
     }
 }
