@@ -54,7 +54,7 @@ else
                         <img class="header-logo" src="@logo" alt="Organisation Logo" />
                     }
                 }
-                <RadzenText TextStyle="TextStyle.DisplayH5" TagName="TagName.H1" class="@($"header-footer-text {(Environment.IsDevelopment() ? "header-footer-text-dev" : "")}")">CapX - RSE Operational Management Tool</RadzenText>
+                <RadzenText TextStyle="TextStyle.DisplayH5" TagName="TagName.H1" class="@($"header-footer-text {(Environment.IsDevelopment() ? "header-footer-text-dev" : "")}")">@SettingsService.GetSetting(SettingType.ApplicationName)</RadzenText>
             </RadzenStack>
             @if (Environment.IsDevelopment())
             {
