@@ -82,6 +82,10 @@ namespace PPMTool.Data.Enums
 
         [Description("The percentage overspend planned vs budget on a project permitted before overbudget warning becomes an error.")]
         [DefaultSettingValue("10")]
-        OverbudgetThreshold = 17
+        OverbudgetThreshold = 17,
+
+        [Description("The name of the application as it appears in the application header.")]
+        [DefaultSettingValue("CapX - RSE Operational Management Tool")]
+        ApplicationName = 18
     }
 }
