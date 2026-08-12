@@ -84,6 +84,10 @@ namespace PPMTool.Data.Enums
         [DefaultSettingValue("10")]
         OverbudgetThreshold = 17,
 
+        [Description("The name of the application as it appears in the application header.")]
+        [DefaultSettingValue("CapX - RSE Operational Management Tool")]
+        ApplicationName = 18,
+
         [Description("The percentage of the planned cost that can be underclaimed (requested) for a given financial year.")]
         [DefaultSettingValue("10")]
         UnderclaimedFundsThreshold = 19

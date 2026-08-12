@@ -62,7 +62,7 @@ namespace PPMTool.Services.StatusEvaluators
                 new StatusMessage("A current or future task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => project.HasUnmetDemandInWindow()),
                 new StatusMessage("This project has started but has no link to a project board!", StatusMessage.MessageType.Warning, project.HasStartedButHasNoScrumProjectLink),
                 new StatusMessage("Task has resource(s) with zero FTE assignment!", StatusMessage.MessageType.Warning, project.HasResourceWithZeroFTE),
-                new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Warning, () => project.ProjectStatus.IsActive() && project.IsOverBudget(), FeatureType.ProjectFinance),
+                new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Warning, () => project.ProjectStatus.IsActive() && project.IsOverBudget() && !project.IsOverBudget(settingsService.GetSetting(SettingType.OverbudgetThreshold, 0d)), FeatureType.ProjectFinance),
                 new StatusMessage("Funds requested this financial year are significantly below planned costs, has Other funding sources but no invoice in the current financial year. Raise one by June to request funds.", StatusMessage.MessageType.Warning, () => shouldRunInvoiceChecks ? !hasCurrentFYInvoice && project.FundsRequestedBelowPlannedCostForFY(requestedThisFY, settingsService.GetSetting(SettingType.UnderclaimedFundsThreshold, 10d), today) : false, FeatureType.ProjectFinance),
 
                 // Errors
