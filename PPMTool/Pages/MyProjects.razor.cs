@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
 using PPMTool.Services;
+using PPMTool.Services.StatusEvaluators;
 using Radzen.Blazor;
 
 namespace PPMTool.Pages
@@ -15,6 +16,9 @@ namespace PPMTool.Pages
     {
         [Inject]
         private NoteService NoteService { get; set; }
+
+        [Inject]
+        private ProjectStatusEvaluator ProjectStatusEvaluator { get; set; }
 
         private bool includeFinished;
         public bool IncludeFinished
@@ -109,8 +113,7 @@ namespace PPMTool.Pages
                     // Show just the list of alerts for all
                     proj = proj.Where(x =>
                     {
-                        x.GetLatestStatusMessages();
-                        return x.HasActiveStatusMessages();
+                        return ProjectStatusEvaluator.HasActiveStatusMessages(x);
                     }).ToList();
                 }
                 else if (ProjectManagerShortName.ToLower() == "errors")
@@ -118,8 +121,7 @@ namespace PPMTool.Pages
                     // Show just the list of errors for all
                     proj = proj.Where(x =>
                     {
-                        x.GetLatestStatusMessages();
-                        return x.HasActiveErrorMessages();
+                        return ProjectStatusEvaluator.HasActiveErrorMessages(x);
                     }).ToList();
                 }
                 else

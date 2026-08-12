@@ -18,6 +18,7 @@ using PPMTool.Helpers;
 using PPMTool.Models;
 using PPMTool.Pages.Components;
 using PPMTool.Services;
+using PPMTool.Services.StatusEvaluators;
 using Radzen;
 using Radzen.Blazor;
 
@@ -58,6 +59,12 @@ namespace PPMTool.Pages
 
         [Inject]
         private PersonService PersonService { get; set; }
+
+        [Inject]
+        private ProjectStatusEvaluator ProjectStatusEvaluator { get; set; }
+
+        [Inject]
+        private SubTaskStatusEvaluator SubTaskStatusEvaluator { get; set; }
 
         [Parameter]
         public int? ProjectId { get; set; }

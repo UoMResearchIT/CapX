@@ -25,6 +25,7 @@ using PPMTool.Data.Context;
 using PPMTool.Data.Enums;
 using PPMTool.Helpers;
 using PPMTool.Services;
+using PPMTool.Services.StatusEvaluators;
 using Radzen;
 using EnvironmentHelper = PPMTool.Helpers.EnvironmentHelper;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -87,6 +88,9 @@ builder.Services.AddScoped<CssVariableService>();
 builder.Services.AddSingleton<APIAuthService>();
 builder.Services.AddSingleton<FeatureService>();
 builder.Services.AddSingleton<SettingsService>();
+builder.Services.AddScoped<PersonStatusEvaluator>();
+builder.Services.AddScoped<SubTaskStatusEvaluator>();
+builder.Services.AddScoped<ProjectStatusEvaluator>();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {

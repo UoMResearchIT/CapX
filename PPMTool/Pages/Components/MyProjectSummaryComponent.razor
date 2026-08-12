@@ -4,12 +4,10 @@ SPDX-FileCopyrightText: 2026 University of Manchester
 SPDX-License-Identifier: apache-2.0
 *@
 
-@using Microsoft.EntityFrameworkCore
-@using PPMTool.Data.Context
-@using PPMTool.Data.Enums
 @using PPMTool.Data.Entities
+@using PPMTool.Data.Enums
 @using PPMTool.Services
-@using System.Diagnostics
+@using PPMTool.Services.StatusEvaluators
 
 <RadzenCard>
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween" Gap="0rem" Wrap="FlexWrap.Wrap">
@@ -18,7 +16,7 @@ SPDX-License-Identifier: apache-2.0
                 <RadzenText TextStyle="TextStyle.H5" Text="@ProjectService.GetFullName(Project)" />
                 <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
             </RadzenStack>
-            <StatusMessageSummaryComponent Messages="Project.GetLatestStatusMessages()" />
+            <StatusMessageSummaryComponent Messages="@ProjectStatusEvaluator.GetLatestStatusMessages(Project)" />
         </RadzenStack>
         @if (NextDueDate != null)
         {
@@ -92,6 +90,9 @@ SPDX-License-Identifier: apache-2.0
 
     [Inject]
     private ProjectService ProjectService { get; set; }
+
+    [Inject]
+    private ProjectStatusEvaluator ProjectStatusEvaluator { get; set; }
 
     private bool financeEnabled;
     private string borderClass;
