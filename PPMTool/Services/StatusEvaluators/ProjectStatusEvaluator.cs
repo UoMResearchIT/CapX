@@ -31,7 +31,7 @@ namespace PPMTool.Services.StatusEvaluators
                 new StatusMessage("A current or future task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => project.HasUnmetDemandInWindow()),
                 new StatusMessage("This project has started but has no link to a project board!", StatusMessage.MessageType.Warning, project.HasStartedButHasNoScrumProjectLink),
                 new StatusMessage("Task has resource(s) with zero FTE assignment!", StatusMessage.MessageType.Warning, project.HasResourceWithZeroFTE),
-                new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Warning, () => project.ProjectStatus.IsActive() && project.IsOverBudget(), FeatureType.ProjectFinance),
+                new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Warning, () => project.ProjectStatus.IsActive() && project.IsOverBudget() && !project.IsOverBudget(settingsService.GetSetting(SettingType.OverbudgetThreshold, 0d)), FeatureType.ProjectFinance),
                 
                 // Errors
                 new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Error, () => project.ProjectStatus.IsActive() && project.IsOverBudget(settingsService.GetSetting(SettingType.OverbudgetThreshold, 0d)), FeatureType.ProjectFinance),
