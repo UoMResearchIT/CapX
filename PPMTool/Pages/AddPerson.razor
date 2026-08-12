@@ -34,7 +34,7 @@ SPDX-License-Identifier: apache-2.0
                     <div class="row align-items-center">
                         <div class="col">
                             <h1>Edit <i>@personModel.Name</i></h1>
-                            <StatusMessageSummaryComponent Messages="personModel.GetLatestStatusMessages()" />
+                            <StatusMessageSummaryComponent Messages="@PersonStatusEvaluator.GetLatestStatusMessages(personModel)" />
                         </div>
                         @if (PersonId > 0)
                         {

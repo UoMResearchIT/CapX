@@ -12,6 +12,7 @@ using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
 using PPMTool.Services;
+using PPMTool.Services.StatusEvaluators;
 using Radzen;
 using Radzen.Blazor;
 using static PPMTool.Shared.MainLayout;
@@ -67,6 +68,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private FundingSourceService FundingSourceService { get; set; }
+
+        [Inject]
+        private SubTaskStatusEvaluator SubTaskStatusEvaluator { get; set; }
 
         [Parameter]
         public int? ProjectId { get; set; }
