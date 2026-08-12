@@ -72,6 +72,10 @@ namespace PPMTool.Pages
             LogInformation($"Viewing capacity page");
         }
 
+        /// <summary>
+        /// Override to provide a unique tag for session storage for this page.
+        /// </summary>
+        /// <returns></returns>
         protected override string GetSessionStorageTag() => "capacity";
 
         /// <summary>

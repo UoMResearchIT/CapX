@@ -4,7 +4,6 @@
 
 using System.Diagnostics;
 using ApexCharts;
-using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Data;
@@ -507,12 +506,6 @@ namespace PPMTool.Pages
                 Debug.WriteLine($"** There are {chartModels.Count} chart(s)!");
             });
         }
-
-        /// <summary>
-        /// Method to get a unique session storage tag for the page
-        /// </summary>
-        /// <returns></returns>
-        protected abstract string GetSessionStorageTag();
 
         /// <summary>
         /// Get managers from a list of people

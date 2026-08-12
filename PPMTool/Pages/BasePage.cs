@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+using System.Diagnostics;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -49,11 +50,22 @@ namespace PPMTool.Pages
         [Inject]
         protected FeatureService FeatureService { get; set; }
 
-        // Datagrid variables for results paging
-        public int PageCount = 15;
-        public readonly int[] PageSizeOptions = new[] { 5, 10, 25, 50, 100 };
+        /// <summary>
+        /// The count of pages to display in a datagrid on the page, bound to by datagrids
+        /// </summary>
+        public int PageCount { get; set; } = 15;
 
-        public string CallingPage { get; set; } = null;
+        /// <summary>
+        /// Page sizing options to be bound to for datagrids on the page
+        /// </summary>
+        public int[] PageSizeOptions { get; } = new[] { 5, 10, 25, 50, 100 };
+
+        /// <summary>
+        /// Method to get a unique session storage tag for the page. Returns empty string by default.
+        /// Override in derived pages to provide a unique tag for the page to store settings in session storage.
+        /// </summary>
+        /// <returns></returns>
+        protected virtual string GetSessionStorageTag() => string.Empty;
 
         private bool loading = true;
         [CascadingParameter]
@@ -74,13 +86,14 @@ namespace PPMTool.Pages
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public async Task OnPageSizeChanged(int value)
+        public async Task OnPageSizeChangedAsync(int value)
         {
-            if (CallingPage != null)
+            if (!string.IsNullOrWhiteSpace(GetSessionStorageTag()))
             {
-                await SessionStorage.SetItemAsync($"PageCount-{CallingPage}", value);
+                await SessionStorage.SetItemAsync($"PageCount-{GetSessionStorageTag()}", value);
             }
 
+            Logger.LogInformation($"Page size changed to {value} for page {GetSessionStorageTag()}");
             PageCount = value;
             StateHasChanged();
         }
@@ -135,25 +148,19 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Retrieves the currently set PageCount int from the session variable.
-        /// If a page specific one has been set then that is returned.
-        /// The calling page needs to set the CallingPage property for this to work.
+        /// Retrieves the currently page count from the session variable if it exists and updates the bound property .
         /// </summary>
         /// <returns></returns>
         private async Task GetPageCountSettingAsync()
         {
-            if (CallingPage != null)
+            if (!string.IsNullOrWhiteSpace(GetSessionStorageTag()))
             {
-                var pageCount = await SessionStorage.GetItemAsync<int?>($"PageCount-{CallingPage}");
-                if (pageCount.HasValue)
+                var pageCount = await SessionStorage.GetItemAsync<int?>($"PageCount-{GetSessionStorageTag()}");
+                if (pageCount != null)
                 {
                     PageCount = pageCount.Value;
+                    Debug.WriteLine($"Retrieved page count {PageCount} for page {GetSessionStorageTag()}");
                 }
-                else
-                {
-                    await SessionStorage.SetItemAsync($"PageCount-{CallingPage}", PageCount);
-                }
-                return;
             }
         }
 
