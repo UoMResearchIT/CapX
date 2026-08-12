@@ -94,7 +94,7 @@ SPDX-License-Identifier: apache-2.0
                                             PageSize="@PageCount"
                                             ShowPagingSummary="true"
                                             PageSizeOptions="@PageSizeOptions"
-                                            PageSizeChanged="@OnPageSizeChanged"
+                                            PageSizeChanged="@OnPageSizeChangedAsync"
                                             PagerHorizontalAlign="HorizontalAlign.Left"
                                             PagerPosition="PagerPosition.TopAndBottom"
                                             @ref="@dataGridInvoices">
@@ -140,7 +140,7 @@ SPDX-License-Identifier: apache-2.0
                                             PageSize="@PageCount"
                                             ShowPagingSummary="true"
                                             PageSizeOptions="@PageSizeOptions"
-                                            PageSizeChanged="@OnPageSizeChanged"
+                                            PageSizeChanged="@OnPageSizeChangedAsync"
                                             PagerHorizontalAlign="HorizontalAlign.Left"
                                             PagerPosition="PagerPosition.TopAndBottom"
                                             @ref="@dataGridPayments">
@@ -182,7 +182,7 @@ SPDX-License-Identifier: apache-2.0
                                             PageSizeOptions="@PageSizeOptions"
                                             PagerHorizontalAlign="HorizontalAlign.Left"
                                             PagerPosition="PagerPosition.TopAndBottom"
-                                            PageSizeChanged="@OnPageSizeChanged"
+                                            PageSizeChanged="@OnPageSizeChangedAsync"
                                             @ref="@dataGridSources">
                                 <Columns>
                                     <RadzenDataGridColumn TItem="FundingSource" Property="FundingSourceId" Title="Source ID" MinWidth="10px" Width="3rem" />
