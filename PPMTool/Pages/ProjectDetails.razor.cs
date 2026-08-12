@@ -95,7 +95,6 @@ namespace PPMTool.Pages
 
         // Task grid
         private int count;
-        private readonly int gridPageSize = 10;
         private List<SubTask> allTasks;
         private IList<SubTask> gridTasks;
 
@@ -1337,7 +1336,7 @@ namespace PPMTool.Pages
             count = query.Count();
 
             // Perform paging
-            gridTasks = query.Skip(args.Skip ?? 0).Take(args.Top ?? gridPageSize).ToList();
+            gridTasks = query.Skip(args.Skip ?? 0).Take(args.Top ?? PageCount).ToList();
 
         }
 
