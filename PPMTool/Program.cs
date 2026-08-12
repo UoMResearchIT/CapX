@@ -348,6 +348,7 @@ api.MapGet("/faculties/getById", Faculties.GetFacultyByIdAsync);
 api.MapGet("/financialreferences/getAll", FinancialReferences.GetAllFinancialReferencesAsync);
 api.MapGet("/financialreferences/getByFinancialYear", FinancialReferences.GetFinancialReferenceByFinancialYearAsync);
 api.MapPost("/import/faculty", Import.CreateFaculty);
+api.MapPost("/import/project", Import.CreateProject);
 
 // API middleware -- conditional on /api routes only
 app.UseWhen(

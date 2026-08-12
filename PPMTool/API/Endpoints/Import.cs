@@ -63,6 +63,47 @@ public static class Import
     }
 
     /// <summary>
+    /// Create a Project (+ project-management SubTask, Resourcing, Comments)
+    /// in one call. See UoMResearchIT/CapX#1310.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportProjectResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult CreateProject(
+        PPMToolContext context,
+        ImportService importService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] ImportProjectRequestDTO request)
+    {
+        try
+        {
+            var (allowed, caller, gateResult) = CheckGate(settingsService, http, logger, "CreateProject");
+            if (!allowed) return gateResult!;
+
+            var errors = importService.Validate(context, request);
+            if (errors.Count > 0)
+            {
+                logger.LogWarning("API: Import: project validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors));
+                return Results.BadRequest(new ImportErrorDTO(errors));
+            }
+
+            var result = importService.Create(context, request);
+            logger.LogInformation(
+                "API: Import: created Project {ProjectId} '{Name}' ({ResourceCount} resources, {NoteCount} notes) by {User}",
+                result.ProjectId, request.Name, result.ResourcesCreated, result.NotesCreated, caller!.Name);
+            return Results.Created($"/api/import/project/{result.ProjectId}", result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: Import error for project '{Name}'", request.Name);
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
     /// Shared gate for the import endpoints: ImportApiEnabled setting, then Superuser role.
     /// </summary>
     private static (bool allowed, User? caller, IResult? result) CheckGate(
