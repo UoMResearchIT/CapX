@@ -159,7 +159,7 @@ namespace PPMTool.Pages
                 if (pageCount != null)
                 {
                     PageCount = pageCount.Value;
-                    Debug.WriteLine($"Retrieved page count {PageCount} for page {GetSessionStorageTag()}");
+                    Debug.WriteLine($"** Retrieved page count {PageCount} for page {GetSessionStorageTag()}");
                 }
             }
         }

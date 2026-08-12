@@ -49,12 +49,12 @@ namespace PPMTool.API
                 var handler = new JsonWebTokenHandler();
                 var key = handler.CreateToken(tokenDescriptor);
 
-                Debug.WriteLine($"Created key for {user.Name} => {key}");
+                Debug.WriteLine($"** Created key for {user.Name} => {key}");
                 return key;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error creating token: {ex.Message}");
+                Debug.WriteLine($"** Error creating token: {ex.Message}");
             }
 
             return string.Empty;
