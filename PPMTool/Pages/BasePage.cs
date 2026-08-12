@@ -90,7 +90,7 @@ namespace PPMTool.Pages
         {
             if (!string.IsNullOrWhiteSpace(GetSessionStorageTag()))
             {
-                await SessionStorage.SetItemAsync($"PageCount-{GetSessionStorageTag()}", value);
+                await SessionStorage.SetItemAsync($"{GetSessionStorageTag()}-page-count", value);
             }
 
             Logger.LogInformation($"Page size changed to {value} for page {GetSessionStorageTag()}");
@@ -155,7 +155,7 @@ namespace PPMTool.Pages
         {
             if (!string.IsNullOrWhiteSpace(GetSessionStorageTag()))
             {
-                var pageCount = await SessionStorage.GetItemAsync<int?>($"PageCount-{GetSessionStorageTag()}");
+                var pageCount = await SessionStorage.GetItemAsync<int?>($"{GetSessionStorageTag()}-page-count");
                 if (pageCount != null)
                 {
                     PageCount = pageCount.Value;

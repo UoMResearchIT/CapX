@@ -41,11 +41,12 @@ namespace PPMTool.Pages
             }
         }
 
+        protected override string GetSessionStorageTag() => "people";
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
             skillsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Skills);
-            CallingPage = "People";
 
             Loading = true;
             EnqueueLoadData(GetLoadTask);

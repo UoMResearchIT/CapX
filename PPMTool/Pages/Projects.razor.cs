@@ -66,6 +66,8 @@ namespace PPMTool.Pages
         // Expression for sorting by cost model display order
         private Expression<Func<Project, int>> costModelSortKey;
 
+        protected override string GetSessionStorageTag() => "projects";
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
@@ -74,7 +76,6 @@ namespace PPMTool.Pages
             costModelSortKey = DisplayOrderHelper.CreateOrderAttributeSortingExpression<Project, CostModel>(p => p.CostModel);
 
             Loading = true;
-            CallingPage = "Projects";
             EnqueueLoadData(() => GetLoadTask());
             LogInformation("Viewing project grid");
         }

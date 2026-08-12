@@ -22,10 +22,11 @@ namespace PPMTool.Pages
         private List<Person> people;
         private List<RoleType> roles;
 
+        protected override string GetSessionStorageTag() => "access-control";
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            CallingPage = "AccessControl";
             dataGridEntityService = UserService;
             dataGridEntities = UserService.GetAll(Context).OrderBy(x => x.GetName()).ToList();
 

@@ -63,6 +63,8 @@ namespace PPMTool.Pages
         private RadzenDataGrid<FundingSource> dataGridSources;
         private bool exportRunning;
 
+        protected override string GetSessionStorageTag() => "manage-finance";
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
@@ -71,8 +73,6 @@ namespace PPMTool.Pages
                 ActiveUserRoleType == RoleType.Superuser ||
                 ActiveUserRoleType == RoleType.Manager ||
                 ActiveUserRoleType == RoleType.Finance;
-
-            CallingPage = "Finance";
         }
 
         protected override void OnAfterRender(bool firstRender)
