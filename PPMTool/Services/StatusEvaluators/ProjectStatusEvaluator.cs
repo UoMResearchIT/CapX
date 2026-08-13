@@ -49,7 +49,7 @@ namespace PPMTool.Services.StatusEvaluators
                 new StatusMessage("This project has a task with a resource without a funding source and is currently running or has run in the past!", StatusMessage.MessageType.Error, project.HasResourcesWithNoFundingSourceOnRunningTask, FeatureType.ProjectFinance),
                 new StatusMessage("This project uses the Day Rate model but has a DI funding source which is not allowed! DI funding sources must use salary costs for recharge.", StatusMessage.MessageType.Error, () => project.DayRateWithDIFunding(), FeatureType.ProjectFinance),
                 new StatusMessage("This project does not have a project management task!", StatusMessage.MessageType.Error, () => !project.SubTasks?.Any(x => x.TaskDuty == Duty.ProjectAndServiceMgmt) ?? true),
-
+                new StatusMessage("This project has funding sources contributing to the budget that are not associated with task resources!", StatusMessage.MessageType.Error, () => project.HasFundingSourcesNotLinkedToResources(), FeatureType.ProjectFinance)
             };
         }
     }
