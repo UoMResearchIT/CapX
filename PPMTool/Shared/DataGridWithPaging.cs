@@ -40,7 +40,7 @@ namespace PPMTool.Shared
             // Check if the parameters have been provided through the properties
             var hasAllowPaging = parameters.TryGetValue<bool>(nameof(AllowPaging), out _);
             var hasShowPagingSummary = parameters.TryGetValue<bool>(nameof(ShowPagingSummary), out _);
-            var hasPageSizeOptions = parameters.TryGetValue<IEnumerable<int>>(nameof(AvaialblePageSizeOptions), out _);
+            var hasPageSizeOptions = parameters.TryGetValue<IEnumerable<int>>(nameof(PageSizeOptions), out _);
             var hasPagerHorizontalAlign = parameters.TryGetValue<HorizontalAlign>(nameof(PagerHorizontalAlign), out _);
             var hasPagerPosition = parameters.TryGetValue<PagerPosition>(nameof(PagerPosition), out _);
             var hasPageSize = parameters.TryGetValue<int>(nameof(PageSize), out _);
