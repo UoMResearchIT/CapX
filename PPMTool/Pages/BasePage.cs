@@ -92,6 +92,10 @@ namespace PPMTool.Pages
             {
                 await SessionStorage.SetItemAsync($"{GetSessionStorageTag()}-page-count", value);
             }
+            else
+            {
+                LogError("OnPageSizeChangedAsync has been fired but the page does not override GetSessionStorageTag so session storage will fail!");
+            }
 
             Logger.LogInformation($"Page size changed to {value} for page {GetSessionStorageTag()}");
             PageCount = value;
