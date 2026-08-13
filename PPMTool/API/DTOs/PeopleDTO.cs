@@ -23,6 +23,6 @@ namespace PPMTool.API.DTOs
         DateTime StartDate,
         DateTime? EndDate,
         int? LineManagerId,
-        string? LineManagerName
+        string LineManagerName
     );
 }
