@@ -56,11 +56,6 @@ namespace PPMTool.Pages
         public int PageCount { get; set; } = 15;
 
         /// <summary>
-        /// Page sizing options to be bound to for datagrids on the page
-        /// </summary>
-        public int[] PageSizeOptions { get; } = new[] { 5, 10, 25, 50, 100 };
-
-        /// <summary>
         /// Method to get a unique session storage tag for the page. Returns empty string by default.
         /// Override in derived pages to provide a unique tag for the page to store settings in session storage.
         /// </summary>

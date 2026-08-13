@@ -84,20 +84,14 @@ SPDX-License-Identifier: apache-2.0
                 <RadzenTabs @bind-SelectedIndex="selectedTab">
                     <Tabs>
                         <RadzenTabsItem Text="Invoices">
-                            <RadzenDataGrid Data="@invoices"
-                                            TItem="Invoice"
-                                            ColumnWidth="5rem"
-                                            FilterMode="FilterMode.Simple"
-                                            AllowSorting="true"
-                                            AllowFiltering="true"
-                                            AllowPaging="true"
-                                            PageSize="@PageCount"
-                                            ShowPagingSummary="true"
-                                            PageSizeOptions="@PageSizeOptions"
-                                            PageSizeChanged="@OnPageSizeChangedAsync"
-                                            PagerHorizontalAlign="HorizontalAlign.Left"
-                                            PagerPosition="PagerPosition.TopAndBottom"
-                                            @ref="@dataGridInvoices">
+                            <DataGridWithPaging Data="@invoices"
+                                                TItem="Invoice"
+                                                ColumnWidth="5rem"
+                                                FilterMode="FilterMode.Simple"
+                                                AllowSorting="true"
+                                                AllowFiltering="true"
+                                                PagingPage="@this"
+                                                @ref="@dataGridInvoices">
                                 <Columns>
                                     <RadzenDataGridColumn TItem="Invoice" Property="InvoiceId" Title="Invoice ID" MinWidth="10px" Width="3rem" />
                                     <RadzenDataGridColumn TItem="Invoice" Property="InvoiceReference" Title="Reference" MinWidth="10px" />
@@ -126,24 +120,18 @@ SPDX-License-Identifier: apache-2.0
                                         </Template>
                                     </RadzenDataGridColumn>
                                 </Columns>
-                            </RadzenDataGrid>
+                            </DataGridWithPaging>
                         </RadzenTabsItem>
                         <RadzenTabsItem Text="Payments">
-                            <RadzenDataGrid Data="@payments"
-                                            TItem="Payment"
-                                            ColumnWidth="5rem"
-                                            FilterMode="FilterMode.Simple"
-                                            AllowSorting="true"
-                                            AllowFiltering="true"
-                                            class="white-space:pre-wrap"
-                                            AllowPaging="true"
-                                            PageSize="@PageCount"
-                                            ShowPagingSummary="true"
-                                            PageSizeOptions="@PageSizeOptions"
-                                            PageSizeChanged="@OnPageSizeChangedAsync"
-                                            PagerHorizontalAlign="HorizontalAlign.Left"
-                                            PagerPosition="PagerPosition.TopAndBottom"
-                                            @ref="@dataGridPayments">
+                            <DataGridWithPaging Data="@payments"
+                                                TItem="Payment"
+                                                ColumnWidth="5rem"
+                                                FilterMode="FilterMode.Simple"
+                                                AllowSorting="true"
+                                                AllowFiltering="true"
+                                                class="white-space:pre-wrap"
+                                                PagingPage="@this"
+                                                @ref="@dataGridPayments">
                                 <Columns>
                                     <RadzenDataGridColumn TItem="Payment" Property="PaymentId" Title="Payment ID" MinWidth="10px" Width="3rem" />
                                     <RadzenDataGridColumn TItem="Payment" Property="Project.RTP" Title="@($"{GetSetting(SettingType.ProjectAbbreviation)}")" MinWidth="10px" Width="3rem" />
@@ -166,24 +154,18 @@ SPDX-License-Identifier: apache-2.0
                                         </Template>
                                     </RadzenDataGridColumn>
                                 </Columns>
-                            </RadzenDataGrid>
+                            </DataGridWithPaging>
                         </RadzenTabsItem>
                         <RadzenTabsItem Text="Funding Sources">
-                            <RadzenDataGrid Data="@sources"
-                                            TItem="FundingSource"
-                                            ColumnWidth="5rem"
-                                            FilterMode="FilterMode.Simple"
-                                            AllowSorting="true"
-                                            AllowFiltering="true"
-                                            class="white-space:pre-wrap"
-                                            AllowPaging="true"
-                                            PageSize="@PageCount"
-                                            ShowPagingSummary="true"
-                                            PageSizeOptions="@PageSizeOptions"
-                                            PagerHorizontalAlign="HorizontalAlign.Left"
-                                            PagerPosition="PagerPosition.TopAndBottom"
-                                            PageSizeChanged="@OnPageSizeChangedAsync"
-                                            @ref="@dataGridSources">
+                            <DataGridWithPaging Data="@sources"
+                                                TItem="FundingSource"
+                                                ColumnWidth="5rem"
+                                                FilterMode="FilterMode.Simple"
+                                                AllowSorting="true"
+                                                AllowFiltering="true"
+                                                class="white-space:pre-wrap"
+                                                PagingPage="@this"
+                                                @ref="@dataGridSources">
                                 <Columns>
                                     <RadzenDataGridColumn TItem="FundingSource" Property="FundingSourceId" Title="Source ID" MinWidth="10px" Width="3rem" />
                                     <RadzenDataGridColumn TItem="FundingSource" Property="FundingSource.Project.RTP" Title="@($"{GetSetting(SettingType.ProjectAbbreviation)}")" MinWidth="10px" Width="3rem" />
@@ -217,7 +199,7 @@ SPDX-License-Identifier: apache-2.0
                                         </Template>
                                     </RadzenDataGridColumn>
                                 </Columns>
-                            </RadzenDataGrid>
+                            </DataGridWithPaging>
                         </RadzenTabsItem>
                     </Tabs>
                 </RadzenTabs>

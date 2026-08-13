@@ -294,24 +294,18 @@ SPDX-License-Identifier: apache-2.0
                 else
                 {
                     <RadzenCard>
-                        <RadzenDataGrid AllowFiltering="@((gridTasks?.Count ?? 0) > 0)"
-                                        AllowColumnResize="true"
-                                        FilterMode="FilterMode.Simple"
-                                        AllowSorting="true"
-                                        PageSize="@PageCount"
-                                        AllowPaging="true"
-                                        ShowPagingSummary="true"
-                                        PageSizeOptions="@PageSizeOptions"
-                                        PagerHorizontalAlign="HorizontalAlign.Left"
-                                        PagerPosition="PagerPosition.TopAndBottom"
-                                        PageSizeChanged="@OnPageSizeChangedAsync"
-                                        Data="@gridTasks"
-                                        TItem="SubTask"
-                                        ColumnWidth="6rem"
-                                        SelectionMode="DataGridSelectionMode.Single"
-                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                        Count="@count"
-                                        LoadData="@LoadTaskData">
+                        <DataGridWithPaging AllowFiltering="@((gridTasks?.Count ?? 0) > 0)"
+                                            AllowColumnResize="true"
+                                            FilterMode="FilterMode.Simple"
+                                            AllowSorting="true"
+                                            Data="@gridTasks"
+                                            TItem="SubTask"
+                                            ColumnWidth="6rem"
+                                            SelectionMode="DataGridSelectionMode.Single"
+                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                            PagingPage="@this"
+                                            Count="@count"
+                                            LoadData="@LoadTaskData">
                             <Columns>
                                 <RadzenDataGridColumn TItem="SubTask" Title="Status" Frozen="true" Sortable=false Filterable=false Width="7rem" MinWidth="10px">
                                     <Template Context="t">
@@ -385,7 +379,7 @@ SPDX-License-Identifier: apache-2.0
                                     </Template>
                                 </RadzenDataGridColumn>
                             </Columns>
-                        </RadzenDataGrid>
+                        </DataGridWithPaging>
                     </RadzenCard>
                 }
                 <hr />

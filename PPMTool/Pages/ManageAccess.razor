@@ -29,24 +29,18 @@ SPDX-License-Identifier: apache-2.0
         <StatusMessageComponent Message="ErrorMessage" />
     }
     <hr />
-    <RadzenDataGrid @ref="dataGrid"
-                    AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
-                    AllowPaging="true"
-                    ShowPagingSummary="true"
-                    PageSizeOptions="@PageSizeOptions"
-                    PagerHorizontalAlign="HorizontalAlign.Left"
-                    PagerPosition="PagerPosition.TopAndBottom"
-                    PageSize="@PageCount"
-                    PageSizeChanged="@OnPageSizeChangedAsync"
-                    AllowSorting="true"
-                    EditMode="DataGridEditMode.Single"
-                    FilterMode="FilterMode.Simple"
-                    Data="@dataGridEntities"
-                    TItem="User"
-                    RowUpdate="@OnUpdateRow"
-                    RowCreate="@OnCreateRow"
-                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                    ColumnWidth="12rem">
+    <DataGridWithPaging @ref="dataGrid"
+                        PagingPage="@this"
+                        AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
+                        AllowSorting="true"
+                        EditMode="DataGridEditMode.Single"
+                        FilterMode="FilterMode.Simple"
+                        Data="@dataGridEntities"
+                        TItem="User"
+                        RowUpdate="@OnUpdateRow"
+                        RowCreate="@OnCreateRow"
+                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                        ColumnWidth="12rem">
         <Columns>
             <RadzenDataGridColumn TItem="User" Property="Person.Name" Title="Person (RSE)" MinWidth="10px">
                 <EditTemplate Context="user">
@@ -110,6 +104,6 @@ SPDX-License-Identifier: apache-2.0
                 </EditTemplate>
             </RadzenDataGridColumn>
         </Columns>
-    </RadzenDataGrid>
+    </DataGridWithPaging>
     <br />
 </div>
