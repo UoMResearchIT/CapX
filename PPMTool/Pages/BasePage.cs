@@ -64,7 +64,7 @@ namespace PPMTool.Pages
         /// Override in derived pages to provide a unique tag for the page to store settings in session storage.
         /// </summary>
         /// <returns></returns>
-        protected virtual string GetSessionStorageTag() => string.Empty;
+        protected virtual string GetStorageTag() => string.Empty;
 
         private bool loading = true;
         [CascadingParameter]
@@ -87,16 +87,16 @@ namespace PPMTool.Pages
         /// <returns></returns>
         public async Task OnPageSizeChangedAsync(int value)
         {
-            if (!string.IsNullOrWhiteSpace(GetSessionStorageTag()))
+            if (!string.IsNullOrWhiteSpace(GetStorageTag()))
             {
-                await LocalStorage.SetItemAsync($"{GetSessionStorageTag()}-page-count", value);
+                await LocalStorage.SetItemAsync($"{GetStorageTag()}-page-count", value);
             }
             else
             {
-                LogError("OnPageSizeChangedAsync has been fired but the page does not override GetSessionStorageTag so variable storage will fail!");
+                LogError("OnPageSizeChangedAsync has been fired but the page does not override GetStorageTag so variable storage will fail!");
             }
 
-            Logger.LogInformation($"Page size changed to {value} for page {GetSessionStorageTag()}");
+            Logger.LogInformation($"Page size changed to {value} for page {GetStorageTag()}");
             PageCount = value;
             StateHasChanged();
         }
@@ -158,13 +158,13 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private async Task GetPageCountSettingAsync()
         {
-            if (!string.IsNullOrWhiteSpace(GetSessionStorageTag()))
+            if (!string.IsNullOrWhiteSpace(GetStorageTag()))
             {
-                var pageCount = await LocalStorage.GetItemAsync<int?>($"{GetSessionStorageTag()}-page-count");
+                var pageCount = await LocalStorage.GetItemAsync<int?>($"{GetStorageTag()}-page-count");
                 if (pageCount != null)
                 {
                     PageCount = pageCount.Value;
-                    Debug.WriteLine($"** Retrieved page count {PageCount} for page {GetSessionStorageTag()}");
+                    Debug.WriteLine($"** Retrieved page count {PageCount} for page {GetStorageTag()}");
                 }
             }
         }

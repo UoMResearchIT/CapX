@@ -66,7 +66,7 @@ namespace PPMTool.Pages
         // Expression for sorting by cost model display order
         private Expression<Func<Project, int>> costModelSortKey;
 
-        protected override string GetSessionStorageTag() => "projects";
+        protected override string GetStorageTag() => "projects";
 
         protected override void OnInitialized()
         {

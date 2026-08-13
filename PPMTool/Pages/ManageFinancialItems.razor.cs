@@ -63,7 +63,7 @@ namespace PPMTool.Pages
         private RadzenDataGrid<FundingSource> dataGridSources;
         private bool exportRunning;
 
-        protected override string GetSessionStorageTag() => "manage-finance";
+        protected override string GetStorageTag() => "manage-finance";
 
         protected override void OnInitialized()
         {

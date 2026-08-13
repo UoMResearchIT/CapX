@@ -40,7 +40,7 @@ namespace PPMTool.Pages
             }
         }
 
-        protected override string GetSessionStorageTag() => "people";
+        protected override string GetStorageTag() => "people";
 
         protected override void OnInitialized()
         {

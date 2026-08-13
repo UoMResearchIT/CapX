@@ -22,7 +22,7 @@ namespace PPMTool.Pages
         private List<Person> people;
         private List<RoleType> roles;
 
-        protected override string GetSessionStorageTag() => "access-control";
+        protected override string GetStorageTag() => "access-control";
 
         protected override void OnInitialized()
         {

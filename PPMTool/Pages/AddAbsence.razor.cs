@@ -17,7 +17,7 @@ namespace PPMTool.Pages
         [Inject]
         public EmailService EmailService { get; set; }
 
-        protected override string GetSessionStorageTag() => "add-absence";
+        protected override string GetStorageTag() => "add-absence";
 
         protected override void OnInitialized()
         {
