@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: apache-2.0
 
 using System.Diagnostics;
+using Blazored.LocalStorage;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -34,6 +35,9 @@ namespace PPMTool.Pages
 
         [Inject]
         protected ISessionStorageService SessionStorage { get; set; }
+
+        [Inject]
+        protected ILocalStorageService LocalStorage { get; set; }
 
         [Inject]
         protected ILogger Logger { get; set; }
@@ -85,11 +89,11 @@ namespace PPMTool.Pages
         {
             if (!string.IsNullOrWhiteSpace(GetSessionStorageTag()))
             {
-                await SessionStorage.SetItemAsync($"{GetSessionStorageTag()}-page-count", value);
+                await LocalStorage.SetItemAsync($"{GetSessionStorageTag()}-page-count", value);
             }
             else
             {
-                LogError("OnPageSizeChangedAsync has been fired but the page does not override GetSessionStorageTag so session storage will fail!");
+                LogError("OnPageSizeChangedAsync has been fired but the page does not override GetSessionStorageTag so variable storage will fail!");
             }
 
             Logger.LogInformation($"Page size changed to {value} for page {GetSessionStorageTag()}");
@@ -156,7 +160,7 @@ namespace PPMTool.Pages
         {
             if (!string.IsNullOrWhiteSpace(GetSessionStorageTag()))
             {
-                var pageCount = await SessionStorage.GetItemAsync<int?>($"{GetSessionStorageTag()}-page-count");
+                var pageCount = await LocalStorage.GetItemAsync<int?>($"{GetSessionStorageTag()}-page-count");
                 if (pageCount != null)
                 {
                     PageCount = pageCount.Value;
