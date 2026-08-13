@@ -75,8 +75,6 @@ namespace PPMTool.Pages
             // Initialise the sort key expression for the data grid sort
             costModelSortKey = DisplayOrderHelper.CreateOrderAttributeSortingExpression<Project, CostModel>(p => p.CostModel);
 
-            Loading = true;
-            EnqueueLoadData(() => GetLoadTask());
             LogInformation("Viewing project grid");
         }
 
@@ -100,31 +98,34 @@ namespace PPMTool.Pages
 
                 // Get switch setting
                 includeFinished = await SessionStorage.GetItemAsync<bool>("project-show-active");
+
+                // Load the project data
+                await LoadProjectsAsync();
             }
         }
 
         /// <summary>
-        /// Gets the task responsible for loading the data
+        /// Wrapper for loading the data
         /// </summary>
         /// <returns></returns>
-        private Task GetLoadTask(LoadDataArgs args = null)
+        private async Task LoadProjectsAsync()
         {
-            return Task.Run(() =>
-            {
-                // Get people from the database
-                OnLoadData(args ?? new LoadDataArgs());
-            })
-                .ContinueWith(t =>
-                {
-                    InvokeAsync(() =>
-                    {
-                        Loading = false;
-                        StateHasChanged();
-                    });
-                });
+            Loading = true;
+            StateHasChanged();
+            await Task.Yield();
+
+            Debug.WriteLine("** [Projects] Loading Data...");
+            LoadData(new LoadDataArgs());
+
+            Loading = false;
+            StateHasChanged();
         }
 
-        private void OnLoadData(LoadDataArgs args)
+        /// <summary>
+        /// Loads the project data for the grid, applying filtering and sorting as specified in the LoadDataArgs.
+        /// </summary>
+        /// <param name="args"></param>
+        private void LoadData(LoadDataArgs args)
         {
             Debug.WriteLine($"** Loading data...");
 

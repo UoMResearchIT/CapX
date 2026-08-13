@@ -54,7 +54,7 @@ SPDX-License-Identifier: apache-2.0
                                 PagingPage="@this"
                                 @bind-Settings="@Settings"
                                 @ref="dataGrid"
-                                LoadData="@OnLoadData">
+                                LoadData="@LoadData">
                 <Columns>
                     <RadzenDataGridColumn TItem="Project" Property="RTP" Title="@($"{GetSetting(SettingType.ProjectAbbreviation)}")" Frozen="true" Width="7rem" MinWidth="10px" FilterMode="FilterMode.SimpleWithMenu" />
                     <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" Width="15rem" MinWidth="10px" />
