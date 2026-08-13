@@ -24,7 +24,6 @@ namespace PPMTool.Pages
 
         private IEnumerable<Person> people;
         private int count;
-        private int pageCount = 10;
         private bool skillsEnabled;
 
         private bool includeLeavers;
@@ -36,42 +35,46 @@ namespace PPMTool.Pages
                 if (value != includeLeavers)
                 {
                     includeLeavers = value;
-                    Loading = true;
-                    EnqueueLoadData(GetLoadTask);
+                    _ = LoadPeopleAsync();
                 }
             }
         }
+
+        protected override string GetStorageTag() => "people";
 
         protected override void OnInitialized()
         {
             base.OnInitialized();
             skillsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Skills);
 
-            Loading = true;
-            EnqueueLoadData(GetLoadTask);
-
             LogInformation($"Viewing people grid");
         }
 
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            await base.OnAfterRenderAsync(firstRender);
+
+            if (firstRender)
+            {
+                await LoadPeopleAsync();
+            }
+        }
+
         /// <summary>
-        /// Generates a task to call the load data method
+        /// Wrapper for loading the data
         /// </summary>
         /// <returns></returns>
-        private Task GetLoadTask()
+        private async Task LoadPeopleAsync()
         {
-            return Task.Run(() =>
-            {
-                // Get people from the database
-                LoadData(new LoadDataArgs());
-            })
-                .ContinueWith(t =>
-            {
-                InvokeAsync(() =>
-                {
-                    Loading = false;
-                    StateHasChanged();
-                });
-            });
+            Loading = true;
+            StateHasChanged();
+            await Task.Yield();
+
+            Debug.WriteLine("** [People] Loading Data...");
+            LoadData(new LoadDataArgs());
+
+            Loading = false;
+            StateHasChanged();
         }
 
         /// <summary>
@@ -145,7 +148,7 @@ namespace PPMTool.Pages
 
             // ---- PAGING ----
             var skip = args.Skip ?? 0;
-            var take = args.Top ?? pageCount;
+            var take = args.Top ?? PageCount;
 
             people = query.Skip(skip).Take(take).ToList();
 

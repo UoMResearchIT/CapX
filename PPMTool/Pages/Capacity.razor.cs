@@ -45,7 +45,7 @@ namespace PPMTool.Pages
             if (CanCustomise())
             {
                 // Load settings
-                var managerName = await SessionStorage.GetItemAsync<string>($"{GetSessionStorageTag()}-chosen-manager");
+                var managerName = await SessionStorage.GetItemAsync<string>($"{GetStorageTag()}-chosen-manager");
                 ChosenManager = managers.FirstOrDefault(x => x.Name == managerName);
 
                 // Reload the dropdown sources if a manager has been chosen
@@ -72,7 +72,11 @@ namespace PPMTool.Pages
             LogInformation($"Viewing capacity page");
         }
 
-        protected override string GetSessionStorageTag() => "capacity";
+        /// <summary>
+        /// Override to provide a unique tag for session storage for this page.
+        /// </summary>
+        /// <returns></returns>
+        protected override string GetStorageTag() => "capacity";
 
         /// <summary>
         /// Method to setup the dropdown sources
@@ -142,7 +146,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// Save the chosen manager to session storage
         /// </summary>
-        private void SaveManagerState() => SessionStorage.SetItemAsync($"{GetSessionStorageTag()}-chosen-manager", chosenManager == null ? null : chosenManager.Name);
+        private void SaveManagerState() => SessionStorage.SetItemAsync($"{GetStorageTag()}-chosen-manager", chosenManager == null ? null : chosenManager.Name);
 
         /// <summary>
         /// Use the master list of managers to filter the data source for the dropdown based on user typing

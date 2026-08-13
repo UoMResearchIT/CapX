@@ -36,21 +36,19 @@ SPDX-License-Identifier: apache-2.0
         }
         else
         {
-            <RadzenDataGrid AllowFiltering="true"
-                            AllowColumnResize="true"
-                            FilterMode="FilterMode.Simple"
-                            AllowSorting="true"
-                            Data="@people"
-                            TItem="Person"
-                            ColumnWidth="150px"
-                            SelectionMode="DataGridSelectionMode.Single"
-                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                            LogicalFilterOperator="LogicalFilterOperator.And"
-                            AllowPaging="true"
-                            PageSize="@pageCount"
-                            ShowPagingSummary="true"
-                            Count="@count"
-                            LoadData="@LoadData">
+            <DataGridWithPaging AllowFiltering="true"
+                                AllowColumnResize="true"
+                                FilterMode="FilterMode.Simple"
+                                AllowSorting="true"
+                                Data="@people"
+                                TItem="Person"
+                                ColumnWidth="150px"
+                                SelectionMode="DataGridSelectionMode.Single"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                LogicalFilterOperator="LogicalFilterOperator.And"
+                                PagingPage="@this"
+                                Count="@count"
+                                LoadData="@LoadData">
                 <Columns>
                     <RadzenDataGridColumn TItem="Person" Property="Name" Title="Name" Frozen="true" FilterOperator="FilterOperator.Contains" MinWidth="10px">
                         <Template Context="p">
@@ -110,7 +108,7 @@ SPDX-License-Identifier: apache-2.0
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>
-            </RadzenDataGrid>
+            </DataGridWithPaging>
         }
     </RadzenCard>
 </div>

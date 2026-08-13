@@ -102,7 +102,6 @@ namespace PPMTool.Pages
 
         // Task grid
         private int count;
-        private readonly int gridPageSize = 10;
         private List<SubTask> allTasks;
         private IList<SubTask> gridTasks;
 
@@ -164,6 +163,8 @@ namespace PPMTool.Pages
             public double ClientLeft { get; set; }
             public double ClientHeight { get; set; }
         }
+
+        protected override string GetStorageTag() => "project-details";
 
         /// <summary>
         /// Fired when the component is first created - used here to check feature flags and log the page view
@@ -1344,7 +1345,7 @@ namespace PPMTool.Pages
             count = query.Count();
 
             // Perform paging
-            gridTasks = query.Skip(args.Skip ?? 0).Take(args.Top ?? gridPageSize).ToList();
+            gridTasks = query.Skip(args.Skip ?? 0).Take(args.Top ?? PageCount).ToList();
 
         }
 
