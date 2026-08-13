@@ -447,7 +447,6 @@ span.mention {
 /* Styling for the header and footer */
 .rz-has-pager nav {
     padding: 0.8rem;
-    border: 1px solid #eee;
     justify-content: start;
 }
 
