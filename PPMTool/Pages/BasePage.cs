@@ -147,9 +147,8 @@ namespace PPMTool.Pages
 
             if (firstRender)
             {
-                // Now it's safe to call JS-interop backed services like SessionStorage.
+                // Load the page count out of storage if needs be and call a re-render of the components
                 await GetPageCountSettingAsync();
-                await Task.Delay(500); // Fixes the race condition when getting the paging size. Ugh!
                 StateHasChanged();
             }
         }
