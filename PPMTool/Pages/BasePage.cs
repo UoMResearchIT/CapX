@@ -124,6 +124,9 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
 
+            // Reset the layout to clear any previous page's settings
+            Layout?.Reset();
+
             // Not sure why this happens but worth noting
             if (Layout == null)
             {
