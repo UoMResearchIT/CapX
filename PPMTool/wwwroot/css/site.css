@@ -447,12 +447,12 @@ span.mention {
 /* Styling for the header and footer */
 .rz-has-pager nav {
     padding: 0.8rem;
-    justify-content: start;
+    justify-content: end;
 }
 
 /* Make the dropdown wide enough to show the 100 pagination option */
 .rz-pager .rz-dropdown {
-    width: 6rem;
+    width: fit-content;
 }
 
 
