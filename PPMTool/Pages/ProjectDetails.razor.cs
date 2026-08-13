@@ -164,6 +164,8 @@ namespace PPMTool.Pages
             public double ClientHeight { get; set; }
         }
 
+        protected override string GetSessionStorageTag() => "project-details";
+
         /// <summary>
         /// Fired when the component is first created - used here to check feature flags and log the page view
         /// </summary>
