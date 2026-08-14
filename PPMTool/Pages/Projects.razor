@@ -138,6 +138,14 @@ SPDX-License-Identifier: apache-2.0
                                               Type="typeof(double)" 
                                               FilterMode="FilterMode.SimpleWithMenu" 
                                               FilterOperator="FilterOperator.GreaterThanOrEquals" />
+                        <RadzenDataGridColumn TItem="Project"
+                                              Property="PlannedCost"
+                                              Title="PlannedCost"
+                                              FormatString="{0:C0}"
+                                              Width="10rem"
+                                              Type="typeof(double)"
+                                              FilterMode="FilterMode.SimpleWithMenu"
+                                              FilterOperator="FilterOperator.GreaterThanOrEquals" />
                         <RadzenDataGridColumn TItem="Project" 
                                               Property="ActualCost" 
                                               Title="Actual Cost" 
@@ -146,17 +154,6 @@ SPDX-License-Identifier: apache-2.0
                                               Type="typeof(double)"
                                               FilterMode="FilterMode.SimpleWithMenu"
                                               FilterOperator="FilterOperator.GreaterThanOrEquals" />
-                        <RadzenDataGridColumn TItem="Project" 
-                                              Property="FundsReceived" 
-                                              Title="Funds Received" 
-                                              Width="10rem"
-                                              Type="typeof(double)"
-                                              FilterMode="FilterMode.SimpleWithMenu"
-                                              FilterOperator="FilterOperator.GreaterThanOrEquals">
-                            <Template Context="p">
-                                @p.FundsReceived.ToString("C0")
-                            </Template>
-                        </RadzenDataGridColumn>
                     }
                     <RadzenDataGridColumn TItem="Project" 
                                           Property="ActualWorkHours" 
