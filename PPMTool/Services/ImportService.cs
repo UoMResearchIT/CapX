@@ -29,6 +29,7 @@ namespace PPMTool.Services
         private readonly NoteService _noteService;
         private readonly FinancialReferenceService _financialReferenceService;
         private readonly SettingsService _settingsService;
+        private readonly TimesheetService _timesheetService;
 
         public ImportService(
             FacultyService facultyService,
@@ -37,7 +38,8 @@ namespace PPMTool.Services
             SubTaskService subTaskService,
             NoteService noteService,
             FinancialReferenceService financialReferenceService,
-            SettingsService settingsService)
+            SettingsService settingsService,
+            TimesheetService timesheetService)
         {
             _facultyService = facultyService;
             _schoolService = schoolService;
@@ -46,6 +48,7 @@ namespace PPMTool.Services
             _noteService = noteService;
             _financialReferenceService = financialReferenceService;
             _settingsService = settingsService;
+            _timesheetService = timesheetService;
         }
 
         /// <summary>
@@ -181,6 +184,28 @@ namespace PPMTool.Services
             if (projectId < 0)
                 throw new InvalidOperationException($"ProjectService.Add returned {projectId} (duplicate name/RTP) despite passing Validate() -- possible race condition");
 
+            // Every Project needs an InnateActivity code so hours logged against it in
+            // Timesheets can actually be attributed back (CapX computes a Project's
+            // actuals by querying Approved Timesheets linked via this code -- see
+            // AddTask.razor.cs, TimesheetService.GetAllForInnateCode). Without one, a
+            // future POST /api/import/timesheet call for this project has nothing to
+            // attach to. Mirrors SeedHelper.EnsureInnateCodeExists/GetDefaultInnateCodeTasks
+            // exactly: one InnateCode per project keyed "S-RES-RTP-{RTP}", with the same
+            // three default tasks.
+            project.InnateActivity = new InnateCode
+            {
+                ActivityCode = $"S-RES-RTP-{project.RTP}",
+                ActivityName = project.Name,
+                IsActive = true,
+                Tasks = new List<InnateCodeTask>
+                {
+                    new() { TaskName = "Development", Duty = Duty.ProjectWork },
+                    new() { TaskName = "Management", Duty = Duty.ProjectAndServiceMgmt },
+                    new() { TaskName = "Maintenance", Duty = Duty.ProjectWork },
+                },
+            };
+            context.SaveChangesWithRetry();
+
             // Every Project needs a task carrying Duty.ProjectAndServiceMgmt --
             // ProjectStatusEvaluator flags "This project does not have a project
             // management task!" as an error otherwise. Shaped the same way
@@ -272,6 +297,110 @@ namespace PPMTool.Services
 
             return new ImportProjectResponseDTO(project.ProjectId, resourcesCreated, notesCreated);
         }
+
+        /// <summary>
+        /// Validate a POST /api/import/timesheet request without writing
+        /// anything.
+        /// </summary>
+        public List<string> ValidateTimesheetEntry(PPMToolContext context, ImportTimesheetEntryDTO request)
+        {
+            var errors = new List<string>();
+
+            if (FindUserByUsername(context, request.Username)?.Person == null)
+                errors.Add($"Username '{request.Username}' not found, or has no linked Person");
+
+            if (request.WeekStartDate.DayOfWeek != DayOfWeek.Monday)
+                errors.Add($"WeekStartDate '{request.WeekStartDate:yyyy-MM-dd}' is a {request.WeekStartDate.DayOfWeek}, not a Monday -- CapX Timesheets are always Monday-start weeks");
+
+            foreach (var (label, hours) in DayHours(request))
+            {
+                if (hours < 0) errors.Add($"{label} cannot be negative");
+            }
+
+            var project = FindProjectWithInnateActivity(context, request.ProjectId);
+            if (project == null)
+                errors.Add($"ProjectId {request.ProjectId} does not exist");
+            else if (project.InnateActivity == null)
+                errors.Add($"Project {request.ProjectId} ('{project.Name}') has no InnateActivity code -- only projects created via POST /api/import/project (or otherwise already linked) can receive imported timesheet entries");
+            else if (!project.InnateActivity.Tasks.Any(t => t.TaskName.Trim().Equals(request.TaskName.Trim(), StringComparison.OrdinalIgnoreCase)))
+                errors.Add($"TaskName '{request.TaskName}' does not match any InnateCodeTask under project {request.ProjectId}'s InnateActivity ('{project.InnateActivity.ActivityName}'); available: {string.Join(", ", project.InnateActivity.Tasks.Select(t => t.TaskName))}");
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Create or update the Timesheet + TimesheetEntry for this
+        /// person/week/task. Caller is responsible for validating first.
+        /// Idempotent: re-importing the same (Username, WeekStartDate,
+        /// TaskName) overwrites the existing entry's hours rather than
+        /// accumulating on top of them.
+        /// </summary>
+        public ImportTimesheetResponseDTO CreateOrUpdateTimesheetEntry(PPMToolContext context, ImportTimesheetEntryDTO request)
+        {
+            var person = FindUserByUsername(context, request.Username)!.Person!;
+            var project = FindProjectWithInnateActivity(context, request.ProjectId)!;
+            var task = project.InnateActivity!.Tasks.First(t => t.TaskName.Trim().Equals(request.TaskName.Trim(), StringComparison.OrdinalIgnoreCase));
+
+            var timesheet = context.Timesheets
+                .Include(t => t.TimesheetEntries)
+                .FirstOrDefault(t => t.Owner.PersonId == person.PersonId && t.StartDate == request.WeekStartDate);
+
+            var timesheetCreated = timesheet == null;
+            if (timesheet == null)
+            {
+                timesheet = new Timesheet
+                {
+                    Owner = person,
+                    StartDate = request.WeekStartDate,
+                    Status = TimesheetStatus.Approved, // historical actuals -- not pending review
+                    DateStatusChanged = DateTime.Now,
+                };
+                var timesheetId = _timesheetService.Add(context, timesheet);
+                if (timesheetId < 0)
+                    throw new InvalidOperationException($"TimesheetService.Add returned {timesheetId} (duplicate) despite passing ValidateTimesheetEntry() -- possible race condition");
+            }
+
+            var entry = timesheet.TimesheetEntries.FirstOrDefault(e => e.InnateCodeTaskId == task.InnateCodeTaskId);
+            var entryCreated = entry == null;
+            if (entry == null)
+            {
+                entry = new TimesheetEntry { Timesheet = timesheet, InnateCodeTask = task };
+                _timesheetService.AddEntry(context, entry, commitChanges: false);
+            }
+
+            entry.MondayHours = request.MondayHours;
+            entry.TuesdayHours = request.TuesdayHours;
+            entry.WednesdayHours = request.WednesdayHours;
+            entry.ThursdayHours = request.ThursdayHours;
+            entry.FridayHours = request.FridayHours;
+            entry.SaturdayHours = request.SaturdayHours;
+            entry.SundayHours = request.SundayHours;
+            entry.UpdateTotalHours();
+            context.SaveChangesWithRetry();
+
+            return new ImportTimesheetResponseDTO(timesheet.TimesheetId, timesheetCreated, entryCreated, entry.TotalHours);
+        }
+
+        private static IEnumerable<(string Label, double Hours)> DayHours(ImportTimesheetEntryDTO request)
+        {
+            yield return ("MondayHours", request.MondayHours);
+            yield return ("TuesdayHours", request.TuesdayHours);
+            yield return ("WednesdayHours", request.WednesdayHours);
+            yield return ("ThursdayHours", request.ThursdayHours);
+            yield return ("FridayHours", request.FridayHours);
+            yield return ("SaturdayHours", request.SaturdayHours);
+            yield return ("SundayHours", request.SundayHours);
+        }
+
+        // .Include(InnateActivity.Tasks) is required, not optional -- same class of bug as
+        // FindUserByUsername's WorkloadModelChanges include (see below): without it,
+        // project.InnateActivity.Tasks is null/empty after materialization even for a
+        // project that has tasks in the DB, so task-name matching would silently fail.
+        private static Project? FindProjectWithInnateActivity(PPMToolContext context, int projectId) =>
+            context.Projects
+                .Include(p => p.InnateActivity)
+                    .ThenInclude(a => a!.Tasks)
+                .FirstOrDefault(p => p.ProjectId == projectId);
 
         // ThenInclude(WorkloadModelChanges) is required, not optional -- AssignmentHelper.GetAssignmentChunks
         // (called via Project.UpdateProjectMetaData -> SubTask.UpdateSubTaskCosts -> Resource.UpdateResourceCosts)

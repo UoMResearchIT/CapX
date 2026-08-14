@@ -125,4 +125,56 @@ namespace PPMTool.API.DTOs
         int ResourcesCreated,
         int NotesCreated
     );
+
+    /// <summary>
+    /// Request body for POST /api/import/timesheet. One week's actual
+    /// hours for one person on one project, on a single InnateCodeTask
+    /// under that project's InnateActivity code (every Project imported
+    /// via POST /api/import/project auto-provisions one, matching the
+    /// pattern SeedHelper.EnsureInnateCodeExists already establishes --
+    /// see ImportService.Create). CapX computes a Project's actual hours
+    /// by querying Approved Timesheets linked through this InnateActivity
+    /// code (see AddTask.razor.cs), so this is the real, native path for
+    /// historical actuals -- not a bespoke side-channel field.
+    ///
+    /// Re-importing the same (Username, WeekStartDate, TaskName) is safe:
+    /// the existing entry's hours are overwritten, not accumulated, so a
+    /// repeated import doesn't double-count.
+    /// </summary>
+    /// <param name="Username">CapX Access Control username of an existing Person</param>
+    /// <param name="ProjectId">Must already have an InnateActivity code (see remarks)</param>
+    /// <param name="WeekStartDate">Must be a Monday -- CapX Timesheets are always Monday-start weeks</param>
+    /// <param name="TaskName">Must match one of the project's InnateActivity InnateCodeTask names (the default set is "Development", "Management", "Maintenance")</param>
+    /// <param name="MondayHours"></param>
+    /// <param name="TuesdayHours"></param>
+    /// <param name="WednesdayHours"></param>
+    /// <param name="ThursdayHours"></param>
+    /// <param name="FridayHours"></param>
+    /// <param name="SaturdayHours"></param>
+    /// <param name="SundayHours"></param>
+    public sealed record ImportTimesheetEntryDTO(
+        string Username,
+        int ProjectId,
+        DateTime WeekStartDate,
+        string TaskName,
+        double MondayHours,
+        double TuesdayHours,
+        double WednesdayHours,
+        double ThursdayHours,
+        double FridayHours,
+        double SaturdayHours,
+        double SundayHours
+    );
+
+    /// <summary>Response for a successful timesheet-entry import.</summary>
+    /// <param name="TimesheetId"></param>
+    /// <param name="TimesheetCreated">False if an existing Timesheet for this person/week was reused</param>
+    /// <param name="EntryCreated">False if an existing entry for this task was updated instead</param>
+    /// <param name="TotalHours">Sum of the week's hours for this entry</param>
+    public sealed record ImportTimesheetResponseDTO(
+        int TimesheetId,
+        bool TimesheetCreated,
+        bool EntryCreated,
+        double TotalHours
+    );
 }

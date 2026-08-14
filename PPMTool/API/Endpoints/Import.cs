@@ -104,6 +104,48 @@ public static class Import
     }
 
     /// <summary>
+    /// Create or update one week's actual hours for one person on one
+    /// project's InnateActivity task (see ImportTimesheetEntryDTO). See
+    /// UoMResearchIT/CapX#1310.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportTimesheetResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult CreateTimesheetEntry(
+        PPMToolContext context,
+        ImportService importService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] ImportTimesheetEntryDTO request)
+    {
+        try
+        {
+            var (allowed, caller, gateResult) = CheckGate(settingsService, http, logger, "CreateTimesheetEntry");
+            if (!allowed) return gateResult!;
+
+            var errors = importService.ValidateTimesheetEntry(context, request);
+            if (errors.Count > 0)
+            {
+                logger.LogWarning("API: Import: timesheet validation failed for '{Username}'/{ProjectId}/{Week}: {Errors}", request.Username, request.ProjectId, request.WeekStartDate, string.Join("; ", errors));
+                return Results.BadRequest(new ImportErrorDTO(errors));
+            }
+
+            var result = importService.CreateOrUpdateTimesheetEntry(context, request);
+            logger.LogInformation(
+                "API: Import: timesheet {TimesheetId} for {Username}, week {Week}, project {ProjectId}: {Hours}h ({Created}) by {User}",
+                result.TimesheetId, request.Username, request.WeekStartDate, result.TotalHours, result.EntryCreated ? "new entry" : "updated entry", caller!.Name);
+            return Results.Created($"/api/import/timesheet/{result.TimesheetId}", result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: Import error for timesheet '{Username}'/{ProjectId}/{Week}", request.Username, request.ProjectId, request.WeekStartDate);
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
     /// Shared gate for the import endpoints: ImportApiEnabled setting, then Superuser role.
     /// </summary>
     private static (bool allowed, User? caller, IResult? result) CheckGate(
