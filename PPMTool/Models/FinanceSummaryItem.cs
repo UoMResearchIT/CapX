@@ -76,6 +76,18 @@ namespace PPMTool.Models
 
         public double ActualHours { get; set; }
 
+        public double BudgetDirectCosts => Budget - BudgetIndirectCosts;
+
+        public double PlannedTechnicalCosts => GetTechPlannedCosts();
+
+        public double ActualTechnicalCosts => GetTechActualCosts();
+
+        public double FundsRequestedTotal => GetAllRequested();
+
+        public double FundsReceivedTotal => GetAllReceived();
+
+        public double FundsReceivedDI => GetReceivedDI();
+
         public string PlannedCostColour { get; }
 
         public string ActualCostColour { get; }

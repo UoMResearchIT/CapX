@@ -91,98 +91,58 @@ SPDX-License-Identifier: apache-2.0
                                     @(item.CostModel == CostModel.DayRate ? item.DayRate.ToString("C0") : "N/A")
                                 </Template>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="Budget" Title="Agreed Budget" Filterable="false" Width="14rem">
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="Budget" Title="Agreed Budget Total" FormatString="{0:C0}" />
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="BudgetDirectCosts" Title="Agreed Budget Directs" FormatString="{0:C0}">
                                 <Template Context="item">
-                                    @if (item.CostModel.HasIndirects())
-                                    {
-                                        <span>Total: @item.Budget.ToString("C0")</span>
-                                        <br />
-                                        <span>Directs: @((item.Budget - item.BudgetIndirectCosts).ToString("C0"))</span>
-                                        <br />
-                                        <span>Indirects: @item.BudgetIndirectCosts.ToString("C0")</span>
-                                    }
-                                    else
-                                    {
-                                        <span>@item.Budget.ToString("C0")</span>
-                                    }
+                                    @(item.CostModel.HasIndirects() ? item.BudgetDirectCosts.ToString("C0") : item.Budget.ToString("C0"))
                                 </Template>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="PlannedTotalCost" Title="Planned Cost" Filterable="false" Width="14rem">
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="BudgetIndirectCosts" Title="Agreed Budget Indirects" FormatString="{0:C0}">
                                 <Template Context="item">
-                                    @if (!item.CostModel.HasIndirects() && !item.CostModel.HasLeadership())
-                                    {
-                                        <span style="color:@item.PlannedCostColour">@item.PlannedTotalCost.ToString("C0")</span>
-                                    }
-                                    else
-                                    {
-                                        <span>Total: </span><span style="color:@item.PlannedCostColour">@item.PlannedTotalCost.ToString("C0")</span>
-                                        <br />
-                                        <span>Technical: @item.GetTechPlannedCosts().ToString("C0")</span>
-
-                                        @if (item.CostModel.HasLeadership())
-                                        {
-                                            <br />
-                                            <span>Leadership: @item.PlannedLeadershipCosts.ToString("C0")</span>
-                                        }
-
-                                        @if (item.CostModel.HasIndirects())
-                                        {
-                                            <br />
-                                            <span>Indirects: @item.PlannedIndirectCosts.ToString("C0")</span>
-                                        }
-                                    }
+                                    @(item.CostModel.HasIndirects() ? item.BudgetIndirectCosts.ToString("C0") : "N/A")
                                 </Template>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ActualTotalCost" Title="Actual Cost (Hours)" Filterable="false" Width="14rem">
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="PlannedTotalCost" Title="Planned Cost Total">
                                 <Template Context="item">
-                                    @if (!item.CostModel.HasIndirects() && !item.CostModel.HasLeadership())
-                                    {
-                                        <span style="color:@item.ActualCostColour">@item.ActualTotalCost.ToString("C0")</span>
-                                    }
-                                    else
-                                    {
-                                        <span>Total: </span><span style="color:@item.ActualCostColour">@item.ActualTotalCost.ToString("C0")</span>
-                                        <br />
-                                        <span>Technical: @item.GetTechActualCosts().ToString("C0")</span>
-
-                                        @if (item.CostModel.HasLeadership())
-                                        {
-                                            <br />
-                                            <span>Leadership: @item.ActualLeadershipCosts.ToString("C0")</span>
-                                        }
-
-                                        @if (item.CostModel.HasIndirects())
-                                        {
-                                            <br />
-                                            <span>Indirects: @item.ActualIndirectCosts.ToString("C0")</span>
-                                        }
-                                    }
-                                    <br />
-                                    <span>(Hours: @item.ActualHours.ToString("F2"))</span>
+                                    <span style="color:@item.PlannedCostColour">@item.PlannedTotalCost.ToString("C0")</span>
                                 </Template>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Title="Funds Requested" Filterable="false" Width="14rem">
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="PlannedTechnicalCosts" Title="Planned Cost Technical" FormatString="{0:C0}" />
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="PlannedLeadershipCosts" Title="Planned Cost Leadership" FormatString="{0:C0}" />
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="PlannedIndirectCosts" Title="Planned Cost Indirects" FormatString="{0:C0}" />
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ActualTotalCost" Title="Actual Cost Total">
                                 <Template Context="item">
-                                    <span>Total: </span><span style="color:@item.FundsRequestedColour">@item.GetAllRequested().ToString("C0")</span>
-                                    <br />
-                                    <span>DI: </span><span style="color:@item.FundsDIColour">@item.FundsDI.ToString("C0")</span>
-                                    <br />
-                                    <span>DA: @item.FundsDA.ToString("C0")</span>
-                                    <br />
-                                    <span>Other: @item.FundsRequestedOther.ToString("C0")</span>
+                                    <span style="color:@item.ActualCostColour">@item.ActualTotalCost.ToString("C0")</span>
                                 </Template>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Title="Funds Received" Filterable="false" Width="14rem">
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ActualTechnicalCosts" Title="Actual Cost Technical" FormatString="{0:C0}" />
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ActualLeadershipCosts" Title="Actual Cost Leadership" FormatString="{0:C0}" />
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ActualIndirectCosts" Title="Actual Cost Indirects" FormatString="{0:C0}" />
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ActualHours" Title="Actual Hours" FormatString="{0:F2}" />
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsRequestedTotal" Title="Funds Requested Total">
                                 <Template Context="item">
-                                    <span>Total: </span><span style="color:@item.FundsReceivedColour">@item.GetAllReceived().ToString("C0")</span>
-                                    <br />
-                                    <span>DI: </span><span style="color:@item.FundsDIColour">@item.GetReceivedDI().ToString("C0")</span>
-                                    <br />
-                                    <span>DA: @item.FundsDA.ToString("C0")</span>
-                                    <br />
-                                    <span>Other: @item.FundsReceivedOther.ToString("C0")</span>
+                                    <span style="color:@item.FundsRequestedColour">@item.FundsRequestedTotal.ToString("C0")</span>
                                 </Template>
                             </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsDI" Title="Funds Requested DI">
+                                <Template Context="item">
+                                    <span style="color:@item.FundsDIColour">@item.FundsDI.ToString("C0")</span>
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsDA" Title="Funds Requested DA" FormatString="{0:C0}" />
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsRequestedOther" Title="Funds Requested Other" FormatString="{0:C0}" />
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsReceivedTotal" Title="Funds Received Total">
+                                <Template Context="item">
+                                    <span style="color:@item.FundsReceivedColour">@item.FundsReceivedTotal.ToString("C0")</span>
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsReceivedDI" Title="Funds Received DI">
+                                <Template Context="item">
+                                    <span style="color:@item.FundsDIColour">@item.FundsReceivedDI.ToString("C0")</span>
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsDA" Title="Funds Received DA" FormatString="{0:C0}" />
+                            <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsReceivedOther" Title="Funds Received Other" FormatString="{0:C0}" />
                             <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ListOfFundingSources" Title="Funding Sources" Filterable="false" Width="12rem">
                                 <Template Context="item">
                                     @item.ListOfFundingSources
