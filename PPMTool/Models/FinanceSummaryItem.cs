@@ -76,11 +76,25 @@ namespace PPMTool.Models
 
         public double ActualHours { get; set; }
 
+        public double? DayRateForGrid => CostModel == CostModel.DayRate ? DayRate : null;
+
         public double BudgetDirectCosts => Budget - BudgetIndirectCosts;
+
+        public double? BudgetDirectCostsForGrid => CostModel.HasIndirects() ? BudgetDirectCosts : Budget;
+
+        public double? BudgetIndirectCostsForGrid => CostModel.HasIndirects() ? BudgetIndirectCosts : null;
 
         public double PlannedTechnicalCosts => GetTechPlannedCosts();
 
+        public double? PlannedLeadershipCostsForGrid => CostModel.HasLeadership() ? PlannedLeadershipCosts : null;
+
+        public double? PlannedIndirectCostsForGrid => CostModel.HasIndirects() ? PlannedIndirectCosts : null;
+
         public double ActualTechnicalCosts => GetTechActualCosts();
+
+        public double? ActualLeadershipCostsForGrid => CostModel.HasLeadership() ? ActualLeadershipCosts : null;
+
+        public double? ActualIndirectCostsForGrid => CostModel.HasIndirects() ? ActualIndirectCosts : null;
 
         public double FundsRequestedTotal => GetAllRequested();
 
