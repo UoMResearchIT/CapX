@@ -163,16 +163,6 @@ namespace PPMTool.Pages
                 projectsToDisplay = data.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
             }
 
-            // Load FundsReceived for displayed projects only (after filtering and paging)
-            var projectIds = projectsToDisplay.Select(p => p.ProjectId).ToList();
-            var fundsReceivedLookup = PaymentService.GetFundsReceivedForProjects(Context, projectIds);
-
-            // Populate FundsReceived from the lookup
-            foreach (var project in projectsToDisplay)
-            {
-                project.FundsReceived = fundsReceivedLookup.TryGetValue(project.ProjectId, out var funds) ? funds : 0;
-            }
-
             // Now assign to bound variable for display
             projects = projectsToDisplay;
 
