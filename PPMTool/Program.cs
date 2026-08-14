@@ -329,6 +329,7 @@ api.MapGet("/people/getAll", People.GetAllPeopleAsync);
 api.MapGet("/people/getById", People.GetPersonByIdAsync);
 api.MapPost("/import/faculty", Import.CreateFaculty);
 api.MapPost("/import/project", Import.CreateProject);
+api.MapPost("/import/timesheet", Import.CreateTimesheetEntry);
 
 // API middleware -- conditional on /api routes only
 app.UseWhen(
