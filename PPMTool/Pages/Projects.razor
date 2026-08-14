@@ -26,6 +26,10 @@ SPDX-License-Identifier: apache-2.0
                 <RadzenLabel Text="Include Finished" Style="margin-bottom: 0.1rem" Component="IncludeFinished" />
                 <RadzenSwitch @bind-Value="@IncludeFinished" Name="IncludeFinished"/>
                 <RadzenButton Text="Add" Icon="add" Click="@AddProject" Disabled="@(!EditAuthorised || Loading)" />
+                @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance))
+                {
+                    <RadzenButton Text="Finance Summary" Icon="payments" Click="@GoToFinanceSummary" Disabled="@(!EditAuthorised)" />
+                }
             </RadzenStack>
         </div>
     </div>

@@ -279,5 +279,13 @@ namespace PPMTool.Pages
         {
             Navigation.NavigateTo($"projects/addproject/-1");
         }
+
+        /// <summary>
+        /// Navigate to the finance summary page
+        /// </summary>
+        private void GoToFinanceSummary()
+        {
+            Navigation.NavigateTo($"managefinancialitems/summary");
+        }
     }
 }
