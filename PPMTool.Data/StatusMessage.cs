@@ -52,11 +52,11 @@ namespace PPMTool.Data
         }
 
         /// <summary>
-        /// Evaluate the condition to update the status
+        /// Evaluate the condition to update the status. If no condition, defaults to true.
         /// </summary>
         public void Update()
         {
-            Status = Condition != null ? Condition.Invoke() : false;
+            Status = Condition != null ? Condition.Invoke() : true;
         }
 
         /// <summary>

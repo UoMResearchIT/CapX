@@ -32,9 +32,12 @@ namespace PPMTool.Services.StatusEvaluators
                 x.Status &&
                 x.Type != StatusMessage.MessageType.Success))
             {
+                // Add message then call update to set status to true
+                var message = new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success);
+                message.Update();
                 return
                 [
-                    new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => true)
+                    message
                 ];
             }
 
