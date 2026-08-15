@@ -129,7 +129,7 @@ else
     /// <returns></returns>
     private MarkupString DefaultValue1Formatter(ChartItem item)
     {
-        return (MarkupString)$"<h3>{item?.Value1} FTE</h3>";
+        return (MarkupString)$"<h3>Assigned: {item?.Value1} FTE</h3>";
     }
 
     /// <summary>
@@ -139,6 +139,10 @@ else
     /// <returns></returns>
     private MarkupString DefaultValue2Formatter(ChartItem item)
     {
-        return (MarkupString)$"<h5>({item?.Value2} FTE Availability)</h5>";
+        var assigned = item?.Value1 ?? 0;
+        var workloadModel = item?.Value2 ?? 0;
+        var available = Math.Round(Math.Max(workloadModel - assigned, 0), 3);
+
+        return (MarkupString)$"<p class=\"h4\">Available: {available} FTE</p><p class=\"me-1\">(Workload Model: {workloadModel} FTE)<span>";
     }
 }
