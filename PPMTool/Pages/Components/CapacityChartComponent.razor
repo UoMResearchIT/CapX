@@ -8,7 +8,6 @@ SPDX-License-Identifier: apache-2.0
 @using System.Diagnostics
 @using ApexCharts
 @using static PPMTool.Pages.BaseCapacityPage
-@using static PPMTool.Pages.Capacity
 
 @if ((confirmedChartItems?.Count() ?? 0) == 0 && (provisionalChartItems?.Count() ?? 0) == 0)
 {
@@ -59,7 +58,7 @@ else
                         </span>
                         <span class="me-1">
                             @((point.Y?.Max() is decimal d2 && d2 > 0 && d2 < DateTimeOffset.MaxValue.ToUnixTimeMilliseconds()
-                                ? DateTimeOffset.FromUnixTimeMilliseconds((long)d2).ToString("dd MMM yyyy")
+                                ? DateTimeOffset.FromUnixTimeMilliseconds((long)d2).AddDays(-1).ToString("dd MMM yyyy")
                                 : ""))
                         </span>
 
