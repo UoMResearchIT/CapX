@@ -5,6 +5,7 @@ SPDX-License-Identifier: apache-2.0
 *@
 
 @using PPMTool.Models
+@using PPMTool.Helpers
 @using System.Diagnostics
 @using ApexCharts
 @using static PPMTool.Pages.BaseCapacityPage
@@ -52,14 +53,10 @@ else
                         @Value2TooltipFormatter(point.Items.FirstOrDefault())
 
                         <span class="me-1">
-                            @((point.Y?.Min() is decimal d1 && d1 > 0 && d1 < DateTimeOffset.MaxValue.ToUnixTimeMilliseconds()
-                                ? $"{DateTimeOffset.FromUnixTimeMilliseconds((long)d1).ToString("dd MMM yyyy")} - "
-                                : "Add tasks to define dates"))
+                            @ChartHelper.FormatTooltipRangeStart(point.Y?.Min())
                         </span>
                         <span class="me-1">
-                            @((point.Y?.Max() is decimal d2 && d2 > 0 && d2 < DateTimeOffset.MaxValue.ToUnixTimeMilliseconds()
-                                ? DateTimeOffset.FromUnixTimeMilliseconds((long)d2).AddDays(-1).ToString("dd MMM yyyy")
-                                : ""))
+                            @ChartHelper.FormatTooltipRangeEnd(point.Y?.Max())
                         </span>
 
                     </div>
