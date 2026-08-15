@@ -24,11 +24,11 @@ namespace PPMTool.API.DTOs
         string Name,
         string PrincipalInvestigator,
         int? ProjectManagerId,
-        string? ProjectManagerName,
-        string? TimesheetActivityCode,
-        string? TimesheetActivityName,
+        string ProjectManagerName,
+        string TimesheetActivityCode,
+        string TimesheetActivityName,
         string RequestDocLink,
-        string? ScrumProjectLink,
+        string ScrumProjectLink,
         string ProjectStatus
     );
 }

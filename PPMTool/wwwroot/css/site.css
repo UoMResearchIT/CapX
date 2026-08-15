@@ -434,3 +434,26 @@ span.mention {
     width: 5rem;
     justify-self: center;
 }
+
+/* Hide paging details & summary in datagrid header 
+   and the paging count dropdown and label in the footer */
+.rz-has-pager .rz-pager:first-of-type:not(:only-of-type) .rz-pager-pages,
+.rz-has-pager .rz-pager:first-of-type:not(:only-of-type) .rz-pager-summary,
+.rz-has-pager .rz-pager:last-of-type:not(:only-of-type) .rz-dropdown,
+.rz-has-pager .rz-pager:last-of-type:not(:only-of-type) .rz-pagesize-text {
+    display: none;
+}
+
+/* Styling for the header and footer */
+.rz-has-pager nav {
+    padding: 0.8rem;
+    justify-content: end;
+}
+
+/* Make the dropdown wide enough to show the 100 pagination option */
+.rz-pager .rz-dropdown {
+    width: fit-content;
+}
+
+
+

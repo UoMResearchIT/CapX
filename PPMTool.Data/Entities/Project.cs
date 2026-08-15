@@ -145,6 +145,47 @@ namespace PPMTool.Data.Entities
         public double FundsReceived { get; set; }
 
         /// <summary>
+        /// Checks whether any funding sources are not linked to any resources in the subtasks
+        /// </summary>
+        /// <returns></returns>
+        public bool HasFundingSourcesNotLinkedToResources()
+        {
+            // If no tasks or no resources then return false
+            if (SubTasks == null || SubTasks?.Count == 0) return false;
+            if (SubTasks?.All(x => x.AssignedResources == null || x.AssignedResources?.Count == 0) ?? true) return false;
+
+            // Get the funding source IDs from the project by flattening to a list or returning an empty list
+            // if there are no funding sources associated with the project at all
+            var fundingSourceIds =
+                FundingSources?
+                .Select(x => x.FundingSourceId)
+                .ToList() ?? new List<int>();
+
+            // Get the funding source IDs that are linked to assigned resources
+            var resourceFundingSourceIds =
+                SubTasks?.
+                SelectMany(t =>
+                {
+                    // Take the funding sources linked to resources and flatten
+                    return t.AssignedResources?
+
+                        // If there is a an assigned resource with no linked funding source then
+                        // use 0 as the funding source ID which will not match any real funding
+                        // source ID and will be ignored in the comparison later.
+                        .Select(r => r.FundedFrom?.FundingSourceId ?? 0)
+
+                        // If no assigned resources then return an empty list for this sub task
+                        ?? new List<int>();
+                })
+
+                // If no sub tasks then return empty list
+                .ToList() ?? new List<int>();
+
+            // Check whether there are any funding source IDs that are not linked to resources
+            return fundingSourceIds.Except(resourceFundingSourceIds).Any();
+        }
+
+        /// <summary>
         /// Whether the project uses the day rate model and has a DI funding source
         /// </summary>
         /// <returns></returns>

@@ -42,7 +42,11 @@ namespace PPMTool.Pages
             LogInformation($"Viewing management capacity page");
         }
 
-        protected override string GetSessionStorageTag() => "management-capacity";
+        /// <summary>
+        /// Override to provide a unique tag for session storage for this page.
+        /// </summary>
+        /// <returns></returns>
+        protected override string GetStorageTag() => "management-capacity";
 
         /// <summary>
         /// Only called in person mode per person to generate chart items. Assumed assignments only contain projects that are owned by this person.

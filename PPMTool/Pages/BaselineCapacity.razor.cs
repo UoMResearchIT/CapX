@@ -56,7 +56,7 @@ namespace PPMTool.Pages
             LogInformation($"Viewing baseline capacity page");
         }
 
-        protected override string GetSessionStorageTag() => "baseline";
+        protected override string GetStorageTag() => "baseline";
 
         /// <summary>
         /// Only called in person mode per person to generate chart items

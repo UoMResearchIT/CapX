@@ -4,7 +4,6 @@
 
 using System.Diagnostics;
 using ApexCharts;
-using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Data;
@@ -42,9 +41,6 @@ namespace PPMTool.Pages
         [Inject]
         protected IJSRuntime JSRuntime { get; set; }
 
-        [Inject]
-        protected ISessionStorageService SessionStorage { get; set; }
-
         [Parameter]
         [SupplyParameterFromQuery(Name = "filterid")]
         public int? FilterPersonId { get; set; }
@@ -76,7 +72,7 @@ namespace PPMTool.Pages
         protected async Task UnFundedSwitchChangedAsync(bool value)
         {
             includeUnFunded = value;
-            await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-unfunded", value);
+            await SessionStorage.SetItemAsync<bool?>($"{GetStorageTag()}-include-unfunded", value);
         }
 
         /// <summary>
@@ -85,7 +81,7 @@ namespace PPMTool.Pages
         protected async Task LeaversSwitchChangedAsync(bool value)
         {
             includeLeavers = value;
-            await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-leavers", value);
+            await SessionStorage.SetItemAsync<bool?>($"{GetStorageTag()}-include-leavers", value);
             await ReloadDropDownSourcesAsync();
         }
 
@@ -95,13 +91,13 @@ namespace PPMTool.Pages
         protected async Task FinishedSwitchChangedAsync(bool value)
         {
             includeFinished = value;
-            await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished", value);
+            await SessionStorage.SetItemAsync<bool?>($"{GetStorageTag()}-include-finished", value);
         }
 
         /// <summary>
         /// Save the chosen people to session storage
         /// </summary>
-        protected async Task SavePeopleStateAsync() => await SessionStorage.SetItemAsync($"{GetSessionStorageTag()}-chosen-people", chosenPeople);
+        protected async Task SavePeopleStateAsync() => await SessionStorage.SetItemAsync($"{GetStorageTag()}-chosen-people", chosenPeople);
 
         /// <summary>
         /// Fire and forget when selection of the multi-select people down changes
@@ -512,12 +508,6 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Method to get a unique session storage tag for the page
-        /// </summary>
-        /// <returns></returns>
-        protected abstract string GetSessionStorageTag();
-
-        /// <summary>
         /// Get managers from a list of people
         /// </summary>
         /// <param name="people"></param>
@@ -605,7 +595,7 @@ namespace PPMTool.Pages
             // Load dropdown sources
             await ReloadDropDownSourcesAsync();
 
-            chosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>($"{GetSessionStorageTag()}-chosen-people");
+            chosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>($"{GetStorageTag()}-chosen-people");
             Debug.WriteLine($"** From session storage: {(chosenPeople != null ? string.Join('|', chosenPeople) : "")}");
 
             // If there is a query parameter then use it
@@ -622,17 +612,17 @@ namespace PPMTool.Pages
             }
 
             // Check that the boolean flags are not null (i.e. that they exist in session storage) before overwriting defaults
-            var temp = await SessionStorage.GetItemAsync<bool?>($"{GetSessionStorageTag()}-include-leavers");
+            var temp = await SessionStorage.GetItemAsync<bool?>($"{GetStorageTag()}-include-leavers");
             if (temp != null)
             {
                 includeLeavers = temp ?? false;
             }
-            temp = await SessionStorage.GetItemAsync<bool?>($"{GetSessionStorageTag()}-include-unfunded");
+            temp = await SessionStorage.GetItemAsync<bool?>($"{GetStorageTag()}-include-unfunded");
             if (temp != null)
             {
                 includeUnFunded = temp ?? false;
             }
-            temp = await SessionStorage.GetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished");
+            temp = await SessionStorage.GetItemAsync<bool?>($"{GetStorageTag()}-include-finished");
             if (temp != null)
             {
                 includeFinished = temp ?? false;

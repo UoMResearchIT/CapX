@@ -30,16 +30,17 @@ SPDX-License-Identifier: apache-2.0
                             <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || !EditAuthorised) />
                         </div>
                     </div>
-                    <RadzenDataGrid @ref="dataGrid"
-                                    AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
-                                    AllowSorting="true"
-                                    EditMode="DataGridEditMode.Single"
-                                    FilterMode="FilterMode.Simple"
-                                    Data="@dataGridEntities"
-                                    TItem="Absence"
-                                    RowUpdate="@OnUpdateRow"
-                                    RowCreate="@OnCreateRow"
-                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                    <DataGridWithPaging @ref="dataGrid"
+                                        PagingPage="@this"
+                                        AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
+                                        AllowSorting="true"
+                                        EditMode="DataGridEditMode.Single"
+                                        FilterMode="FilterMode.Simple"
+                                        Data="@dataGridEntities"
+                                        TItem="Absence"
+                                        RowUpdate="@OnUpdateRow"
+                                        RowCreate="@OnCreateRow"
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
                         <Columns>
                             <RadzenDataGridColumn TItem="Absence" Filterable="false" Property="Person.Name" Title="Person" Width="200px" MinWidth="10px">
                             </RadzenDataGridColumn>
@@ -71,7 +72,7 @@ SPDX-License-Identifier: apache-2.0
                                 </EditTemplate>
                             </RadzenDataGridColumn>
                         </Columns>
-                    </RadzenDataGrid>
+                    </DataGridWithPaging>
                 </EditForm>
             </RadzenCard>
         }

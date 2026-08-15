@@ -25,7 +25,6 @@ namespace PPMTool.Pages
         private IEnumerable<Project> projects;
         private RadzenDataGrid<Project> dataGrid;
         private int count;
-        private int pageCount = 15;
 
         private bool includeFinished;
         public bool IncludeFinished
@@ -67,6 +66,8 @@ namespace PPMTool.Pages
         // Expression for sorting by cost model display order
         private Expression<Func<Project, int>> costModelSortKey;
 
+        protected override string GetStorageTag() => "projects";
+
         protected override void OnInitialized()
         {
             base.OnInitialized();
@@ -74,13 +75,14 @@ namespace PPMTool.Pages
             // Initialise the sort key expression for the data grid sort
             costModelSortKey = DisplayOrderHelper.CreateOrderAttributeSortingExpression<Project, CostModel>(p => p.CostModel);
 
-            Loading = true;
-            EnqueueLoadData(() => GetLoadTask());
             LogInformation("Viewing project grid");
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
+            // Ensure base class OnAfterRenderAsync runs so BasePage can perform its first-render work
+            await base.OnAfterRenderAsync(firstRender);
+
             // Load settings the first time
             if (firstRender)
             {
@@ -96,31 +98,34 @@ namespace PPMTool.Pages
 
                 // Get switch setting
                 includeFinished = await SessionStorage.GetItemAsync<bool>("project-show-active");
+
+                // Load the project data
+                await LoadProjectsAsync();
             }
         }
 
         /// <summary>
-        /// Gets the task responsible for loading the data
+        /// Wrapper for loading the data
         /// </summary>
         /// <returns></returns>
-        private Task GetLoadTask(LoadDataArgs args = null)
+        private async Task LoadProjectsAsync()
         {
-            return Task.Run(() =>
-            {
-                // Get people from the database
-                OnLoadData(args ?? new LoadDataArgs());
-            })
-                .ContinueWith(t =>
-                {
-                    InvokeAsync(() =>
-                    {
-                        Loading = false;
-                        StateHasChanged();
-                    });
-                });
+            Loading = true;
+            StateHasChanged();
+            await Task.Yield();
+
+            Debug.WriteLine("** [Projects] Loading Data...");
+            LoadData(new LoadDataArgs());
+
+            Loading = false;
+            StateHasChanged();
         }
 
-        private void OnLoadData(LoadDataArgs args)
+        /// <summary>
+        /// Loads the project data for the grid, applying filtering and sorting as specified in the LoadDataArgs.
+        /// </summary>
+        /// <param name="args"></param>
+        private void LoadData(LoadDataArgs args)
         {
             Debug.WriteLine($"** Loading data...");
 
@@ -151,7 +156,7 @@ namespace PPMTool.Pages
             List<Project> projectsToDisplay;
             if (args.Skip == null)
             {
-                projectsToDisplay = data.Take(pageCount).ToList();
+                projectsToDisplay = data.Take(PageCount).ToList();
             }
             else
             {

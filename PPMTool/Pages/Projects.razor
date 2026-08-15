@@ -41,22 +41,20 @@ SPDX-License-Identifier: apache-2.0
         }
         else
         {
-            <RadzenDataGrid AllowFiltering="true"
-                            AllowColumnResize="true"
-                            AllowSorting="true"
-                            FilterMode="FilterMode.Simple"
-                            PageSize="@pageCount"
-                            Count="@count"
-                            AllowPaging="true"
-                            ShowPagingSummary="true"
-                            Data="@projects"
-                            TItem="Project"
-                            ColumnWidth="8rem"
-                            SelectionMode="DataGridSelectionMode.Single"
-                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                            @bind-Settings="@Settings"
-                            @ref="dataGrid"
-                            LoadData="@OnLoadData">
+            <DataGridWithPaging AllowFiltering="true"
+                                AllowColumnResize="true"
+                                AllowSorting="true"
+                                FilterMode="FilterMode.Simple"
+                                Count="@count" 
+                                Data="@projects"
+                                TItem="Project"
+                                ColumnWidth="8rem"
+                                SelectionMode="DataGridSelectionMode.Single"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                PagingPage="@this"
+                                @bind-Settings="@Settings"
+                                @ref="dataGrid"
+                                LoadData="@LoadData">
                 <Columns>
                     <RadzenDataGridColumn TItem="Project" Property="RTP" Title="@($"{GetSetting(SettingType.ProjectAbbreviation)}")" Frozen="true" Width="7rem" MinWidth="10px" FilterMode="FilterMode.SimpleWithMenu" />
                     <RadzenDataGridColumn TItem="Project" Property="Name" Title="Name" Frozen="true" Width="15rem" MinWidth="10px" />
@@ -175,7 +173,7 @@ SPDX-License-Identifier: apache-2.0
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>
-            </RadzenDataGrid>
+            </DataGridWithPaging>
         }
     </RadzenCard>
 </div>

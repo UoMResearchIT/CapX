@@ -71,14 +71,17 @@ SPDX-License-Identifier: apache-2.0
                 <HintComponent Message="If your chosen cost model includes leadership then a leadership resource is displayed. It cannot be deleted." />
                 @foreach (var resource in models)
                 {
-                    if (ShouldIncludeResource(resource))
+                    // Allow resources to be deleted if there are more than a single one (non leadership)
+                    bool CanDeleteResource = models.Where(x => x.Key != "Leadership").Count() > 1;
+
+                    if (ShouldIncludeResource(resource) )
                     {
                         <div class="row">
                             <div class="col">
                                 <h3>@resource.Key</h3>
                             </div>
                             <div class="col-auto">
-                                <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteResource(resource.Key))" Disabled="@(resource.Key == "Leadership")" />
+                                <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteResource(resource.Key))" Disabled="@(resource.Key == "Leadership" || !CanDeleteResource)" />
                             </div>
                         </div>
                         <TaskConfigurationComponent Context=Context
@@ -91,5 +94,4 @@ SPDX-License-Identifier: apache-2.0
             </RadzenCard>
         }
     </div>
-
 </FeatureCheckComponent>
