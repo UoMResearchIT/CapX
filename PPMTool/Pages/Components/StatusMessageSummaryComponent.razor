@@ -13,7 +13,7 @@ SPDX-License-Identifier: apache-2.0
     <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.1rem" class="align-self-start">
         @foreach (var message in activeMessages)
         {
-            <StatusMessageComponent Message=message />
+            <StatusMessageComponent Message=@message />
         }
     </RadzenStack>
 }
@@ -33,9 +33,15 @@ else
     [Parameter]
     public IReadOnlyList<StatusMessage> Messages { get; set; }
 
+    /// <summary>
+    /// Determines whether to show the status messages or just the icons. Default is true.
+    /// </summary>
     [Parameter]
     public bool ShowMessages { get; set; } = true;
 
+    /// <summary>
+    /// If false (default), only show status messages that are active (Status = true). If true, show all status messages regardless of their status.
+    /// </summary>
     [Parameter]
     public bool IgnoreStatus { get; set; } = false;
 }
