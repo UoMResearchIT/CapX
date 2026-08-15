@@ -37,7 +37,7 @@ SPDX-License-Identifier: apache-2.0
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="GSS.Authentication.CAS.AspNetCore" Version="5.7.0" />
+    <PackageReference Include="GSS.Authentication.CAS.AspNetCore" Version="5.8.0" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
     <PackageReference Include="Lorem.Universal.NET" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.10" />
