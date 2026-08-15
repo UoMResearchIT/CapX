@@ -17,6 +17,7 @@ namespace PPMTool.Data.Enums
         /// A new request that is being discussed and written up and has not had its scope confirmed by the customer yet
         /// </summary>
         [Description("New Request")]
+        [BadgeStyle(BadgeStyle.Primary)]
         NewRequest,
 
         /// <summary>
@@ -51,6 +52,7 @@ namespace PPMTool.Data.Enums
         /// <summary>
         /// Project is in maintenance phase and not under active development but still requires RSE effort
         /// </summary>
+        [BadgeStyle(BadgeStyle.Warning)]
         Maintenance,
 
         /// <summary>
