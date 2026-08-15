@@ -366,11 +366,11 @@ SPDX-License-Identifier: apache-2.0
 
                                             if (financeEnabled)
                                             {
-                                                    if (project.CostModel.HasIndirects())
-                                                    {
-                                                        label += $" ({Math.Round(x.BilledFTE, 3)})";
-                                                    }
+                                                if (project.CostModel.HasIndirects())
+                                                {
+                                                    label += $" ({Math.Round(x.BilledFTE, 3)})";
                                                 }
+                                            }
 
                                             label += "]";
                                             return label;
