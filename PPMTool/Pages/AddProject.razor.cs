@@ -204,8 +204,17 @@ namespace PPMTool.Pages
             // If the PM is not null and is not the current user then warn of loss of access if not superuser
             if (pm != null && pm.PersonId != ActiveUser?.Person?.PersonId && ActiveUser.RoleType != RoleType.Superuser)
             {
-                DialogService.Alert("By changing the project manager of this project to someone other than you, you will lose edit access to the project on saving.", "Warning!", new AlertOptions() { OkButtonText = "OK" });
+                DialogService.Alert("By changing the project manager of this project to someone other than you, you may lose edit access to the project on saving.", "Warning!", new AlertOptions() { OkButtonText = "OK" });
             }
+        }
+
+        /// <summary>
+        /// Callback after request owner is chosen in the dropdown
+        /// </summary>
+        /// <param name="value"></param>
+        private void OnRequestOwnerChosen(object value)
+        {
+            Debug.WriteLine($"** {value}");
         }
 
         /// <summary>
@@ -231,6 +240,8 @@ namespace PPMTool.Pages
                         UpdateErrorOnActionBarFromContextMessageStore();
                         return;
                     }
+
+                    // TODO: Add prompt here for changing the request status
 
                     // Update the project summary values
                     var finrefs = FinancialReferenceService.GetAllOrDefault(Context);
