@@ -88,8 +88,8 @@ namespace PPMTool.Pages
                 // Get funds received
                 fundsReceived = PaymentService.GetFundsReceived(Context, projectModel?.ProjectId ?? 0);
 
-                // If editing a project, only allow the project manager to edit it or a superuser
-                EditAuthorised = ActiveUserRoleType == RoleType.Superuser || projectModel.ProjectManager.PersonId == ActiveUser?.Person?.PersonId;
+                // If editing a project, there is specific logic to follow
+                EditAuthorised = projectModel?.ActiveUserHasEditAccessToProject(ActiveUser) ?? false;
 
                 // Populate school list
                 schools = SchoolService.GetSchoolsForFaculty(Context, projectModel.School.Faculty.FacultyId);
@@ -199,22 +199,34 @@ namespace PPMTool.Pages
         /// <param name="value"></param>
         private void OnProjectManagerChosen(object value)
         {
+            // Convert the value to the person chosen
             Person pm = value as Person;
 
-            // If the PM is not null and is not the current user then warn of loss of access if not superuser
-            if (pm != null && pm.PersonId != ActiveUser?.Person?.PersonId && ActiveUser.RoleType != RoleType.Superuser)
-            {
-                DialogService.Alert("By changing the project manager of this project to someone other than you, you may lose edit access to the project on saving.", "Warning!", new AlertOptions() { OkButtonText = "OK" });
-            }
+            // Present warning dialog if necessary
+            PresentDialogForAccessLoss(pm?.PersonId ?? 0, projectModel.RequestOwnerId);
         }
 
         /// <summary>
         /// Callback after request owner is chosen in the dropdown
         /// </summary>
         /// <param name="value"></param>
-        private void OnRequestOwnerChosen(object value)
+        private void OnRequestOwnerChosen(int value)
         {
-            Debug.WriteLine($"** {value}");
+            PresentDialogForAccessLoss(projectModel.ProjectManager?.PersonId ?? 0, value);
+        }
+
+        /// <summary>
+        /// Method to present a dialog to the user on access loss if necessary.
+        /// </summary>
+        /// <param name="projectManagerId"></param>
+        /// <param name="requestOwnerId"></param>
+        private void PresentDialogForAccessLoss(int projectManagerId, int requestOwnerId)
+        {
+            // Check edit access
+            if (!projectModel.ActiveUserHasEditAccessToProject(ActiveUser, projectManagerId, requestOwnerId))
+            {
+                DialogService.Alert("Based on the project manager, request owner, project status and your role, you will lose edit access to the project if you save your changes.", "Warning!", new AlertOptions() { OkButtonText = "OK" });
+            }
         }
 
         /// <summary>

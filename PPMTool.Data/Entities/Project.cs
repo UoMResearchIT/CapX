@@ -162,6 +162,52 @@ namespace PPMTool.Data.Entities
         public double FundsReceived { get; set; }
 
         /// <summary>
+        /// Method to determine whether the active user can edit this project based on its configuration or the configuration of dependent parameters.
+        /// Allowed to edit if they are the PM, a superuser, or the request owner and the project is in the new request state.
+        /// This assesses the state of the project model unless arguments specifically passed to speculatively assess access.
+        /// </summary>
+        /// <param name="activeUser"></param>
+        /// <param name="projectManagerId"></param>
+        /// <param name="requestOwnerId"></param>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public bool ActiveUserHasEditAccessToProject(User? activeUser, int? projectManagerId = null, int? requestOwnerId = null, ProjectStatus? status = null)
+        {
+            // If no user then false
+            if (activeUser == null)
+            {
+                return false;
+            }
+
+            // If no PM provided then read from the model
+            if (projectManagerId == null)
+            {
+                projectManagerId = ProjectManager?.PersonId;
+            }
+
+            // If no request owner provided then read from model and retrieve from DB
+            if (requestOwnerId == null)
+            {
+                requestOwnerId = RequestOwnerId;
+            }
+
+            // If no status provided then read from model
+            if (status == null)
+            {
+                status = ProjectStatus;
+            }
+
+            // Active user id for comparison
+            var activeUserId = activeUser?.Person?.PersonId;
+
+            // Run the conditions
+            return
+                activeUser!.RoleType == RoleType.Superuser ||
+                projectManagerId != null && projectManagerId == activeUserId ||
+                requestOwnerId != null && status == ProjectStatus.NewRequest && requestOwnerId == activeUserId;
+        }
+
+        /// <summary>
         /// Checks whether any funding sources are not linked to any resources in the subtasks
         /// </summary>
         /// <returns></returns>
