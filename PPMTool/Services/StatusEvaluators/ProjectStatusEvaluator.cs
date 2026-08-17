@@ -17,7 +17,7 @@ namespace PPMTool.Services.StatusEvaluators
             this.settingsService = settingsService;
         }
 
-        protected override IReadOnlyList<StatusMessage> BuildCoreStatusMessages(Project project)
+        protected override IReadOnlyList<StatusMessage> BuildCoreStatusMessages(Project project, int? messageViewerPersonId = null)
         {
             // Build messages that apply to all projects
             var messages = new List<StatusMessage>
@@ -25,7 +25,8 @@ namespace PPMTool.Services.StatusEvaluators
                 // Info
                 new StatusMessage("A task in this project will start soon.", StatusMessage.MessageType.Info, () => project.SubTasks?.Any(x => x.WillStartWithinAMonth()) ?? false),
                 new StatusMessage("A task in this project has recently started.", StatusMessage.MessageType.Info, () => project.SubTasks?.Any(x => x.HasStartedInTheLastWeek()) ?? false),
-                new StatusMessage("A task in this project has absent resources and has started or will start soon!", StatusMessage.MessageType.Info, () => project.SubTasks?.Any(x => x.HasAbsentResourcesAndStartsWithinAWeek()) ?? false, FeatureType.Absences),
+                new StatusMessage("A task in this project has absent resources and has started or will start soon.", StatusMessage.MessageType.Info, () => project.SubTasks?.Any(x => x.HasAbsentResourcesAndStartsWithinAWeek()) ?? false, FeatureType.Absences),
+                new StatusMessage($"This request is owned by {project.RequestOwner?.Name}.", StatusMessage.MessageType.Info, () => project.ShowRequestOwnerMessage(messageViewerPersonId ?? 0)),
 
                 // Warnings
                 // TODO: Approach SLA breach

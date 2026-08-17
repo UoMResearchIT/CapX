@@ -51,7 +51,8 @@ SPDX-License-Identifier: apache-2.0
                                                DueNoteCount="@(projectAndNotes.Value.Where(x => x.IsDue()).Count())"
                                                NextDueDate="@(projectAndNotes.Value.Where(x => x.DueDate != null && !x.IsCompleted()).OrderBy(x => x.DueDate).FirstOrDefault()?.DueDate)"
                                                DueButtonClicked="DueButtonClicked"
-                                               ShowTooltip="@((elem, text) => ShowTooltip(elem, text))" />
+                                               ShowTooltip="@((elem, text) => ShowTooltip(elem, text))"
+                                               ViewerPersonId="@personIdToMatch" />
                 }
             </RadzenStack>
         }

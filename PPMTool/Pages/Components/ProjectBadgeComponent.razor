@@ -6,9 +6,9 @@ SPDX-License-Identifier: apache-2.0
 
 @using PPMTool.Data.Enums
 
-<RadzenBadge BadgeStyle="@(ProjectStatus.GetBadgeStyle())"
-             Text="@ProjectStatus.ToNiceString()" 
-             Style="padding: 4px 10px;"/>
+<RadzenBadge class="padded-badge"
+             BadgeStyle="@(ProjectStatus.GetBadgeStyle())"
+             Text="@ProjectStatus.ToNiceString()" />
 
 @code {
     [Parameter]

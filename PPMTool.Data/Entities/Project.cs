@@ -531,5 +531,16 @@ namespace PPMTool.Data.Entities
         {
             return $"Project {RTP} | {Name}";
         }
+
+        /// <summary>
+        /// Whether the request owner message should be shown on the my project card.
+        /// Depends on the status of the project and who is viewing the message.
+        /// </summary>
+        /// <param name="messageViewerPersonId">The person Id of the viewer of the message</param>
+        /// <returns></returns>
+        public bool ShowRequestOwnerMessage(int messageViewerPersonId)
+        {
+            return RequestOwnerId != ProjectManager?.PersonId && messageViewerPersonId != RequestOwnerId && ProjectStatus == ProjectStatus.NewRequest;
+        }
     }
 }

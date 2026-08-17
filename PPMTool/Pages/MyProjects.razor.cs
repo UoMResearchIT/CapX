@@ -41,6 +41,8 @@ namespace PPMTool.Pages
             }
         }
 
+        private int? personIdToMatch;
+
         [Parameter]
         [SupplyParameterFromQuery(Name = "pm")]
         public string ProjectManagerShortName { get; set; }
@@ -50,7 +52,7 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
-
+            personIdToMatch = ActiveUser?.Person?.PersonId;
             LogInformation("Viewing my projects");
         }
 
@@ -110,8 +112,8 @@ namespace PPMTool.Pages
                 return false;
             }
 
-            // PersonId to match to
-            var personIdToMatch = ActiveUser.Person.PersonId;
+            // PersonId to match to, start by resetting to default
+            personIdToMatch = ActiveUser.Person.PersonId;
             if (shortName != null)
             {
                 // If there is no matching user then set to zero so comparison will fail anyway
