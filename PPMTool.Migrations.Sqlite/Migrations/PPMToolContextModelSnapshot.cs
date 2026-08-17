@@ -610,6 +610,8 @@ namespace PPMTool.Migrations.Sqlite.Migrations
 
                     b.HasIndex("ProjectManagerPersonId");
 
+                    b.HasIndex("RequestOwnerId");
+
                     b.HasIndex("SchoolId");
 
                     b.ToTable("Projects");
@@ -1178,6 +1180,12 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                         .WithMany("ManagedProjects")
                         .HasForeignKey("ProjectManagerPersonId");
 
+                    b.HasOne("PPMTool.Data.Entities.Person", "RequestOwner")
+                        .WithMany("RequestedOwnerProjects")
+                        .HasForeignKey("RequestOwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("PPMTool.Data.Entities.School", "School")
                         .WithMany()
                         .HasForeignKey("SchoolId")
@@ -1187,6 +1195,8 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                     b.Navigation("InnateActivity");
 
                     b.Navigation("ProjectManager");
+
+                    b.Navigation("RequestOwner");
 
                     b.Navigation("School");
                 });
@@ -1368,6 +1378,8 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                     b.Navigation("OwnedSkills");
 
                     b.Navigation("PeopleManaged");
+
+                    b.Navigation("RequestedOwnerProjects");
 
                     b.Navigation("Timesheets");
 

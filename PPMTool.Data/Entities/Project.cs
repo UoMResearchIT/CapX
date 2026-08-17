@@ -139,6 +139,12 @@ namespace PPMTool.Data.Entities
         public int RequestOwnerId { get; set; }
 
         /// <summary>
+        /// Navigation property for the person who created the project request
+        /// </summary>
+        [InverseProperty("RequestedOwnerProjects")]
+        public Person RequestOwner { get; set; } = null!;
+
+        /// <summary>
         /// List of Invoices associated with this project
         /// </summary>
         public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();

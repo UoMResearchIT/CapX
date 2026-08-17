@@ -112,6 +112,12 @@ namespace PPMTool.Data.Entities
         public virtual ICollection<Person> PeopleManaged { get; set; } = new List<Person>();
 
         /// <summary>
+        /// Collection of projects this person was the request owner for
+        /// </summary>
+        [InverseProperty("RequestOwner")]
+        public virtual ICollection<Project> RequestedOwnerProjects { get; set; } = new List<Project>();
+
+        /// <summary>
         /// Checks whether this person is currently absent.
         /// </summary>
         /// <returns></returns>
