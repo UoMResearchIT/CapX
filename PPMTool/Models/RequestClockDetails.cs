@@ -40,5 +40,23 @@ namespace PPMTool.Models
         public string ClockColour { get; }
         public string BorderClass { get; }
         public ProgressBarStyle ProgressBarStyle { get; }
+
+        /// <summary>
+        /// Whether or not the request duration should cause an error
+        /// </summary>
+        /// <returns></returns>
+        internal bool ShouldError()
+        {
+            return ClockPercentage >= 100;
+        }
+
+        /// <summary>
+        /// Whether or not the request duration should cause a warning
+        /// </summary>
+        /// <returns></returns>
+        internal bool ShouldWarn()
+        {
+            return ClockPercentage >= 80 && ClockPercentage < 100;
+        }
     }
 }

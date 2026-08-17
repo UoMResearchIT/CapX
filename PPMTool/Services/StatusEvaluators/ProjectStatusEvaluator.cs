@@ -11,10 +11,15 @@ namespace PPMTool.Services.StatusEvaluators
     public sealed class ProjectStatusEvaluator : BaseStatusEvaluatorService<Project>
     {
         private readonly SettingsService settingsService;
+        private readonly ProjectService projectService;
 
-        public ProjectStatusEvaluator(SettingsService settingsService)
+        public ProjectStatusEvaluator(
+            SettingsService settingsService,
+            ProjectService projectService
+        )
         {
             this.settingsService = settingsService;
+            this.projectService = projectService;
         }
 
         protected override IReadOnlyList<StatusMessage> BuildCoreStatusMessages(Project project, int? messageViewerPersonId = null)
@@ -29,14 +34,14 @@ namespace PPMTool.Services.StatusEvaluators
                 new StatusMessage($"This request is owned by {project.RequestOwner?.Name}.", StatusMessage.MessageType.Info, () => project.ShowRequestOwnerMessage(messageViewerPersonId ?? 0)),
 
                 // Warnings
-                // TODO: Approach SLA breach
+                new StatusMessage($"This request is approaching the request duration limit!", StatusMessage.MessageType.Warning, () => project.ProjectStatus == ProjectStatus.NewRequest && projectService.GetRequestClockDetails(project.CreatedDate).ShouldWarn()),
 
                 // Errors
+                new StatusMessage($"This request is has breached the request duration limit!", StatusMessage.MessageType.Error, () => project.ProjectStatus == ProjectStatus.NewRequest && projectService.GetRequestClockDetails(project.CreatedDate).ShouldError()),
                 new StatusMessage("This project has no project ID specified!", StatusMessage.MessageType.Error, () => project.RTP == 0),
                 new StatusMessage("This project has no agreed budget!", StatusMessage.MessageType.Error, project.HasNoBudget, FeatureType.ProjectFinance),
                 new StatusMessage("This project has no link to a request document!", StatusMessage.MessageType.Error, project.HasNoRequestDocLink),
                 new StatusMessage("This project uses the Day Rate model but has a DI funding source which is not allowed! DI funding sources must use salary costs for recharge.", StatusMessage.MessageType.Error, () => project.DayRateWithDIFunding(), FeatureType.ProjectFinance),
-                // TODO: SLA breached
             };
 
             // Messages that do not apply to new requests
