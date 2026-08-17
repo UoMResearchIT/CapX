@@ -210,9 +210,12 @@ namespace PPMTool.Pages
         /// Callback after request owner is chosen in the dropdown
         /// </summary>
         /// <param name="value"></param>
-        private void OnRequestOwnerChosen(int value)
+        private void OnRequestOwnerChosen(object value)
         {
-            PresentDialogForAccessLoss(projectModel.ProjectManager?.PersonId ?? 0, value);
+            // Convert the value to the person chosen
+            Person requestOwner = value as Person;
+
+            PresentDialogForAccessLoss(projectModel.ProjectManager?.PersonId ?? 0, requestOwner?.PersonId ?? 0);
         }
 
         /// <summary>
