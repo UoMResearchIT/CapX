@@ -226,8 +226,8 @@ SPDX-License-Identifier: apache-2.0
                                                         }
                                                     }
                                                     <h4>@string.Join(" | ", point.Items.FirstOrDefault()?.Task.AssignedResources.Select(x => $"{x.Person.Name} [{Math.Round(x.AssignmentFTE, 3)}]"))</h4>
-                                                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
-                                                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
+                                                    <span class="me-1">@ChartHelper.FormatTooltipRangeStart(point.Y?.Min())</span>
+                                                    <span class="me-1">@ChartHelper.FormatTooltipRangeEnd(point.Y?.Max())</span>
                                                     @if ((point.Items.FirstOrDefault() is not null && point.Items.FirstOrDefault()!.BlockDuty != Duty.ProjectAndServiceMgmt) && skillsEnabled)
                                                     {
                                                         var taskId = point.Items.FirstOrDefault()?.Task.SubTaskId ?? 0;
