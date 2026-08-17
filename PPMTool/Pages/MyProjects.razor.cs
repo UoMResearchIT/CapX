@@ -18,6 +18,9 @@ namespace PPMTool.Pages
         private NoteService NoteService { get; set; }
 
         [Inject]
+        private PersonService PersonService { get; set; }
+
+        [Inject]
         private ProjectStatusEvaluator ProjectStatusEvaluator { get; set; }
 
         private bool includeFinished;
@@ -93,6 +96,51 @@ namespace PPMTool.Pages
             }
         }
 
+        /// <summary>
+        /// Determines whether the specified project should be shown in the list for the active user or a specified short name.
+        /// </summary>
+        /// <param name="project"></param>
+        /// <param name="shortName"></param>
+        /// <returns></returns>
+        private bool ShouldShowInList(Project project, string shortName = null)
+        {
+            // If no user then always false
+            if (ActiveUser == null || ActiveUser.Person == null)
+            {
+                return false;
+            }
+
+            // PersonId to match to
+            var personIdToMatch = ActiveUser.Person.PersonId;
+            if (shortName != null)
+            {
+                // If there is no matching user then set to zero so comparison will fail anyway
+                personIdToMatch = PersonService.GetByShortName(Context, shortName)?.PersonId ?? 0;
+            }
+
+            // Check if should visible due to PM status
+            bool isProjectManager = false;
+            if (project.ProjectManager?.PersonId == personIdToMatch)
+            {
+                isProjectManager = true;
+            }
+
+            // Check if should visible due to request owner status
+            bool isRequestOwner = false;
+            if (project.RequestOwnerId == personIdToMatch && project.ProjectStatus == ProjectStatus.NewRequest)
+            {
+                isRequestOwner = true;
+            }
+
+            // One or the other needs to be true to show in the list
+            return isProjectManager || isRequestOwner;
+        }
+
+        /// <summary>
+        /// Loads the project data and their due notes into the ownedProjectsAndDueNotes dictionary.
+        /// </summary>
+        /// <param name="initial"></param>
+        /// <returns></returns>
         private async Task LoadProjectDataAsync(bool initial)
         {
             Loading = true;
@@ -111,29 +159,23 @@ namespace PPMTool.Pages
                 if (ProjectManagerShortName.ToLower() == "alerts")
                 {
                     // Show just the list of alerts for all
-                    proj = proj.Where(x =>
-                    {
-                        return ProjectStatusEvaluator.HasActiveStatusMessages(x);
-                    }).ToList();
+                    proj = proj.Where(x => ProjectStatusEvaluator.HasActiveStatusMessages(x)).ToList();
                 }
                 else if (ProjectManagerShortName.ToLower() == "errors")
                 {
                     // Show just the list of errors for all
-                    proj = proj.Where(x =>
-                    {
-                        return ProjectStatusEvaluator.HasActiveErrorMessages(x);
-                    }).ToList();
+                    proj = proj.Where(x => ProjectStatusEvaluator.HasActiveErrorMessages(x)).ToList();
                 }
                 else
                 {
                     // Use query string to see someone else's list of cards
-                    proj = proj.Where(x => x.ProjectManager?.ShortName.ToLower() == ProjectManagerShortName.ToLower()).ToList();
+                    proj = proj.Where(x => ShouldShowInList(x, ProjectManagerShortName.ToLower())).ToList();
                 }
             }
             else
             {
                 // Show just the logged in user's projects
-                proj = proj.Where(x => x.ProjectManager?.PersonId == ActiveUser?.Person?.PersonId).ToList();
+                proj = proj.Where(x => ShouldShowInList(x)).ToList();
             }
 
             // Build the dictionary
