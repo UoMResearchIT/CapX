@@ -307,8 +307,8 @@ namespace PPMTool.Pages
             // Assign edit context
             editContext = new EditContext(TaskModel);
 
-            // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser
-            EditAuthorised = ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager && ProjectModel.ProjectManager.PersonId == ActiveUser?.Person.PersonId);
+            // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser or the request owner if in a request state
+            EditAuthorised = projectModel.ActiveUserHasEditAccessToProject(ActiveUser);
 
             LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetSensibleObjectName()} | Copy = {IsCopy} | Split = {IsSplit}" : $"Adding new task to {ProjectModel?.GetSensibleObjectName()}");
 
