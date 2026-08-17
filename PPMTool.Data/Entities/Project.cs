@@ -122,6 +122,23 @@ namespace PPMTool.Data.Entities
         public string? ActualsLastUpdated { get; set; } = DateTime.Now.ToString("R");
 
         /// <summary>
+        /// The date when the project was created
+        /// </summary>
+        [Required]
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+        /// <summary>
+        /// The latest date the project was moved out of the New Request status.
+        /// </summary>
+        public DateTime? RequestCompletedDate { get; set; }
+
+        /// <summary>
+        /// The person who created the project request -- automatically set to the logged in user when the project is created but can be changed later if necessary
+        /// </summary>
+        [Required]
+        public int RequestOwnerId { get; set; }
+
+        /// <summary>
         /// List of Invoices associated with this project
         /// </summary>
         public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
