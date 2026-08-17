@@ -86,6 +86,10 @@ namespace PPMTool.Data.Enums
 
         [Description("The name of the application as it appears in the application header.")]
         [DefaultSettingValue("CapX - RSE Operational Management Tool")]
-        ApplicationName = 18
+        ApplicationName = 18,
+
+        [Description("The length of time in calendar days that a request is expected to be open at the start of the demand process. Affects the timers on the MyProjects page.")]
+        [DefaultSettingValue("14")]
+        RequestDurationLimit = 19
     }
 }

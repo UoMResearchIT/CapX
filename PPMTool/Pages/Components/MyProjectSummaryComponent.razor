@@ -14,20 +14,15 @@ SPDX-License-Identifier: apache-2.0
         <RadzenStack class="col-5 p-1" Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.4rem">
             <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="AlignItems.Start" Gap="0.1rem">
                 <RadzenText TextStyle="TextStyle.H5" Text="@ProjectService.GetFullName(Project)" />
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.2rem">
-                    <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
-                    @* <RadzenIcon Icon="schedule"
-                                Style="@($"color:{GetSlaColour(request)}")" />
-
-                    <div style="width:80px">
-                        <RadzenProgressBar Value="@request.SlaPercentRemaining"
-                                           ShowValue="false"
-                                           ProgressBarStyle="@GetSlaStyle(request)"
-                                           Style="height:6px;" />
-                    </div>
-                    <span class="text-muted small">
-                        @request.HoursRemaining h
-                    </span> *@
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="1rem">
+                    @if (Project.ProjectStatus == ProjectStatus.NewRequest)
+                    {
+                        <RequestClockComponent Project="@Project" />
+                    }                    
+                    else
+                    {
+                        <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
+                    }
                 </RadzenStack>
             </RadzenStack>
             <StatusMessageSummaryComponent Messages="@ProjectStatusEvaluator.GetLatestStatusMessages(Project, ViewerPersonId ?? 0)" />
