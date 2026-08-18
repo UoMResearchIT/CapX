@@ -235,7 +235,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// Fired when the save button is clicked
         /// </summary>
-        private void HandleSubmit()
+        private async Task HandleSubmit()
         {
             // Clear the action bar messages
             ClearErrorMessage();
@@ -256,7 +256,32 @@ namespace PPMTool.Pages
                         return;
                     }
 
-                    // TODO: Add prompt here for changing the request status
+                    // Get new and old status
+                    var oldStatus = ProjectService.GetOldStatus(Context, projectModel);
+                    var newStatus = projectModel.ProjectStatus;
+
+                    // If the status is changing and old or new status is NewRequest then there are timestampas involved so we need
+                    // be sure that the user is aware of this and wants to continue
+                    var confirmed = true;
+                    if (oldStatus != newStatus && oldStatus == ProjectStatus.NewRequest)
+                    {
+                        confirmed = await DialogService.Confirm(
+                            $"You are about to change the status of {ProjectService.GetFullName(projectModel)} such that it will end the request phase. " +
+                            $"This will stop the request duration clock. Are you sure you want to continue?",
+                            "Continue?",
+                            new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" }
+                        ) ?? false;
+
+                        // If confirmed then set the timestamp for request completed
+                        if (confirmed)
+                        {
+                            projectModel.RequestCompletedDate = DateTime.Today;
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
 
                     // Update the project summary values
                     var finrefs = FinancialReferenceService.GetAllOrDefault(Context);
@@ -284,7 +309,6 @@ namespace PPMTool.Pages
                         }
 
                         // Check if the status is changing
-                        var oldStatus = ProjectService.GetOldStatus(Context, projectModel);
                         if (oldStatus != projectModel.ProjectStatus)
                         {
                             LogInformation($"Project status change: {oldStatus} -> {projectModel.ProjectStatus}");
