@@ -76,6 +76,12 @@ namespace PPMTool.Data.Enums
         /// Project cancelled because we couldn't resource it and never started
         /// </summary>
         [Description("Unable to Resource")]
-        CancelledNoResource
+        CancelledNoResource,
+
+        /// <summary>
+        /// Project cancelled because during scoping it was determined as out of scope and never started
+        /// </summary>
+        [Description("Out of Scope")]
+        CancelledOutOfScope
     }
 }
