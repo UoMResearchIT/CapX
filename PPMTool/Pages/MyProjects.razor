@@ -20,6 +20,11 @@ SPDX-License-Identifier: apache-2.0
             </div>
             <div class="col-auto">
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    @if (ActiveUserRoleType == RoleType.Superuser)
+                    {
+                        <RadzenLabel Text="Show Request Summary" Style="margin-bottom: 0.1rem" Component="ShowRequestSummary" />
+                        <RadzenSwitch Name="ShowRequestSummary" @bind-Value="@showRequestSummary" />
+                    }
                     <RadzenLabel Text="Include Finished" Style="margin-bottom: 0.1rem" Component="IncludeFinished" />
                     <RadzenSwitch Name="IncludeFinished" @bind-Value="@IncludeFinished" />
                 </RadzenStack>
@@ -41,6 +46,18 @@ SPDX-License-Identifier: apache-2.0
         }
         else
         {
+            if (showRequestSummary)
+            {
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                             Gap="0.3rem"
+                             Wrap="FlexWrap.Wrap"
+                             JustifyContent="JustifyContent.Center"
+                             AlignItems="AlignItems.Center">
+                    @* Some kind of widget or table here *@
+                </RadzenStack>
+                <hr />
+            }
+
             <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.3rem">
                 @foreach (var projectAndNotes in ownedProjectsAndDueNotes.OrderBy(x => x.Key.ProjectStatus))
                 {

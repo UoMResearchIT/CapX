@@ -35,19 +35,38 @@ namespace PPMTool.Pages
                 if (includeFinished != value)
                 {
                     includeFinished = value;
-                    SessionStorage.SetItemAsync("my-project-show-active", includeFinished);
-                    Task.Run(() => LoadProjectDataAsync(false));
+                    SessionStorage.SetItemAsync($"{GetStorageTag()}-show-active", includeFinished);
+                    InvokeAsync(async () => await LoadProjectDataAsync(false));
                 }
             }
         }
 
-        private int? personIdToMatch;
+        private bool showRequestSummary;
+        public bool ShowRequestSummary
+        {
+            get
+            {
+                return showRequestSummary;
+            }
+            set
+            {
+                if (showRequestSummary != value)
+                {
+                    showRequestSummary = value;
+                    SessionStorage.SetItemAsync($"{GetStorageTag()}-show-request-summary", showRequestSummary);
+                    InvokeAsync(async () => await LoadProjectDataAsync(false));
+                }
+            }
+        }
 
         [Parameter]
         [SupplyParameterFromQuery(Name = "pm")]
         public string ProjectManagerShortName { get; set; }
 
         private IDictionary<Project, IEnumerable<Note>> ownedProjectsAndDueNotes;
+        private int? personIdToMatch;
+
+        protected override string GetStorageTag() => "my-project";
 
         protected override void OnInitialized()
         {
@@ -91,7 +110,8 @@ namespace PPMTool.Pages
                 }
 
                 // Get switch setting
-                includeFinished = await SessionStorage.GetItemAsync<bool>("my-project-show-active");
+                includeFinished = await SessionStorage.GetItemAsync<bool>($"{GetStorageTag()}-show-active");
+                showRequestSummary = await SessionStorage.GetItemAsync<bool>($"{GetStorageTag()}-show-request-summary");
 
                 // Load data
                 await LoadProjectDataAsync(true);
@@ -185,6 +205,12 @@ namespace PPMTool.Pages
             foreach (var p in proj)
             {
                 ownedProjectsAndDueNotes.Add(p, NoteService.GetDueNotesForProject(Context, p.ProjectId));
+            }
+
+            // Load the request summary widget
+            if (ShowRequestSummary)
+            {
+                // TODO: Load the summary
             }
 
             // Disable spinner now load complete
