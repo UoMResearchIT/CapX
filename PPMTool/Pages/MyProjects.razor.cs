@@ -6,6 +6,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
+using PPMTool.Models;
 using PPMTool.Services;
 using PPMTool.Services.StatusEvaluators;
 using Radzen.Blazor;
@@ -65,6 +66,7 @@ namespace PPMTool.Pages
 
         private IDictionary<Project, IEnumerable<Note>> ownedProjectsAndDueNotes;
         private int? personIdToMatch;
+        private IList<RequestClockSummary> summaries = new List<RequestClockSummary>();
 
         protected override string GetStorageTag() => "my-project";
 
@@ -170,10 +172,11 @@ namespace PPMTool.Pages
             await Task.Yield();
 
             // Initialise the project list
-            var proj = ProjectService
+            var allProjects = ProjectService
                 .GetAll(Context)
                 .OrderBy(x => x.RTP)
                 .Where(x => includeFinished ? true : !x.ProjectStatus.IsFinishedOrCancelled());
+            var filteredProjects = allProjects;
 
             // Extract the owned projects and their due notes
             if (ProjectManagerShortName != null)
@@ -181,28 +184,28 @@ namespace PPMTool.Pages
                 if (ProjectManagerShortName.ToLower() == "alerts")
                 {
                     // Show just the list of alerts for all
-                    proj = proj.Where(x => ProjectStatusEvaluator.HasActiveStatusMessages(x)).ToList();
+                    filteredProjects = filteredProjects.Where(x => ProjectStatusEvaluator.HasActiveStatusMessages(x)).ToList();
                 }
                 else if (ProjectManagerShortName.ToLower() == "errors")
                 {
                     // Show just the list of errors for all
-                    proj = proj.Where(x => ProjectStatusEvaluator.HasActiveErrorMessages(x)).ToList();
+                    filteredProjects = filteredProjects.Where(x => ProjectStatusEvaluator.HasActiveErrorMessages(x)).ToList();
                 }
                 else
                 {
                     // Use query string to see someone else's list of cards
-                    proj = proj.Where(x => ShouldShowInList(x, ProjectManagerShortName.ToLower())).ToList();
+                    filteredProjects = filteredProjects.Where(x => ShouldShowInList(x, ProjectManagerShortName.ToLower())).ToList();
                 }
             }
             else
             {
                 // Show just the logged in user's projects
-                proj = proj.Where(x => ShouldShowInList(x)).ToList();
+                filteredProjects = filteredProjects.Where(x => ShouldShowInList(x)).ToList();
             }
 
             // Build the dictionary
             ownedProjectsAndDueNotes = new Dictionary<Project, IEnumerable<Note>>();
-            foreach (var p in proj)
+            foreach (var p in filteredProjects)
             {
                 ownedProjectsAndDueNotes.Add(p, NoteService.GetDueNotesForProject(Context, p.ProjectId));
             }
@@ -210,14 +213,54 @@ namespace PPMTool.Pages
             // Load the request summary widget
             if (ShowRequestSummary)
             {
-                // TODO: Load the summary
+                // Clear the current list
+                summaries.Clear();
+
+                // Get all projects that are new requests
+                var requests = allProjects.Where(x => x.ProjectStatus == ProjectStatus.NewRequest);
+
+                // Group by person
+                var groupedRequests = requests.GroupBy(x => x.RequestOwner?.Name ?? "Not Set");
+
+                // Map to the chart objects
+                foreach (var group in groupedRequests)
+                {
+                    var mappedValues = group.Select(x => ProjectService.GetRequestClockDetails(x.CreatedDate));
+                    summaries.Add(
+                        new RequestClockSummary(
+                            group.Key,
+                            mappedValues.Count(x => x.ShouldError()),
+                            mappedValues.Count(x => x.ShouldWarn()),
+                            mappedValues.Count(x => !x.ShouldError() && !x.ShouldWarn())
+                        )
+                    );
+                }
+
+                // Sort the resulting data
+                summaries = summaries
+                    .OrderByDescending(x => x.RedCount)
+                    .ThenByDescending(x => x.AmberCount)
+                    .ThenByDescending(x => x.TotalCount)
+                    .ThenBy(x => x.RequestOwner)
+                    .ToList();
             }
 
             // Disable spinner now load complete
             Loading = false;
             await InvokeAsync(StateHasChanged);
 
-            Debug.WriteLine($"** {proj.Count()} projects loaded. Initial load = {initial}");
+            Debug.WriteLine($"** {filteredProjects.Count()} projects loaded. Initial load = {initial}");
+        }
+
+        /// <summary>
+        /// Formatter for the data labels for the request summary chart
+        /// </summary>
+        /// <param name="val"></param>
+        /// <returns></returns>
+        private string FormatSummaryDataLabels(object val)
+        {
+            // Don't show zero labels as they are confusing
+            return Convert.ToInt16(val) == 0 ? "" : val.ToString();
         }
 
         private void DetailsButtonClicked(RadzenSplitButtonItem item, Project project)

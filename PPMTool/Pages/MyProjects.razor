@@ -23,7 +23,7 @@ SPDX-License-Identifier: apache-2.0
                     @if (ActiveUserRoleType == RoleType.Superuser)
                     {
                         <RadzenLabel Text="Show Request Summary" Style="margin-bottom: 0.1rem" Component="ShowRequestSummary" />
-                        <RadzenSwitch Name="ShowRequestSummary" @bind-Value="@showRequestSummary" />
+                        <RadzenSwitch Name="ShowRequestSummary" @bind-Value="@ShowRequestSummary" />
                     }
                     <RadzenLabel Text="Include Finished" Style="margin-bottom: 0.1rem" Component="IncludeFinished" />
                     <RadzenSwitch Name="IncludeFinished" @bind-Value="@IncludeFinished" />
@@ -48,13 +48,44 @@ SPDX-License-Identifier: apache-2.0
         {
             if (showRequestSummary)
             {
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal"
-                             Gap="0.3rem"
-                             Wrap="FlexWrap.Wrap"
-                             JustifyContent="JustifyContent.Center"
-                             AlignItems="AlignItems.Center">
-                    @* Some kind of widget or table here *@
-                </RadzenStack>
+                <RadzenCard>
+                    <h2>Request Summary</h2>
+                    <RadzenChart Animate="true"
+                                 Style="height: 18rem">
+                        <RadzenStackedBarSeries FillMode="FillMode.Solid"
+                                                Data="@summaries"
+                                                CategoryProperty="RequestOwner"
+                                                Title="Breached"
+                                                ValueProperty="RedCount"
+                                                Fill="var(--rz-danger)">
+                            <RadzenSeriesDataLabels Appearance="DataLabelAppearance.Outline"
+                                                    Formatter="@FormatSummaryDataLabels" />
+                        </RadzenStackedBarSeries>
+                        <RadzenStackedBarSeries FillMode="FillMode.Solid"
+                                                Data="@summaries"
+                                                CategoryProperty="RequestOwner"
+                                                Title="Approaching"
+                                                ValueProperty="AmberCount"
+                                                Fill="var(--rz-warning)">
+                            <RadzenSeriesDataLabels Appearance="DataLabelAppearance.Outline"
+                                                    Formatter="@FormatSummaryDataLabels" />
+                        </RadzenStackedBarSeries>
+                        <RadzenStackedBarSeries FillMode="FillMode.Solid"
+                                                Data="@summaries"
+                                                CategoryProperty="RequestOwner"
+                                                Title="On Track"
+                                                ValueProperty="GreenCount"
+                                                Fill="var(--rz-success)">
+                            <RadzenSeriesDataLabels Appearance="DataLabelAppearance.Outline"
+                                                    Formatter="@FormatSummaryDataLabels" />
+                        </RadzenStackedBarSeries>
+                        <RadzenValueAxis Min="0">
+                            <RadzenGridLines Visible="true" />
+                            <RadzenAxisTitle Text="Request Count" />
+                        </RadzenValueAxis>
+                        <RadzenBarOptions Radius="5" />
+                    </RadzenChart>
+                </RadzenCard>
                 <hr />
             }
 
