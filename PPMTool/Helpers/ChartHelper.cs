@@ -13,6 +13,66 @@ namespace PPMTool.Helpers
     public abstract class ChartHelper
     {
         /// <summary>
+        /// Format the start date part of a Gantt-style tooltip date range.
+        /// </summary>
+        /// <param name="startUnixMilliseconds"></param>
+        /// <param name="fallbackText"></param>
+        /// <param name="dateFormat"></param>
+        /// <returns></returns>
+        public static string FormatTooltipRangeStart(
+            decimal? startUnixMilliseconds,
+            string fallbackText = "Add tasks to define dates",
+            string dateFormat = "dd MMM yyyy")
+        {
+            // Check the valid is valid or fallback to text
+            if (!IsValidUnixMilliseconds(startUnixMilliseconds))
+            {
+                return fallbackText;
+            }
+
+            // Return the formatted start date with a trailing dash to indicate a range
+            return $"{DateTimeOffset.FromUnixTimeMilliseconds((long)startUnixMilliseconds.Value).ToString(dateFormat)} - ";
+        }
+
+        /// <summary>
+        /// Format the end date part of a Gantt-style tooltip date range.
+        /// </summary>
+        /// <param name="endUnixMilliseconds"></param>
+        /// <param name="isEndExclusive">If true, subtract one day so the displayed range is inclusive.</param>
+        /// <param name="dateFormat"></param>
+        /// <returns></returns>
+        public static string FormatTooltipRangeEnd(
+            decimal? endUnixMilliseconds,
+            bool isEndExclusive = true,
+            string dateFormat = "dd MMM yyyy")
+        {
+            // Check the valid is valid or fallback to empty string
+            if (!IsValidUnixMilliseconds(endUnixMilliseconds))
+            {
+                return string.Empty;
+            }
+
+            // Return the formatted end date, subtracting a day if the end is exclusive to make the range inclusive
+            var endDate = DateTimeOffset.FromUnixTimeMilliseconds((long)endUnixMilliseconds.Value);
+            if (isEndExclusive)
+            {
+                endDate = endDate.AddDays(-1);
+            }
+
+            return endDate.ToString(dateFormat);
+        }
+
+        /// <summary>
+        /// Checks whether a decimal can safely be treated as a Unix timestamp in milliseconds.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        private static bool IsValidUnixMilliseconds(decimal? value)
+        {
+            return value is decimal d && d > 0 && d < DateTimeOffset.MaxValue.ToUnixTimeMilliseconds();
+        }
+
+        /// <summary>
         /// For a given person, convert assignments into an aggregated set of blocks for the timeline graph.
         /// Adds special logic to pad whitespace in the timelines and adjust for person start and end dates.
         /// </summary>
