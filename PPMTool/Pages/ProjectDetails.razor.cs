@@ -77,10 +77,6 @@ namespace PPMTool.Pages
         [SupplyParameterFromQuery(Name = "filteredNote")]
         public int? FilteredNote { get; set; }
 
-        [Parameter]
-        [SupplyParameterFromQuery(Name = "filterDueNotes")]
-        public bool FilterDueNotes { get; set; }
-
         // Chart stuff
         private List<GanttBlock> confirmedBlocks;
         private List<GanttBlock> provisionalBlocks;
@@ -179,6 +175,12 @@ namespace PPMTool.Pages
             LogInformation("Viewing project details");
         }
 
+        private async Task OnFilterChangedAsync(bool value)
+        {
+            await SetNoteFilterAsync(value);
+            await LoadDataAsync(loadCts.Token);
+        }
+
         /// <summary>
         /// Fired when the paramters are changed
         /// </summary>
@@ -191,7 +193,7 @@ namespace PPMTool.Pages
                 lastRTP != RTP ||
                 lastId != ProjectId ||
                 lastNote != FilteredNote ||
-                lastDue != FilterDueNotes;
+                lastDue != FilterNotesForOverdue;
 
             Debug.WriteLine($"** [Project Details] OnParameters fired - changed={changed}");
 
@@ -206,7 +208,7 @@ namespace PPMTool.Pages
             lastRTP = RTP;
             lastId = ProjectId;
             lastNote = FilteredNote;
-            lastDue = FilterDueNotes;
+            lastDue = FilterNotesForOverdue;
 
             try
             {
@@ -354,6 +356,7 @@ namespace PPMTool.Pages
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
+            await GetNoteFilterSettingAsync();
 
             if (firstRender)
             {
@@ -385,7 +388,7 @@ namespace PPMTool.Pages
             sortByDueDate = false;
 
             // Set the switches based on the parameters
-            if (FilterDueNotes)
+            if (FilterNotesForOverdue)
             {
                 showOnlyDueItems = true;
                 sortByDueDate = true;
@@ -459,7 +462,7 @@ namespace PPMTool.Pages
             }
 
             // Check whether the parameter is present to scroll to the due notes
-            if (FilterDueNotes)
+            if (FilterNotesForOverdue)
             {
                 // Refresh then scroll last due note into view
                 await Task.Delay(300);
