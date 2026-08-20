@@ -41,7 +41,7 @@ SPDX-License-Identifier: apache-2.0
             </RadzenStack>
         }
         <RadzenStack class="col-4 p-1" Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.End" Gap="0.3rem" Wrap="FlexWrap.Wrap">
-            <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Icon="info" Click="@(item => DetailsButtonClicked(item, Project))">
+            <RadzenSplitButton ButtonStyle="ButtonStyle.Primary" Text="Details" Icon="info" Click="@(async item => DetailsButtonClicked?.Invoke(item, Project))">
                 <ChildContent>
                     <RadzenSplitButtonItem Text="Details in New Tab" Value="NewWindow" />
                 </ChildContent>
@@ -65,10 +65,10 @@ SPDX-License-Identifier: apache-2.0
     public bool EditAuthorised { get; set; }
 
     [Parameter]
-    public Action<RadzenSplitButtonItem, Project> DetailsButtonClicked { get; set; }
+    public Func<RadzenSplitButtonItem, Project, Task> DetailsButtonClicked { get; set; }
 
     [Parameter]
-    public Action<Project> DueButtonClicked { get; set; }
+    public Func<Project, Task> DueButtonClicked { get; set; }
 
     [Parameter]
     public Action<ElementReference, string> ShowTooltip { get; set; }
