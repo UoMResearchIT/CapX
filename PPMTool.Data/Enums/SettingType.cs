@@ -95,7 +95,5 @@ namespace PPMTool.Data.Enums
         [Description("The percentage of the planned cost that can be underclaimed (requested) for a given financial year.")]
         [DefaultSettingValue("10")]
         UnderclaimedFundsThreshold = 20
-
-        
     }
 }
