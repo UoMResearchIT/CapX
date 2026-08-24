@@ -514,9 +514,12 @@ namespace PPMTool.Services
             var localPart = email[..atIndex];
             var domainPart = email[(atIndex + 1)..];
 
-            // Mask the local part, leaving only the first 3 characters visible
-            var visibleCount = Math.Min(3, localPart.Length);
-            var maskedLocalPart = localPart[..visibleCount] + new string('*', Math.Max(0, localPart.Length - visibleCount));
+            // Mask the local part, leaving only the first 3 characters visible when possible
+            // If not possible then just keep first character.
+            // Anonymised part of the local part is always 10 characters.
+            var maskedLocalPart = localPart.Length <= 3
+                ? localPart[0] + new string('*', 9)
+                : localPart[..3] + new string('*', 7);
 
             return $"{maskedLocalPart}@{domainPart}";
         }
