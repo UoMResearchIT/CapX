@@ -237,6 +237,68 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// When there are Other funding sources but the total funds requested for the current FY is below the planned cost for the FY by a given threshold percentage.
+        /// Requested funds value is provided by caller so this entity does not have to deep load the invoices.
+        /// </summary>
+        /// <param name="requestedThisFY"></param>
+        /// <param name="thresholdPercentage"></param>
+        /// <param name="today"></param>
+        /// <returns></returns>
+        public bool FundsRequestedBelowPlannedCostForFY(double requestedThisFY, double thresholdPercentage, DateTime? today = null)
+        {
+            var currentDate = (today ?? DateTime.Today).Date;
+
+            // Get planned costs in current financial year
+            var currentFY = FinancialReference.GetFinancialYear(currentDate);
+            var financialYearStart = new DateTime(currentFY, 8, 1);
+            var financialYearEnd = new DateTime(currentFY + 1, 7, 31);
+            var plannedThisFY = GetPlannedCostInDateRange(financialYearStart, financialYearEnd);
+            if (plannedThisFY <= 0)
+            {
+                return false;
+            }
+
+            var threshold = Math.Clamp(thresholdPercentage, 0d, 100d);
+            var minimumExpectedRequestedFunds = plannedThisFY * (1d - (threshold / 100d));
+            return requestedThisFY < minimumExpectedRequestedFunds;
+        }
+
+        /// <summary>
+        /// Calculates the planned cost of the project within a given date range by summing the proportion of planned costs of each subtask that overlaps with the date range.
+        /// </summary>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        private double GetPlannedCostInDateRange(DateTime startDate, DateTime endDate)
+        {
+            if (startDate.Date > endDate.Date || SubTasks == null)
+            {
+                return 0;
+            }
+
+            double planned = 0;
+            foreach (var subTask in SubTasks.Where(x => x.IsWithin(startDate, endDate)))
+            {
+                var taskStart = subTask.StartDate.Date;
+                var taskEnd = subTask.EndDate.Date;
+                var overlapStart = taskStart > startDate.Date ? taskStart : startDate.Date;
+                var overlapEnd = taskEnd < endDate.Date ? taskEnd : endDate.Date;
+
+                if (overlapEnd < overlapStart)
+                {
+                    continue;
+                }
+
+                // Get proportion of planned costs of the task in the window
+                var taskDays = Math.Max(1d, taskEnd.Subtract(taskStart).TotalDays + 1d);
+                var overlapDays = overlapEnd.Subtract(overlapStart).TotalDays + 1d;
+                planned += subTask.PlannedCost * (overlapDays / taskDays);
+            }
+
+            return planned;
+        }
+
+        /// <summary>
         /// Whether this project is active and the actuals updated timestamp shows it hasn't been updated for a month or more
         /// </summary>
         /// <returns></returns>
