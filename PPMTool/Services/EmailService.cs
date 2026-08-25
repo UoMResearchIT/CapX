@@ -59,7 +59,7 @@ namespace PPMTool.Services
             };
             mailMessage.To.Add(to);
 
-            Logger.LogInformation($"Sending email to {to}, subject {mailMessage.Subject}");
+            Logger.LogInformation($"Sending email to {AnonymiseEmail(to)}, subject {mailMessage.Subject}");
 
 #if RELEASE
             // Launch a background task to do the sending
@@ -73,7 +73,7 @@ namespace PPMTool.Services
                 }
                 catch (Exception e)
                 {
-                    Logger.LogInformation($"Failed to send email to {to}, subject {mailMessage.Subject}");
+                    Logger.LogInformation($"Failed to send email to {AnonymiseEmail(to)}, subject {mailMessage.Subject}");
                 }
             });
 #endif
@@ -124,7 +124,7 @@ namespace PPMTool.Services
                                 body.Append("<p><em>Sent from CapX</em></p>");
 
                                 // Send email
-                                Debug.WriteLine($"** Sending Timesheet Submission email to {string.Join("|", recipients)}");
+                                Debug.WriteLine($"** Sending Timesheet Submission email to {string.Join("|", recipients.Select(AnonymiseEmail))}");
                                 foreach (var recipient in recipients)
                                 {
                                     SendEmail(recipient, subject, body.ToString());
@@ -313,7 +313,7 @@ namespace PPMTool.Services
                                 recipients.AddRange(lineManagerEmailAddresses);
                             }
 
-                            Debug.WriteLine($"** Sending email to {string.Join(',', recipients)}");
+                            Debug.WriteLine($"** Sending email to {string.Join(',', recipients.Select(AnonymiseEmail))}");
                             foreach (var recipient in recipients)
                             {
                                 SendEmail(recipient, subject, body.ToString());
@@ -475,7 +475,7 @@ namespace PPMTool.Services
                                 }
                                 recipients.AddRange(lineManagerEmailAddresses);
                             }
-                            Debug.WriteLine($"** Sending email to {string.Join(',', recipients)}");
+                            Debug.WriteLine($"** Sending email to {string.Join(',', recipients.Select(AnonymiseEmail))}");
                             foreach (var recipient in recipients)
                             {
                                 SendEmail(recipient, subject, body.ToString());
@@ -489,6 +489,39 @@ namespace PPMTool.Services
                     Logger.LogError($"Mention email failure: {e}");
                 }
             });
+        }
+
+        /// <summary>
+        /// Anonymise an email address for logging purposes
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns></returns>
+        private static string AnonymiseEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return email;
+            }
+
+            // Find the at
+            var atIndex = email.IndexOf('@');
+            if (atIndex <= 0 || atIndex == email.Length - 1)
+            {
+                return new string('*', email.Length);
+            }
+
+            // Extract the parts
+            var localPart = email[..atIndex];
+            var domainPart = email[(atIndex + 1)..];
+
+            // Mask the local part, leaving only the first 3 characters visible when possible
+            // If not possible then just keep first character.
+            // Anonymised part of the local part is always 10 characters.
+            var maskedLocalPart = localPart.Length <= 3
+                ? localPart[0] + new string('*', 9)
+                : localPart[..3] + new string('*', 7);
+
+            return $"{maskedLocalPart}@{domainPart}";
         }
     }
 }
