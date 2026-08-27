@@ -21,11 +21,13 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// Request body for POST /api/import/faculty. There's no other bulk way
+    /// Request body for POST /api/faculties/add. There's no other bulk way
     /// to populate an institution's own faculty/school list -- /manageorgunits
     /// is one row at a time, and SeedHelper.SeedOrganisationalUnits() is
     /// hardcoded to Manchester's own list (see discussion on
-    /// UoMResearchIT/CapX#1310).
+    /// UoMResearchIT/CapX#1310). Always creates a brand-new Faculty --
+    /// to add a School under one that already exists, use
+    /// POST /api/schools/add instead.
     /// </summary>
     /// <param name="Name"></param>
     /// <param name="Code">Must be unique across all Faculties</param>
@@ -42,6 +44,29 @@ namespace PPMTool.API.DTOs
     public sealed record ImportFacultyResponseDTO(
         int FacultyId,
         IReadOnlyList<int> SchoolIds
+    );
+
+    /// <summary>
+    /// Request body for POST /api/schools/add -- adds a single School under
+    /// a Faculty that already exists (unlike ImportFacultyRequestDTO's
+    /// nested Schools, which only ever create Schools alongside a brand-new
+    /// Faculty). See UoMResearchIT/CapX#1310.
+    /// </summary>
+    /// <param name="Name"></param>
+    /// <param name="Code">Must be unique within the Faculty</param>
+    /// <param name="FacultyCode">Code of an existing Faculty to add this School under</param>
+    public sealed record ImportSchoolRequestDTO(
+        string Name,
+        string Code,
+        string FacultyCode
+    );
+
+    /// <summary>Response for a successful School import.</summary>
+    /// <param name="SchoolId"></param>
+    /// <param name="FacultyId"></param>
+    public sealed record ImportSchoolResponseDTO(
+        int SchoolId,
+        int FacultyId
     );
 
     /// <summary>
@@ -75,7 +100,7 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// Request body for POST /api/import/project. One project, with its
+    /// Request body for POST /api/projects/add. One project, with its
     /// resourcing and comments created in the same call. See MIGRATION.md
     /// (rse-project-scrape, Durham ARC) for the source-side worksheet this
     /// is generated from -- this DTO shape is intentionally source-agnostic,
@@ -127,10 +152,10 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// Request body for POST /api/import/timesheet. One week's actual
+    /// Request body for POST /api/timesheets/add. One week's actual
     /// hours for one person on one project, on a single InnateCodeTask
     /// under that project's InnateActivity code (every Project imported
-    /// via POST /api/import/project auto-provisions one, matching the
+    /// via POST /api/projects/add auto-provisions one, matching the
     /// pattern SeedHelper.EnsureInnateCodeExists already establishes --
     /// see ImportService.Create). CapX computes a Project's actual hours
     /// by querying Approved Timesheets linked through this InnateActivity

@@ -1,136 +1,182 @@
-﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+// SPDX-FileCopyrightText: 2026 University of Manchester
 //
 // SPDX-License-Identifier: apache-2.0
+
+#nullable enable
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
 using PPMTool.API.Helpers;
 using PPMTool.Data.Context;
+using PPMTool.Services;
 
-namespace PPMTool.API.Endpoints
+namespace PPMTool.API.Endpoints;
+
+/// <summary>
+/// School endpoint methods. Superuser-only write access, gated behind
+/// SettingType.ImportApiEnabled -- see UoMResearchIT/CapX#1310.
+/// </summary>
+public static class Schools
 {
     /// <summary>
-    /// School endpoint methods.
+    /// Get all schools.
     /// </summary>
-    public static class Schools
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SchoolDTO>))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static async Task<IResult> GetAllSchoolsAsync(
+        PPMToolContext context,
+        ILogger logger,
+        HttpContext http)
     {
-        /// <summary>
-        /// Get all schools.
-        /// </summary>
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SchoolDTO>))]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public static async Task<IResult> GetAllSchoolsAsync(
-            PPMToolContext context,
-            ILogger logger,
-            HttpContext http)
+        try
         {
-            try
+            var caller = GeneralHelpers.GetCurrentUser(http);
+            var canAccess = GeneralHelpers.IsSuperUserOrManager(caller);
+            if (!canAccess)
             {
-                var caller = GeneralHelpers.GetCurrentUser(http);
-                var canAccess = GeneralHelpers.IsSuperUserOrManager(caller);
-                if (!canAccess)
-                {
-                    logger.LogWarning("API: GetAllSchools: Caller does not have permission to access school data.");
+                logger.LogWarning("API: GetAllSchools: Caller does not have permission to access school data.");
 
-                    return Results.Unauthorized();
-                }
-
-                var schools = await context.Schools
-                    .AsNoTracking()
-                    .Include(x => x.Faculty)
-                    .OrderBy(x => x.Name)
-                    .ToListAsync();
-
-                var schoolDtos = schools.Select(x => new SchoolDTO(
-                    SchoolId: x.SchoolId,
-                    FacultyId: x.Faculty.FacultyId,
-                    Name: x.Name
-                )).ToList();
-
-                logger.LogInformation(
-                    "API: GetAllSchools: Returned {Count} school records.",
-                    schoolDtos.Count);
-
-                return Results.Json(schoolDtos);
+                return Results.Unauthorized();
             }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "API: GetAllSchools: error");
-                return Results.StatusCode(StatusCodes.Status500InternalServerError);
-            }
+
+            var schools = await context.Schools
+                .AsNoTracking()
+                .Include(x => x.Faculty)
+                .OrderBy(x => x.Name)
+                .ToListAsync();
+
+            var schoolDtos = schools.Select(x => new SchoolDTO(
+                SchoolId: x.SchoolId,
+                FacultyId: x.Faculty.FacultyId,
+                Name: x.Name
+            )).ToList();
+
+            logger.LogInformation(
+                "API: GetAllSchools: Returned {Count} school records.",
+                schoolDtos.Count);
+
+            return Results.Json(schoolDtos);
         }
-
-        /// <summary>
-        /// Get one school by school ID.
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="logger"></param>
-        /// <param name="http"></param>
-        /// <param name="schoolId">The school ID.</param>
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SchoolDTO))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public static async Task<IResult> GetSchoolByIdAsync(
-            PPMToolContext context,
-            ILogger logger,
-            HttpContext http,
-            [FromQuery] int? schoolId)
+        catch (Exception ex)
         {
-            try
+            logger.LogError(ex, "API: GetAllSchools: error");
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Get one school by school ID.
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="logger"></param>
+    /// <param name="http"></param>
+    /// <param name="schoolId">The school ID.</param>
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SchoolDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static async Task<IResult> GetSchoolByIdAsync(
+        PPMToolContext context,
+        ILogger logger,
+        HttpContext http,
+        [FromQuery] int? schoolId)
+    {
+        try
+        {
+            if (!schoolId.HasValue || schoolId.Value <= 0)
             {
-                if (!schoolId.HasValue || schoolId.Value <= 0)
-                {
-                    logger.LogWarning(
-                        "API: GetSchoolById: Invalid schoolId {SchoolId}",
-                        schoolId);
-
-                    return Results.BadRequest("School ID must be greater than zero.");
-                }
-
-                var caller = GeneralHelpers.GetCurrentUser(http);
-                var canAccess = GeneralHelpers.IsSuperUserOrManager(caller);
-                if (!canAccess)
-                {
-                    logger.LogWarning("API: GetSchoolById: Caller does not have permission to access school data.");
-
-                    return Results.Unauthorized();
-                }
-
-                var school = await context.Schools
-                    .AsNoTracking()
-                    .Include(x => x.Faculty)
-                    .FirstOrDefaultAsync(x => x.SchoolId == schoolId.Value);
-
-                if (school == null)
-                {
-                    logger.LogWarning(
-                        "API: GetSchoolById: No school found for schoolId {SchoolId}",
-                        schoolId);
-
-                    return Results.NotFound();
-                }
-
-                var dto = new SchoolDTO(
-                    SchoolId: school.SchoolId,
-                    FacultyId: school.Faculty.FacultyId,
-                    Name: school.Name
-                );
-
-                logger.LogInformation(
-                    "API: GetSchoolById: Returned school record for schoolId {SchoolId}",
+                logger.LogWarning(
+                    "API: GetSchoolById: Invalid schoolId {SchoolId}",
                     schoolId);
 
-                return Results.Json(dto);
+                return Results.BadRequest("School ID must be greater than zero.");
             }
-            catch (Exception ex)
+
+            var caller = GeneralHelpers.GetCurrentUser(http);
+            var canAccess = GeneralHelpers.IsSuperUserOrManager(caller);
+            if (!canAccess)
             {
-                logger.LogError(ex, "API: GetSchoolById: error");
-                return Results.StatusCode(StatusCodes.Status500InternalServerError);
+                logger.LogWarning("API: GetSchoolById: Caller does not have permission to access school data.");
+
+                return Results.Unauthorized();
             }
+
+            var school = await context.Schools
+                .AsNoTracking()
+                .Include(x => x.Faculty)
+                .FirstOrDefaultAsync(x => x.SchoolId == schoolId.Value);
+
+            if (school == null)
+            {
+                logger.LogWarning(
+                    "API: GetSchoolById: No school found for schoolId {SchoolId}",
+                    schoolId);
+
+                return Results.NotFound();
+            }
+
+            var dto = new SchoolDTO(
+                SchoolId: school.SchoolId,
+                FacultyId: school.Faculty.FacultyId,
+                Name: school.Name
+            );
+
+            logger.LogInformation(
+                "API: GetSchoolById: Returned school record for schoolId {SchoolId}",
+                schoolId);
+
+            return Results.Json(dto);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: GetSchoolById: error");
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Add a single School under a Faculty that already exists. Unlike
+    /// Faculties.CreateFaculty, this doesn't create a new Faculty --
+    /// use this once an institution's Faculty list is already bootstrapped
+    /// and a new School needs adding under one of them.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportSchoolResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult CreateSchool(
+        PPMToolContext context,
+        ImportService importService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] ImportSchoolRequestDTO request)
+    {
+        try
+        {
+            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Schools.CreateSchool");
+            if (!allowed) return gateResult!;
+
+            var errors = importService.ValidateSchool(context, request);
+            if (errors.Count > 0)
+            {
+                logger.LogWarning("API: Schools: school validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors));
+                return Results.BadRequest(new ImportErrorDTO(errors));
+            }
+
+            var result = importService.CreateSchool(context, request);
+            logger.LogInformation(
+                "API: Schools: created School {SchoolId} '{Name}' under Faculty {FacultyId} by {User}",
+                result.SchoolId, request.Name, result.FacultyId, caller!.Name);
+            return Results.Created($"/api/schools/{result.SchoolId}", result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: Schools: error creating school '{Name}'", request.Name);
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
 }
