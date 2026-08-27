@@ -14,8 +14,8 @@ using PPMTool.Data.Enums;
 namespace PPMTool.Services
 {
     /// <summary>
-    /// Backs the Superuser-only POST /api/import/* endpoints
-    /// (see PPMTool.API.Endpoints.Import), gated behind
+    /// Backs the Superuser-only bulk-write "/add" endpoints (Faculties,
+    /// Schools, Projects, Timesheets), gated behind
     /// SettingType.ImportApiEnabled (towards #1310).
     /// </summary>
     public class ImportService
@@ -52,7 +52,7 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Validate a POST /api/import/faculty request without writing
+        /// Validate a POST /api/faculties/add request without writing
         /// anything.
         /// </summary>
         public List<string> ValidateFaculty(PPMToolContext context, ImportFacultyRequestDTO request)
@@ -111,7 +111,56 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Validate a POST /api/import/project request without writing
+        /// Validate a POST /api/schools/add request without writing
+        /// anything.
+        /// </summary>
+        public List<string> ValidateSchool(PPMToolContext context, ImportSchoolRequestDTO request)
+        {
+            var errors = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(request.Name)) errors.Add("Name is required");
+            if (string.IsNullOrWhiteSpace(request.Code)) errors.Add("Code is required");
+            if (string.IsNullOrWhiteSpace(request.FacultyCode)) errors.Add("FacultyCode is required");
+
+            if (!string.IsNullOrWhiteSpace(request.FacultyCode))
+            {
+                var faculty = FindFacultyByCode(context, request.FacultyCode);
+                if (faculty == null)
+                {
+                    errors.Add($"FacultyCode '{request.FacultyCode}' does not match any Faculty");
+                }
+                else if (!string.IsNullOrWhiteSpace(request.Name) && !string.IsNullOrWhiteSpace(request.Code)
+                    && _schoolService.DuplicateDetected(context, new School { Name = request.Name, Code = request.Code, Faculty = faculty }))
+                {
+                    errors.Add($"A School named '{request.Name}' or with code '{request.Code}' already exists under Faculty '{faculty.Name}'");
+                }
+            }
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Create the School under an existing Faculty. Caller is
+        /// responsible for validating first.
+        /// </summary>
+        public ImportSchoolResponseDTO CreateSchool(PPMToolContext context, ImportSchoolRequestDTO request)
+        {
+            var faculty = FindFacultyByCode(context, request.FacultyCode)!;
+            var school = new School
+            {
+                Name = request.Name,
+                Code = request.Code,
+                Faculty = faculty,
+            };
+            var schoolId = _schoolService.Add(context, school);
+            if (schoolId < 0)
+                throw new InvalidOperationException($"SchoolService.Add returned {schoolId} for School '{request.Name}' despite passing ValidateSchool() -- possible race condition");
+
+            return new ImportSchoolResponseDTO(schoolId, faculty.FacultyId);
+        }
+
+        /// <summary>
+        /// Validate a POST /api/projects/add request without writing
         /// anything. Returns the errors that would prevent import, or an
         /// empty list if it's valid.
         /// </summary>
@@ -188,7 +237,7 @@ namespace PPMTool.Services
             // Timesheets can actually be attributed back (CapX computes a Project's
             // actuals by querying Approved Timesheets linked via this code -- see
             // AddTask.razor.cs, TimesheetService.GetAllForInnateCode). Without one, a
-            // future POST /api/import/timesheet call for this project has nothing to
+            // future POST /api/timesheets/add call for this project has nothing to
             // attach to. Mirrors SeedHelper.EnsureInnateCodeExists/GetDefaultInnateCodeTasks
             // exactly: one InnateCode per project keyed "S-RES-RTP-{RTP}", with the same
             // three default tasks.
@@ -299,7 +348,7 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Validate a POST /api/import/timesheet request without writing
+        /// Validate a POST /api/timesheets/add request without writing
         /// anything.
         /// </summary>
         public List<string> ValidateTimesheetEntry(PPMToolContext context, ImportTimesheetEntryDTO request)
@@ -321,7 +370,7 @@ namespace PPMTool.Services
             if (project == null)
                 errors.Add($"ProjectId {request.ProjectId} does not exist");
             else if (project.InnateActivity == null)
-                errors.Add($"Project {request.ProjectId} ('{project.Name}') has no InnateActivity code -- only projects created via POST /api/import/project (or otherwise already linked) can receive imported timesheet entries");
+                errors.Add($"Project {request.ProjectId} ('{project.Name}') has no InnateActivity code -- only projects created via POST /api/projects/add (or otherwise already linked) can receive imported timesheet entries");
             else if (!project.InnateActivity.Tasks.Any(t => t.TaskName.Trim().Equals(request.TaskName.Trim(), StringComparison.OrdinalIgnoreCase)))
                 errors.Add($"TaskName '{request.TaskName}' does not match any InnateCodeTask under project {request.ProjectId}'s InnateActivity ('{project.InnateActivity.ActivityName}'); available: {string.Join(", ", project.InnateActivity.Tasks.Select(t => t.TaskName))}");
 
@@ -422,5 +471,9 @@ namespace PPMTool.Services
             context.Schools
                 .Include(s => s.Faculty)
                 .FirstOrDefault(s => s.IsActive && s.Code.Trim().ToLower() == code.Trim().ToLower());
+
+        private static Faculty? FindFacultyByCode(PPMToolContext context, string code) =>
+            context.Faculties
+                .FirstOrDefault(f => f.Code.Trim().ToLower() == code.Trim().ToLower());
     }
 }
