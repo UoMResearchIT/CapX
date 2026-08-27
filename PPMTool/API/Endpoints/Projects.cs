@@ -8,11 +8,13 @@ using PPMTool.API.DTOs;
 using PPMTool.API.Helpers;
 using PPMTool.Data.Context;
 using PPMTool.Data.Enums;
+using PPMTool.Services;
 
 namespace PPMTool.API.Endpoints;
 
 /// <summary>
-/// Project endpoint methods.
+/// Project endpoint methods. CreateProject is Superuser-only write access,
+/// gated behind SettingType.ImportApiEnabled -- see UoMResearchIT/CapX#1310.
 /// </summary>
 public static class Projects
 {
@@ -132,6 +134,47 @@ public static class Projects
         catch (Exception ex)
         {
             logger.LogError(ex, "API: GetProjectById: error");
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Create a Project (+ project-management SubTask, Resourcing, Comments)
+    /// in one call. See UoMResearchIT/CapX#1310.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportProjectResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult CreateProject(
+        PPMToolContext context,
+        ImportService importService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] ImportProjectRequestDTO request)
+    {
+        try
+        {
+            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Projects.CreateProject");
+            if (!allowed) return gateResult!;
+
+            var errors = importService.Validate(context, request);
+            if (errors.Count > 0)
+            {
+                logger.LogWarning("API: Projects: project validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors));
+                return Results.BadRequest(new ImportErrorDTO(errors));
+            }
+
+            var result = importService.Create(context, request);
+            logger.LogInformation(
+                "API: Projects: created Project {ProjectId} '{Name}' ({ResourceCount} resources, {NoteCount} notes) by {User}",
+                result.ProjectId, request.Name, result.ResourcesCreated, result.NotesCreated, caller!.Name);
+            return Results.Created($"/api/projects/{result.ProjectId}", result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: Projects: error creating project '{Name}'", request.Name);
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

@@ -96,7 +96,7 @@ namespace PPMTool.Data.Enums
         [DefaultSettingValue("10")]
         UnderclaimedFundsThreshold = 20,
 
-        [Description("Whether the Superuser-only bulk-import API (/api/import/*) is enabled. Defaults to disabled -- these are write endpoints for programmatic data creation, meant to be turned on only while an active data migration is underway.")]
+        [Description("Whether the Superuser-only bulk-import write endpoints (POST methods) are enabled. Defaults to disabled: these are write endpoints for programmatic data creation.")]
         [DefaultSettingValue("false")]
         ImportApiEnabled = 21
     }

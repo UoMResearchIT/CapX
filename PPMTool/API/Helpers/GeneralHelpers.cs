@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
+using PPMTool.Services;
 
 namespace PPMTool.API.Helpers;
 
@@ -183,6 +184,33 @@ public static class GeneralHelpers
         }
 
         return (start, endExclusive, null);
+    }
+
+    /// <summary>
+    /// Shared gate for the write ("/add") endpoints: SettingType.ImportApiEnabled
+    /// must be on, and the caller must be a Superuser. See UoMResearchIT/CapX#1310.
+    /// </summary>
+    /// <param name="settingsService"></param>
+    /// <param name="http"></param>
+    /// <param name="logger"></param>
+    /// <param name="endpointName">Used only for logging, to identify which endpoint rejected the call.</param>
+    internal static (bool allowed, User caller, IResult result) CheckImportApiGate(
+        SettingsService settingsService, HttpContext http, ILogger logger, string endpointName)
+    {
+        if (!settingsService.GetSetting(SettingType.ImportApiEnabled, false))
+        {
+            logger.LogWarning("API: {Endpoint}: rejected, ImportApiEnabled setting is off", endpointName);
+            return (false, null, Results.StatusCode(StatusCodes.Status403Forbidden));
+        }
+
+        var caller = GetCurrentUser(http);
+        if (!IsSuperUser(caller))
+        {
+            logger.LogWarning("API: {Endpoint}: caller {User} is not a Superuser", endpointName, caller.Name);
+            return (false, null, Results.StatusCode(StatusCodes.Status403Forbidden));
+        }
+
+        return (true, caller, null);
     }
 
     /// <summary>
