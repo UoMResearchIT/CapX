@@ -88,8 +88,12 @@ namespace PPMTool.Data.Enums
         [DefaultSettingValue("CapX - RSE Operational Management Tool")]
         ApplicationName = 18,
 
+        [Description("The length of time in calendar days that a request is expected to be open at the start of the demand process. Affects the timers on the MyProjects page.")]
+        [DefaultSettingValue("14")]
+        RequestDurationLimit = 19,
+
         [Description("The percentage of the planned cost that can be underclaimed (requested) for a given financial year.")]
         [DefaultSettingValue("10")]
-        UnderclaimedFundsThreshold = 19
+        UnderclaimedFundsThreshold = 20
     }
 }

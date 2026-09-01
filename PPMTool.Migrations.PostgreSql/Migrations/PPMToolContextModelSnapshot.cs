@@ -21,7 +21,7 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.9")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -577,6 +577,9 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                     b.Property<int>("CostModel")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<double>("DayRate")
                         .HasColumnType("double precision");
 
@@ -619,9 +622,15 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                     b.Property<int>("RTP")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("RequestCompletedDate")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<string>("RequestDocLink")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("RequestOwnerId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("SchoolId")
                         .HasColumnType("integer");
@@ -637,6 +646,8 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                     b.HasIndex("InnateActivityInnateCodeId");
 
                     b.HasIndex("ProjectManagerPersonId");
+
+                    b.HasIndex("RequestOwnerId");
 
                     b.HasIndex("SchoolId");
 
@@ -1224,6 +1235,12 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                         .WithMany("ManagedProjects")
                         .HasForeignKey("ProjectManagerPersonId");
 
+                    b.HasOne("PPMTool.Data.Entities.Person", "RequestOwner")
+                        .WithMany("RequestedOwnerProjects")
+                        .HasForeignKey("RequestOwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("PPMTool.Data.Entities.School", "School")
                         .WithMany()
                         .HasForeignKey("SchoolId")
@@ -1233,6 +1250,8 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                     b.Navigation("InnateActivity");
 
                     b.Navigation("ProjectManager");
+
+                    b.Navigation("RequestOwner");
 
                     b.Navigation("School");
                 });
@@ -1414,6 +1433,8 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                     b.Navigation("OwnedSkills");
 
                     b.Navigation("PeopleManaged");
+
+                    b.Navigation("RequestedOwnerProjects");
 
                     b.Navigation("Timesheets");
 

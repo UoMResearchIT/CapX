@@ -146,7 +146,8 @@ namespace PPMTool.Data.Enums
                 status == ProjectStatus.Finished ||
                 status == ProjectStatus.CancelledByCustomer ||
                 status == ProjectStatus.CancelledBidFailed ||
-                status == ProjectStatus.CancelledNoResource;
+                status == ProjectStatus.CancelledNoResource ||
+                status == ProjectStatus.CancelledOutOfScope;
         }
 
         /// <summary>
@@ -159,7 +160,8 @@ namespace PPMTool.Data.Enums
             return
                 status == ProjectStatus.CancelledByCustomer ||
                 status == ProjectStatus.CancelledBidFailed ||
-                status == ProjectStatus.CancelledNoResource;
+                status == ProjectStatus.CancelledNoResource ||
+                status == ProjectStatus.CancelledOutOfScope;
         }
 
         /// <summary>

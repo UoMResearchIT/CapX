@@ -12,11 +12,9 @@ SPDX-License-Identifier: apache-2.0
 @using PPMTool.Models
 @using PPMTool.Data
 @using PPMTool.Data.Enums
-@using PPMTool.Data.Helpers
 @using PPMTool.Data.Entities
 @using PPMTool.Helpers
 @using PPMTool.Pages.Components
-@using Radzen.Blazor.Rendering
 <PageTitle>Project Details - CapX</PageTitle>
 
 <FeatureCheckComponent Feature="FeatureType.ProjectsAndCapacity">
@@ -71,7 +69,7 @@ SPDX-License-Identifier: apache-2.0
             <hr />
             if (project != null)
             {
-                <StatusMessageSummaryComponent Messages="@ProjectStatusEvaluator.GetLatestStatusMessages(project)" />
+                <StatusMessageSummaryComponent Messages="@ProjectStatusEvaluator.GetLatestStatusMessages(project, ActiveUser?.Person?.PersonId)" />
                 <hr />
                 <ProjectDetailsSummaryComponent FinanceSummaryItem="@financeSummaryItem"
                                                 EditAuthorised="@EditAuthorised" />
@@ -309,7 +307,7 @@ SPDX-License-Identifier: apache-2.0
                             <Columns>
                                 <RadzenDataGridColumn TItem="SubTask" Title="Status" Frozen="true" Sortable=false Filterable=false Width="7rem" MinWidth="10px">
                                     <Template Context="t">
-                                        <StatusMessageSummaryComponent Messages="@SubTaskStatusEvaluator.GetLatestStatusMessages(t)" ShowMessages="false" />
+                                        <StatusMessageSummaryComponent Messages="@SubTaskStatusEvaluator.GetLatestStatusMessages(t, ActiveUser?.Person?.PersonId)" ShowMessages="false" />
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="SubTask" Property="Name" Title="Name" Frozen="true" Width="14rem" MinWidth="10px">

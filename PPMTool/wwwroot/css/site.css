@@ -455,5 +455,7 @@ span.mention {
     width: fit-content;
 }
 
-
+.padded-badge {
+    padding: 4px 10px;
+}
 

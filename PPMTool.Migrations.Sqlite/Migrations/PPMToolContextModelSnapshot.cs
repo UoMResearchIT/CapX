@@ -19,7 +19,7 @@ namespace PPMTool.Migrations.Sqlite.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.10");
 
             modelBuilder.Entity("PPMTool.Data.Entities.Absence", b =>
                 {
@@ -540,6 +540,9 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                     b.Property<int>("CostModel")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
                     b.Property<double>("DayRate")
                         .HasColumnType("REAL");
 
@@ -582,9 +585,15 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                     b.Property<int>("RTP")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("RequestCompletedDate")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("RequestDocLink")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("RequestOwnerId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("SchoolId")
                         .HasColumnType("INTEGER");
@@ -600,6 +609,8 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                     b.HasIndex("InnateActivityInnateCodeId");
 
                     b.HasIndex("ProjectManagerPersonId");
+
+                    b.HasIndex("RequestOwnerId");
 
                     b.HasIndex("SchoolId");
 
@@ -1169,6 +1180,12 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                         .WithMany("ManagedProjects")
                         .HasForeignKey("ProjectManagerPersonId");
 
+                    b.HasOne("PPMTool.Data.Entities.Person", "RequestOwner")
+                        .WithMany("RequestedOwnerProjects")
+                        .HasForeignKey("RequestOwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("PPMTool.Data.Entities.School", "School")
                         .WithMany()
                         .HasForeignKey("SchoolId")
@@ -1178,6 +1195,8 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                     b.Navigation("InnateActivity");
 
                     b.Navigation("ProjectManager");
+
+                    b.Navigation("RequestOwner");
 
                     b.Navigation("School");
                 });
@@ -1359,6 +1378,8 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                     b.Navigation("OwnedSkills");
 
                     b.Navigation("PeopleManaged");
+
+                    b.Navigation("RequestedOwnerProjects");
 
                     b.Navigation("Timesheets");
 

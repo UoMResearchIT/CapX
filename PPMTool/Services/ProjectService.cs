@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
+using PPMTool.Models;
+using Radzen;
 
 namespace PPMTool.Services
 {
@@ -124,6 +126,7 @@ namespace PPMTool.Services
                 .Include(p => p.InnateActivity)
                 .Include(p => p.Followers)
                 .Include(p => p.FundingSources)
+                .Include(p => p.RequestOwner)
                 .ToList();
         }
 
@@ -256,6 +259,23 @@ namespace PPMTool.Services
                     logger.LogWarning(ex, $"Error occurred while updating project metadata for project {project.ProjectId} ({prefix}-{project.RTP}): {ex.Message}");
                 }
             }
+        }
+
+        /// <summary>
+        /// Method to construct the request clock model for a project given its created date.
+        /// </summary>
+        /// <param name="createdDate"></param>
+        /// <returns></returns>
+        public RequestClockDetails GetRequestClockDetails(DateTime createdDate)
+        {
+            // Get clock time from settings
+            var clockTime = settingsService.GetSetting(SettingType.RequestDurationLimit, 14d);
+
+            // End of request window
+            var endDate = createdDate.AddDays(clockTime).Date;
+
+            // Create the model and return it
+            return new RequestClockDetails(endDate.Subtract(DateTime.Today), clockTime);
         }
     }
 }

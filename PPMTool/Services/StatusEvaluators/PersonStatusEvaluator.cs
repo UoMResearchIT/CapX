@@ -12,7 +12,7 @@ namespace PPMTool.Services.StatusEvaluators
     /// </summary>
     public sealed class PersonStatusEvaluator : BaseStatusEvaluatorService<Person>
     {
-        protected override IReadOnlyList<StatusMessage> BuildCoreStatusMessages(Person person)
+        protected override IReadOnlyList<StatusMessage> BuildCoreStatusMessages(Person person, int? messageViewerPersonId = null)
         {
             return new List<StatusMessage>
             {

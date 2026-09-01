@@ -15,18 +15,22 @@ namespace PPMTool.Services.StatusEvaluators
         private readonly SettingsService settingsService;
         private readonly IDbContextFactory<PPMToolContext> contextFactory;
         private readonly InvoiceService invoiceService;
+        private readonly ProjectService projectService;
 
         public ProjectStatusEvaluator(
             SettingsService settingsService,
             IDbContextFactory<PPMToolContext> contextFactory,
-            InvoiceService invoiceService)
+            InvoiceService invoiceService,
+            ProjectService projectService
+        )
         {
             this.settingsService = settingsService;
             this.contextFactory = contextFactory;
             this.invoiceService = invoiceService;
+            this.projectService = projectService;
         }
 
-        protected override IReadOnlyList<StatusMessage> BuildCoreStatusMessages(Project project)
+        protected override IReadOnlyList<StatusMessage> BuildCoreStatusMessages(Project project, int? messageViewerPersonId = null)
         {
             // Compute some pre-requisites for the status messages that need to be retrieved from other services
             var today = DateTime.Today;
@@ -50,39 +54,55 @@ namespace PPMTool.Services.StatusEvaluators
                 requestedThisFY = invoiceService.GetFundsRequestedForFinancialYear(context, project.ProjectId, currentFY);
             }
 
-            return new List<StatusMessage>
+            // Build messages that apply to all projects
+            var messages = new List<StatusMessage>
             {
                 // Info
                 new StatusMessage("A task in this project will start soon.", StatusMessage.MessageType.Info, () => project.SubTasks?.Any(x => x.WillStartWithinAMonth()) ?? false),
                 new StatusMessage("A task in this project has recently started.", StatusMessage.MessageType.Info, () => project.SubTasks?.Any(x => x.HasStartedInTheLastWeek()) ?? false),
-                new StatusMessage("A task in this project has absent resources and has started or will start soon!", StatusMessage.MessageType.Info, () => project.SubTasks?.Any(x => x.HasAbsentResourcesAndStartsWithinAWeek()) ?? false, FeatureType.Absences),
-                
+                new StatusMessage("A task in this project has absent resources and has started or will start soon.", StatusMessage.MessageType.Info, () => project.SubTasks?.Any(x => x.HasAbsentResourcesAndStartsWithinAWeek()) ?? false, FeatureType.Absences),
+                new StatusMessage($"This request is owned by {project.RequestOwner?.Name}.", StatusMessage.MessageType.Info, () => project.ShowRequestOwnerMessage(messageViewerPersonId ?? 0)),
+
                 // Warnings
-                new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => project.SubTasks?.Any(x => x.HasProvisionalResources()) ?? false),
-                new StatusMessage("A current or future task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => project.HasUnmetDemandInWindow()),
-                new StatusMessage("This project has started but has no link to a project board!", StatusMessage.MessageType.Warning, project.HasStartedButHasNoScrumProjectLink),
-                new StatusMessage("Task has resource(s) with zero FTE assignment!", StatusMessage.MessageType.Warning, project.HasResourceWithZeroFTE),
-                new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Warning, () => project.ProjectStatus.IsActive() && project.IsOverBudget() && !project.IsOverBudget(settingsService.GetSetting(SettingType.OverbudgetThreshold, 0d)), FeatureType.ProjectFinance),
-                new StatusMessage("Funds requested this financial year are significantly below planned costs, has Other funding sources but no invoice in the current financial year. Raise one by June to request funds.", StatusMessage.MessageType.Warning, () => shouldRunInvoiceChecks ? !hasCurrentFYInvoice && project.FundsRequestedBelowPlannedCostForFY(requestedThisFY, settingsService.GetSetting(SettingType.UnderclaimedFundsThreshold, 10d), today) : false, FeatureType.ProjectFinance),
+                new StatusMessage($"This request is approaching the request duration limit!", StatusMessage.MessageType.Warning, () => project.ProjectStatus == ProjectStatus.NewRequest && projectService.GetRequestClockDetails(project.CreatedDate).ShouldWarn()),
 
                 // Errors
-                new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Error, () => project.ProjectStatus.IsActive() && project.IsOverBudget(settingsService.GetSetting(SettingType.OverbudgetThreshold, 0d)), FeatureType.ProjectFinance),
-                new StatusMessage("This project has no agreed budget!", StatusMessage.MessageType.Error, project.HasNoBudget, FeatureType.ProjectFinance),
-                new StatusMessage("A task in this project is running but the project is not active!", StatusMessage.MessageType.Error, project.RunningTaskButInactive),
-                new StatusMessage("This project is active but has no currently running tasks!", StatusMessage.MessageType.Error, project.ActiveButNoRunningTask),
-                new StatusMessage("This project has no project manager set!", StatusMessage.MessageType.Error, project.NotFinishedOrCancelledButNoPM),
-                new StatusMessage("This project has no timesheet activity set and project has started or will start soon!", StatusMessage.MessageType.Error, () => project.NotFinishedOrCancelledButNoInnateCodeAndUpcoming(), FeatureType.Timesheets),
+                new StatusMessage($"This request is has breached the request duration limit!", StatusMessage.MessageType.Error, () => project.ProjectStatus == ProjectStatus.NewRequest && projectService.GetRequestClockDetails(project.CreatedDate).ShouldError()),
                 new StatusMessage("This project has no project ID specified!", StatusMessage.MessageType.Error, () => project.RTP == 0),
+                new StatusMessage("This project has no agreed budget!", StatusMessage.MessageType.Error, project.HasNoBudget, FeatureType.ProjectFinance),
                 new StatusMessage("This project has no link to a request document!", StatusMessage.MessageType.Error, project.HasNoRequestDocLink),
-                new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, project.HasNoDescription),
-                new StatusMessage("This project has no tasks!", StatusMessage.MessageType.Error, () => project.SubTasks == null || project.SubTasks.Count == 0),
-                new StatusMessage("This project is active but hasn't had its actuals updated for more than a month!", StatusMessage.MessageType.Error, project.ActiveButNotHadActualsUpdatedForAMonth, FeatureType.Timesheets),
-                new StatusMessage("This project has no funding sources but is either finished or is active!", StatusMessage.MessageType.Error, project.HasNoFundingSourcesButRan, FeatureType.ProjectFinance),
-                new StatusMessage("This project has a task with a resource without a funding source and is currently running or has run in the past!", StatusMessage.MessageType.Error, project.HasResourcesWithNoFundingSourceOnRunningTask, FeatureType.ProjectFinance),
                 new StatusMessage("This project uses the Day Rate model but has a DI funding source which is not allowed! DI funding sources must use salary costs for recharge.", StatusMessage.MessageType.Error, () => project.DayRateWithDIFunding(), FeatureType.ProjectFinance),
-                new StatusMessage("This project does not have a project management task!", StatusMessage.MessageType.Error, () => !project.SubTasks?.Any(x => x.TaskDuty == Duty.ProjectAndServiceMgmt) ?? true),
-                new StatusMessage("This project has funding sources contributing to the budget that are not associated with task resources!", StatusMessage.MessageType.Error, () => project.HasFundingSourcesNotLinkedToResources(), FeatureType.ProjectFinance)
             };
+
+            // Messages that do not apply to new requests
+            if (project.ProjectStatus != ProjectStatus.NewRequest)
+            {
+                messages.AddRange([
+                    // Warnings
+                    new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => project.SubTasks?.Any(x => x.HasProvisionalResources()) ?? false),
+                    new StatusMessage("A current or future task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => project.HasUnmetDemandInWindow()),
+                    new StatusMessage("This project has started but has no link to a project board!", StatusMessage.MessageType.Warning, project.HasStartedButHasNoScrumProjectLink),
+                    new StatusMessage("Task has resource(s) with zero FTE assignment!", StatusMessage.MessageType.Warning, project.HasResourceWithZeroFTE),
+                    new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Warning, () => project.ProjectStatus.IsActive() && project.IsOverBudget() && !project.IsOverBudget(settingsService.GetSetting(SettingType.OverbudgetThreshold, 0d)), FeatureType.ProjectFinance),
+                    new StatusMessage("Funds requested this financial year are significantly below planned costs, has Other funding sources but no invoice in the current financial year. Raise one by June to request funds.", StatusMessage.MessageType.Warning, () => shouldRunInvoiceChecks ? !hasCurrentFYInvoice && project.FundsRequestedBelowPlannedCostForFY(requestedThisFY, settingsService.GetSetting(SettingType.UnderclaimedFundsThreshold, 10d), today) : false, FeatureType.ProjectFinance),
+                
+                    // Errors
+                    new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Error, () => project.ProjectStatus.IsActive() && project.IsOverBudget(settingsService.GetSetting(SettingType.OverbudgetThreshold, 0d)), FeatureType.ProjectFinance),
+                    new StatusMessage("A task in this project is running but the project is not active!", StatusMessage.MessageType.Error, project.RunningTaskButInactive),
+                    new StatusMessage("This project is active but has no currently running tasks!", StatusMessage.MessageType.Error, project.ActiveButNoRunningTask),
+                    new StatusMessage("This project has no project manager set!", StatusMessage.MessageType.Error, project.NotFinishedOrCancelledButNoPM),
+                    new StatusMessage("This project has no timesheet activity set and project has started or will start soon!", StatusMessage.MessageType.Error, () => project.NotFinishedOrCancelledButNoInnateCodeAndUpcoming(), FeatureType.Timesheets),
+                    new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, project.HasNoDescription),
+                    new StatusMessage("This project has no tasks!", StatusMessage.MessageType.Error, () => project.SubTasks == null || project.SubTasks.Count == 0),
+                    new StatusMessage("This project is active but hasn't had its actuals updated for more than a month!", StatusMessage.MessageType.Error, project.ActiveButNotHadActualsUpdatedForAMonth, FeatureType.Timesheets),
+                    new StatusMessage("This project has no funding sources but is either finished or is active!", StatusMessage.MessageType.Error, project.HasNoFundingSourcesButRan, FeatureType.ProjectFinance),
+                    new StatusMessage("This project has a task with a resource without a funding source and is currently running or has run in the past!", StatusMessage.MessageType.Error, project.HasResourcesWithNoFundingSourceOnRunningTask, FeatureType.ProjectFinance),
+                    new StatusMessage("This project does not have a project management task!", StatusMessage.MessageType.Error, () => !project.SubTasks?.Any(x => x.TaskDuty == Duty.ProjectAndServiceMgmt) ?? true),
+                    new StatusMessage("This project has funding sources contributing to the budget that are not associated with task resources!", StatusMessage.MessageType.Error, () => project.HasFundingSourcesNotLinkedToResources(), FeatureType.ProjectFinance)
+                ]);
+            }
+
+            return messages;
         }
     }
 }
