@@ -419,78 +419,43 @@ span.mention {
 .capacity-gen-button-pulse {
     position: relative;
     overflow: visible;
+    border: 2px solid var(--rz-primary) !important;
+    box-shadow: 0 0 0 1px var(--rz-primary);
 }
 
 .capacity-gen-button-pulse::after {
     content: "";
     position: absolute;
-    inset: -3px;
+    inset: -5px;
     border-radius: inherit;
+    border: 3px solid var(--rz-primary);
+    opacity: 0;
+    transform: scale(0.98);
+    animation: capacity-generate-pulse 1.25s ease-out infinite;
     pointer-events: none;
-    background:
-        linear-gradient(var(--rz-danger), var(--rz-danger)) top left / 0% 4px no-repeat,
-        linear-gradient(var(--rz-danger), var(--rz-danger)) top right / 4px 0% no-repeat,
-        linear-gradient(var(--rz-danger), var(--rz-danger)) bottom right / 0% 4px no-repeat,
-        linear-gradient(var(--rz-danger), var(--rz-danger)) bottom left / 4px 0% no-repeat;
-    animation: capacity-generate-outline-trace 2s linear infinite;
 }
 
-@keyframes capacity-generate-outline-trace {
+@keyframes capacity-generate-pulse {
     0% {
-        background-position: top left, top right, bottom right, bottom left;
-        background-size: 0% 4px, 4px 0%, 0% 4px, 4px 0%;
-    }
-
-    12.5% {
-        background-position: top left, top right, bottom right, bottom left;
-        background-size: 100% 4px, 4px 0%, 0% 4px, 4px 0%;
+        opacity: 0;
+        transform: scale(0.98);
     }
 
     25% {
-        background-position: top left, top right, bottom right, bottom left;
-        background-size: 100% 4px, 4px 100%, 0% 4px, 4px 0%;
-    }
-
-    37.5% {
-        background-position: top left, top right, bottom right, bottom left;
-        background-size: 100% 4px, 4px 100%, 100% 4px, 4px 0%;
-    }
-
-    50% {
-        background-position: top left, top right, bottom right, bottom left;
-        background-size: 100% 4px, 4px 100%, 100% 4px, 4px 100%;
-    }
-
-    50.01% {
-        background-position: top right, bottom right, bottom left, top left;
-        background-size: 100% 4px, 4px 100%, 100% 4px, 4px 100%;
-    }
-
-    62.5% {
-        background-position: top right, bottom right, bottom left, top left;
-        background-size: 0% 4px, 4px 100%, 100% 4px, 4px 100%;
-    }
-
-    75% {
-        background-position: top right, bottom right, bottom left, top left;
-        background-size: 0% 4px, 4px 0%, 100% 4px, 4px 100%;
-    }
-
-    87.5% {
-        background-position: top right, bottom right, bottom left, top left;
-        background-size: 0% 4px, 4px 0%, 0% 4px, 4px 100%;
+        opacity: 0.9;
     }
 
     100% {
-        background-position: top right, bottom right, bottom left, top left;
-        background-size: 0% 4px, 4px 0%, 0% 4px, 4px 0%;
+        opacity: 0;
+        transform: scale(1.08);
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .capacity-gen-button-pulse::after {
         animation: none;
-        background-size: 100% 4px, 4px 100%, 100% 4px, 4px 100%;
+        opacity: 1;
+        transform: none;
     }
 }
 
