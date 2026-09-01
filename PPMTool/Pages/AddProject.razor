@@ -94,7 +94,7 @@ SPDX-License-Identifier: apache-2.0
                                                 @bind-Value="projectModel.School"
                                                 Data="@schools"
                                                 Placeholder="Select a school">
-                                                    <Template Context="x">
+                                    <Template Context="x">
                                         @x.GetSensibleObjectName()
                                     </Template>
                                 </RadzenDropDown>
@@ -110,8 +110,7 @@ SPDX-License-Identifier: apache-2.0
                                                 ValueProperty="PersonId"
                                                 Data="@projectManagers"
                                                 Change="OnRequestOwnerChosen"
-                                                Disabled="@(projectModel.ProjectStatus != ProjectStatus.NewRequest)">
-                                </RadzenDropDown>
+                                                Disabled="@(projectModel.ProjectStatus != ProjectStatus.NewRequest)" />
                             </div>
                             <div class="col-4">
                                 <RadzenLabel class="radzen-form-label" Text="Project Manager" /><br />

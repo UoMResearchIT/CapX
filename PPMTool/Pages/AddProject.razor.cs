@@ -78,6 +78,7 @@ namespace PPMTool.Pages
 
             if (!firstRender) return;
 
+            // Edit project
             if (ProjectId > 0)
             {
                 projectModel = ProjectService.GetById(Context, ProjectId);
@@ -97,15 +98,19 @@ namespace PPMTool.Pages
                 // Populate funding source list
                 availableFundingSources = FundingSourceService.GetFundingSources(Context, ProjectId);
             }
+
+            // New project
             else
             {
+                // Set default day rate value
                 projectModel.DayRate = GetSetting(SettingType.DayRateDefault, 0f);
 
                 // Auto generate the RTP number based on the highest in the DB
                 projectModel.RTP = ProjectService.GetAll(Context).Select(x => x.RTP).DefaultIfEmpty(0).Max() + 1;
 
-                // Set the active user as the PM by default
+                // Set the active user as the PM and request owner by default
                 projectModel.ProjectManager = ActiveUser?.Person;
+                projectModel.RequestOwner = ActiveUser?.Person;
 
                 // Specific check for when Finance feature has not been enabled and a new
                 // project is being added, as Faculties/Schools are required
