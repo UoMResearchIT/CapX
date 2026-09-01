@@ -89,7 +89,7 @@ SPDX-License-Identifier: apache-2.0
                                 <CapacityChartComponent ChartModel=@chartModels[i]
                                                         OnDataPointSelection="@(async item => await DataPointsSelectedAsync(item))"
                                                         OnChartZoomed="@OnChartZoomed"
-                                                        Value2TooltipFormatter="@FormatProjectModeAwareValue2Tooltip" />
+                                                        IsProjectMode="@PeopleChosen()" />
                             </div>
                         </div>
                     }

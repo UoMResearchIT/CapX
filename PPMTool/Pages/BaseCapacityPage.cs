@@ -657,36 +657,6 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Formats the value2 line on capacity chart tooltips.
-        /// Keeps all three values visible (Assigned, Available, Workload Model) across modes.
-        /// </summary>
-        /// <param name="item"></param>
-        /// <returns></returns>
-        protected MarkupString FormatProjectModeAwareValue2Tooltip(ChartItem item)
-        {
-            var assigned = item?.Value1 ?? 0;
-            var value2 = item?.Value2 ?? 0;
-
-            double available;
-            double workloadModel;
-
-            if (PeopleChosen())
-            {
-                // In project mode, value2 is availability derived from total assigned load
-                available = Math.Round(value2, 3);
-                workloadModel = Math.Round(assigned + value2, 3);
-            }
-            else
-            {
-                // In person mode, value2 is direct workload model capacity
-                available = Math.Round(Math.Max(value2 - assigned, 0), 3);
-                workloadModel = value2;
-            }
-
-            return (MarkupString)$"<p class=\"h4\">Available: {available} FTE</p><p class=\"me-1\">(Workload Model: {workloadModel} FTE)<span>";
-        }
-
-        /// <summary>
         /// Use the master list of people to filter the data source for the dropdown based on user typing
         /// </summary>
         /// <param name="args"></param>
