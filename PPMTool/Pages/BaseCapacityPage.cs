@@ -135,6 +135,7 @@ namespace PPMTool.Pages
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <param name="person"></param>
+        /// <param name="totalAssignmentsByDay"></param>
         /// <param name="isTotalRow"></param>
         /// <returns></returns>
         protected abstract IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
@@ -143,6 +144,7 @@ namespace PPMTool.Pages
             DateTime startDate,
             DateTime endDate,
             Person person,
+            IReadOnlyDictionary<DateTime, double> totalAssignmentsByDay,
             bool isTotalRow = false
         );
 
@@ -408,6 +410,18 @@ namespace PPMTool.Pages
 
                             // Build chart source from the grouped data
                             Debug.WriteLine($"** {person.Name} has {groupedAssignments.Count} projects");
+
+                            // Flatten once so all rows can reference the same total assignment data per day
+                            var allProjectAssignments = groupedAssignments.SelectMany(x => x.Value).ToList();
+                            var totalAssignmentsByDay = new Dictionary<DateTime, double>();
+                            for (var currentDay = startDate.Date; currentDay < endDate.Date; currentDay = currentDay.AddDays(1))
+                            {
+                                var totalAssignedForDay = allProjectAssignments
+                                    .Where(x => x.IsWithin(currentDay))
+                                    .RoundedSum(x => x.SubTask.GetAssignmentValueForPerson(person));
+                                totalAssignmentsByDay[currentDay] = totalAssignedForDay;
+                            }
+
                             foreach (var group in groupedAssignments)
                             {
                                 // Compute chart items from the grouped assignments
@@ -418,13 +432,13 @@ namespace PPMTool.Pages
                                         group,
                                         startDate,
                                         endDate,
-                                        person
+                                        person,
+                                        totalAssignmentsByDay
                                     )
                                 );
                             }
 
                             // Total row needs to repeat the above logic but on the flattened set of subtasks
-                            var allProjectAssignments = groupedAssignments.SelectMany(x => x.Value);
                             var rowName = "Total";
                             groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
                             chartSourceTemp.AddRange(
@@ -434,6 +448,7 @@ namespace PPMTool.Pages
                                     startDate,
                                     endDate,
                                     person,
+                                    totalAssignmentsByDay,
                                     isTotalRow: true
                                 )
                             );
@@ -639,6 +654,36 @@ namespace PPMTool.Pages
         protected bool PeopleChosen()
         {
             return chosenPeople != null && chosenPeople.Count() > 0;
+        }
+
+        /// <summary>
+        /// Formats the value2 line on capacity chart tooltips.
+        /// Keeps all three values visible (Assigned, Available, Workload Model) across modes.
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        protected MarkupString FormatProjectModeAwareValue2Tooltip(ChartItem item)
+        {
+            var assigned = item?.Value1 ?? 0;
+            var value2 = item?.Value2 ?? 0;
+
+            double available;
+            double workloadModel;
+
+            if (PeopleChosen())
+            {
+                // In project mode, value2 is availability derived from total assigned load
+                available = Math.Round(value2, 3);
+                workloadModel = Math.Round(assigned + value2, 3);
+            }
+            else
+            {
+                // In person mode, value2 is direct workload model capacity
+                available = Math.Round(Math.Max(value2 - assigned, 0), 3);
+                workloadModel = value2;
+            }
+
+            return (MarkupString)$"<p class=\"h4\">Available: {available} FTE</p><p class=\"me-1\">(Workload Model: {workloadModel} FTE)<span>";
         }
 
         /// <summary>

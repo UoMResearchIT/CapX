@@ -107,6 +107,7 @@ namespace PPMTool.Pages
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <param name="person"></param>
+        /// <param name="totalAssignmentsByDay"></param>
         /// <param name="isTotalRow"></param>
         /// <returns></returns>
         protected override IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
@@ -115,6 +116,7 @@ namespace PPMTool.Pages
             DateTime startDate,
             DateTime endDate,
             Person person,
+            IReadOnlyDictionary<DateTime, double> totalAssignmentsByDay,
             bool isTotalRow = false
         )
         {
@@ -127,7 +129,7 @@ namespace PPMTool.Pages
                 {
                     // Shading function based on value 1 and value 2
                     return isTotalRow ?
-                        ChartItem.GetColourStringFTE(value1, value2) :
+                        ChartItem.GetColourStringFTE(value1, value1 + value2) :
                         (
                             value1 > projectManDefaultFte ?
                                 "#FF9800" :
@@ -142,7 +144,11 @@ namespace PPMTool.Pages
                 // Value 2 for each block
                 value2Function: (assignments, value1, currentDay) =>
                 {
-                    return person.GetProjectManagementCapacityOnDate(currentDay);
+                    var totalAssignedForDay = totalAssignmentsByDay.TryGetValue(currentDay.Date, out var total) ? total : 0;
+                    var capacityForDay = person.GetProjectManagementCapacityOnDate(currentDay);
+
+                    // Value 2 is the availability relative to total assignments for the chosen person/day
+                    return Math.Round(capacityForDay - totalAssignedForDay, 3);
                 },
                 tooltipMessageFormatter: assignmentsWithinBlock => GenerateTooltipMessages(assignmentsWithinBlock, person, string.Empty),
                 ignoreZeroValue1Entries: !isTotalRow

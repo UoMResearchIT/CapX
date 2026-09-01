@@ -102,7 +102,8 @@ SPDX-License-Identifier: apache-2.0
                             <div class="rz-card rz-variant-fill my-1">
                                 <CapacityChartComponent ChartModel=@chartModels[i]
                                                         OnDataPointSelection="@(async item => await DataPointsSelectedAsync(item))"
-                                                        OnChartZoomed="@OnChartZoomed" />
+                                                        OnChartZoomed="@OnChartZoomed"
+                                                        Value2TooltipFormatter="@FormatProjectModeAwareValue2Tooltip" />
                             </div>
                         </div>
                     }
