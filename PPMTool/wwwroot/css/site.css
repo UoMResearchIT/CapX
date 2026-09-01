@@ -416,6 +416,28 @@ span.mention {
     min-width: fit-content;
 }
 
+.capacity-gen-button-pulse {
+    animation: capacity-generate-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes capacity-generate-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(47, 126, 216, 0.0);
+        transform: scale(1);
+    }
+
+    50% {
+        box-shadow: 0 0 0 6px rgba(47, 126, 216, 0.35);
+        transform: scale(1.02);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .capacity-gen-button-pulse {
+        animation: none;
+    }
+}
+
 .components-reconnect-dialog {
     background-color: var(--rz-card-background-color) !important;
 }

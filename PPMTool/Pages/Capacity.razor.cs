@@ -172,6 +172,8 @@ namespace PPMTool.Pages
             var item = selectedOptions as Person;
             Debug.WriteLine($"** Selected Manager: {item?.Name}");
 
+            chartNeedsRegeneration = true;
+
             // Save the new state
             SaveManagerState();
 

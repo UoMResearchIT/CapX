@@ -62,7 +62,7 @@ SPDX-License-Identifier: apache-2.0
                         <RadzenButton Text="Generate"
                                       Click="@(async () => await ConfigureChartSourceAsync())"
                                       Icon="refresh"
-                                      class="capacity-gen-button" />
+                                      class="@GetGenerateButtonCssClass()" />
                     }
                 </RadzenStack>
             </RadzenCard>

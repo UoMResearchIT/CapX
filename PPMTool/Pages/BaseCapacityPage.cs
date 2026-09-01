@@ -65,6 +65,7 @@ namespace PPMTool.Pages
         protected bool includeUnFunded = true;
         protected bool includeLeavers = false;
         protected bool includeFinished = false;
+        protected bool chartNeedsRegeneration = false;
 
         /// <summary>
         /// Change callback for unfunded switch
@@ -72,6 +73,7 @@ namespace PPMTool.Pages
         protected async Task UnFundedSwitchChangedAsync(bool value)
         {
             includeUnFunded = value;
+            chartNeedsRegeneration = true;
             await SessionStorage.SetItemAsync<bool?>($"{GetStorageTag()}-include-unfunded", value);
         }
 
@@ -81,6 +83,7 @@ namespace PPMTool.Pages
         protected async Task LeaversSwitchChangedAsync(bool value)
         {
             includeLeavers = value;
+            chartNeedsRegeneration = true;
             await SessionStorage.SetItemAsync<bool?>($"{GetStorageTag()}-include-leavers", value);
             await ReloadDropDownSourcesAsync();
         }
@@ -91,6 +94,7 @@ namespace PPMTool.Pages
         protected async Task FinishedSwitchChangedAsync(bool value)
         {
             includeFinished = value;
+            chartNeedsRegeneration = true;
             await SessionStorage.SetItemAsync<bool?>($"{GetStorageTag()}-include-finished", value);
         }
 
@@ -107,6 +111,7 @@ namespace PPMTool.Pages
         {
             var items = selectedOptions as IEnumerable<string>;
             Debug.WriteLine($"** Selected People: {(items != null ? string.Join('|', items) : "")}");
+            chartNeedsRegeneration = true;
 
             // Save the new state
             await SavePeopleStateAsync();
@@ -314,6 +319,7 @@ namespace PPMTool.Pages
             Func<bool> projectModeCondition = null)
         {
             Debug.WriteLine("** Configuring Chart Source...");
+            chartNeedsRegeneration = false;
             Loading = true;
             StateHasChanged();
             await Task.Yield();
@@ -654,6 +660,15 @@ namespace PPMTool.Pages
         protected bool PeopleChosen()
         {
             return chosenPeople != null && chosenPeople.Count() > 0;
+        }
+
+        /// <summary>
+        /// Gets the css classes for the generate button and adds a pulse nudge when chart options changed.
+        /// </summary>
+        /// <returns></returns>
+        protected string GetGenerateButtonCssClass()
+        {
+            return chartNeedsRegeneration ? "capacity-gen-button capacity-gen-button-pulse" : "capacity-gen-button";
         }
 
         /// <summary>
