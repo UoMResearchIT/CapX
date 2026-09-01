@@ -140,14 +140,23 @@ namespace PPMTool.Pages
             innateActivities = innateActivityQuery.ToList();
             faculties = FacultyService.GetAllActive(Context).ToList();
             statuses = Enum.GetValues<ProjectStatus>().ToList();
+            costModels = DisplayOrderHelper.GetOrderListOfCostModels();
+
+            // Get all the people in the system and order by name for the dropdowns
             var people = PersonService.GetAll(Context).OrderBy(x => x.Name).ToList();
+
+            // Get list of managers and superusers who are also team members (i.e. have a person record associated)
             var users = UserService.GetAll(Context)
                 .Where(x =>
                     (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
                     && x.Person != null
                 );
-            projectManagers = people.Where(x => users.Any(y => y.Person.PersonId == x.PersonId)).ToList();
-            costModels = DisplayOrderHelper.GetOrderListOfCostModels();
+
+            // Just set the project managers to the subset of users above but who haven't left yet
+            projectManagers = people
+                .Where(x => users.Any(y => y.Person.PersonId == x.PersonId))
+                .Where(x => x.EndDate == null || x.EndDate >= DateTime.Today)
+                .ToList();
 
             // Create edit context and message store
             editContext = new EditContext(projectModel);
