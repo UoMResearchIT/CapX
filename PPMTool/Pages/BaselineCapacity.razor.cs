@@ -117,6 +117,7 @@ namespace PPMTool.Pages
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <param name="person"></param>
+        /// <param name="totalAssignmentsByDay"></param>
         /// <param name="isTotalRow"></param>
         /// <returns></returns>
         protected override IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
@@ -125,6 +126,7 @@ namespace PPMTool.Pages
             DateTime startDate,
             DateTime endDate,
             Person person,
+            IReadOnlyDictionary<DateTime, double> totalAssignmentsByDay,
             bool isTotalRow = false
         )
         {
@@ -135,8 +137,9 @@ namespace PPMTool.Pages
                 // Colour function
                 (value1, value2, isHatched) =>
                 {
-                    // Shading function based on value 1 and value 2
-                    return ChartItem.GetColourStringFTE(value1, isTotalRow ? value2 : 1, isTotalRow ? ColourScale.Capacity : ColourScale.Load);
+                    // In project mode, value2 is availability derived from total assignment load.
+                    // For total row, reconstruct capacity from assigned + available for colour scaling.
+                    return ChartItem.GetColourStringFTE(value1, isTotalRow ? value1 + value2 : 1, isTotalRow ? ColourScale.Capacity : ColourScale.Load);
                 },
                 seriesName,
                 startDate,
@@ -148,10 +151,11 @@ namespace PPMTool.Pages
                 // Value 2 for each block
                 value2Function: (assignments, value1, currentDay) =>
                 {
-                    var peo = people.Where(y => y == person);
+                    var totalAssignedForDay = totalAssignmentsByDay.TryGetValue(currentDay.Date, out var total) ? total : 0;
+                    var capacityForDay = person.GetBAUAvailability(currentDay);
 
-                    // The total availability of the person becomes value 2
-                    return peo.RoundedSum(y => y.GetBAUAvailability(currentDay));
+                    // Value 2 is the availability relative to total assignments for the chosen person/day
+                    return Math.Round(capacityForDay - totalAssignedForDay, 3);
                 },
                 // Accepts list of assignments for the block to determine tooltip messages for the block
                 tooltipMessageFormatter: assignmentsWithinBlock =>

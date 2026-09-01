@@ -65,6 +65,7 @@ namespace PPMTool.Pages
         protected bool includeUnFunded = true;
         protected bool includeLeavers = false;
         protected bool includeFinished = false;
+        protected bool chartNeedsRegeneration = false;
 
         /// <summary>
         /// Change callback for unfunded switch
@@ -72,6 +73,7 @@ namespace PPMTool.Pages
         protected async Task UnFundedSwitchChangedAsync(bool value)
         {
             includeUnFunded = value;
+            chartNeedsRegeneration = true;
             await SessionStorage.SetItemAsync<bool?>($"{GetStorageTag()}-include-unfunded", value);
         }
 
@@ -81,6 +83,7 @@ namespace PPMTool.Pages
         protected async Task LeaversSwitchChangedAsync(bool value)
         {
             includeLeavers = value;
+            chartNeedsRegeneration = true;
             await SessionStorage.SetItemAsync<bool?>($"{GetStorageTag()}-include-leavers", value);
             await ReloadDropDownSourcesAsync();
         }
@@ -91,6 +94,7 @@ namespace PPMTool.Pages
         protected async Task FinishedSwitchChangedAsync(bool value)
         {
             includeFinished = value;
+            chartNeedsRegeneration = true;
             await SessionStorage.SetItemAsync<bool?>($"{GetStorageTag()}-include-finished", value);
         }
 
@@ -107,6 +111,7 @@ namespace PPMTool.Pages
         {
             var items = selectedOptions as IEnumerable<string>;
             Debug.WriteLine($"** Selected People: {(items != null ? string.Join('|', items) : "")}");
+            chartNeedsRegeneration = true;
 
             // Save the new state
             await SavePeopleStateAsync();
@@ -135,6 +140,7 @@ namespace PPMTool.Pages
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <param name="person"></param>
+        /// <param name="totalAssignmentsByDay"></param>
         /// <param name="isTotalRow"></param>
         /// <returns></returns>
         protected abstract IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
@@ -143,6 +149,7 @@ namespace PPMTool.Pages
             DateTime startDate,
             DateTime endDate,
             Person person,
+            IReadOnlyDictionary<DateTime, double> totalAssignmentsByDay,
             bool isTotalRow = false
         );
 
@@ -312,6 +319,7 @@ namespace PPMTool.Pages
             Func<bool> projectModeCondition = null)
         {
             Debug.WriteLine("** Configuring Chart Source...");
+            chartNeedsRegeneration = false;
             Loading = true;
             StateHasChanged();
             await Task.Yield();
@@ -408,6 +416,18 @@ namespace PPMTool.Pages
 
                             // Build chart source from the grouped data
                             Debug.WriteLine($"** {person.Name} has {groupedAssignments.Count} projects");
+
+                            // Flatten once so all rows can reference the same total assignment data per day
+                            var allProjectAssignments = groupedAssignments.SelectMany(x => x.Value).ToList();
+                            var totalAssignmentsByDay = new Dictionary<DateTime, double>();
+                            for (var currentDay = startDate.Date; currentDay < endDate.Date; currentDay = currentDay.AddDays(1))
+                            {
+                                var totalAssignedForDay = allProjectAssignments
+                                    .Where(x => x.IsWithin(currentDay))
+                                    .RoundedSum(x => x.SubTask.GetAssignmentValueForPerson(person));
+                                totalAssignmentsByDay[currentDay] = totalAssignedForDay;
+                            }
+
                             foreach (var group in groupedAssignments)
                             {
                                 // Compute chart items from the grouped assignments
@@ -418,13 +438,13 @@ namespace PPMTool.Pages
                                         group,
                                         startDate,
                                         endDate,
-                                        person
+                                        person,
+                                        totalAssignmentsByDay
                                     )
                                 );
                             }
 
                             // Total row needs to repeat the above logic but on the flattened set of subtasks
-                            var allProjectAssignments = groupedAssignments.SelectMany(x => x.Value);
                             var rowName = "Total";
                             groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
                             chartSourceTemp.AddRange(
@@ -434,6 +454,7 @@ namespace PPMTool.Pages
                                     startDate,
                                     endDate,
                                     person,
+                                    totalAssignmentsByDay,
                                     isTotalRow: true
                                 )
                             );
@@ -639,6 +660,15 @@ namespace PPMTool.Pages
         protected bool PeopleChosen()
         {
             return chosenPeople != null && chosenPeople.Count() > 0;
+        }
+
+        /// <summary>
+        /// Gets the css classes for the generate button and adds a pulse nudge when chart options changed.
+        /// </summary>
+        /// <returns></returns>
+        protected string GetGenerateButtonCssClass()
+        {
+            return chartNeedsRegeneration ? "capacity-gen-button capacity-gen-button-pulse" : "capacity-gen-button";
         }
 
         /// <summary>

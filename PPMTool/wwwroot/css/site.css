@@ -416,6 +416,49 @@ span.mention {
     min-width: fit-content;
 }
 
+.capacity-gen-button-pulse {
+    position: relative;
+    overflow: visible;
+    border: 2px solid var(--rz-primary) !important;
+    box-shadow: 0 0 0 1px var(--rz-primary);
+}
+
+.capacity-gen-button-pulse::after {
+    content: "";
+    position: absolute;
+    inset: -5px;
+    border-radius: inherit;
+    border: 3px solid var(--rz-primary);
+    opacity: 0;
+    transform: scale(0.98);
+    animation: capacity-generate-pulse 1.25s ease-out infinite;
+    pointer-events: none;
+}
+
+@keyframes capacity-generate-pulse {
+    0% {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+
+    25% {
+        opacity: 0.9;
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(1.08);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .capacity-gen-button-pulse::after {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+}
+
 .components-reconnect-dialog {
     background-color: var(--rz-card-background-color) !important;
 }

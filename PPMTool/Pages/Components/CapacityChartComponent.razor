@@ -86,6 +86,9 @@ else
     [Parameter]
     public Func<ChartItem, MarkupString> Value2TooltipFormatter { get; set; }
 
+    [Parameter]
+    public bool IsProjectMode { get; set; }
+
     private string title;
     private ApexChartOptions<ChartItem> chartOptions;
     private IEnumerable<ChartItem> confirmedChartItems;
@@ -125,7 +128,7 @@ else
     /// <returns></returns>
     private MarkupString DefaultValue1Formatter(ChartItem item)
     {
-        return (MarkupString)$"<h3>{item?.Value1} FTE</h3>";
+        return (MarkupString)$"<h3>Assigned: {item?.Value1} FTE</h3>";
     }
 
     /// <summary>
@@ -135,6 +138,25 @@ else
     /// <returns></returns>
     private MarkupString DefaultValue2Formatter(ChartItem item)
     {
-        return (MarkupString)$"<h5>({item?.Value2} FTE Availability)</h5>";
+        var assigned = item?.Value1 ?? 0;
+        var value2 = item?.Value2 ?? 0;
+
+        double available;
+        double workloadModel;
+
+        if (IsProjectMode)
+        {
+            // In project mode, value2 stores available based on total assigned load
+            available = Math.Round(value2, 3);
+            workloadModel = Math.Round(assigned + value2, 3);
+        }
+        else
+        {
+            // In person mode, value2 stores direct workload model capacity
+            available = Math.Round(Math.Max(value2 - assigned, 0), 3);
+            workloadModel = value2;
+        }
+
+        return (MarkupString)$"<p class=\"h4\">Available: {available} FTE</p><p class=\"me-1\">(Workload Model: {workloadModel} FTE)<span>";
     }
 }
