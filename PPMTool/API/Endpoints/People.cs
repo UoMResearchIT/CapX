@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
 using PPMTool.API.Helpers;
 using PPMTool.Data.Context;
+using PPMTool.Services;
 
 namespace PPMTool.API.Endpoints;
 
@@ -135,6 +136,48 @@ public static class People
         catch (Exception ex)
         {
             logger.LogError(ex, "API: GetPersonById: error");
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Create a bare Person record, with no linked User/Access-Control
+    /// account. Superuser-only write access, gated behind
+    /// SettingType.ImportApiEnabled -- see UoMResearchIT/CapX#1310.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportPersonResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult CreatePerson(
+        PPMToolContext context,
+        ImportService importService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] ImportPersonDTO request)
+    {
+        try
+        {
+            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "People.CreatePerson");
+            if (!allowed) return gateResult!;
+
+            var errors = importService.ValidatePerson(context, request);
+            if (errors.Count > 0)
+            {
+                logger.LogWarning("API: People: person validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors));
+                return Results.BadRequest(new ImportErrorDTO(errors));
+            }
+
+            var result = importService.CreatePerson(context, request);
+            logger.LogInformation(
+                "API: People: created Person {PersonId} '{Name}' ({ShortName}) by {User}",
+                result.PersonId, request.Name, result.ShortName, caller!.Name);
+            return Results.Created($"/api/people/getById?personId={result.PersonId}", result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: People: error creating person '{Name}'", request.Name);
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

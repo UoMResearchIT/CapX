@@ -334,6 +334,7 @@ api.MapPost("/timesheets/add", Timesheets.CreateTimesheetEntry);
 api.MapPost("/projects/add", Projects.CreateProject);
 api.MapPost("/schools/add", Schools.CreateSchool);
 api.MapPost("/workloadmodels/add", WorkloadModels.CreateWorkloadModelChange);
+api.MapPost("/people/add", People.CreatePerson);
 
 // API middleware -- conditional on /api routes only
 app.UseWhen(

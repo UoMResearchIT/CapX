@@ -251,4 +251,36 @@ namespace PPMTool.API.DTOs
         int WorkloadModelChangeId,
         bool Created
     );
+
+    /// <summary>
+    /// Request body for POST /api/people/add. Creates a bare Person record --
+    /// no linked User/Access-Control account, unlike the Username the other
+    /// import endpoints (Resourcing, Timesheets, WorkloadModels) require an
+    /// existing one for. For bootstrapping people who never need to log in
+    /// (e.g. departed staff, needed only so historical cost data can be
+    /// matched against a real Person) -- not for provisioning active staff,
+    /// which should go through normal onboarding instead. Rejects a
+    /// duplicate Name/initials the same way Pages/AddPerson.razor does
+    /// (PersonService.Add) rather than upserting -- unlike
+    /// WorkloadModelChange/Timesheet imports, there's no natural
+    /// (key, date) pair to upsert on here.
+    /// </summary>
+    /// <param name="Name">Full name -- ShortName (initials) is auto-derived the same way Person.Name's setter does for the UI</param>
+    /// <param name="StartDate"></param>
+    /// <param name="EndDate">Null if still in post</param>
+    /// <param name="FTE">FTE of the post (see Person.FTE) -- 0.0-1.0, same range Pages/AddPerson.razor enforces</param>
+    public sealed record ImportPersonDTO(
+        string Name,
+        DateTime StartDate,
+        DateTime? EndDate,
+        double FTE
+    );
+
+    /// <summary>Response for a successful Person import.</summary>
+    /// <param name="PersonId"></param>
+    /// <param name="ShortName">Auto-derived initials</param>
+    public sealed record ImportPersonResponseDTO(
+        int PersonId,
+        string ShortName
+    );
 }
