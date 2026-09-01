@@ -30,6 +30,7 @@ namespace PPMTool.Services
         private readonly FinancialReferenceService _financialReferenceService;
         private readonly SettingsService _settingsService;
         private readonly TimesheetService _timesheetService;
+        private readonly PersonService _personService;
 
         public ImportService(
             FacultyService facultyService,
@@ -39,7 +40,8 @@ namespace PPMTool.Services
             NoteService noteService,
             FinancialReferenceService financialReferenceService,
             SettingsService settingsService,
-            TimesheetService timesheetService)
+            TimesheetService timesheetService,
+            PersonService personService)
         {
             _facultyService = facultyService;
             _schoolService = schoolService;
@@ -49,6 +51,7 @@ namespace PPMTool.Services
             _financialReferenceService = financialReferenceService;
             _settingsService = settingsService;
             _timesheetService = timesheetService;
+            _personService = personService;
         }
 
         /// <summary>
@@ -497,6 +500,55 @@ namespace PPMTool.Services
             context.SaveChangesWithRetry();
 
             return new ImportWorkloadModelChangeResponseDTO(change.WorkloadModelChangeId, created);
+        }
+
+        /// <summary>
+        /// Validate a POST /api/people/add request without writing anything.
+        /// </summary>
+        public List<string> ValidatePerson(PPMToolContext context, ImportPersonDTO request)
+        {
+            var errors = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(request.Name))
+                errors.Add("Name is required");
+
+            if (request.FTE < 0.0 || request.FTE > 1.0)
+                errors.Add($"FTE {request.FTE} is out of range (must be 0.0-1.0)");
+
+            if (request.EndDate.HasValue && request.EndDate.Value < request.StartDate)
+                errors.Add("EndDate cannot be before StartDate");
+
+            if (!string.IsNullOrWhiteSpace(request.Name))
+            {
+                // Same duplicate checks Pages/AddPerson.razor.cs runs via
+                // PersonService.Add -- probe with an unsaved Person so
+                // ShortName is derived the same way (Person.Name's setter)
+                // rather than re-implementing GetInitials() here.
+                var probe = new Person { Name = request.Name.Trim() };
+                if (_personService.DuplicateDetected(context, probe))
+                    errors.Add($"A Person named '{request.Name}' already exists");
+                else if (_personService.DuplicateInitialsDetected(context, probe))
+                    errors.Add($"A Person with initials '{probe.ShortName}' already exists");
+            }
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Create the Person. Caller is responsible for validating first.
+        /// </summary>
+        public ImportPersonResponseDTO CreatePerson(PPMToolContext context, ImportPersonDTO request)
+        {
+            var person = new Person
+            {
+                Name = request.Name.Trim(),
+                StartDate = request.StartDate,
+                EndDate = request.EndDate,
+                FTE = request.FTE,
+            };
+            _personService.Add(context, person);
+
+            return new ImportPersonResponseDTO(person.PersonId, person.ShortName);
         }
 
         private static IEnumerable<(string Label, double FTE)> DutyFTEs(ImportWorkloadModelChangeDTO request)
