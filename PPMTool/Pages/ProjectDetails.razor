@@ -226,8 +226,8 @@ SPDX-License-Identifier: apache-2.0
                                                         }
                                                     }
                                                     <h4>@string.Join(" | ", point.Items.FirstOrDefault()?.Task.AssignedResources.Select(x => $"{x.Person.Name} [{Math.Round(x.AssignmentFTE, 3)}]"))</h4>
-                                                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Min())).ToString("dd MMM yyy") - </span>
-                                                    <span class="me-1">@DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(point.Y?.Max())).AddDays(-1).ToString("dd MMM yyy")</span>
+                                                    <span class="me-1">@ChartHelper.FormatTooltipRangeStart(point.Y?.Min())</span>
+                                                    <span class="me-1">@ChartHelper.FormatTooltipRangeEnd(point.Y?.Max())</span>
                                                     @if ((point.Items.FirstOrDefault() is not null && point.Items.FirstOrDefault()!.BlockDuty != Duty.ProjectAndServiceMgmt) && skillsEnabled)
                                                     {
                                                         var taskId = point.Items.FirstOrDefault()?.Task.SubTaskId ?? 0;
@@ -355,16 +355,21 @@ SPDX-License-Identifier: apache-2.0
                                         @t.TaskType.ToNiceString()
                                     </Template>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="SubTask" Property="Demand" Title="Demand" FormatString="{0:F3}" MinWidth="10px" />
+                                <RadzenDataGridColumn TItem="SubTask" Property="Demand" Title="Demand" FormatString="{0:0.###}" MinWidth="10px" />
                                 <RadzenDataGridColumn TItem="SubTask" Property="Resources" Title="Resources" Sortable="false" Width="10rem" MinWidth="10px">
                                     <Template Context="t">
                                         @string.Join(',', t.AssignedResources?.Select(x =>
                                         {
-                                            var label = $"{x.Person.ShortName}[{x.AssignmentFTE}";
-                                            if (project.CostModel.HasIndirects())
+                                            var label = $"{x.Person.ShortName} [{x.AssignmentFTE}";
+
+                                            if (financeEnabled)
                                             {
-                                                label += $" ({Math.Round(x.BilledFTE, 3)})";
+                                                if (project.CostModel.HasIndirects())
+                                                {
+                                                    label += $" ({Math.Round(x.BilledFTE, 3)})";
+                                                }
                                             }
+
                                             label += "]";
                                             return label;
                                         }))

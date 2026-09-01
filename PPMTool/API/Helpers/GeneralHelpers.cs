@@ -187,7 +187,7 @@ public static class GeneralHelpers
 
     /// <summary>
     /// Formats a single object value for inclusion in a CSV field.
-    /// It handles nulls and wraps strings containing commas in double quotes.
+    /// It handles nulls and applies RFC 4180 escaping for commas, quotes, and line terminators.
     /// </summary>
     private static string FormatCsvField(object field)
     {
@@ -209,12 +209,16 @@ public static class GeneralHelpers
             return "";
         }
 
-        if (value.Contains(","))
+        // Escape double quotes anywhere in the string by doubling them
+        var escapedValue = value.Replace("\"", "\"\"");
+
+        // If the original value contains a comma, double quote, or line break, enclose the whole string in double quotes
+        if (value.IndexOfAny([',', '\"', '\r', '\n']) >= 0)
         {
-            // Wrap fields with commas in double quotes.
-            return $"\"{value}\"";
+            return $"\"{escapedValue}\"";
         }
-        return value;
+
+        return escapedValue;
     }
 
     /// <summary>
