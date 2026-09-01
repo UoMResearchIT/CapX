@@ -121,8 +121,18 @@ namespace PPMTool.Pages
 
             // Add default buttons with handlers
             SetDefaultActionBar(
-                () => { gotoDetails = true; discardChanges = false; HandleSubmit(); },
-                () => { gotoDetails = ProjectId > 0; discardChanges = true; HandleSubmit(); }
+                async () =>
+                {
+                    gotoDetails = true;
+                    discardChanges = false;
+                    await HandleSubmitAsync();
+                },
+                async () =>
+                {
+                    gotoDetails = ProjectId > 0;
+                    discardChanges = true;
+                    await HandleSubmitAsync();
+                }
             );
 
             // Initially load data
@@ -235,7 +245,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// Fired when the save button is clicked
         /// </summary>
-        private async Task HandleSubmit()
+        private async Task HandleSubmitAsync()
         {
             // Clear the action bar messages
             ClearErrorMessage();
