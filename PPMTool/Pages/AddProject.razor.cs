@@ -110,7 +110,7 @@ namespace PPMTool.Pages
 
                 // Set the active user as the PM and request owner by default
                 projectModel.ProjectManager = ActiveUser?.Person;
-                projectModel.RequestOwner = ActiveUser?.Person;
+                projectModel.RequestOwnerId = ActiveUser?.Person?.PersonId ?? 0;
 
                 // Specific check for when Finance feature has not been enabled and a new
                 // project is being added, as Faculties/Schools are required
