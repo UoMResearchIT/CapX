@@ -42,6 +42,12 @@ public static class People
                 .OrderBy(x => x.Name)
                 .ToListAsync();
 
+            // Person has no reverse nav to User -- look usernames up the other way round.
+            var usernamesByPersonId = await context.Users
+                .Where(u => u.Person != null)
+                .Select(u => new { u.Person!.PersonId, u.CASUserName })
+                .ToDictionaryAsync(x => x.PersonId, x => x.CASUserName);
+
             var personDtos = people.Select(x => new PersonDTO(
                 PersonId: x.PersonId,
                 EmployeeId: x.StaffId,
@@ -53,7 +59,8 @@ public static class People
                     ? DateOnly.FromDateTime(x.EndDate.Value)
                     : null,
                 LineManagerId: x.LineManager?.PersonId,
-                LineManagerName: x.LineManager?.Name
+                LineManagerName: x.LineManager?.Name,
+                Username: usernamesByPersonId.GetValueOrDefault(x.PersonId)
             )).ToList();
 
             logger.LogInformation("API: GetAllPeople: Returned {Count} people records.", personDtos.Count);
@@ -110,6 +117,11 @@ public static class People
                 return Results.NotFound();
             }
 
+            var username = await context.Users
+                .Where(u => u.Person != null && u.Person.PersonId == person.PersonId)
+                .Select(u => u.CASUserName)
+                .FirstOrDefaultAsync();
+
             var dto = new PersonDTO(
                 PersonId: person.PersonId,
                 EmployeeId: person.StaffId,
@@ -121,7 +133,8 @@ public static class People
                     ? DateOnly.FromDateTime(person.EndDate.Value)
                     : null,
                 LineManagerId: person.LineManager?.PersonId,
-                LineManagerName: person.LineManager?.Name
+                LineManagerName: person.LineManager?.Name,
+                Username: username
             );
 
             logger.LogInformation("API: GetPersonById: Returned person record for personId {PersonId}", personId);
