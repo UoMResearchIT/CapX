@@ -202,4 +202,53 @@ namespace PPMTool.API.DTOs
         bool EntryCreated,
         double TotalHours
     );
+
+    /// <summary>
+    /// Request body for POST /api/workloadmodels/add. One workload model
+    /// change (duty/role FTE split, effective from ChangeDate) for an
+    /// existing Person, identified by Access Control username -- mirrors
+    /// WorkloadModelChange, with the same Grade (4-9) and per-duty FTE
+    /// (0.0-1.0) ranges the UI enforces (Pages/AddWorkloadModelChange.razor).
+    /// ProjectAndServiceManagementFTE isn't accepted directly: it's derived
+    /// from ProjectManagementFTE + ServiceManagementFTE, the same as the
+    /// entity's own UpdatePSM().
+    ///
+    /// Idempotent: re-importing the same (Username, ChangeDate) overwrites
+    /// the existing change's values rather than creating a duplicate --
+    /// CapX itself rejects two changes on the same date for one person (see
+    /// AddWorkloadModelChange.razor.cs), so upsert is the only sane import
+    /// semantics for repeated/corrected runs.
+    /// </summary>
+    /// <param name="Username">CapX Access Control username of an existing Person</param>
+    /// <param name="ChangeDate">Date this workload model takes effect; applies forward until superseded by the next later ChangeDate (see Person.GetWorkloadModelOnDate)</param>
+    /// <param name="Grade">Must be 4-9</param>
+    /// <param name="ProjectWorkFTE">0.0-1.0</param>
+    /// <param name="BusinessAsUsualFTE">0.0-1.0</param>
+    /// <param name="PersonalDevelopmentFTE">0.0-1.0</param>
+    /// <param name="StaffManagementFTE">0.0-1.0</param>
+    /// <param name="ArchitectureFTE">0.0-1.0</param>
+    /// <param name="ServiceManagementFTE">0.0-1.0</param>
+    /// <param name="ProjectManagementFTE">0.0-1.0</param>
+    /// <param name="Notes"></param>
+    public sealed record ImportWorkloadModelChangeDTO(
+        string Username,
+        DateTime ChangeDate,
+        int Grade,
+        double ProjectWorkFTE,
+        double BusinessAsUsualFTE,
+        double PersonalDevelopmentFTE,
+        double StaffManagementFTE,
+        double ArchitectureFTE,
+        double ServiceManagementFTE,
+        double ProjectManagementFTE,
+        string? Notes
+    );
+
+    /// <summary>Response for a successful workload-model-change import.</summary>
+    /// <param name="WorkloadModelChangeId"></param>
+    /// <param name="Created">False if an existing change on this date was updated instead</param>
+    public sealed record ImportWorkloadModelChangeResponseDTO(
+        int WorkloadModelChangeId,
+        bool Created
+    );
 }

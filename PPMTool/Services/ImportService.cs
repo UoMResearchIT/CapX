@@ -15,7 +15,7 @@ namespace PPMTool.Services
 {
     /// <summary>
     /// Backs the Superuser-only bulk-write "/add" endpoints (Faculties,
-    /// Schools, Projects, Timesheets), gated behind
+    /// Schools, Projects, Timesheets, WorkloadModels), gated behind
     /// SettingType.ImportApiEnabled (towards #1310).
     /// </summary>
     public class ImportService
@@ -439,6 +439,75 @@ namespace PPMTool.Services
             yield return ("FridayHours", request.FridayHours);
             yield return ("SaturdayHours", request.SaturdayHours);
             yield return ("SundayHours", request.SundayHours);
+        }
+
+        /// <summary>
+        /// Validate a POST /api/workloadmodels/add request without writing
+        /// anything.
+        /// </summary>
+        public List<string> ValidateWorkloadModelChange(PPMToolContext context, ImportWorkloadModelChangeDTO request)
+        {
+            var errors = new List<string>();
+
+            if (FindUserByUsername(context, request.Username)?.Person == null)
+                errors.Add($"Username '{request.Username}' not found, or has no linked Person");
+
+            if (request.Grade < 4 || request.Grade > 9)
+                errors.Add($"Grade {request.Grade} is out of range (must be 4-9)");
+
+            foreach (var (label, fte) in DutyFTEs(request))
+            {
+                if (fte < 0.0 || fte > 1.0) errors.Add($"{label} {fte} is out of range (must be 0.0-1.0)");
+            }
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Create or update the WorkloadModelChange for this person/date.
+        /// Caller is responsible for validating first. Idempotent:
+        /// re-importing the same (Username, ChangeDate) overwrites the
+        /// existing change rather than creating a duplicate -- CapX itself
+        /// rejects two changes on the same date for one person (see
+        /// AddWorkloadModelChange.razor.cs), so overwrite is the only
+        /// import semantics that doesn't risk violating that.
+        /// </summary>
+        public ImportWorkloadModelChangeResponseDTO CreateOrUpdateWorkloadModelChange(PPMToolContext context, ImportWorkloadModelChangeDTO request)
+        {
+            var person = FindUserByUsername(context, request.Username)!.Person!;
+
+            var change = person.WorkloadModelChanges.FirstOrDefault(c => c.ChangeDate == request.ChangeDate);
+            var created = change == null;
+            if (change == null)
+            {
+                change = new WorkloadModelChange { Person = person };
+                context.WorkloadModelChanges.Add(change);
+            }
+
+            change.ChangeDate = request.ChangeDate;
+            change.Grade = request.Grade;
+            change.ProjectWorkFTE = request.ProjectWorkFTE;
+            change.BusinessAsUsualFTE = request.BusinessAsUsualFTE;
+            change.PersonalDevelopmentFTE = request.PersonalDevelopmentFTE;
+            change.StaffManagementFTE = request.StaffManagementFTE;
+            change.ArchitectureFTE = request.ArchitectureFTE;
+            change.ServiceManagementFTE = request.ServiceManagementFTE; // setter derives ProjectAndServiceManagementFTE
+            change.ProjectManagementFTE = request.ProjectManagementFTE; // setter derives ProjectAndServiceManagementFTE
+            change.Notes = request.Notes;
+            context.SaveChangesWithRetry();
+
+            return new ImportWorkloadModelChangeResponseDTO(change.WorkloadModelChangeId, created);
+        }
+
+        private static IEnumerable<(string Label, double FTE)> DutyFTEs(ImportWorkloadModelChangeDTO request)
+        {
+            yield return ("ProjectWorkFTE", request.ProjectWorkFTE);
+            yield return ("BusinessAsUsualFTE", request.BusinessAsUsualFTE);
+            yield return ("PersonalDevelopmentFTE", request.PersonalDevelopmentFTE);
+            yield return ("StaffManagementFTE", request.StaffManagementFTE);
+            yield return ("ArchitectureFTE", request.ArchitectureFTE);
+            yield return ("ServiceManagementFTE", request.ServiceManagementFTE);
+            yield return ("ProjectManagementFTE", request.ProjectManagementFTE);
         }
 
         // .Include(InnateActivity.Tasks) is required, not optional -- same class of bug as
