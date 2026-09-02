@@ -21,7 +21,7 @@ jobs:
       SUPERUSER_NAME: "Captain Marvel"
       SUPERUSER_USERNAME: c123456m
       SUPERUSER_EMAIL: captain.marvel@manchester.ac.uk
-      BaseUrl: http://localhost:3000
+      TEST_BASE_URL: http://localhost:${{ env.CAPX_HTTP_PORT }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
