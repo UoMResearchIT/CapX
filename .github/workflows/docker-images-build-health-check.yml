@@ -22,7 +22,6 @@ jobs:
       SUPERUSER_NAME: "Captain Marvel"
       SUPERUSER_USERNAME: c123456m
       SUPERUSER_EMAIL: captain.marvel@manchester.ac.uk
-      TEST_BASE_URL: http://localhost:${{ env.CAPX_HTTP_PORT }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -65,6 +64,8 @@ jobs:
           pwsh PPMTool.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps
 
       - name: Run Tests
+        env:
+          TEST_BASE_URL: http://localhost:${{ env.CAPX_HTTP_PORT }}
         run: |
           dotnet test PPMTool.Tests/PPMTool.Tests.csproj --verbosity normal --logger "console;verbosity=detailed" --no-build
 
