@@ -86,14 +86,14 @@ namespace PPMTool.Pages
                 endDate,
                 person,
                 // Hatched function -- If any resources are marked as provisional or the project owning the task is not funded, active or in maintenance i.e. unconfirmed.
-                assignments => assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed() || assignment.SubTask.IsProvisionalResource(person)),
+                hatchedFunction: assignments => assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed() || assignment.SubTask.IsProvisionalResource(person)),
                 // Value 2 function
-                (assignments, value1, currentDay) =>
+                value2Function: (assignments, value1, currentDay) =>
                 {
                     return person.GetBAUAvailability(currentDay);
                 },
                 // Gap filler function
-                (assignments, gapStart, gapEnd) =>
+                gapFillingFunction: (assignments, gapStart, gapEnd) =>
                 {
                     return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(
                         person,
@@ -105,7 +105,7 @@ namespace PPMTool.Pages
                         (double value1, double value2, bool isHatched) => ChartItem.GetColourStringFTE(value1, value2)
                     );
                 },
-                assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
+                tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
             );
         }
 
@@ -157,6 +157,8 @@ namespace PPMTool.Pages
                     // Value 2 is the availability relative to total assignments for the chosen person/day
                     return Math.Round(capacityForDay - totalAssignedForDay, 3);
                 },
+                // Value 3 is the BAU availabilty
+                value3Function: (assignments, value1, currentDay) => person.GetBAUAvailability(currentDay),
                 // Accepts list of assignments for the block to determine tooltip messages for the block
                 tooltipMessageFormatter: assignmentsWithinBlock =>
                 {

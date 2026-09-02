@@ -76,14 +76,14 @@ namespace PPMTool.Pages
                 endDate,
                 person,
                 // Hatched function
-                assignments => assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed()),
+                hatchedFunction: assignments => assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed()),
                 // Value 2 function
-                (assignments, value1, currentDay) =>
+                value2Function: (assignments, value1, currentDay) =>
                 {
                     return person.GetProjectManagementCapacityOnDate(currentDay);
                 },
                 // Gap filling function
-                (assignments, gapStart, gapEnd) =>
+                gapFillingFunction: (assignments, gapStart, gapEnd) =>
                 {
                     return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(
                         person,
@@ -95,7 +95,7 @@ namespace PPMTool.Pages
                         (value1, value2, isHatched) => ChartItem.GetColourStringFTE(value1, value2)
                     );
                 },
-                assignmentsWithinBlock => GenerateTooltipMessages(assignmentsWithinBlock, person, string.Empty)
+                tooltipMessageFormatter: assignmentsWithinBlock => GenerateTooltipMessages(assignmentsWithinBlock, person, string.Empty)
             );
         }
 
@@ -150,6 +150,8 @@ namespace PPMTool.Pages
                     // Value 2 is the availability relative to total assignments for the chosen person/day
                     return Math.Round(capacityForDay - totalAssignedForDay, 3);
                 },
+                // Value 3 is the PM availabilty
+                value3Function: (assignments, value1, currentDay) => person.GetProjectManagementCapacityOnDate(currentDay),
                 tooltipMessageFormatter: assignmentsWithinBlock => GenerateTooltipMessages(assignmentsWithinBlock, person, string.Empty),
                 ignoreZeroValue1Entries: !isTotalRow
             );
