@@ -28,7 +28,7 @@ namespace PPMTool.Pages
         {
             await base.OnAfterRenderAsync(firstRender);
 
-            if (!firstRender) return;
+            if (!firstRender || !FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity)) return;
 
             // Update the cached people to just contain managers
             cachedPeople = GetManagers(cachedPeople);
