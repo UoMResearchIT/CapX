@@ -19,6 +19,7 @@ jobs:
       LEAVEBOOKINGS_CONNECTION_STRING: Data Source=/app/state/LeaveBookings.db;Cache=Shared;Mode=ReadWriteCreate;
       CAPX_HTTP_PORT: 3000
       CAPX_STATE_DIR: ./capx-state
+      SEED_DUMMY_DATA: "TRUE"
       SUPERUSER_NAME: "Captain Marvel"
       SUPERUSER_USERNAME: c123456m
       SUPERUSER_EMAIL: captain.marvel@manchester.ac.uk
@@ -66,6 +67,8 @@ jobs:
       - name: Run Tests
         env:
           TEST_BASE_URL: http://localhost:${{ env.CAPX_HTTP_PORT }}
+          ConnectionStrings__PPMToolContextConnection: Data Source=${{ github.workspace }}/capx-state/PPMTool.db;Cache=Shared;Mode=ReadWriteCreate;
+          DbProvider: sqlite
         run: |
           dotnet test PPMTool.Tests/PPMTool.Tests.csproj -c Release --verbosity normal --logger "console;verbosity=detailed" --no-build
 
