@@ -70,6 +70,43 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
+    /// Request body for PUT /api/faculties/update. Identifies an existing
+    /// Faculty by its current Code; Name and/or Code (rename) are updated
+    /// when supplied. Doesn't touch Schools -- see UpdateSchoolRequestDTO.
+    /// </summary>
+    /// <param name="Code">Current Code of the Faculty to update</param>
+    /// <param name="Name">New Name, if changing</param>
+    /// <param name="NewCode">New Code, if renaming</param>
+    public sealed record UpdateFacultyRequestDTO(
+        string Code,
+        string? Name,
+        string? NewCode
+    );
+
+    /// <summary>Response for a successful Faculty update.</summary>
+    /// <param name="FacultyId"></param>
+    public sealed record UpdateFacultyResponseDTO(
+        int FacultyId
+    );
+
+    /// <summary>
+    /// Request body for PUT /api/schools/update. Identifies an existing
+    /// School by its current Code; Name, Code (rename), and/or
+    /// NewFacultyCode (re-parent under a different existing Faculty) are
+    /// updated when supplied.
+    /// </summary>
+    /// <param name="Code">Current Code of the School to update</param>
+    /// <param name="Name">New Name, if changing</param>
+    /// <param name="NewCode">New Code, if renaming</param>
+    /// <param name="NewFacultyCode">Code of a different existing Faculty to move this School under, if re-parenting</param>
+    public sealed record UpdateSchoolRequestDTO(
+        string Code,
+        string? Name,
+        string? NewCode,
+        string? NewFacultyCode
+    );
+
+    /// <summary>
     /// One resourcing/FTE allocation to create alongside the imported project,
     /// on a single "Delivery" SubTask. Matched against an existing Person via
     /// Access Control username.
@@ -149,6 +186,46 @@ namespace PPMTool.API.DTOs
         int ProjectId,
         int ResourcesCreated,
         int NotesCreated
+    );
+
+    /// <summary>
+    /// Request body for PUT /api/projects/update. Identifies an existing
+    /// Project by its RTP; only the core scalar fields are updatable here
+    /// -- Resourcing and Comments are additive actions with their own
+    /// semantics via POST /api/projects/add, not something a partial
+    /// update should touch. Any field left null is left unchanged.
+    /// </summary>
+    /// <param name="RTP">RTP of the Project to update</param>
+    /// <param name="Name"></param>
+    /// <param name="PI"></param>
+    /// <param name="SchoolCode">Access Control School code</param>
+    /// <param name="ProjectManagerUsername">Pass an empty string to clear the Project Manager, null to leave unchanged</param>
+    /// <param name="Budget"></param>
+    /// <param name="CostModel">Must parse as a PPMTool.Data.Enums.CostModel value, if changing</param>
+    /// <param name="DayRate">Must be greater than zero if the resulting CostModel is "DayRate"</param>
+    /// <param name="ProjectStatus">Must parse as a PPMTool.Data.Enums.ProjectStatus value, if changing</param>
+    /// <param name="Description">HTML</param>
+    /// <param name="RequestDocLink"></param>
+    /// <param name="ScrumProjectLink">Pass an empty string to clear, null to leave unchanged</param>
+    public sealed record UpdateProjectRequestDTO(
+        int RTP,
+        string? Name,
+        string? PI,
+        string? SchoolCode,
+        string? ProjectManagerUsername,
+        double? Budget,
+        string? CostModel,
+        double? DayRate,
+        string? ProjectStatus,
+        string? Description,
+        string? RequestDocLink,
+        string? ScrumProjectLink
+    );
+
+    /// <summary>Response for a successful Project update.</summary>
+    /// <param name="ProjectId"></param>
+    public sealed record UpdateProjectResponseDTO(
+        int ProjectId
     );
 
     /// <summary>
@@ -282,5 +359,32 @@ namespace PPMTool.API.DTOs
     public sealed record ImportPersonResponseDTO(
         int PersonId,
         string ShortName
+    );
+
+    /// <summary>
+    /// Request body for PUT /api/people/update. Identifies an existing bare
+    /// Person by PersonId (returned from POST /api/people/add); Name,
+    /// StartDate, EndDate, and/or FTE are updated when supplied. Supersedes
+    /// the original 2026-09-01 decision to leave this endpoint create-only
+    /// -- manual corrections (e.g. reconciling a placeholder StartDate)
+    /// turned out common enough to be worth a real endpoint rather than
+    /// always going through the UI.
+    ///
+    /// EndDate follows plain nullable-field semantics: omitted/null in the
+    /// request leaves the existing EndDate unchanged. There's no way to
+    /// clear an already-set EndDate back to null via this endpoint -- do
+    /// that directly in the UI.
+    /// </summary>
+    /// <param name="PersonId">PersonId of the Person to update</param>
+    /// <param name="Name">New full name, if changing -- ShortName is re-derived automatically</param>
+    /// <param name="StartDate"></param>
+    /// <param name="EndDate">See remarks -- can only be set, not cleared, via this endpoint</param>
+    /// <param name="FTE">0.0-1.0</param>
+    public sealed record UpdatePersonRequestDTO(
+        int PersonId,
+        string? Name,
+        DateTime? StartDate,
+        DateTime? EndDate,
+        double? FTE
     );
 }

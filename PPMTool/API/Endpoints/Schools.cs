@@ -60,4 +60,45 @@ public static class Schools
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+
+    /// <summary>
+    /// Update an existing School's Name, Code, and/or parent Faculty.
+    /// Identified by its current Code.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ImportSchoolResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult UpdateSchool(
+        PPMToolContext context,
+        ImportService importService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] UpdateSchoolRequestDTO request)
+    {
+        try
+        {
+            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Schools.UpdateSchool");
+            if (!allowed) return gateResult!;
+
+            var errors = importService.ValidateSchoolUpdate(context, request);
+            if (errors.Count > 0)
+            {
+                logger.LogWarning("API: Schools: school update validation failed for '{Code}': {Errors}", request.Code, string.Join("; ", errors));
+                return Results.BadRequest(new ImportErrorDTO(errors));
+            }
+
+            var result = importService.UpdateSchool(context, request);
+            logger.LogInformation(
+                "API: Schools: updated School {SchoolId} (was '{Code}') under Faculty {FacultyId} by {User}",
+                result.SchoolId, request.Code, result.FacultyId, caller!.Name);
+            return Results.Ok(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: Schools: error updating school '{Code}'", request.Code);
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
 }

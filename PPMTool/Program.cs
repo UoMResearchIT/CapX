@@ -336,6 +336,13 @@ api.MapPost("/schools/add", Schools.CreateSchool);
 api.MapPost("/workloadmodels/add", WorkloadModels.CreateWorkloadModelChange);
 api.MapPost("/people/add", People.CreatePerson);
 
+// PUT (update) endpoints (behind SettingType.ImportApiEnabled) -- timesheets/add
+// and workloadmodels/add are already upsert-on-post, so no separate PUT for those.
+api.MapPut("/faculties/update", Faculties.UpdateFaculty);
+api.MapPut("/schools/update", Schools.UpdateSchool);
+api.MapPut("/projects/update", Projects.UpdateProject);
+api.MapPut("/people/update", People.UpdatePerson);
+
 // API middleware -- conditional on /api routes only
 app.UseWhen(
     context => context.Request.Path.StartsWithSegments("/api"),

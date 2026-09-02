@@ -181,4 +181,46 @@ public static class People
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+
+    /// <summary>
+    /// Update an existing bare Person's Name, StartDate, EndDate, and/or
+    /// FTE. Identified by PersonId. Superuser-only write access, gated
+    /// behind SettingType.ImportApiEnabled -- see UoMResearchIT/CapX#1310.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ImportPersonResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult UpdatePerson(
+        PPMToolContext context,
+        ImportService importService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] UpdatePersonRequestDTO request)
+    {
+        try
+        {
+            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "People.UpdatePerson");
+            if (!allowed) return gateResult!;
+
+            var errors = importService.ValidatePersonUpdate(context, request);
+            if (errors.Count > 0)
+            {
+                logger.LogWarning("API: People: person update validation failed for PersonId {PersonId}: {Errors}", request.PersonId, string.Join("; ", errors));
+                return Results.BadRequest(new ImportErrorDTO(errors));
+            }
+
+            var result = importService.UpdatePerson(context, request);
+            logger.LogInformation(
+                "API: People: updated Person {PersonId} ('{ShortName}') by {User}",
+                result.PersonId, result.ShortName, caller!.Name);
+            return Results.Ok(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: People: error updating person {PersonId}", request.PersonId);
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
 }
