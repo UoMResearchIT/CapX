@@ -289,9 +289,16 @@ namespace PPMTool.Services
         /// anything. Returns the errors that would prevent import, or an
         /// empty list if it's valid.
         /// </summary>
-        public List<string> Validate(PPMToolContext context, ImportProjectRequestDTO request)
+        public List<string> Validate(PPMToolContext context, ImportProjectRequestDTO request, User caller)
         {
             var errors = new List<string>();
+
+            // RequestOwnerId is a required, non-nullable FK on Project ("the person who
+            // created the project request -- automatically set to the logged in user").
+            // There's no interactive login here, so it's set to the API caller instead --
+            // needs a linked Person the same way ProjectManager/Resourcing usernames do.
+            if (caller.Person == null)
+                errors.Add($"Caller '{caller.CASUserName}' has no linked Person -- required to set as the imported Project's RequestOwner");
 
             if (string.IsNullOrWhiteSpace(request.Name)) errors.Add("Name is required");
             else if (_projectService.DuplicateDetected(context, new Project { Name = request.Name }))
@@ -331,7 +338,7 @@ namespace PPMTool.Services
         /// responsible for validating first and for transaction/commit
         /// semantics -- this just adds entities and saves.
         /// </summary>
-        public ImportProjectResponseDTO Create(PPMToolContext context, ImportProjectRequestDTO request)
+        public ImportProjectResponseDTO Create(PPMToolContext context, ImportProjectRequestDTO request, User caller)
         {
             var school = FindActiveSchoolByCode(context, request.SchoolCode)!;
             var projectManager = string.IsNullOrWhiteSpace(request.ProjectManagerUsername)
@@ -346,6 +353,7 @@ namespace PPMTool.Services
                 PI = request.PI,
                 School = school,
                 ProjectManager = projectManager,
+                RequestOwner = caller.Person!, // validated non-null in Validate()
                 Budget = request.Budget,
                 CostModel = costModel,
                 DayRate = costModel == CostModel.DayRate ? request.DayRate : 0,
