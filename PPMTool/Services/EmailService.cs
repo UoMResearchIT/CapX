@@ -71,7 +71,7 @@ namespace PPMTool.Services
                     using var client = new SmtpClient(Configuration["Email:SmtpServer"]);
                     client.Send(mailMessage);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     Logger.LogInformation($"Failed to send email to {AnonymiseEmail(to)}, subject {mailMessage.Subject}");
                 }
