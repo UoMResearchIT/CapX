@@ -67,7 +67,7 @@ namespace PPMTool.Services.StatusEvaluators
                 new StatusMessage($"This request is approaching the request duration limit!", StatusMessage.MessageType.Warning, () => project.ProjectStatus == ProjectStatus.NewRequest && projectService.GetRequestClockDetails(project.CreatedDate).ShouldWarn()),
 
                 // Errors
-                new StatusMessage($"This request is has breached the request duration limit!", StatusMessage.MessageType.Error, () => project.ProjectStatus == ProjectStatus.NewRequest && projectService.GetRequestClockDetails(project.CreatedDate).ShouldError()),
+                new StatusMessage($"This request has breached the request duration limit!", StatusMessage.MessageType.Error, () => project.ProjectStatus == ProjectStatus.NewRequest && projectService.GetRequestClockDetails(project.CreatedDate).ShouldError()),
                 new StatusMessage("This project has no project ID specified!", StatusMessage.MessageType.Error, () => project.RTP == 0),
                 new StatusMessage("This project has no agreed budget!", StatusMessage.MessageType.Error, project.HasNoBudget, FeatureType.ProjectFinance),
                 new StatusMessage("This project has no link to a request document!", StatusMessage.MessageType.Error, project.HasNoRequestDocLink),

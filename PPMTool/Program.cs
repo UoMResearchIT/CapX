@@ -393,6 +393,7 @@ using (var context = dbContextFactory.CreateDbContext())
         SeedHelper.SeedPeople(scope.ServiceProvider);
         SeedHelper.SeedAbsences(scope.ServiceProvider);
         SeedHelper.SeedUsers(scope.ServiceProvider);
+        SeedHelper.SeedApiKeys(scope.ServiceProvider);
         SeedHelper.SeedWorkloadModelChanges(scope.ServiceProvider);
         SeedHelper.SeedSkillTags(scope.ServiceProvider);
         SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);

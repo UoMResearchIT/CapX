@@ -85,6 +85,7 @@ namespace PPMTool.Helpers
         /// <param name="person">Person of interest if required</param>
         /// <param name="hatchedFunction">Function to determine the "hatched" state of the block</param>
         /// <param name="value2Function">Function to define the secondary value of a given block</param>
+        /// <param name="value3Function">Function to define the tertiary value of a given block</param>
         /// <param name="gapFillingFunction">Function that fills gaps in the chart items</param>
         /// <param name="tooltipMessageFormatter">Function to provide HTML string to be shown as tooltip messages for block based on list of assignments that fall within the block</param>
         /// <param name="ignoreZeroValue1Entries">If true, does not create a block if it has a value of 0 for value 1, leaving a gap. Default is false.</param>
@@ -99,6 +100,7 @@ namespace PPMTool.Helpers
             Person person = null,
             Func<IEnumerable<Assignment>, bool> hatchedFunction = null,
             Func<IEnumerable<Assignment>, double, DateTime, double> value2Function = null,
+            Func<IEnumerable<Assignment>, double, DateTime, double> value3Function = null,
             Func<Person, DateTime, DateTime, IEnumerable<ChartItem>> gapFillingFunction = null,
             Func<IEnumerable<Assignment>, string> tooltipMessageFormatter = null,
             bool ignoreZeroValue1Entries = false
@@ -115,7 +117,7 @@ namespace PPMTool.Helpers
 
             var chartItems = AggregateAssignmentsIntoBlocks(
                 assignments, valueFunction, colourFunction, label, startDate,
-                endDate, hatchedFunction, value2Function, tooltipMessageFormatter,
+                endDate, hatchedFunction, value2Function, value3Function, tooltipMessageFormatter,
                 ignoreZeroValue1Entries
             ).OrderBy(x => x.StartDate).ToList();
 
@@ -176,6 +178,7 @@ namespace PPMTool.Helpers
         /// <param name="endDate"></param>
         /// <param name="hatchedFunction">Function to determine whether any of the assignments evaluate the function to true</param>
         /// <param name="value2Function">Function used to generate a second value for the block based on the current week being examined</param>
+        /// <param name="value3Function">Optional function for determining a third value associated with a block</param>
         /// <param name="tooltipMessageFormatter">Function to return some HTML for a tooltip message based on list of assignments that fall within the block</param>
         /// <param name="ignoreZeroValue1Entries">If true, does not create a block if it has a value of 0 for value 1, leaving a gap</param>
         /// <returns></returns>
@@ -188,6 +191,7 @@ namespace PPMTool.Helpers
             DateTime endDate,
             Func<IEnumerable<Assignment>, bool> hatchedFunction = null,
             Func<IEnumerable<Assignment>, double, DateTime, double> value2Function = null,
+            Func<IEnumerable<Assignment>, double, DateTime, double> value3Function = null,
             Func<IEnumerable<Assignment>, string> tooltipMessageFormatter = null,
             bool ignoreZeroValue1Entries = false
         )
@@ -218,6 +222,8 @@ namespace PPMTool.Helpers
             bool hatchedDay = false;
             double? value2Tracked = null;
             double value2Day = 0d;
+            double? value3Tracked = null;
+            double? value3Day = null;
 
             // March through
             while (currentDay < endDate)
@@ -234,8 +240,14 @@ namespace PPMTool.Helpers
                 // Set value2 for the current day
                 value2Day = value2Function != null ? value2Function(within, valueDay, currentDay) : 0;
 
+                // Set value3 for the current day
+                value3Day = value3Function != null ? value3Function(within, valueDay, currentDay) : null;
+
                 // Set colour state for the first time
                 if (value2Tracked == null) value2Tracked = value2Day;
+
+                // Set value3 state for the first time
+                if (value3Tracked == null && value3Day != null) value3Tracked = value3Day;
 
                 // Set hatched state for the first time
                 if (hatchedTracked == null) hatchedTracked = hatchedDay;
@@ -244,7 +256,7 @@ namespace PPMTool.Helpers
                 if (valueTracked == null) valueTracked = valueDay;
 
                 // If any of the tracked parameters have changed then complete block and reset tracking params
-                if (valueDay != valueTracked || hatchedDay != hatchedTracked || value2Day != value2Tracked)
+                if (valueDay != valueTracked || hatchedDay != hatchedTracked || value2Day != value2Tracked || value3Day != value3Tracked)
                 {
                     // Only add a block if its value is non-zero if flag set
                     if (!ignoreZeroValue1Entries || ignoreZeroValue1Entries && valueTracked != 0d)
@@ -259,7 +271,8 @@ namespace PPMTool.Helpers
                             valueTracked ?? -99,
                             value2Tracked ?? -99,
                             hatchedTracked ?? false,
-                            tooltipMessageFormatter != null ? tooltipMessageFormatter(assignmentsInBlock) : null
+                            tooltipMessageFormatter != null ? tooltipMessageFormatter(assignmentsInBlock) : null,
+                            value3Tracked
                         ));
                     }
 
@@ -267,6 +280,7 @@ namespace PPMTool.Helpers
                     valueTracked = valueDay;
                     hatchedTracked = hatchedDay;
                     value2Tracked = value2Day;
+                    value3Tracked = value3Day;
                 }
 
                 // Increment by 1 day
@@ -286,7 +300,8 @@ namespace PPMTool.Helpers
                     valueDay,
                     value2Day,
                     hatchedDay,
-                    tooltipMessageFormatter != null ? tooltipMessageFormatter(assignmentsInBlock) : null
+                    tooltipMessageFormatter != null ? tooltipMessageFormatter(assignmentsInBlock) : null,
+                    value3Day
                 ));
             }
             return temp;

@@ -128,7 +128,7 @@ else
     /// <returns></returns>
     private MarkupString DefaultValue1Formatter(ChartItem item)
     {
-        return (MarkupString)$"<h3>Assigned: {item?.Value1} FTE</h3>";
+        return (MarkupString)$"<h3>{item?.Value1} FTE</h3>";
     }
 
     /// <summary>
@@ -140,15 +140,17 @@ else
     {
         var assigned = item?.Value1 ?? 0;
         var value2 = item?.Value2 ?? 0;
+        var value3 = item?.Value3 ?? 0;
 
         double available;
         double workloadModel;
 
         if (IsProjectMode)
         {
-            // In project mode, value2 stores available based on total assigned load
+            // In project mode, value2 stores available based on total assigned load.
+            // Value3 stores the workload model value for the block when supplied.
             available = Math.Round(value2, 3);
-            workloadModel = Math.Round(assigned + value2, 3);
+            workloadModel = Math.Round(value3, 3);
         }
         else
         {
@@ -157,6 +159,6 @@ else
             workloadModel = value2;
         }
 
-        return (MarkupString)$"<p class=\"h4\">Available: {available} FTE</p><p class=\"me-1\">(Workload Model: {workloadModel} FTE)<span>";
+        return (MarkupString)$"<p class=\"h4\">Available: {available} FTE</p><p>(Workload Model: {workloadModel} FTE)</p>";
     }
 }
