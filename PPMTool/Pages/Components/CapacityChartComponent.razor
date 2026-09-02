@@ -128,7 +128,7 @@ else
     /// <returns></returns>
     private MarkupString DefaultValue1Formatter(ChartItem item)
     {
-        return (MarkupString)$"<h3>Assigned: {item?.Value1} FTE</h3>";
+        return (MarkupString)$"<h3>{item?.Value1} FTE</h3>";
     }
 
     /// <summary>
@@ -159,6 +159,6 @@ else
             workloadModel = value2;
         }
 
-        return (MarkupString)$"<p class=\"h4\">Available: {available} FTE</p><p class=\"me-1\">(Workload Model: {workloadModel} FTE)<span>";
+        return (MarkupString)$"<p class=\"h4\">Available: {available} FTE</p><p>(Workload Model: {workloadModel} FTE)</p>";
     }
 }

@@ -169,7 +169,7 @@ namespace PPMTool.Pages
             // Add project badges
             foreach (var status in assignmentsWithinBlock.Select(x => x.ProjectStatus).Distinct())
             {
-                messages += $"<div class=\"rz-badge {GetCSSBadgeStyle(status.GetBadgeStyle())}\">{status.ToNiceString()}</div>&nbsp";
+                messages += $"<div class=\"mb-1 rz-badge {GetCSSBadgeStyle(status.GetBadgeStyle())}\">{status.ToNiceString()}</div>&nbsp";
             }
 
             // Add the base messages
@@ -183,7 +183,7 @@ namespace PPMTool.Pages
                         x.SubTask.GetAssignmentValueForPerson(personOfInterest) :
                         0
                     );
-                messages += $"<h3 class=\"me-1 text-warning\"> &#x26A0; [INCREASED LEADERSHIP ({amount} FTE)]</h3>";
+                messages += $"<h3 class=\"mt-1 text-warning\"> &#x26A0; [INCREASED LEADERSHIP ({amount} FTE)]</h3>";
             }
             return messages;
         }

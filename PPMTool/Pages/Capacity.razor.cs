@@ -349,7 +349,7 @@ namespace PPMTool.Pages
                         if (assignedWithinBlockWithChosenPerson.Any(x => x?.SubTask.HasUnmetDemand() ?? false))
                         {
                             var unmetDemand = assignedWithinBlockWithChosenPerson.RoundedSum(x => x?.SubTask.UnmetDemand ?? 0);
-                            messages += $"<h3 class=\"me-1 text-danger\"> &#x26A0; [UNMET DEMAND ({unmetDemand} FTE)]</h3>";
+                            messages += $"<h3 class=\"mt-1 text-danger\"> &#x26A0; [UNMET DEMAND ({unmetDemand} FTE)]</h3>";
                         }
                     }
 
