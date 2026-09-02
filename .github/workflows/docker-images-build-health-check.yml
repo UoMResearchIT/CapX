@@ -49,7 +49,7 @@ jobs:
         run: |
           curl --fail --silent --show-error http://localhost:${CAPX_HTTP_PORT}/swagger/index.html | grep -q 'swagger'
           echo "API test passed"
-          
+
       - name: Setup .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
