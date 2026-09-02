@@ -67,7 +67,7 @@ jobs:
         env:
           TEST_BASE_URL: http://localhost:${{ env.CAPX_HTTP_PORT }}
         run: |
-          dotnet test PPMTool.Tests/PPMTool.Tests.csproj --verbosity normal --logger "console;verbosity=detailed" --no-build
+          dotnet test PPMTool.Tests/PPMTool.Tests.csproj -c Release --verbosity normal --logger "console;verbosity=detailed" --no-build
 
       - name: Show container logs on failure
         if: failure()
