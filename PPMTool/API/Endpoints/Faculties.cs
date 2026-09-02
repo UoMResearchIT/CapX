@@ -60,4 +60,45 @@ public static class Faculties
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+
+    /// <summary>
+    /// Update an existing Faculty's Name and/or Code. Identified by its
+    /// current Code. Doesn't touch Schools -- see Schools.UpdateSchool.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateFacultyResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult UpdateFaculty(
+        PPMToolContext context,
+        ImportService importService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] UpdateFacultyRequestDTO request)
+    {
+        try
+        {
+            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Faculties.UpdateFaculty");
+            if (!allowed) return gateResult!;
+
+            var errors = importService.ValidateFacultyUpdate(context, request);
+            if (errors.Count > 0)
+            {
+                logger.LogWarning("API: Faculties: faculty update validation failed for '{Code}': {Errors}", request.Code, string.Join("; ", errors));
+                return Results.BadRequest(new ImportErrorDTO(errors));
+            }
+
+            var result = importService.UpdateFaculty(context, request);
+            logger.LogInformation(
+                "API: Faculties: updated Faculty {FacultyId} (was '{Code}') by {User}",
+                result.FacultyId, request.Code, caller!.Name);
+            return Results.Ok(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: Faculties: error updating faculty '{Code}'", request.Code);
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
 }

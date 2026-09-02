@@ -31,6 +31,7 @@ namespace PPMTool.Services
         private readonly SettingsService _settingsService;
         private readonly TimesheetService _timesheetService;
         private readonly PersonService _personService;
+        private readonly UserService _userService;
 
         public ImportService(
             FacultyService facultyService,
@@ -41,7 +42,8 @@ namespace PPMTool.Services
             FinancialReferenceService financialReferenceService,
             SettingsService settingsService,
             TimesheetService timesheetService,
-            PersonService personService)
+            PersonService personService,
+            UserService userService)
         {
             _facultyService = facultyService;
             _schoolService = schoolService;
@@ -52,6 +54,7 @@ namespace PPMTool.Services
             _settingsService = settingsService;
             _timesheetService = timesheetService;
             _personService = personService;
+            _userService = userService;
         }
 
         /// <summary>
@@ -114,6 +117,59 @@ namespace PPMTool.Services
         }
 
         /// <summary>
+        /// Validate a PUT /api/faculties/update request without writing
+        /// anything.
+        /// </summary>
+        public List<string> ValidateFacultyUpdate(PPMToolContext context, UpdateFacultyRequestDTO request)
+        {
+            var errors = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(request.Code))
+            {
+                errors.Add("Code is required");
+                return errors;
+            }
+
+            var faculty = FindFacultyByCode(context, request.Code);
+            if (faculty == null)
+            {
+                errors.Add($"Code '{request.Code}' does not match any Faculty");
+                return errors;
+            }
+
+            if (request.Name == null && request.NewCode == null)
+                errors.Add("At least one of Name or NewCode must be supplied");
+
+            var probe = new Faculty
+            {
+                FacultyId = faculty.FacultyId,
+                Name = request.Name ?? faculty.Name,
+                Code = request.NewCode ?? faculty.Code,
+            };
+            if (_facultyService.DuplicateDetected(context, probe))
+                errors.Add($"A different Faculty named '{probe.Name}' or with code '{probe.Code}' already exists");
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Update the Faculty's Name and/or Code. Caller is responsible for
+        /// validating first.
+        /// </summary>
+        public UpdateFacultyResponseDTO UpdateFaculty(PPMToolContext context, UpdateFacultyRequestDTO request)
+        {
+            var faculty = FindFacultyByCode(context, request.Code)!;
+            if (request.Name != null) faculty.Name = request.Name;
+            if (request.NewCode != null) faculty.Code = request.NewCode;
+
+            var result = _facultyService.Update(context, faculty);
+            if (result < 0)
+                throw new InvalidOperationException($"FacultyService.Update returned {result} (duplicate) despite passing ValidateFacultyUpdate() -- possible race condition");
+
+            return new UpdateFacultyResponseDTO(faculty.FacultyId);
+        }
+
+        /// <summary>
         /// Validate a POST /api/schools/add request without writing
         /// anything.
         /// </summary>
@@ -160,6 +216,72 @@ namespace PPMTool.Services
                 throw new InvalidOperationException($"SchoolService.Add returned {schoolId} for School '{request.Name}' despite passing ValidateSchool() -- possible race condition");
 
             return new ImportSchoolResponseDTO(schoolId, faculty.FacultyId);
+        }
+
+        /// <summary>
+        /// Validate a PUT /api/schools/update request without writing
+        /// anything.
+        /// </summary>
+        public List<string> ValidateSchoolUpdate(PPMToolContext context, UpdateSchoolRequestDTO request)
+        {
+            var errors = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(request.Code))
+            {
+                errors.Add("Code is required");
+                return errors;
+            }
+
+            var school = FindSchoolByCode(context, request.Code);
+            if (school == null)
+            {
+                errors.Add($"Code '{request.Code}' does not match any School");
+                return errors;
+            }
+
+            if (request.Name == null && request.NewCode == null && request.NewFacultyCode == null)
+                errors.Add("At least one of Name, NewCode, or NewFacultyCode must be supplied");
+
+            var faculty = school.Faculty;
+            if (request.NewFacultyCode != null)
+            {
+                faculty = FindFacultyByCode(context, request.NewFacultyCode);
+                if (faculty == null)
+                    errors.Add($"NewFacultyCode '{request.NewFacultyCode}' does not match any Faculty");
+            }
+
+            if (faculty != null)
+            {
+                var probe = new School
+                {
+                    SchoolId = school.SchoolId,
+                    Name = request.Name ?? school.Name,
+                    Code = request.NewCode ?? school.Code,
+                    Faculty = faculty,
+                };
+                if (_schoolService.DuplicateDetected(context, probe))
+                    errors.Add($"A different School named '{probe.Name}' or with code '{probe.Code}' already exists under Faculty '{faculty.Name}'");
+            }
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Update the School's Name, Code, and/or parent Faculty. Caller is
+        /// responsible for validating first.
+        /// </summary>
+        public ImportSchoolResponseDTO UpdateSchool(PPMToolContext context, UpdateSchoolRequestDTO request)
+        {
+            var school = FindSchoolByCode(context, request.Code)!;
+            if (request.Name != null) school.Name = request.Name;
+            if (request.NewCode != null) school.Code = request.NewCode;
+            if (request.NewFacultyCode != null) school.Faculty = FindFacultyByCode(context, request.NewFacultyCode)!;
+
+            var result = _schoolService.Update(context, school);
+            if (result < 0)
+                throw new InvalidOperationException($"SchoolService.Update returned {result} (duplicate) despite passing ValidateSchoolUpdate() -- possible race condition");
+
+            return new ImportSchoolResponseDTO(school.SchoolId, school.Faculty.FacultyId);
         }
 
         /// <summary>
@@ -348,6 +470,92 @@ namespace PPMTool.Services
             context.SaveChangesWithRetry();
 
             return new ImportProjectResponseDTO(project.ProjectId, resourcesCreated, notesCreated);
+        }
+
+        /// <summary>
+        /// Validate a PUT /api/projects/update request without writing
+        /// anything.
+        /// </summary>
+        public List<string> ValidateProjectUpdate(PPMToolContext context, UpdateProjectRequestDTO request)
+        {
+            var errors = new List<string>();
+
+            var project = FindProjectByRTP(context, request.RTP);
+            if (project == null)
+            {
+                errors.Add($"RTP {request.RTP} does not match any Project");
+                return errors;
+            }
+
+            if (request.Name != null)
+            {
+                if (string.IsNullOrWhiteSpace(request.Name))
+                    errors.Add("Name cannot be blank");
+                else if (_projectService.DuplicateDetected(context, new Project { ProjectId = project.ProjectId, Name = request.Name }))
+                    errors.Add($"A different Project named '{request.Name}' already exists");
+            }
+
+            CostModel? costModel = null;
+            if (request.CostModel != null)
+            {
+                if (!Enum.TryParse<CostModel>(request.CostModel, out var parsed))
+                    errors.Add($"CostModel '{request.CostModel}' is not a valid value");
+                else
+                    costModel = parsed;
+            }
+            var resolvedCostModel = costModel ?? project.CostModel;
+            var resolvedDayRate = request.DayRate ?? project.DayRate;
+            if (resolvedCostModel == CostModel.DayRate && resolvedDayRate <= 0)
+                errors.Add("DayRate must be greater than zero when CostModel is 'DayRate'");
+
+            if (request.ProjectStatus != null && !Enum.TryParse<ProjectStatus>(request.ProjectStatus, out _))
+                errors.Add($"ProjectStatus '{request.ProjectStatus}' is not a valid value");
+
+            if (request.SchoolCode != null && FindActiveSchoolByCode(context, request.SchoolCode) == null)
+                errors.Add($"SchoolCode '{request.SchoolCode}' does not match any active School");
+
+            if (!string.IsNullOrEmpty(request.ProjectManagerUsername) && FindUserByUsername(context, request.ProjectManagerUsername)?.Person == null)
+                errors.Add($"ProjectManagerUsername '{request.ProjectManagerUsername}' not found, or has no linked Person");
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Update the Project's core scalar fields. Caller is responsible
+        /// for validating first. Doesn't touch Resourcing or Comments --
+        /// those are additive actions with their own semantics via POST
+        /// /api/projects/add.
+        /// </summary>
+        public UpdateProjectResponseDTO UpdateProject(PPMToolContext context, UpdateProjectRequestDTO request)
+        {
+            var project = FindProjectByRTP(context, request.RTP)!;
+
+            if (request.Name != null) project.Name = request.Name;
+            if (request.PI != null) project.PI = request.PI;
+            if (request.SchoolCode != null) project.School = FindActiveSchoolByCode(context, request.SchoolCode)!;
+            if (request.ProjectManagerUsername != null)
+                project.ProjectManager = request.ProjectManagerUsername == ""
+                    ? null
+                    : FindUserByUsername(context, request.ProjectManagerUsername)!.Person!;
+            if (request.Budget.HasValue) project.Budget = request.Budget.Value;
+            if (request.CostModel != null) project.CostModel = Enum.Parse<CostModel>(request.CostModel);
+            if (request.DayRate.HasValue) project.DayRate = request.DayRate.Value;
+            if (project.CostModel != CostModel.DayRate) project.DayRate = 0; // same invariant Create() enforces
+            if (request.ProjectStatus != null) project.ProjectStatus = Enum.Parse<ProjectStatus>(request.ProjectStatus);
+            if (request.Description != null) project.Description = request.Description;
+            if (request.RequestDocLink != null) project.RequestDocLink = request.RequestDocLink;
+            if (request.ScrumProjectLink != null) project.ScrumProjectLink = request.ScrumProjectLink == "" ? null : request.ScrumProjectLink;
+
+            var result = _projectService.Update(context, project);
+            if (result < 0)
+                throw new InvalidOperationException($"ProjectService.Update returned {result} (duplicate) despite passing ValidateProjectUpdate() -- possible race condition");
+
+            var financialReferences = _financialReferenceService.GetAllOrDefault(context);
+            var indirectsPercentage = _settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+            project.UpdateProjectMetaData(true, financialReferences, indirectsPercentage);
+            context.SaveChangesWithRetry();
+
+            return new UpdateProjectResponseDTO(project.ProjectId);
         }
 
         /// <summary>
@@ -551,6 +759,71 @@ namespace PPMTool.Services
             return new ImportPersonResponseDTO(person.PersonId, person.ShortName);
         }
 
+        /// <summary>
+        /// Validate a PUT /api/people/update request without writing
+        /// anything.
+        /// </summary>
+        public List<string> ValidatePersonUpdate(PPMToolContext context, UpdatePersonRequestDTO request)
+        {
+            var errors = new List<string>();
+
+            var person = _personService.GetById(context, request.PersonId);
+            if (person == null)
+            {
+                errors.Add($"PersonId {request.PersonId} does not exist");
+                return errors;
+            }
+
+            if (request.Name != null && string.IsNullOrWhiteSpace(request.Name))
+                errors.Add("Name cannot be blank");
+
+            if (request.FTE.HasValue && (request.FTE.Value < 0.0 || request.FTE.Value > 1.0))
+                errors.Add($"FTE {request.FTE} is out of range (must be 0.0-1.0)");
+
+            var resolvedStart = request.StartDate ?? person.StartDate;
+            var resolvedEnd = request.EndDate ?? person.EndDate;
+            if (resolvedEnd.HasValue && resolvedEnd.Value < resolvedStart)
+                errors.Add("EndDate cannot be before StartDate");
+
+            if (!string.IsNullOrWhiteSpace(request.Name))
+            {
+                var probe = new Person { PersonId = person.PersonId, Name = request.Name.Trim() };
+                if (_personService.DuplicateDetected(context, probe))
+                    errors.Add($"A different Person named '{request.Name}' already exists");
+                else if (_personService.DuplicateInitialsDetected(context, probe))
+                    errors.Add($"A different Person with initials '{probe.ShortName}' already exists");
+            }
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Update the Person's Name, StartDate, EndDate, and/or FTE. Caller
+        /// is responsible for validating first. See UpdatePersonRequestDTO
+        /// remarks -- EndDate can only be set, not cleared, here.
+        /// </summary>
+        public ImportPersonResponseDTO UpdatePerson(PPMToolContext context, UpdatePersonRequestDTO request)
+        {
+            var person = _personService.GetById(context, request.PersonId)!;
+
+            if (request.Name != null) person.Name = request.Name.Trim(); // setter also re-derives ShortName
+            if (request.StartDate.HasValue) person.StartDate = request.StartDate.Value;
+            if (request.EndDate.HasValue) person.EndDate = request.EndDate.Value;
+            if (request.FTE.HasValue) person.FTE = request.FTE.Value;
+
+            var result = _personService.Update(context, person);
+            if (result < 0)
+                throw new InvalidOperationException($"PersonService.Update returned {result} (duplicate) despite passing ValidatePersonUpdate() -- possible race condition");
+
+            // Mirrors AddPerson.razor.cs's own edit flow -- a renamed Person may have a
+            // linked User (this endpoint isn't restricted to the bare, login-less People
+            // POST /api/people/add creates), whose display name would otherwise go stale.
+            if (request.Name != null)
+                _userService.UpdateDisplayName(context, person);
+
+            return new ImportPersonResponseDTO(person.PersonId, person.ShortName);
+        }
+
         private static IEnumerable<(string Label, double FTE)> DutyFTEs(ImportWorkloadModelChangeDTO request)
         {
             yield return ("ProjectWorkFTE", request.ProjectWorkFTE);
@@ -596,5 +869,21 @@ namespace PPMTool.Services
         private static Faculty? FindFacultyByCode(PPMToolContext context, string code) =>
             context.Faculties
                 .FirstOrDefault(f => f.Code.Trim().ToLower() == code.Trim().ToLower());
+
+        // Unlike FindActiveSchoolByCode, not filtered to IsActive -- update needs to
+        // find (and potentially reactivate) an inactive School too.
+        private static School? FindSchoolByCode(PPMToolContext context, string code) =>
+            context.Schools
+                .Include(s => s.Faculty)
+                .FirstOrDefault(s => s.Code.Trim().ToLower() == code.Trim().ToLower());
+
+        // Reuses ProjectService.GetAll()'s own Include chain rather than assembling a
+        // partial one here -- UpdateProject's call to project.UpdateProjectMetaData needs
+        // the same full graph (SubTasks/AssignedResources/Person/WorkloadModelChanges,
+        // FundingSources, etc.) that method's NRE-prone dependencies read directly (see
+        // the ProjectService.GetAll() include list, and the class of bug noted on
+        // SchoolService.GetAllActive() elsewhere in this codebase).
+        private Project? FindProjectByRTP(PPMToolContext context, int rtp) =>
+            _projectService.GetAll(context).FirstOrDefault(p => p.RTP == rtp);
     }
 }

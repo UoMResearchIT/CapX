@@ -178,4 +178,45 @@ public static class Projects
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+
+    /// <summary>
+    /// Update an existing Project's core scalar fields. Identified by RTP.
+    /// Doesn't touch Resourcing or Comments -- see Projects.CreateProject.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateProjectResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult UpdateProject(
+        PPMToolContext context,
+        ImportService importService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] UpdateProjectRequestDTO request)
+    {
+        try
+        {
+            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Projects.UpdateProject");
+            if (!allowed) return gateResult!;
+
+            var errors = importService.ValidateProjectUpdate(context, request);
+            if (errors.Count > 0)
+            {
+                logger.LogWarning("API: Projects: project update validation failed for RTP {RTP}: {Errors}", request.RTP, string.Join("; ", errors));
+                return Results.BadRequest(new ImportErrorDTO(errors));
+            }
+
+            var result = importService.UpdateProject(context, request);
+            logger.LogInformation(
+                "API: Projects: updated Project {ProjectId} (RTP {RTP}) by {User}",
+                result.ProjectId, request.RTP, caller!.Name);
+            return Results.Ok(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: Projects: error updating project RTP {RTP}", request.RTP);
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
 }
