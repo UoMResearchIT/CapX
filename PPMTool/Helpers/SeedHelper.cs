@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using LoremNET;
 using Microsoft.EntityFrameworkCore;
+using PPMTool.API;
 using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -464,6 +465,97 @@ namespace PPMTool.Helpers
                     Person = context.People.FirstOrDefault(x => x.ShortName == "JN")
                 };
                 context.Users.Add(none);
+                context.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Seed API keys for dummy-data testing.
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        internal static void SeedApiKeys(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+            logger.LogInformation("Seeding API keys...");
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Check if there is already an API key for a manager with a report and a developer key
+                var managerWithReportExists = context.ApiKeys
+                    .Include(x => x.Owner)
+                    .ThenInclude(x => x.Person)
+                    .Any(x => x.ExpiresAt > DateTime.Now
+                        && x.Owner.RoleType == RoleType.Manager
+                        && x.Owner.Person != null
+                        && context.People.Any(p => p.LineManager != null && p.LineManager.PersonId == x.Owner.Person.PersonId));
+
+                // Check if there is already a developer key
+                var developerKeyExists = context.ApiKeys
+                    .Include(x => x.Owner)
+                    .ThenInclude(x => x.Person)
+                    .Any(x => x.ExpiresAt > DateTime.Now
+                        && x.Owner.RoleType == RoleType.Developer
+                        && x.Owner.Person != null);
+
+                // If there are the keys we need then no need to seed anything
+                if (managerWithReportExists && developerKeyExists)
+                {
+                    return;
+                }
+
+                // Otherwise, get a manager and a developer that we can generate dummy keys for
+                var manager = context.Users
+                    .Include(x => x.Person)
+                    .AsEnumerable()
+                    .FirstOrDefault(x => x.RoleType == RoleType.Manager
+                        && x.Person != null
+                        && context.People.Any(p => p.LineManager != null && p.LineManager.PersonId == x.Person.PersonId))
+                    ?? throw new InvalidOperationException("Cannot find a manager with a report to seed an API key for testing.");
+
+                var developer = context.Users
+                    .Include(x => x.Person)
+                    .FirstOrDefault(x => x.RoleType == RoleType.Developer && x.Person != null)
+                    ?? throw new InvalidOperationException("Cannot find a developer to seed an API key for testing.");
+
+                // Create a one day long token so it will be useful for tests but not a lingering security issue
+                var tokenProvider = new ApiTokenProvider(configuration);
+                const int expirationInDays = 1;
+                var keysToAdd = new List<ApiKey>();
+
+                // Add key
+                if (!managerWithReportExists)
+                {
+                    keysToAdd.Add(new ApiKey
+                    {
+                        Active = true,
+                        Description = "Dummy data manager API key",
+                        ExpiresAt = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(expirationInDays), DateTimeKind.Unspecified),
+                        Key = tokenProvider.CreateToken(manager, expirationInDays),
+                        Owner = manager
+                    });
+                }
+
+                if (!developerKeyExists)
+                {
+                    keysToAdd.Add(new ApiKey
+                    {
+                        Active = true,
+                        Description = "Dummy data developer API key",
+                        ExpiresAt = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(expirationInDays), DateTimeKind.Unspecified),
+                        Key = tokenProvider.CreateToken(developer, expirationInDays),
+                        Owner = developer
+                    });
+                }
+
+                // Check the keys are valid and we didn't mess up the generation
+                if (keysToAdd.Any(x => string.IsNullOrWhiteSpace(x.Key)))
+                {
+                    throw new InvalidOperationException("Failed to generate API keys during dummy-data seeding. Check JWT secret configuration.");
+                }
+
+                // Save changes
+                context.ApiKeys.AddRange(keysToAdd);
                 context.SaveChanges();
             }
         }
