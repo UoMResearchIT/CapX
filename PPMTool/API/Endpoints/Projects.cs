@@ -159,14 +159,14 @@ public static class Projects
             var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Projects.CreateProject");
             if (!allowed) return gateResult!;
 
-            var errors = importService.Validate(context, request);
+            var errors = importService.Validate(context, request, caller!);
             if (errors.Count > 0)
             {
                 logger.LogWarning("API: Projects: project validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors));
                 return Results.BadRequest(new ImportErrorDTO(errors));
             }
 
-            var result = importService.Create(context, request);
+            var result = importService.Create(context, request, caller!);
             logger.LogInformation(
                 "API: Projects: created Project {ProjectId} '{Name}' ({ResourceCount} resources, {NoteCount} notes) by {User}",
                 result.ProjectId, request.Name, result.ResourcesCreated, result.NotesCreated, caller!.Name);
