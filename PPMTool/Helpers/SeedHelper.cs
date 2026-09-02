@@ -3028,7 +3028,8 @@ namespace PPMTool.Helpers
                 {
                     FeatureType = FeatureType.ProjectsAndCapacity,
                     Name = "Projects & Capacity",
-                    Description = "Allows mangers to add projects to the database and assign people to them. It also allows them to visualise the capacity of their team based on the project assignments and workload models of the people."
+                    Description = "Allows mangers to add projects to the database and assign people to them. It also allows them to visualise the capacity of their team based on the project assignments and workload models of the people.",
+                    Enabled = true
                 },
                 new Feature
                 {
