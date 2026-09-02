@@ -1529,6 +1529,16 @@ namespace PPMTool.Helpers
                         StartDate = ApplyDateOffset(2025, 03, 05),
                     }
                 };
+
+                // Make sure we seed request owners that will just be the PM if there is one
+                var defaultRequestOwner = context.People.OrderBy(x => x.PersonId).FirstOrDefault()
+                    ?? throw new InvalidOperationException("Cannot find a person to use as project request owner during seeding.");
+
+                foreach (var project in projects)
+                {
+                    project.RequestOwner = project.ProjectManager ?? defaultRequestOwner;
+                }
+
                 context.Projects.AddRange(projects);
                 context.SaveChanges();
             }
