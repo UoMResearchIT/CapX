@@ -752,15 +752,13 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Method fired when the HTML editor input changes
+        /// Method fired when the HTML editor input changes.
+        /// Really used to trigger the JS events / mention panel since data is stored to the model using data binding.
         /// </summary>
         /// <param name="html"></param>
         /// <returns></returns>
         private async Task OnEditorInput(string html)
         {
-            // Pass the html input into the control to the backing property for sanitisation
-            NoteHtmlContentValue = html;
-
             // If the last input was ignored, then re-enable the next one and exit
             if (suppressNextInput)
             {
