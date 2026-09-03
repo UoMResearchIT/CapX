@@ -15,15 +15,18 @@ namespace PPMTool.Services
     {
         private readonly SettingsService settingsService;
         private readonly FinancialReferenceService financialReferenceService;
+        private readonly HtmlContentSanitizer htmlContentSanitizer;
 
         public ProjectService(
             SettingsService settingsService,
             FinancialReferenceService financialReferenceService,
+            HtmlContentSanitizer htmlContentSanitizer,
             ILogger<ProjectService> logger
         ) : base(logger)
         {
             this.settingsService = settingsService;
             this.financialReferenceService = financialReferenceService;
+            this.htmlContentSanitizer = htmlContentSanitizer;
         }
 
         /// <inheritdoc />
@@ -38,6 +41,7 @@ namespace PPMTool.Services
                 return -2;
             }
 
+            SanitizeProjectHtml(projectModel);
             context.Projects.Add(projectModel);
             if (commitChanges) CommitChanges(context);
             return projectModel.ProjectId;
@@ -94,6 +98,7 @@ namespace PPMTool.Services
             {
                 return -2;
             }
+            SanitizeProjectHtml(projectModel);
             context.Projects.Update(projectModel);
             if (commitChanges) CommitChanges(context);
             return projectModel.ProjectId;
@@ -259,6 +264,15 @@ namespace PPMTool.Services
                     logger.LogWarning(ex, $"Error occurred while updating project metadata for project {project.ProjectId} ({prefix}-{project.RTP}): {ex.Message}");
                 }
             }
+        }
+
+        /// <summary>
+        /// Method to sanitise the HTML content in the model
+        /// </summary>
+        /// <param name="project"></param>
+        private void SanitizeProjectHtml(Project project)
+        {
+            project.Description = htmlContentSanitizer.Sanitize(project.Description);
         }
 
         /// <summary>

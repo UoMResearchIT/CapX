@@ -61,6 +61,9 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         [Inject]
+        private HtmlContentSanitizer HtmlContentSanitizer { get; set; }
+
+        [Inject]
         private ProjectStatusEvaluator ProjectStatusEvaluator { get; set; }
 
         [Inject]
@@ -111,6 +114,19 @@ namespace PPMTool.Pages
         private bool editorVisible;
         private Note noteModel;
         private IList<Person> mentions;
+
+        /// <summary>
+        /// Intermediate property to hold the HTML from the editor to so we can sanitise before updating the actual model
+        /// </summary>
+        private string NoteHtmlContentValue
+        {
+            get => noteModel?.HtmlContent ?? string.Empty;
+            set
+            {
+                if (noteModel == null) return;
+                noteModel.HtmlContent = HtmlContentSanitizer.Sanitize(value);
+            }
+        }
         private string noteSearchTerms;
         private List<Note> filteredNotes;
         private bool showOnlyFinanceNotes;
@@ -742,6 +758,9 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private async Task OnEditorInput(string html)
         {
+            // Pass the html input into the control to the backing property for sanitisation
+            NoteHtmlContentValue = html;
+
             // If the last input was ignored, then re-enable the next one and exit
             if (suppressNextInput)
             {

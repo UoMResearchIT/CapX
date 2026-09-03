@@ -7,6 +7,7 @@ SPDX-License-Identifier: apache-2.0
 @using PPMTool.Data.Entities
 @using PPMTool.Data.Enums
 @using PPMTool.Services
+@inject HtmlContentSanitizer HtmlContentSanitizer
 
 <RadzenCard Style="min-height:1rem; border: var(--rz-card-border);">
     <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.5rem">
@@ -44,7 +45,7 @@ SPDX-License-Identifier: apache-2.0
                 {
                     <HintComponent Message="Assessment must include evidence before you can save it." />
                 }
-                <RadzenHtmlEditor @bind-Value="assessmentToEdit.Evidence" Style="min-height: 10rem" Placeholder="Add evidence here to support your assessment" />
+                <RadzenHtmlEditor @bind-Value="AssessmentEvidenceValue" Style="min-height: 10rem" Placeholder="Add evidence here to support your assessment" />
             </RadzenStack>
         }
         @if (Competency?.Assessments != null && Competency.Assessments.Where(x => x.PersonId == SelectedPerson?.PersonId).Count() > 0)
@@ -104,6 +105,19 @@ SPDX-License-Identifier: apache-2.0
     public Action<ElementReference, string> ShowTooltip { get; set; }
 
     private CompetencyAssessment assessmentToEdit = null;
+
+    /// <summary>
+    /// Intermediate property to bind the editor to so we can sanitise before updating the actual model
+    /// </summary>
+    private string AssessmentEvidenceValue
+    {
+        get => assessmentToEdit?.Evidence ?? string.Empty;
+        set
+        {
+            if (assessmentToEdit == null) return;
+            assessmentToEdit.Evidence = HtmlContentSanitizer.Sanitize(value);
+        }
+    }
 
     /// <summary>
     /// Create an assessment entity for the selected competency and person. This will be edited in the form and then passed to the AddAssessmentAction when saved.

@@ -11,8 +11,11 @@ namespace PPMTool.Services
 {
     public class CompetencyService : BaseEntityService<Competency>
     {
-        public CompetencyService(ILogger<CompetencyService> logger) : base(logger)
+        private readonly HtmlContentSanitizer htmlContentSanitizer;
+
+        public CompetencyService(HtmlContentSanitizer htmlContentSanitizer, ILogger<CompetencyService> logger) : base(logger)
         {
+            this.htmlContentSanitizer = htmlContentSanitizer;
         }
 
         /// <inheritdoc />
@@ -22,6 +25,7 @@ namespace PPMTool.Services
             {
                 return -1;
             }
+            SanitizeCompetencyHtml(entity);
             context.Competencies.Add(entity);
             if (commitChanges)
             {
@@ -85,6 +89,7 @@ namespace PPMTool.Services
             {
                 return -1;
             }
+            SanitizeCompetencyHtml(entity);
             context.Competencies.Update(entity);
             if (commitChanges)
             {
@@ -129,6 +134,7 @@ namespace PPMTool.Services
         /// <returns></returns>
         public int UpdateAssessment(PPMToolContext context, CompetencyAssessment entity, bool commitChanges = true)
         {
+            SanitizeAssessmentHtml(entity);
             context.CompetencyAssessments.Update(entity);
             if (commitChanges)
             {
@@ -146,12 +152,34 @@ namespace PPMTool.Services
         /// <returns></returns>
         public int AddAssessment(PPMToolContext context, CompetencyAssessment entity, bool commitChanges = true)
         {
+            SanitizeAssessmentHtml(entity);
             context.CompetencyAssessments.Add(entity);
             if (commitChanges)
             {
                 CommitChanges(context);
             }
             return entity.CompetencyAssessmentId;
+        }
+
+        /// <summary>
+        /// Method to sanitise the HTML content in the competency
+        /// </summary>
+        /// <param name="competency"></param>
+        private void SanitizeCompetencyHtml(Competency competency)
+        {
+            competency.Description = htmlContentSanitizer.Sanitize(competency.Description);
+            competency.Objective = htmlContentSanitizer.Sanitize(competency.Objective);
+        }
+
+        /// <summary>
+        /// Method to sanitise the HTML content in the assessment
+        /// </summary>
+        /// <param name="assessment"></param>
+        private void SanitizeAssessmentHtml(CompetencyAssessment assessment)
+        {
+            assessment.Evidence = htmlContentSanitizer.Sanitize(assessment.Evidence);
+            assessment.CompetencyDescription = htmlContentSanitizer.Sanitize(assessment.CompetencyDescription);
+            assessment.CompetencyObjective = htmlContentSanitizer.Sanitize(assessment.CompetencyObjective);
         }
     }
 }
