@@ -61,7 +61,7 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         [Inject]
-        private HtmlContentSanitizer HtmlContentSanitizer { get; set; }
+        private HtmlContentSanitizerService HtmlContentSanitizer { get; set; }
 
         [Inject]
         private ProjectStatusEvaluator ProjectStatusEvaluator { get; set; }

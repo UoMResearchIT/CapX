@@ -10,7 +10,7 @@ namespace PPMTool.Services
     /// HTML sanitisation service for removing potentially dangerous HTML content from user input.
     /// This is important for preventing XSS attacks and ensuring that only safe HTML is stored and displayed.
     /// </summary>
-    public class HtmlContentSanitizer
+    public class HtmlContentSanitizerService
     {
         /// <summary>
         /// The actual santiser instance
@@ -20,7 +20,7 @@ namespace PPMTool.Services
         /// <summary>
         /// Constructor that configures the sanitizer to allow certain attributes like "class" and "data-id" while removing potentially harmful content.
         /// </summary>
-        public HtmlContentSanitizer()
+        public HtmlContentSanitizerService()
         {
             sanitizer = new HtmlSanitizer();
             sanitizer.AllowedAttributes.Add("class");
@@ -34,7 +34,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="html"></param>
         /// <returns></returns>
-        public string Sanitize(string? html)
+        public string Sanitize(string html)
         {
             return string.IsNullOrWhiteSpace(html) ? string.Empty : sanitizer.Sanitize(html);
         }

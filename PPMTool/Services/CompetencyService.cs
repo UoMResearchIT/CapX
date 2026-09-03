@@ -11,9 +11,9 @@ namespace PPMTool.Services
 {
     public class CompetencyService : BaseEntityService<Competency>
     {
-        private readonly HtmlContentSanitizer htmlContentSanitizer;
+        private readonly HtmlContentSanitizerService htmlContentSanitizer;
 
-        public CompetencyService(HtmlContentSanitizer htmlContentSanitizer, ILogger<CompetencyService> logger) : base(logger)
+        public CompetencyService(HtmlContentSanitizerService htmlContentSanitizer, ILogger<CompetencyService> logger) : base(logger)
         {
             this.htmlContentSanitizer = htmlContentSanitizer;
         }

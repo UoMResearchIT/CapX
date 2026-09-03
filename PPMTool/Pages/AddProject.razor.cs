@@ -53,7 +53,7 @@ namespace PPMTool.Pages
         private SchoolService SchoolService { get; set; }
 
         [Inject]
-        private HtmlContentSanitizer HtmlContentSanitizer { get; set; }
+        private HtmlContentSanitizerService HtmlContentSanitizer { get; set; }
 
         [Parameter]
         public int ProjectId { get; set; }

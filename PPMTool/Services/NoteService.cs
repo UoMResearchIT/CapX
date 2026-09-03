@@ -10,9 +10,9 @@ namespace PPMTool.Services
 {
     public class NoteService : BaseEntityService<Note>
     {
-        private readonly HtmlContentSanitizer htmlContentSanitizer;
+        private readonly HtmlContentSanitizerService htmlContentSanitizer;
 
-        public NoteService(HtmlContentSanitizer htmlContentSanitizer, ILogger<NoteService> logger) : base(logger)
+        public NoteService(HtmlContentSanitizerService htmlContentSanitizer, ILogger<NoteService> logger) : base(logger)
         {
             this.htmlContentSanitizer = htmlContentSanitizer;
         }

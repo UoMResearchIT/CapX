@@ -15,12 +15,12 @@ namespace PPMTool.Services
     {
         private readonly SettingsService settingsService;
         private readonly FinancialReferenceService financialReferenceService;
-        private readonly HtmlContentSanitizer htmlContentSanitizer;
+        private readonly HtmlContentSanitizerService htmlContentSanitizer;
 
         public ProjectService(
             SettingsService settingsService,
             FinancialReferenceService financialReferenceService,
-            HtmlContentSanitizer htmlContentSanitizer,
+            HtmlContentSanitizerService htmlContentSanitizer,
             ILogger<ProjectService> logger
         ) : base(logger)
         {
