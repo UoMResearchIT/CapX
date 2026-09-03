@@ -2,6 +2,9 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+using System.Diagnostics;
+using Blazored.LocalStorage;
+using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
@@ -31,6 +34,12 @@ namespace PPMTool.Pages
         }
 
         [Inject]
+        protected ISessionStorageService SessionStorage { get; set; }
+
+        [Inject]
+        protected ILocalStorageService LocalStorage { get; set; }
+
+        [Inject]
         protected ILogger Logger { get; set; }
 
         [Inject]
@@ -45,6 +54,18 @@ namespace PPMTool.Pages
         [Inject]
         protected FeatureService FeatureService { get; set; }
 
+        /// <summary>
+        /// The count of pages to display in a datagrid on the page, bound to by datagrids
+        /// </summary>
+        public int PageCount { get; set; } = 15;
+
+        /// <summary>
+        /// Method to get a unique session storage tag for the page. Returns empty string by default.
+        /// Override in derived pages to provide a unique tag for the page to store settings in session storage.
+        /// </summary>
+        /// <returns></returns>
+        protected virtual string GetStorageTag() => string.Empty;
+
         private bool loading = true;
         [CascadingParameter]
         public bool Loading
@@ -58,6 +79,28 @@ namespace PPMTool.Pages
                 }
             }
         }
+
+        /// <summary>
+        /// Wired up to the pagesize dropdown on datagrids that need user specified paging
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public async Task OnPageSizeChangedAsync(int value)
+        {
+            if (!string.IsNullOrWhiteSpace(GetStorageTag()))
+            {
+                await LocalStorage.SetItemAsync($"{GetStorageTag()}-page-count", value);
+            }
+            else
+            {
+                LogError("OnPageSizeChangedAsync has been fired but the page does not override GetStorageTag so variable storage will fail!");
+            }
+
+            Logger.LogInformation($"Page size changed to {value} for page {GetStorageTag()}");
+            PageCount = value;
+            StateHasChanged();
+        }
+
 
         [CascadingParameter]
         public MainLayout Layout { get; set; }
@@ -83,6 +126,8 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+
+            // Reset the layout to clear any previous page's settings
             Layout?.Reset();
 
             // Not sure why this happens but worth noting
@@ -93,6 +138,35 @@ namespace PPMTool.Pages
 
             // Editing only permitted by managers and superusers by default
             EditAuthorised = ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser;
+        }
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            await base.OnAfterRenderAsync(firstRender);
+
+            if (firstRender)
+            {
+                // Load the page count out of storage if needs be and call a re-render of the components
+                await GetPageCountSettingAsync();
+                StateHasChanged();
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the currently page count from the session variable if it exists and updates the bound property .
+        /// </summary>
+        /// <returns></returns>
+        private async Task GetPageCountSettingAsync()
+        {
+            if (!string.IsNullOrWhiteSpace(GetStorageTag()))
+            {
+                var pageCount = await LocalStorage.GetItemAsync<int?>($"{GetStorageTag()}-page-count");
+                if (pageCount != null)
+                {
+                    PageCount = pageCount.Value;
+                    Debug.WriteLine($"** Retrieved page count {PageCount} for page {GetStorageTag()}");
+                }
+            }
         }
 
         /// <summary>

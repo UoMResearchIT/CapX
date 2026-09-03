@@ -5,10 +5,10 @@ SPDX-License-Identifier: apache-2.0
 *@
 
 @using PPMTool.Models
+@using PPMTool.Helpers
 @using System.Diagnostics
 @using ApexCharts
 @using static PPMTool.Pages.BaseCapacityPage
-@using static PPMTool.Pages.Capacity
 
 @if ((confirmedChartItems?.Count() ?? 0) == 0 && (provisionalChartItems?.Count() ?? 0) == 0)
 {
@@ -53,14 +53,10 @@ else
                         @Value2TooltipFormatter(point.Items.FirstOrDefault())
 
                         <span class="me-1">
-                            @((point.Y?.Min() is decimal d1 && d1 > 0 && d1 < DateTimeOffset.MaxValue.ToUnixTimeMilliseconds()
-                                ? $"{DateTimeOffset.FromUnixTimeMilliseconds((long)d1).ToString("dd MMM yyyy")} - "
-                                : "Add tasks to define dates"))
+                            @ChartHelper.FormatTooltipRangeStart(point.Y?.Min())
                         </span>
                         <span class="me-1">
-                            @((point.Y?.Max() is decimal d2 && d2 > 0 && d2 < DateTimeOffset.MaxValue.ToUnixTimeMilliseconds()
-                                ? DateTimeOffset.FromUnixTimeMilliseconds((long)d2).ToString("dd MMM yyyy")
-                                : ""))
+                            @ChartHelper.FormatTooltipRangeEnd(point.Y?.Max())
                         </span>
 
                     </div>
@@ -89,6 +85,9 @@ else
 
     [Parameter]
     public Func<ChartItem, MarkupString> Value2TooltipFormatter { get; set; }
+
+    [Parameter]
+    public bool IsProjectMode { get; set; }
 
     private string title;
     private ApexChartOptions<ChartItem> chartOptions;
@@ -139,6 +138,27 @@ else
     /// <returns></returns>
     private MarkupString DefaultValue2Formatter(ChartItem item)
     {
-        return (MarkupString)$"<h5>({item?.Value2} FTE Availability)</h5>";
+        var assigned = item?.Value1 ?? 0;
+        var value2 = item?.Value2 ?? 0;
+        var value3 = item?.Value3 ?? 0;
+
+        double available;
+        double workloadModel;
+
+        if (IsProjectMode)
+        {
+            // In project mode, value2 stores available based on total assigned load.
+            // Value3 stores the workload model value for the block when supplied.
+            available = Math.Round(value2, 3);
+            workloadModel = Math.Round(value3, 3);
+        }
+        else
+        {
+            // In person mode, value2 stores direct workload model capacity
+            available = Math.Round(Math.Max(value2 - assigned, 0), 3);
+            workloadModel = value2;
+        }
+
+        return (MarkupString)$"<p class=\"h4\">Available: {available} FTE</p><p>(Workload Model: {workloadModel} FTE)</p>";
     }
 }

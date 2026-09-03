@@ -8,85 +8,87 @@ SPDX-License-Identifier: apache-2.0
 @inherits BaseCapacityPage
 @using PPMTool.Data.Enums
 @using PPMTool.Pages.Components
-@using PPMTool.Data
 <PageTitle>Management Capacity - CapX</PageTitle>
 
-<div class="container">
-    <div class="row">
-        <div class="col">
-            <h1>Management Capacity</h1>
+<FeatureCheckComponent Feature="FeatureType.ProjectsAndCapacity">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>Management Capacity</h1>
+            </div>
         </div>
-    </div>
-    <hr />
-    @if (Loading)
-    {
-        <LoadingComponent />
-    }
-    else
-    {
-        <RadzenCard>
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
-                    <RadzenDropDown @bind-Value=@chosenPeople
-                                    Data=@filteredPeople
-                                    TextProperty="Name"
-                                    ValueProperty="Name"
-                                    Multiple=true
-                                    AllowClear=true
-                                    Placeholder="Filter Manager"
-                                    Chips=true
-                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                    FilterOperator="StringFilterOperator.Contains"
-                                    AllowFiltering="true"
-                                    Style="width: 100%; max-width: 400px;"
-                                    Change="@(async args => await PeopleSelectionChangedAsync(args))"
-                                    LoadData="@LoadFilteredPeople"
-                                    Disabled="@Loading" />
-                    <CapacityChartControlComponent FinishedSwitchChanged="@(async value => await FinishedSwitchChangedAsync(value))"
-                                                   LeaversSwitchChanged="@(async value => await LeaversSwitchChangedAsync(value))"
-                                                   UnFundedSwitchChanged="@(async value => await UnFundedSwitchChangedAsync(value))"
-                                                   SetZoomToMonthsAhead="@SetZoomToMonthsAhead"
-                                                   @bind-IncludeUnFunded="@includeUnFunded"
-                                                   @bind-IncludeLeavers="@includeLeavers"
-                                                   @bind-IncludeFinished="@includeFinished" />
-                </RadzenStack>
-                @if (ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser)
-                {
-                    <RadzenButton Text="Generate"
-                                  Click="@(async () => await ConfigureChartSourceAsync())"
-                                  Icon="refresh"
-                                  class="capacity-gen-button" />
-                }
-            </RadzenStack>
-        </RadzenCard>
-
-        @if (chartModels == null || chartModels.Count == 0)
+        <hr />
+        @if (Loading)
         {
-            <RadzenCard>
-                <p class="lead">No data to show for the selected managers</p>
-            </RadzenCard>
+            <LoadingComponent />
         }
         else
         {
-            <!-- Legend -->
-            <div class="mt-2">
-                <CapacityLegendComponent ShowProjectModeLegend="false" />
-            </div>
+            <RadzenCard>
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+                        <RadzenDropDown @bind-Value=@chosenPeople
+                                        Data=@filteredPeople
+                                        TextProperty="Name"
+                                        ValueProperty="Name"
+                                        Multiple=true
+                                        AllowClear=true
+                                        Placeholder="Filter Manager"
+                                        Chips=true
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                        FilterOperator="StringFilterOperator.Contains"
+                                        AllowFiltering="true"
+                                        Style="width: 100%; max-width: 400px;"
+                                        Change="@(async args => await PeopleSelectionChangedAsync(args))"
+                                        LoadData="@LoadFilteredPeople"
+                                        Disabled="@Loading" />
+                        <CapacityChartControlComponent FinishedSwitchChanged="@(async value => await FinishedSwitchChangedAsync(value))"
+                                                       LeaversSwitchChanged="@(async value => await LeaversSwitchChangedAsync(value))"
+                                                       UnFundedSwitchChanged="@(async value => await UnFundedSwitchChangedAsync(value))"
+                                                       SetZoomToMonthsAhead="@SetZoomToMonthsAhead"
+                                                       @bind-IncludeUnFunded="@includeUnFunded"
+                                                       @bind-IncludeLeavers="@includeLeavers"
+                                                       @bind-IncludeFinished="@includeFinished" />
+                    </RadzenStack>
+                    @if (CanCustomise())
+                    {
+                        <RadzenButton Text="Generate"
+                                      Click="@(async () => await ConfigureChartSourceAsync())"
+                                      Icon="refresh"
+                                      class="@GetGenerateButtonCssClass()" />
+                    }
+                </RadzenStack>
+            </RadzenCard>
 
-            <!-- Chart -->
-            <div class="row">
-                @for (int i = 0; i < chartModels.Count; ++i)
-                {
-                    <div class="col" style="min-width: 50rem;">
-                        <div class="rz-card rz-variant-fill my-1">
-                            <CapacityChartComponent ChartModel=@chartModels[i]
-                                                    OnDataPointSelection="@(async item => await DataPointsSelectedAsync(item))"
-                                                    OnChartZoomed="@OnChartZoomed" />
+            @if (chartModels == null || chartModels.Count == 0)
+            {
+                <RadzenCard>
+                    <p class="lead">No data to show for the selected managers</p>
+                </RadzenCard>
+            }
+            else
+            {
+                <!-- Legend -->
+                <div class="mt-2">
+                    <CapacityLegendComponent ShowProjectModeLegend="false" />
+                </div>
+
+                <!-- Chart -->
+                <div class="row">
+                    @for (int i = 0; i < chartModels.Count; ++i)
+                    {
+                        <div class="col" style="min-width: 50rem;">
+                            <div class="rz-card rz-variant-fill my-1">
+                                <CapacityChartComponent ChartModel=@chartModels[i]
+                                                        OnDataPointSelection="@(async item => await DataPointsSelectedAsync(item))"
+                                                        OnChartZoomed="@OnChartZoomed"
+                                                        IsProjectMode="@PeopleChosen()" />
+                            </div>
                         </div>
-                    </div>
-                }
-            </div>
+                    }
+                </div>
+            }
+            <hr />
         }
-        <hr />
-    }
-</div>
+    </div>
+</FeatureCheckComponent>

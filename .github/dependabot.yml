@@ -9,15 +9,18 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      all-updates:
+      all-nuget-updates:
         patterns:
           - "*"
     cooldown:
       default-days: 7
   - package-ecosystem: "github-actions"
-    directories:
-      - "/"
+    directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      all-actions-updates:
+        patterns:
+          - "*"
     cooldown:
       default-days: 7

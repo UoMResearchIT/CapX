@@ -18,6 +18,7 @@ using PPMTool.Helpers;
 using PPMTool.Models;
 using PPMTool.Pages.Components;
 using PPMTool.Services;
+using PPMTool.Services.StatusEvaluators;
 using Radzen;
 using Radzen.Blazor;
 
@@ -59,6 +60,15 @@ namespace PPMTool.Pages
         [Inject]
         private PersonService PersonService { get; set; }
 
+        [Inject]
+        private HtmlContentSanitizerService HtmlContentSanitizer { get; set; }
+
+        [Inject]
+        private ProjectStatusEvaluator ProjectStatusEvaluator { get; set; }
+
+        [Inject]
+        private SubTaskStatusEvaluator SubTaskStatusEvaluator { get; set; }
+
         [Parameter]
         public int? ProjectId { get; set; }
 
@@ -95,7 +105,6 @@ namespace PPMTool.Pages
 
         // Task grid
         private int count;
-        private readonly int gridPageSize = 10;
         private List<SubTask> allTasks;
         private IList<SubTask> gridTasks;
 
@@ -105,6 +114,19 @@ namespace PPMTool.Pages
         private bool editorVisible;
         private Note noteModel;
         private IList<Person> mentions;
+
+        /// <summary>
+        /// Intermediate property to hold the HTML from the editor to so we can sanitise before updating the actual model
+        /// </summary>
+        private string NoteHtmlContentValue
+        {
+            get => noteModel?.HtmlContent ?? string.Empty;
+            set
+            {
+                if (noteModel == null) return;
+                noteModel.HtmlContent = HtmlContentSanitizer.Sanitize(value);
+            }
+        }
         private string noteSearchTerms;
         private List<Note> filteredNotes;
         private bool showOnlyFinanceNotes;
@@ -157,6 +179,8 @@ namespace PPMTool.Pages
             public double ClientLeft { get; set; }
             public double ClientHeight { get; set; }
         }
+
+        protected override string GetStorageTag() => "project-details";
 
         /// <summary>
         /// Fired when the component is first created - used here to check feature flags and log the page view
@@ -489,12 +513,12 @@ namespace PPMTool.Pages
                 }
 
                 // Add to the list of blocks
-                allBlocks.Add(new GanttBlock(t, groupName, isLeadershipTask: t.IsLeadershipTask));
+                allBlocks.Add(new GanttBlock(t, groupName, duty: t.TaskDuty));
             }
 
-            // leadership first (true before false), each group by StartDate ascending
+            // Block duty grouped then each group by StartDate ascending
             allBlocks = allBlocks
-                .OrderByDescending(x => x.IsLeadershipTask)
+                .OrderBy(x => x.BlockDuty.GetGanttSortOrder())
                 .ThenBy(x => x.Task.StartDate)
                 .ToList();
 
@@ -728,7 +752,8 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Method fired when the HTML editor input changes
+        /// Method fired when the HTML editor input changes.
+        /// Really used to trigger the JS events / mention panel since data is stored to the model using data binding.
         /// </summary>
         /// <param name="html"></param>
         /// <returns></returns>
@@ -1337,7 +1362,7 @@ namespace PPMTool.Pages
             count = query.Count();
 
             // Perform paging
-            gridTasks = query.Skip(args.Skip ?? 0).Take(args.Top ?? gridPageSize).ToList();
+            gridTasks = query.Skip(args.Skip ?? 0).Take(args.Top ?? PageCount).ToList();
 
         }
 

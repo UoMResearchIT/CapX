@@ -21,7 +21,7 @@ namespace PPMTool.Migrations.SqlServer.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.8")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -577,6 +577,9 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                     b.Property<int>("CostModel")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<double>("DayRate")
                         .HasColumnType("float");
 
@@ -619,9 +622,15 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                     b.Property<int>("RTP")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("RequestCompletedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("RequestDocLink")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RequestOwnerId")
+                        .HasColumnType("int");
 
                     b.Property<int>("SchoolId")
                         .HasColumnType("int");
@@ -637,6 +646,8 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                     b.HasIndex("InnateActivityInnateCodeId");
 
                     b.HasIndex("ProjectManagerPersonId");
+
+                    b.HasIndex("RequestOwnerId");
 
                     b.HasIndex("SchoolId");
 
@@ -821,9 +832,6 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                     b.Property<bool>("HasFixedStart")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsLeadershipTask")
-                        .HasColumnType("bit");
-
                     b.Property<int>("Lag")
                         .HasColumnType("int");
 
@@ -851,6 +859,9 @@ namespace PPMTool.Migrations.SqlServer.Migrations
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("TaskDuty")
+                        .HasColumnType("int");
 
                     b.Property<int>("TaskType")
                         .HasColumnType("int");
@@ -1224,6 +1235,12 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                         .WithMany("ManagedProjects")
                         .HasForeignKey("ProjectManagerPersonId");
 
+                    b.HasOne("PPMTool.Data.Entities.Person", "RequestOwner")
+                        .WithMany("RequestedOwnerProjects")
+                        .HasForeignKey("RequestOwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("PPMTool.Data.Entities.School", "School")
                         .WithMany()
                         .HasForeignKey("SchoolId")
@@ -1233,6 +1250,8 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                     b.Navigation("InnateActivity");
 
                     b.Navigation("ProjectManager");
+
+                    b.Navigation("RequestOwner");
 
                     b.Navigation("School");
                 });
@@ -1414,6 +1433,8 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                     b.Navigation("OwnedSkills");
 
                     b.Navigation("PeopleManaged");
+
+                    b.Navigation("RequestedOwnerProjects");
 
                     b.Navigation("Timesheets");
 

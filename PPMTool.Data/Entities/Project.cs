@@ -122,6 +122,29 @@ namespace PPMTool.Data.Entities
         public string? ActualsLastUpdated { get; set; } = DateTime.Now.ToString("R");
 
         /// <summary>
+        /// The date when the project was created
+        /// </summary>
+        [Required]
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+        /// <summary>
+        /// The latest date the project was moved out of the New Request status.
+        /// </summary>
+        public DateTime? RequestCompletedDate { get; set; }
+
+        /// <summary>
+        /// The person who created the project request -- automatically set to the logged in user when the project is created but can be changed later if necessary
+        /// </summary>
+        [Required]
+        public int RequestOwnerId { get; set; }
+
+        /// <summary>
+        /// Navigation property for the person who created the project request
+        /// </summary>
+        [InverseProperty("RequestedOwnerProjects")]
+        public Person RequestOwner { get; set; } = null!;
+
+        /// <summary>
         /// List of Invoices associated with this project
         /// </summary>
         public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
@@ -145,51 +168,97 @@ namespace PPMTool.Data.Entities
         public double FundsReceived { get; set; }
 
         /// <summary>
-        /// Constructor also adds default status messages
+        /// Method to determine whether the active user can edit this project based on its configuration or the configuration of dependent parameters.
+        /// Allowed to edit if they are the PM, a superuser, or the request owner and the project is in the new request state.
+        /// This assesses the state of the project model unless arguments specifically passed to speculatively assess access.
         /// </summary>
-        public Project()
+        /// <param name="activeUser"></param>
+        /// <param name="projectManagerId"></param>
+        /// <param name="requestOwnerId"></param>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public bool ActiveUserHasEditAccessToProject(User? activeUser, int? projectManagerId = null, int? requestOwnerId = null, ProjectStatus? status = null)
         {
-            // Generate status messages to be maintained against a project
-            statusMessages = new List<StatusMessage>
+            // If no user then false
+            if (activeUser == null)
             {
-                // Info
-                new StatusMessage("A task in this project will start soon.", StatusMessage.MessageType.Info, () => SubTasks?.Any(x => x.WillStartWithinAMonth()) ?? false),
-                new StatusMessage("A task in this project has recently started.", StatusMessage.MessageType.Info, () => SubTasks?.Any(x => x.HasStartedInTheLastWeek()) ?? false),
-                new StatusMessage("A task in this project has absent resources and has started or will start soon!", StatusMessage.MessageType.Info, () => SubTasks?.Any(x => x.HasAbsentResourcesAndStartsWithinAWeek()) ?? false, FeatureType.Absences),
+                return false;
+            }
 
-                // Warning
-                new StatusMessage("A task in this project has provisional resources!", StatusMessage.MessageType.Warning, () => SubTasks?.Any(x => x.HasProvisionalResources()) ?? false),
-                new StatusMessage("A current or future task in this project is under-resourced!", StatusMessage.MessageType.Warning, () => HasUnmetDemandInWindow()),
-                new StatusMessage("This project has started but has no link to a project board!", StatusMessage.MessageType.Warning, () => HasStartedButHasNoScrumProjectLink()),
-                new StatusMessage("Task has resource(s) with zero FTE assignment!", StatusMessage.MessageType.Warning, () => HasResourceWithZeroFTE()),
+            // If no PM provided then read from the model
+            if (projectManagerId == null)
+            {
+                projectManagerId = ProjectManager?.PersonId;
+            }
 
-                // Error
-                new StatusMessage("This project is active and overbudget!", StatusMessage.MessageType.Error, () => ProjectStatus.IsActive() && IsOverBudget(), FeatureType.ProjectFinance), // Finance
-                new StatusMessage("This project has no agreed budget!", StatusMessage.MessageType.Error, () => HasNoBudget(), FeatureType.ProjectFinance), // Finance
-                new StatusMessage("A task in this project is running but the project is not active!", StatusMessage.MessageType.Error, () => RunningTaskButInactive()),
-                new StatusMessage("This project is active but has no currently running tasks!", StatusMessage.MessageType.Error, () => ActiveButNoRunningTask()),
-                new StatusMessage("This project has no project manager set!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoPM()),
-                new StatusMessage("This project has no timesheet activity set and project has started or will start soon!", StatusMessage.MessageType.Error, () => NotFinishedOrCancelledButNoInnateCodeAndUpcoming(), FeatureType.Timesheets), // Timesheets
-                new StatusMessage("This project has no project ID specified!", StatusMessage.MessageType.Error, () => RTP == 0),
-                new StatusMessage("This project has no link to a request document!", StatusMessage.MessageType.Error, () => HasNoRequestDocLink()),
-                new StatusMessage("This project has no description!", StatusMessage.MessageType.Error, () => HasNoDescription()),
-                new StatusMessage("This project has no tasks!", StatusMessage.MessageType.Error, () => SubTasks == null || SubTasks.Count == 0),
-                new StatusMessage("This project is active but hasn't had its actuals updated for more than a month!", StatusMessage.MessageType.Error, () => ActiveButNotHadActualsUpdatedForAMonth(), FeatureType.Timesheets), // Timesheets
-                new StatusMessage("This project has no funding sources but is either finished or is active!", StatusMessage.MessageType.Error, () => HasNoFundingSourcesButRan(), FeatureType.ProjectFinance), // Finance
-                new StatusMessage("This project has a task with a resource without a funding source and is currently running or has run in the past!", StatusMessage.MessageType.Error, () => HasResourcesWithNoFundingSourceOnRunningTask(), FeatureType.ProjectFinance), // Finance
-                new StatusMessage("This project uses the Day Rate model but has a DI funding source which is not allowed! DI funding sources must use salary costs for recharge.", StatusMessage.MessageType.Error, () => DayRateWithDIFunding(), FeatureType.ProjectFinance), // Finance
-                new StatusMessage("This project does not have a leadership task!", StatusMessage.MessageType.Error, () => !SubTasks?.Any(x => x.IsLeadershipTask) ?? true),
-                
-                // Success
-                new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success, () => !HasActiveStatusMessages())
-            };
+            // If no request owner provided then read from model and retrieve from DB
+            if (requestOwnerId == null)
+            {
+                requestOwnerId = RequestOwnerId;
+            }
+
+            // If no status provided then read from model
+            if (status == null)
+            {
+                status = ProjectStatus;
+            }
+
+            // Active user id for comparison
+            var activeUserId = activeUser?.Person?.PersonId;
+
+            // Run the conditions
+            return
+                activeUser!.RoleType == RoleType.Superuser ||
+                projectManagerId != null && projectManagerId == activeUserId ||
+                requestOwnerId != null && status == ProjectStatus.NewRequest && requestOwnerId == activeUserId;
+        }
+
+        /// <summary>
+        /// Checks whether any funding sources are not linked to any resources in the subtasks
+        /// </summary>
+        /// <returns></returns>
+        public bool HasFundingSourcesNotLinkedToResources()
+        {
+            // If no tasks or no resources then return false
+            if (SubTasks == null || SubTasks?.Count == 0) return false;
+            if (SubTasks?.All(x => x.AssignedResources == null || x.AssignedResources?.Count == 0) ?? true) return false;
+
+            // Get the funding source IDs from the project by flattening to a list or returning an empty list
+            // if there are no funding sources associated with the project at all
+            var fundingSourceIds =
+                FundingSources?
+                .Select(x => x.FundingSourceId)
+                .ToList() ?? new List<int>();
+
+            // Get the funding source IDs that are linked to assigned resources
+            var resourceFundingSourceIds =
+                SubTasks?.
+                SelectMany(t =>
+                {
+                    // Take the funding sources linked to resources and flatten
+                    return t.AssignedResources?
+
+                        // If there is a an assigned resource with no linked funding source then
+                        // use 0 as the funding source ID which will not match any real funding
+                        // source ID and will be ignored in the comparison later.
+                        .Select(r => r.FundedFrom?.FundingSourceId ?? 0)
+
+                        // If no assigned resources then return an empty list for this sub task
+                        ?? new List<int>();
+                })
+
+                // If no sub tasks then return empty list
+                .ToList() ?? new List<int>();
+
+            // Check whether there are any funding source IDs that are not linked to resources
+            return fundingSourceIds.Except(resourceFundingSourceIds).Any();
         }
 
         /// <summary>
         /// Whether the project uses the day rate model and has a DI funding source
         /// </summary>
         /// <returns></returns>
-        private bool DayRateWithDIFunding()
+        public bool DayRateWithDIFunding()
         {
             return CostModel == CostModel.DayRate && (FundingSources?.Any(x => x.FundingSourceType == FundingSourceType.DI) ?? false);
         }
@@ -198,7 +267,7 @@ namespace PPMTool.Data.Entities
         /// Determines whether any resource in any subtask has an assignment FTE of zero
         /// </summary>
         /// <returns></returns>
-        private bool HasResourceWithZeroFTE()
+        public bool HasResourceWithZeroFTE()
         {
             return SubTasks?.Any(t => t.AssignedResources?.Any(r => r.AssignmentFTE == 0) ?? false) ?? false;
         }
@@ -207,17 +276,30 @@ namespace PPMTool.Data.Entities
         /// Determines whether the project is over budget based on planned costs.
         /// </summary>
         /// <returns></returns>
-        private bool IsOverBudget()
+        public bool IsOverBudget(double thresholdPercentage = 0)
         {
-            // Has to be more than £1 difference
-            return Math.Floor(PlannedCost - Budget) > 0;
+
+            // If no thresholdPercentage is zero then do direct comparison
+            if (thresholdPercentage == 0)
+            {
+                // Round to the nearest whole £1
+                return Math.Floor(PlannedCost - Budget) > 0;
+            }
+            else
+            {
+                // Avoid division by zero
+                if (Budget == 0) return false;
+
+                // Otherwise check the percentage overspend against the threshold
+                return Math.Floor((PlannedCost - Budget) * 100d / Budget) > thresholdPercentage;
+            }
         }
 
         /// <summary>
         /// Determines whether the project has no budget but is not a new request when it legitimately might not have budget
         /// </summary>
         /// <returns></returns>
-        private bool HasNoBudget()
+        public bool HasNoBudget()
         {
             return Budget == 0 && ProjectStatus != ProjectStatus.NewRequest && !ProjectStatus.IsCancelled();
         }
@@ -226,16 +308,78 @@ namespace PPMTool.Data.Entities
         /// Determine whether the project has any funding sources and is in an active, paused, maintenance or finished state
         /// </summary>
         /// <returns></returns>
-        private bool HasNoFundingSourcesButRan()
+        public bool HasNoFundingSourcesButRan()
         {
             return ProjectStatus.DidRun() && !(FundingSources?.Any() ?? false);
+        }
+
+        /// <summary>
+        /// When there are Other funding sources but the total funds requested for the current FY is below the planned cost for the FY by a given threshold percentage.
+        /// Requested funds value is provided by caller so this entity does not have to deep load the invoices.
+        /// </summary>
+        /// <param name="requestedThisFY"></param>
+        /// <param name="thresholdPercentage"></param>
+        /// <param name="today"></param>
+        /// <returns></returns>
+        public bool FundsRequestedBelowPlannedCostForFY(double requestedThisFY, double thresholdPercentage, DateTime? today = null)
+        {
+            var currentDate = (today ?? DateTime.Today).Date;
+
+            // Get planned costs in current financial year
+            var currentFY = FinancialReference.GetFinancialYear(currentDate);
+            var financialYearStart = new DateTime(currentFY, 8, 1);
+            var financialYearEnd = new DateTime(currentFY + 1, 7, 31);
+            var plannedThisFY = GetPlannedCostInDateRange(financialYearStart, financialYearEnd);
+            if (plannedThisFY <= 0)
+            {
+                return false;
+            }
+
+            var threshold = Math.Clamp(thresholdPercentage, 0d, 100d);
+            var minimumExpectedRequestedFunds = plannedThisFY * (1d - (threshold / 100d));
+            return requestedThisFY < minimumExpectedRequestedFunds;
+        }
+
+        /// <summary>
+        /// Calculates the planned cost of the project within a given date range by summing the proportion of planned costs of each subtask that overlaps with the date range.
+        /// </summary>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        private double GetPlannedCostInDateRange(DateTime startDate, DateTime endDate)
+        {
+            if (startDate.Date > endDate.Date || SubTasks == null)
+            {
+                return 0;
+            }
+
+            double planned = 0;
+            foreach (var subTask in SubTasks.Where(x => x.IsWithin(startDate, endDate)))
+            {
+                var taskStart = subTask.StartDate.Date;
+                var taskEnd = subTask.EndDate.Date;
+                var overlapStart = taskStart > startDate.Date ? taskStart : startDate.Date;
+                var overlapEnd = taskEnd < endDate.Date ? taskEnd : endDate.Date;
+
+                if (overlapEnd < overlapStart)
+                {
+                    continue;
+                }
+
+                // Get proportion of planned costs of the task in the window
+                var taskDays = Math.Max(1d, taskEnd.Subtract(taskStart).TotalDays + 1d);
+                var overlapDays = overlapEnd.Subtract(overlapStart).TotalDays + 1d;
+                planned += subTask.PlannedCost * (overlapDays / taskDays);
+            }
+
+            return planned;
         }
 
         /// <summary>
         /// Whether this project is active and the actuals updated timestamp shows it hasn't been updated for a month or more
         /// </summary>
         /// <returns></returns>
-        private bool ActiveButNotHadActualsUpdatedForAMonth()
+        public bool ActiveButNotHadActualsUpdatedForAMonth()
         {
             if (ProjectStatus != ProjectStatus.Active) return false;
             DateTime lastUpdated = string.IsNullOrEmpty(ActualsLastUpdated) ? default : DateTime.ParseExact(ActualsLastUpdated, "R", CultureInfo.InvariantCulture);
@@ -372,7 +516,7 @@ namespace PPMTool.Data.Entities
                     }
 
                     // Read subtask costs and hours and accumulate into the relevant categories
-                    if (task.IsLeadershipTask)
+                    if (task.TaskDuty == Duty.ProjectAndServiceMgmt)
                     {
                         actualLeadership += task.ActualCost;
                         plannedLeadership += task.PlannedCost;
@@ -448,6 +592,17 @@ namespace PPMTool.Data.Entities
         public string GetSensibleObjectName()
         {
             return $"Project {RTP} | {Name}";
+        }
+
+        /// <summary>
+        /// Whether the request owner message should be shown on the my project card.
+        /// Depends on the status of the project and who is viewing the message.
+        /// </summary>
+        /// <param name="messageViewerPersonId">The person Id of the viewer of the message</param>
+        /// <returns></returns>
+        public bool ShowRequestOwnerMessage(int messageViewerPersonId)
+        {
+            return RequestOwnerId != ProjectManager?.PersonId && messageViewerPersonId != RequestOwnerId && ProjectStatus == ProjectStatus.NewRequest;
         }
     }
 }

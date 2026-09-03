@@ -86,8 +86,10 @@ SPDX-License-Identifier: apache-2.0
                             AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
                             AllowPaging="true"
                             PageSize="15"
-                            AllowSorting="true"
                             ShowPagingSummary="true"
+                            PagerHorizontalAlign="HorizontalAlign.Left"
+                            PagerPosition="PagerPosition.TopAndBottom"
+                            AllowSorting="true"
                             EditMode="DataGridEditMode.Single"
                             FilterMode="FilterMode.Simple"
                             Data="@dataGridEntities"
@@ -101,7 +103,7 @@ SPDX-License-Identifier: apache-2.0
                             @(code.Tasks != null && code.Tasks.Count() > 0 ? string.Join(",", code.Tasks.Select(x => x.TaskName)) : "")
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="InnateCode" Property="IsActive" Title="Active" Width="5rem" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="InnateCode" Property="IsActive" Title="Active" Width="5rem" MinWidth="10px" TextAlign="TextAlign.Center">
                         <Template Context="c">
                             <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
                                 <RadzenSwitch @bind-Value="c.IsActive" Disabled="true" Name="IsActive" />
@@ -109,7 +111,7 @@ SPDX-License-Identifier: apache-2.0
                             </RadzenStack>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="InnateCode" Property="IsSensitive" Title="Sensitive" Width="5rem" MinWidth="10px">
+                    <RadzenDataGridColumn TItem="InnateCode" Property="IsSensitive" Title="Sensitive" Width="5rem" MinWidth="10px" TextAlign="TextAlign.Center">
                         <Template Context="c">
                             <RadzenStack AlignItems="AlignItems.Start" Orientation="Radzen.Orientation.Horizontal" Wrap="FlexWrap.NoWrap">
                                 <RadzenSwitch @bind-Value="c.IsSensitive" Disabled="true" Name="IsSensitive" />

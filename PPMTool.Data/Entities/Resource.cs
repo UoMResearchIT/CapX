@@ -140,7 +140,7 @@ namespace PPMTool.Data.Entities
                 );
 
                 // Planned costs of the resource (leadership tasks are zero if not a leadership cost model)
-                PlannedCost = (!project.CostModel.HasLeadership() && subTask.IsLeadershipTask) ?
+                PlannedCost = (!project.CostModel.HasLeadership() && subTask.TaskDuty == Duty.ProjectAndServiceMgmt) ?
                     0 :
                     chunks.Sum(x => x.PlannedCost);
 
@@ -156,7 +156,7 @@ namespace PPMTool.Data.Entities
             // The indirects only apply if the appropriate cost model is in place and it is not a leadership task
             ActualIndirectCost = 0d;
             PlannedIndirectCost = 0d;
-            if (project.CostModel.HasIndirects() && !subTask.IsLeadershipTask)
+            if (project.CostModel.HasIndirects() && subTask.TaskDuty != Duty.ProjectAndServiceMgmt)
             {
                 // Planned indirects are just proportion of the technical costs as they were computed using BilledFTE
                 PlannedIndirectCost = (PlannedCost * indirectsPercentage) / (1 + indirectsPercentage);
@@ -194,8 +194,8 @@ namespace PPMTool.Data.Entities
         /// <param name="indirectsPercentage"></param>
         public void UpdateBilledFTE(CostModel model, float indirectsPercentage)
         {
-            // Do not apply indirects to leadership assignments
-            BilledFTE = (model.HasIndirects() && !SubTask.IsLeadershipTask) ? AssignmentFTE * (1 + indirectsPercentage) : AssignmentFTE;
+            // Only apply indirects if the cost model requires it and the assignment is not leadership assignment
+            BilledFTE = (model.HasIndirects() && SubTask.TaskDuty != Duty.ProjectAndServiceMgmt) ? AssignmentFTE * (1 + indirectsPercentage) : AssignmentFTE;
         }
     }
 }
