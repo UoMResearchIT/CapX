@@ -21,11 +21,6 @@ namespace PPMTool.Pages
         {
             string url = $"projects/projectdetails/{id}";
 
-            if (filterDueNotes)
-            {
-                url += "?filterDueNotes=true";
-            }
-
             if (newWindow)
             {
                 JSRuntime.InvokeVoidAsync("open", url, "_blank");

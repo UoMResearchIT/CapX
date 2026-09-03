@@ -263,8 +263,11 @@ namespace PPMTool.Pages
             return Convert.ToInt16(val) == 0 ? "" : val.ToString();
         }
 
-        private void DetailsButtonClicked(RadzenSplitButtonItem item, Project project)
+        private async Task DetailsButtonClicked(RadzenSplitButtonItem item, Project project)
         {
+            // Reset filter whenever viewing a project normally
+            await SetNoteFilterAsync(false);
+
             if (item == null)
             {
                 NavigateToProjectDetails(project.ProjectId);
@@ -275,9 +278,10 @@ namespace PPMTool.Pages
             }
         }
 
-        private void DueButtonClicked(Project project)
+        private async Task DueButtonClicked(Project project)
         {
-            NavigateToProjectDetails(project.ProjectId, filterDueNotes: true);
+            await SetNoteFilterAsync(true);
+            NavigateToProjectDetails(project.ProjectId);
         }
     }
 }

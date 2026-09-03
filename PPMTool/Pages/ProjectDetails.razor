@@ -515,7 +515,7 @@ SPDX-License-Identifier: apache-2.0
                                     <div class="badge badge-danger">Note Overdue</div>
                                     <RadzenText Text="/" Style="margin-bottom: 0.1rem" />
                                     <div class="badge badge-warning">Note Due</div>
-                                    <RadzenSwitch @bind-Value="@showOnlyDueItems" Change="@FilterSwitchToggled" />
+                                    <RadzenSwitch @bind-Value="@FilterNotesForOverdue" Change="@OnFilterChangedAsync" />
                                 </RadzenStack>
                                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                                     <RadzenText Text="Sort By Due Date" Style="margin-bottom: 0.1rem; margin-left: 0.5rem" />
