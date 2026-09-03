@@ -61,6 +61,9 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         [Inject]
+        private HtmlContentSanitizerService HtmlContentSanitizer { get; set; }
+
+        [Inject]
         private ProjectStatusEvaluator ProjectStatusEvaluator { get; set; }
 
         [Inject]
@@ -111,6 +114,19 @@ namespace PPMTool.Pages
         private bool editorVisible;
         private Note noteModel;
         private IList<Person> mentions;
+
+        /// <summary>
+        /// Intermediate property to hold the HTML from the editor to so we can sanitise before updating the actual model
+        /// </summary>
+        private string NoteHtmlContentValue
+        {
+            get => noteModel?.HtmlContent ?? string.Empty;
+            set
+            {
+                if (noteModel == null) return;
+                noteModel.HtmlContent = HtmlContentSanitizer.Sanitize(value);
+            }
+        }
         private string noteSearchTerms;
         private List<Note> filteredNotes;
         private bool showOnlyFinanceNotes;
@@ -736,7 +752,8 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Method fired when the HTML editor input changes
+        /// Method fired when the HTML editor input changes.
+        /// Really used to trigger the JS events / mention panel since data is stored to the model using data binding.
         /// </summary>
         /// <param name="html"></param>
         /// <returns></returns>

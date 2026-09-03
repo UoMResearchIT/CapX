@@ -52,10 +52,26 @@ namespace PPMTool.Pages
         [Inject]
         private SchoolService SchoolService { get; set; }
 
+        [Inject]
+        private HtmlContentSanitizerService HtmlContentSanitizer { get; set; }
+
         [Parameter]
         public int ProjectId { get; set; }
 
         private Project projectModel = new Project();
+
+        /// <summary>
+        /// Intermediate property to bind the editor to so we can sanitise before updating the actual model
+        /// </summary>
+        private string ProjectDescriptionValue
+        {
+            get => projectModel?.Description ?? string.Empty;
+            set
+            {
+                if (projectModel == null) return;
+                projectModel.Description = HtmlContentSanitizer.Sanitize(value);
+            }
+        }
         private bool gotoDetails = false;
         private bool discardChanges = true;
         private bool showOrgUnitsRequiredWarning = false;
