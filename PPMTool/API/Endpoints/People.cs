@@ -43,10 +43,18 @@ public static class People
                 .ToListAsync();
 
             // Person has no reverse nav to User -- look usernames up the other way round.
-            var usernamesByPersonId = await context.Users
+            // A Person can legitimately be linked to more than one User (no unique
+            // constraint on Users.PersonId, e.g. a Manager account and a separate
+            // Superuser/API account both linked to the same real person) -- ToDictionary
+            // would throw on the duplicate key, so dedupe deterministically (lowest
+            // UserId, i.e. the earliest-created linked account) instead of crashing.
+            var usernamesByPersonId = (await context.Users
                 .Where(u => u.Person != null)
+                .OrderBy(u => u.UserId)
                 .Select(u => new { u.Person!.PersonId, u.CASUserName })
-                .ToDictionaryAsync(x => x.PersonId, x => x.CASUserName);
+                .ToListAsync())
+                .GroupBy(x => x.PersonId)
+                .ToDictionary(g => g.Key, g => g.First().CASUserName);
 
             var personDtos = people.Select(x => new PersonDTO(
                 PersonId: x.PersonId,
