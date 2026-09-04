@@ -1049,8 +1049,10 @@ namespace PPMTool.Services
             var person = new Person
             {
                 Name = request.Name.Trim(),
-                StartDate = request.StartDate,
-                EndDate = request.EndDate,
+                // Same Npgsql Kind bug as Note/SubTask -- People.StartDate/EndDate is
+                // also "timestamp without time zone".
+                StartDate = AsUnspecifiedKind(request.StartDate),
+                EndDate = request.EndDate.HasValue ? AsUnspecifiedKind(request.EndDate.Value) : null,
                 FTE = request.FTE,
             };
             _personService.Add(context, person);
@@ -1106,8 +1108,8 @@ namespace PPMTool.Services
             var person = _personService.GetById(context, request.PersonId)!;
 
             if (request.Name != null) person.Name = request.Name.Trim(); // setter also re-derives ShortName
-            if (request.StartDate.HasValue) person.StartDate = request.StartDate.Value;
-            if (request.EndDate.HasValue) person.EndDate = request.EndDate.Value;
+            if (request.StartDate.HasValue) person.StartDate = AsUnspecifiedKind(request.StartDate.Value);
+            if (request.EndDate.HasValue) person.EndDate = AsUnspecifiedKind(request.EndDate.Value);
             if (request.FTE.HasValue) person.FTE = request.FTE.Value;
 
             var result = _personService.Update(context, person);
