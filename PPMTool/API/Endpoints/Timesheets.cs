@@ -13,9 +13,9 @@ namespace PPMTool.API.Endpoints;
 
 /// <summary>
 /// Transfer of weekly timesheets and nested entries. Read access:
-/// superuser, the person, or their line manager. CreateTimesheetEntry is a
-/// Superuser-only write, gated behind SettingType.ImportApiEnabled -- see
-/// UoMResearchIT/CapX#1310.
+/// superuser, the person, or their line manager. CreateTimesheetEntry and
+/// UpdateTimesheetEntry are Superuser-only writes, gated behind
+/// SettingType.ImportApiEnabled -- see UoMResearchIT/CapX#1310.
 /// </summary>
 public static class Timesheets
 {
@@ -281,6 +281,46 @@ public static class Timesheets
         catch (Exception ex)
         {
             logger.LogError(ex, "API: Timesheets: error creating timesheet entry for '{Username}'/{ProjectId}/{Week}", request.Username, request.ProjectId, request.WeekStartDate);
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Correct an existing TimesheetEntry's day hours and/or task.
+    /// Identified by TimesheetEntryId (from GET /api/timesheets). See
+    /// UpdateTimesheetEntryRequestDTO.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateTimesheetEntryResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult UpdateTimesheetEntry(
+        PPMToolContext context,
+        ImportService importService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] UpdateTimesheetEntryRequestDTO request)
+    {
+        try
+        {
+            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Timesheets.UpdateTimesheetEntry");
+            if (!allowed) return gateResult!;
+
+            var errors = importService.ValidateTimesheetEntryUpdate(context, request);
+            if (errors.Count > 0)
+            {
+                logger.LogWarning("API: Timesheets: timesheet entry update validation failed for TimesheetEntryId {TimesheetEntryId}: {Errors}", request.TimesheetEntryId, string.Join("; ", errors));
+                return Results.BadRequest(new ImportErrorDTO(errors));
+            }
+
+            var result = importService.UpdateTimesheetEntry(context, request);
+            logger.LogInformation("API: Timesheets: updated TimesheetEntry {TimesheetEntryId}, {Hours}h total, by {User}", result.TimesheetEntryId, result.TotalHours, caller!.Name);
+            return Results.Ok(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: Timesheets: error updating TimesheetEntry {TimesheetEntryId}", request.TimesheetEntryId);
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

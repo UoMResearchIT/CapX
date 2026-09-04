@@ -339,13 +339,14 @@ api.MapPost("/people/add", People.CreatePerson);
 api.MapPost("/users/add", Users.CreateUser);
 api.MapPost("/projects/notes/add", Projects.AddNotes);
 
-// PUT (update) endpoints (behind SettingType.ImportApiEnabled) -- timesheets/add
-// and workloadmodels/add are already upsert-on-post, so no separate PUT for those.
+// PUT (update) endpoints (behind SettingType.ImportApiEnabled) -- workloadmodels/add
+// is already upsert-on-post, so no separate PUT for that.
 api.MapPut("/faculties/update", Faculties.UpdateFaculty);
 api.MapPut("/schools/update", Schools.UpdateSchool);
 api.MapPut("/projects/update", Projects.UpdateProject);
 api.MapPut("/people/update", People.UpdatePerson);
 api.MapPut("/projects/notes/update", Projects.UpdateNote);
+api.MapPut("/timesheets/update", Timesheets.UpdateTimesheetEntry);
 
 // API middleware -- conditional on /api routes only
 app.UseWhen(

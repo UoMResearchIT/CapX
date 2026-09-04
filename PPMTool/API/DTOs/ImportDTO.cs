@@ -305,6 +305,45 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
+    /// Request body for PUT /api/timesheets/update. Corrects an existing
+    /// TimesheetEntry -- identified by TimesheetEntryId (already exposed by
+    /// GET /api/timesheets' TimesheetEntryDTO, so no separate discovery
+    /// endpoint is needed). Unlike POST /api/timesheets/add, which always
+    /// overwrites all seven days at once (identified by the natural
+    /// Username/ProjectId/WeekStartDate/TaskName key), this only touches
+    /// fields actually supplied -- correct a single day, or move the entry
+    /// to a different task, without resending the rest of the week.
+    /// </summary>
+    /// <param name="TimesheetEntryId">TimesheetEntryId of the entry to update (see GET /api/timesheets)</param>
+    /// <param name="NewTaskName">Move this entry to a different InnateCodeTask under the same project's InnateActivity, if changing. Must not already have its own separate entry on this Timesheet.</param>
+    /// <param name="MondayHours"></param>
+    /// <param name="TuesdayHours"></param>
+    /// <param name="WednesdayHours"></param>
+    /// <param name="ThursdayHours"></param>
+    /// <param name="FridayHours"></param>
+    /// <param name="SaturdayHours"></param>
+    /// <param name="SundayHours"></param>
+    public sealed record UpdateTimesheetEntryRequestDTO(
+        int TimesheetEntryId,
+        string? NewTaskName,
+        double? MondayHours,
+        double? TuesdayHours,
+        double? WednesdayHours,
+        double? ThursdayHours,
+        double? FridayHours,
+        double? SaturdayHours,
+        double? SundayHours
+    );
+
+    /// <summary>Response for a successful TimesheetEntry update.</summary>
+    /// <param name="TimesheetEntryId"></param>
+    /// <param name="TotalHours">Sum of the week's hours for this entry, after the update</param>
+    public sealed record UpdateTimesheetEntryResponseDTO(
+        int TimesheetEntryId,
+        double TotalHours
+    );
+
+    /// <summary>
     /// Request body for POST /api/workloadmodels/add. One workload model
     /// change (duty/role FTE split, effective from ChangeDate) for an
     /// existing Person, identified by Access Control username -- mirrors
