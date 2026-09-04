@@ -568,6 +568,224 @@ namespace PPMTool.Services
         }
 
         /// <summary>
+        /// Validate a GET /api/tasks/getAll request without reading
+        /// anything else. An empty list for a valid RTP is a normal
+        /// result (a Project with no non-Leadership tasks yet), not an
+        /// error.
+        /// </summary>
+        public List<string> ValidateTasksGet(PPMToolContext context, int rtp)
+        {
+            var errors = new List<string>();
+            if (FindProjectByRTP(context, rtp) == null)
+                errors.Add($"RTP {rtp} does not match any Project");
+            return errors;
+        }
+
+        /// <summary>
+        /// All SubTasks for one Project. Caller is responsible for
+        /// validating the RTP first (ValidateTasksGet).
+        /// </summary>
+        public List<TaskDTO> GetTasksForRTP(PPMToolContext context, int rtp)
+        {
+            var project = FindProjectByRTP(context, rtp)!;
+
+            return project.SubTasks
+                .OrderBy(t => t.StartDate)
+                .Select(t => new TaskDTO(
+                    t.SubTaskId, rtp, t.Name, t.TaskDuty.ToString(),
+                    t.StartDate, t.EndDate, t.Demand, t.OriginalDemand, t.UnmetDemand
+                ))
+                .ToList();
+        }
+
+        /// <summary>
+        /// Validate a POST /api/tasks/add request without writing
+        /// anything.
+        /// </summary>
+        public List<string> ValidateTaskCreate(PPMToolContext context, ImportTaskDTO request)
+        {
+            var errors = new List<string>();
+
+            var project = FindProjectByRTP(context, request.RTP);
+            if (project == null)
+            {
+                errors.Add($"RTP {request.RTP} does not match any Project");
+                return errors;
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Name))
+                errors.Add("Name cannot be blank");
+
+            Duty? duty = null;
+            if (!Enum.TryParse<Duty>(request.TaskDuty, out var parsedDuty))
+                errors.Add($"TaskDuty '{request.TaskDuty}' is not a valid value");
+            else
+                duty = parsedDuty;
+
+            if (!string.IsNullOrWhiteSpace(request.Name) && duty != null && duty != Duty.ProjectAndServiceMgmt
+                && project.SubTasks.Any(t => t.Name == request.Name))
+                errors.Add($"A task named '{request.Name}' already exists on Project {request.RTP}");
+
+            if (request.EndDate.Date < request.StartDate.Date)
+                errors.Add("EndDate must be on or after StartDate");
+
+            if (HasDigitsAfterThirdDecimalPlace(request.Demand))
+                errors.Add("Demand cannot have digits after the third decimal place");
+            else if (request.Demand <= 0)
+                errors.Add("Demand must be greater than zero");
+
+            var resourcing = request.Resourcing ?? Array.Empty<ImportResourcingDTO>();
+            foreach (var r in resourcing)
+            {
+                var person = FindUserByUsername(context, r.Username)?.Person;
+                if (person == null)
+                    errors.Add($"Resourcing Username '{r.Username}' not found, or has no linked Person");
+                if (HasDigitsAfterThirdDecimalPlace(r.AssignmentFTE))
+                    errors.Add($"Resourcing AssignmentFTE for '{r.Username}' cannot have digits after the third decimal place");
+
+                // Only managers can be assigned to a leadership-duty task -- same rule AddTask.razor enforces.
+                if (person != null && duty == Duty.ProjectAndServiceMgmt && !_userService.GetAllManagerPersonId(context).Contains(person.PersonId))
+                    errors.Add($"Only managers can be assigned to leadership tasks (Resourcing Username '{r.Username}')");
+            }
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Create the Task (+ Resourcing). Caller is responsible for
+        /// validating first. Mirrors ImportService.Create's own
+        /// Leadership/Delivery task creation exactly (FixedDuration,
+        /// fixed start/end), generalised to an arbitrary caller-supplied
+        /// Name/Duty/dates/Demand.
+        /// </summary>
+        public ImportTaskResponseDTO CreateTask(PPMToolContext context, ImportTaskDTO request)
+        {
+            var project = FindProjectByRTP(context, request.RTP)!;
+            var duty = Enum.Parse<Duty>(request.TaskDuty);
+
+            var task = new SubTask
+            {
+                Name = request.Name,
+                TaskDuty = duty,
+                TaskType = TaskType.FixedDuration,
+                HasFixedStart = true,
+                HasFixedEndDate = true,
+                Demand = request.Demand,
+                OriginalDemand = request.Demand,
+                OwningProject = project,
+                // SubTasks.StartDate/EndDate map to Postgres "timestamp without
+                // time zone" columns (see FixDateTimeTimezone migration) -- the
+                // same class of bug already fixed once on Note.CreatedDate/
+                // EditedDate (Npgsql hard-rejects Kind=Utc for that column
+                // type). A caller passing a full "...Z" ISO-8601 timestamp
+                // rather than a bare date would otherwise crash the request.
+                StartDate = AsUnspecifiedKind(request.StartDate),
+                EndDate = AsUnspecifiedKind(request.EndDate),
+            };
+            task.Schedule();
+            _subTaskService.Add(context, task);
+
+            var resourcesCreated = 0;
+            foreach (var r in request.Resourcing ?? Array.Empty<ImportResourcingDTO>())
+            {
+                var person = FindUserByUsername(context, r.Username)!.Person!;
+                context.Resources.Add(new Resource
+                {
+                    Person = person,
+                    SubTask = task,
+                    AssignmentFTE = r.AssignmentFTE,
+                    IsProvisional = true, // migrated data -- flag for PM review, not treated as confirmed
+                });
+                resourcesCreated++;
+            }
+
+            var financialReferences = _financialReferenceService.GetAllOrDefault(context);
+            var indirectsPercentage = _settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+            project.UpdateProjectMetaData(true, financialReferences, indirectsPercentage);
+            context.SaveChangesWithRetry();
+
+            return new ImportTaskResponseDTO(task.SubTaskId, resourcesCreated);
+        }
+
+        /// <summary>
+        /// Validate a PUT /api/tasks/update request without writing
+        /// anything.
+        /// </summary>
+        public List<string> ValidateTaskUpdate(PPMToolContext context, UpdateTaskRequestDTO request)
+        {
+            var errors = new List<string>();
+
+            var found = FindProjectAndTaskById(context, request.SubTaskId);
+            if (found == null)
+            {
+                errors.Add($"SubTaskId {request.SubTaskId} does not exist");
+                return errors;
+            }
+            var (project, task) = found.Value;
+
+            Duty? newDuty = null;
+            if (request.TaskDuty != null)
+            {
+                if (!Enum.TryParse<Duty>(request.TaskDuty, out var parsed))
+                    errors.Add($"TaskDuty '{request.TaskDuty}' is not a valid value");
+                else
+                    newDuty = parsed;
+            }
+            var resolvedDuty = newDuty ?? task.TaskDuty;
+
+            if (request.Name != null)
+            {
+                if (string.IsNullOrWhiteSpace(request.Name))
+                    errors.Add("Name cannot be blank");
+                else if (resolvedDuty != Duty.ProjectAndServiceMgmt
+                         && project.SubTasks.Any(t => t.SubTaskId != task.SubTaskId && t.Name == request.Name))
+                    errors.Add($"A different task named '{request.Name}' already exists on Project {project.RTP}");
+            }
+
+            var resolvedStart = request.StartDate ?? task.StartDate;
+            var resolvedEnd = request.EndDate ?? task.EndDate;
+            if (resolvedEnd.Date < resolvedStart.Date)
+                errors.Add("EndDate must be on or after StartDate");
+
+            if (request.Demand.HasValue)
+            {
+                if (HasDigitsAfterThirdDecimalPlace(request.Demand.Value))
+                    errors.Add("Demand cannot have digits after the third decimal place");
+                else if (request.Demand.Value < 0)
+                    errors.Add("Demand cannot be negative");
+            }
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Update the Task's core fields. Caller is responsible for
+        /// validating first. Only fields actually supplied are touched;
+        /// Demand updates the current Demand only, never OriginalDemand
+        /// (see UpdateTaskRequestDTO remarks). Doesn't touch Resourcing --
+        /// additive, via POST /api/tasks/add or the existing UI.
+        /// </summary>
+        public UpdateTaskResponseDTO UpdateTask(PPMToolContext context, UpdateTaskRequestDTO request)
+        {
+            var (project, task) = FindProjectAndTaskById(context, request.SubTaskId)!.Value;
+
+            if (request.Name != null) task.Name = request.Name;
+            if (request.TaskDuty != null) task.TaskDuty = Enum.Parse<Duty>(request.TaskDuty);
+            if (request.StartDate.HasValue) task.StartDate = AsUnspecifiedKind(request.StartDate.Value);
+            if (request.EndDate.HasValue) task.EndDate = AsUnspecifiedKind(request.EndDate.Value);
+            if (request.Demand.HasValue) task.Demand = request.Demand.Value;
+            task.Schedule();
+            _subTaskService.Update(context, task);
+
+            var financialReferences = _financialReferenceService.GetAllOrDefault(context);
+            var indirectsPercentage = _settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+            project.UpdateProjectMetaData(true, financialReferences, indirectsPercentage);
+            context.SaveChangesWithRetry();
+
+            return new UpdateTaskResponseDTO(task.SubTaskId);
+        }
+
+        /// <summary>
         /// Validate a POST /api/timesheets/add request without writing
         /// anything.
         /// </summary>
@@ -1166,6 +1384,36 @@ namespace PPMTool.Services
         // SchoolService.GetAllActive() elsewhere in this codebase).
         private Project? FindProjectByRTP(PPMToolContext context, int rtp) =>
             _projectService.GetAll(context).FirstOrDefault(p => p.RTP == rtp);
+
+        // Two queries rather than one Include chain on SubTasks directly: the caller
+        // (ValidateTaskUpdate/UpdateTask) needs the fully-loaded owning Project too, for
+        // IsUniqueTaskNameInProject and UpdateProjectMetaData -- both NRE-prone against a
+        // partial graph, same class of bug as FindUserByUsername's WorkloadModelChanges
+        // include above. Reusing FindProjectByRTP's own full Include chain for that is
+        // simpler than assembling an equivalent one from the SubTask side, and EF's
+        // identity map returns the same tracked SubTask instance either way.
+        private (Project Project, SubTask Task)? FindProjectAndTaskById(PPMToolContext context, int subTaskId)
+        {
+            var rtp = context.SubTasks
+                .Where(t => t.SubTaskId == subTaskId)
+                .Select(t => t.OwningProject.RTP)
+                .FirstOrDefault();
+            if (rtp == 0) return null;
+
+            var project = FindProjectByRTP(context, rtp);
+            var task = project?.SubTasks.FirstOrDefault(t => t.SubTaskId == subTaskId);
+            return task == null ? null : (project!, task);
+        }
+
+        // Same check AddTask.razor's HandleSubmit runs before saving (Demand/
+        // OriginalDemand/AssignmentFTE) -- EF/Postgres would happily store more
+        // precision, but the UI treats it as invalid, so the API rejects it too
+        // rather than silently accepting data the UI itself would refuse.
+        private static bool HasDigitsAfterThirdDecimalPlace(double number)
+        {
+            var truncated = Math.Truncate(number * 1000) / 1000;
+            return number != truncated;
+        }
 
         // Note.CreatedDate/EditedDate map to Postgres "timestamp without time
         // zone" columns. A DateTime deserialized from an ISO-8601 JSON value
