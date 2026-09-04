@@ -461,13 +461,14 @@ namespace PPMTool.Services
                     ? $"<p><em>Originally posted by {c.AuthorDisplayName} on Planner, {c.CreatedDate:yyyy-MM-dd}:</em></p>{c.ContentHtml}"
                     : c.ContentHtml;
 
+                var createdDate = AsUnspecifiedKind(c.CreatedDate);
                 _noteService.Add(context, new Note
                 {
                     Project = project,
                     Author = author,
                     HtmlContent = content,
-                    CreatedDate = c.CreatedDate,
-                    EditedDate = c.CreatedDate,
+                    CreatedDate = createdDate,
+                    EditedDate = createdDate,
                 });
                 notesCreated++;
             }
@@ -934,13 +935,14 @@ namespace PPMTool.Services
                     ? $"<p><em>Originally posted by {c.AuthorDisplayName} on Planner, {c.CreatedDate:yyyy-MM-dd}:</em></p>{c.ContentHtml}"
                     : c.ContentHtml;
 
+                var createdDate = AsUnspecifiedKind(c.CreatedDate);
                 _noteService.Add(context, new Note
                 {
                     Project = project,
                     Author = author,
                     HtmlContent = content,
-                    CreatedDate = c.CreatedDate,
-                    EditedDate = c.CreatedDate,
+                    CreatedDate = createdDate,
+                    EditedDate = createdDate,
                 });
                 notesCreated++;
             }
@@ -1010,5 +1012,16 @@ namespace PPMTool.Services
         // SchoolService.GetAllActive() elsewhere in this codebase).
         private Project? FindProjectByRTP(PPMToolContext context, int rtp) =>
             _projectService.GetAll(context).FirstOrDefault(p => p.RTP == rtp);
+
+        // Note.CreatedDate/EditedDate map to Postgres "timestamp without time
+        // zone" columns. A DateTime deserialized from an ISO-8601 JSON value
+        // ending in "Z" (as every real ImportCommentDTO.CreatedDate does)
+        // carries Kind=Utc, which Npgsql now hard-rejects for that column
+        // type ("Cannot write DateTime with Kind=UTC to PostgreSQL type
+        // 'timestamp without time zone'") -- confirmed live, 2026-09-04, on
+        // the first real notes/add call. Strip the Kind rather than convert
+        // the value; the column has no timezone to convert to anyway.
+        private static DateTime AsUnspecifiedKind(DateTime dt) =>
+            DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
     }
 }
