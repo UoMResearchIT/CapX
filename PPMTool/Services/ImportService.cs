@@ -841,6 +841,8 @@ namespace PPMTool.Services
 
             if (string.IsNullOrWhiteSpace(request.CASUserName))
                 errors.Add("CASUserName is required");
+            if (string.IsNullOrWhiteSpace(request.EmailAddress))
+                errors.Add("EmailAddress is required");
 
             Person? person = null;
             if (request.PersonId.HasValue)
@@ -876,6 +878,7 @@ namespace PPMTool.Services
             var user = new User
             {
                 CASUserName = request.CASUserName.Trim(),
+                EmailAddress = request.EmailAddress.Trim(),
                 Name = request.Name?.Trim() ?? "", // overwritten by the Person setter below if PersonId was given
                 RoleType = string.IsNullOrWhiteSpace(request.RoleType) ? RoleType.None : Enum.Parse<RoleType>(request.RoleType),
             };
