@@ -429,11 +429,13 @@ namespace PPMTool.API.DTOs
     /// used for.
     /// </summary>
     /// <param name="CASUserName">Must be unique (case/whitespace-insensitive, same check as every other User)</param>
+    /// <param name="EmailAddress">Required (matches User.EmailAddress -- non-nullable in the data model, used for SSO claim matching via User.MatchesClaim); semicolon-separated if more than one</param>
     /// <param name="Name">Display name -- required only when PersonId is omitted; when PersonId is given, the linked Person's own Name is used instead (same as the entity's own User.Person setter behaviour) and this is ignored</param>
     /// <param name="PersonId">Existing Person to link, if any -- omit for a bare User with no linked Person</param>
     /// <param name="RoleType">Must parse as a PPMTool.Data.Enums.RoleType value; defaults to "None" (no real permissions) if omitted</param>
     public sealed record ImportUserDTO(
         string CASUserName,
+        string EmailAddress,
         string? Name,
         int? PersonId,
         string? RoleType
