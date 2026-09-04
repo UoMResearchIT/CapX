@@ -951,6 +951,74 @@ namespace PPMTool.Services
             return new ImportNotesResponseDTO(project.ProjectId, notesCreated);
         }
 
+        /// <summary>
+        /// Validate a GET /api/projects/notes/getAll request. Just RTP
+        /// existence -- an existing Project with zero Notes is a normal
+        /// empty-list result, not an error.
+        /// </summary>
+        public List<string> ValidateNotesGet(PPMToolContext context, int rtp)
+        {
+            var errors = new List<string>();
+            if (FindProjectByRTP(context, rtp) == null)
+                errors.Add($"RTP {rtp} does not match any Project");
+            return errors;
+        }
+
+        /// <summary>
+        /// All Notes for one Project, oldest first. Caller is responsible
+        /// for validating the RTP first (ValidateNotesGet).
+        /// </summary>
+        public List<NoteDTO> GetNotesForRTP(PPMToolContext context, int rtp)
+        {
+            var project = FindProjectByRTP(context, rtp)!;
+
+            // Convert to a list before projecting to a DTO -- User.GetName()
+            // isn't translatable to SQL, same reason GetAllProjectsAsync's
+            // own Select() runs after ToListAsync() rather than as part of
+            // the query itself.
+            var notes = context.Notes
+                .Where(n => n.Project.ProjectId == project.ProjectId)
+                .Include(n => n.Author).ThenInclude(a => a!.Person)
+                .OrderBy(n => n.CreatedDate)
+                .ToList();
+
+            return notes.Select(n => new NoteDTO(
+                n.NoteId, rtp, n.Author.CASUserName, n.Author.GetName(),
+                n.HtmlContent, n.CreatedDate, n.EditedDate
+            )).ToList();
+        }
+
+        /// <summary>
+        /// Validate a PUT /api/projects/notes/update request without
+        /// writing anything.
+        /// </summary>
+        public List<string> ValidateNoteUpdate(PPMToolContext context, UpdateNoteRequestDTO request)
+        {
+            var errors = new List<string>();
+            if (!context.Notes.Any(n => n.NoteId == request.NoteId))
+                errors.Add($"NoteId {request.NoteId} does not exist");
+            if (string.IsNullOrWhiteSpace(request.HtmlContent))
+                errors.Add("HtmlContent is required");
+            return errors;
+        }
+
+        /// <summary>
+        /// Update an existing Note's content. Caller is responsible for
+        /// validating first. Sets Editor/EditedDate the same way a real
+        /// UI edit would, rather than silently rewriting history.
+        /// </summary>
+        public UpdateNoteResponseDTO UpdateNote(PPMToolContext context, UpdateNoteRequestDTO request, User caller)
+        {
+            var note = context.Notes.First(n => n.NoteId == request.NoteId);
+            note.HtmlContent = request.HtmlContent;
+            note.Editor = caller;
+            note.EditedDate = AsUnspecifiedKind(DateTime.UtcNow);
+            _noteService.Update(context, note);
+            context.SaveChangesWithRetry();
+
+            return new UpdateNoteResponseDTO(note.NoteId);
+        }
+
         private static IEnumerable<(string Label, double FTE)> DutyFTEs(ImportWorkloadModelChangeDTO request)
         {
             yield return ("ProjectWorkFTE", request.ProjectWorkFTE);

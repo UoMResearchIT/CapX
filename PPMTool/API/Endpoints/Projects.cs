@@ -263,4 +263,82 @@ public static class Projects
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+
+    /// <summary>
+    /// Get all Notes for an existing Project, identified by RTP. An empty
+    /// list is a normal result (a Project with no Notes yet), not an error.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<NoteDTO>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult GetNotes(
+        PPMToolContext context,
+        ImportService importService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromQuery] int rtp)
+    {
+        try
+        {
+            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Projects.GetNotes");
+            if (!allowed) return gateResult!;
+
+            var errors = importService.ValidateNotesGet(context, rtp);
+            if (errors.Count > 0)
+            {
+                logger.LogWarning("API: Projects: get notes validation failed for RTP {RTP}: {Errors}", rtp, string.Join("; ", errors));
+                return Results.BadRequest(new ImportErrorDTO(errors));
+            }
+
+            var notes = importService.GetNotesForRTP(context, rtp);
+            logger.LogInformation("API: Projects: returned {Count} Note(s) for RTP {RTP} to {User}", notes.Count, rtp, caller!.Name);
+            return Results.Json(notes);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: Projects: error getting notes for RTP {RTP}", rtp);
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Correct an existing Note's content. Identified by NoteId (from
+    /// GET /api/projects/notes/getAll).
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateNoteResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult UpdateNote(
+        PPMToolContext context,
+        ImportService importService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] UpdateNoteRequestDTO request)
+    {
+        try
+        {
+            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Projects.UpdateNote");
+            if (!allowed) return gateResult!;
+
+            var errors = importService.ValidateNoteUpdate(context, request);
+            if (errors.Count > 0)
+            {
+                logger.LogWarning("API: Projects: note update validation failed for NoteId {NoteId}: {Errors}", request.NoteId, string.Join("; ", errors));
+                return Results.BadRequest(new ImportErrorDTO(errors));
+            }
+
+            var result = importService.UpdateNote(context, request, caller!);
+            logger.LogInformation("API: Projects: updated Note {NoteId} by {User}", result.NoteId, caller!.Name);
+            return Results.Ok(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: Projects: error updating Note {NoteId}", request.NoteId);
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
 }
