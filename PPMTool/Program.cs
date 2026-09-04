@@ -335,6 +335,8 @@ api.MapPost("/projects/add", Projects.CreateProject);
 api.MapPost("/schools/add", Schools.CreateSchool);
 api.MapPost("/workloadmodels/add", WorkloadModels.CreateWorkloadModelChange);
 api.MapPost("/people/add", People.CreatePerson);
+api.MapPost("/users/add", Users.CreateUser);
+api.MapPost("/projects/notes/add", Projects.AddNotes);
 
 // PUT (update) endpoints (behind SettingType.ImportApiEnabled) -- timesheets/add
 // and workloadmodels/add are already upsert-on-post, so no separate PUT for those.

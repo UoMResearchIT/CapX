@@ -832,6 +832,120 @@ namespace PPMTool.Services
             return new ImportPersonResponseDTO(person.PersonId, person.ShortName);
         }
 
+        /// <summary>
+        /// Validate a POST /api/users/add request without writing anything.
+        /// </summary>
+        public List<string> ValidateUser(PPMToolContext context, ImportUserDTO request)
+        {
+            var errors = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(request.CASUserName))
+                errors.Add("CASUserName is required");
+
+            Person? person = null;
+            if (request.PersonId.HasValue)
+            {
+                person = _personService.GetById(context, request.PersonId.Value);
+                if (person == null)
+                    errors.Add($"PersonId {request.PersonId} does not exist");
+            }
+            else if (string.IsNullOrWhiteSpace(request.Name))
+            {
+                errors.Add("Name is required when PersonId is not given");
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.RoleType) && !Enum.TryParse<RoleType>(request.RoleType, out _))
+                errors.Add($"RoleType '{request.RoleType}' is not a valid value");
+
+            if (!string.IsNullOrWhiteSpace(request.CASUserName))
+            {
+                var probe = new User { CASUserName = request.CASUserName.Trim(), Name = person?.Name ?? request.Name?.Trim() ?? "" };
+                if (_userService.DuplicateDetected(context, probe))
+                    errors.Add($"A User named '{request.CASUserName}' already exists");
+            }
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Create a User, optionally linked to an existing Person. Caller
+        /// is responsible for validating first.
+        /// </summary>
+        public ImportUserResponseDTO CreateUser(PPMToolContext context, ImportUserDTO request)
+        {
+            var user = new User
+            {
+                CASUserName = request.CASUserName.Trim(),
+                Name = request.Name?.Trim() ?? "", // overwritten by the Person setter below if PersonId was given
+                RoleType = string.IsNullOrWhiteSpace(request.RoleType) ? RoleType.None : Enum.Parse<RoleType>(request.RoleType),
+            };
+            if (request.PersonId.HasValue)
+                user.Person = _personService.GetById(context, request.PersonId.Value); // Name re-set from Person.Name by the setter
+            _userService.Add(context, user);
+
+            return new ImportUserResponseDTO(user.UserId);
+        }
+
+        /// <summary>
+        /// Validate a POST /api/projects/notes/add request without writing
+        /// anything.
+        /// </summary>
+        public List<string> ValidateNotesImport(PPMToolContext context, ImportNotesRequestDTO request)
+        {
+            var errors = new List<string>();
+
+            if (FindProjectByRTP(context, request.RTP) == null)
+                errors.Add($"RTP {request.RTP} does not match any Project");
+
+            if (request.Comments.Count == 0)
+                errors.Add("Comments must contain at least one entry");
+
+            if (request.Comments.Count > 0 && FindUserByUsername(context, FallbackAuthorUsername) == null)
+                errors.Add($"Fallback author User '{FallbackAuthorUsername}' does not exist -- create it (POST /api/users/add) before importing comments");
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Add Comments as Notes to an existing Project. Caller is
+        /// responsible for validating first. Same author-resolution/
+        /// fallback logic as Create()'s own Comments handling -- kept as a
+        /// small local duplicate rather than a shared private helper,
+        /// since Create()'s version is entangled with the rest of that
+        /// method's single SaveChangesWithRetry() at the end.
+        /// </summary>
+        public ImportNotesResponseDTO AddNotes(PPMToolContext context, ImportNotesRequestDTO request)
+        {
+            var project = FindProjectByRTP(context, request.RTP)!;
+            var fallbackAuthor = FindUserByUsername(context, FallbackAuthorUsername);
+
+            var notesCreated = 0;
+            foreach (var c in request.Comments)
+            {
+                var author = string.IsNullOrWhiteSpace(c.AuthorUsername)
+                    ? null
+                    : FindUserByUsername(context, c.AuthorUsername);
+                author ??= fallbackAuthor!; // validated to exist in ValidateNotesImport
+
+                var content = author.CASUserName == FallbackAuthorUsername
+                    ? $"<p><em>Originally posted by {c.AuthorDisplayName} on Planner, {c.CreatedDate:yyyy-MM-dd}:</em></p>{c.ContentHtml}"
+                    : c.ContentHtml;
+
+                _noteService.Add(context, new Note
+                {
+                    Project = project,
+                    Author = author,
+                    HtmlContent = content,
+                    CreatedDate = c.CreatedDate,
+                    EditedDate = c.CreatedDate,
+                });
+                notesCreated++;
+            }
+            context.SaveChangesWithRetry();
+
+            return new ImportNotesResponseDTO(project.ProjectId, notesCreated);
+        }
+
         private static IEnumerable<(string Label, double FTE)> DutyFTEs(ImportWorkloadModelChangeDTO request)
         {
             yield return ("ProjectWorkFTE", request.ProjectWorkFTE);
