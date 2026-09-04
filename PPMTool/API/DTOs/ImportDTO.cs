@@ -253,6 +253,74 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
+    /// Request body for POST /api/tasks/add. Creates one fixed-duration,
+    /// fixed-start/fixed-end SubTask on an existing Project -- the same
+    /// shape ImportService.Create already uses for the auto-created
+    /// Leadership/Delivery tasks, generalised so real RSE work tasks can
+    /// be created individually during import rather than folded into one
+    /// aggregate "Delivery" task. Deliberately doesn't expose TaskType
+    /// (FixedWork), predecessor/Lag chains, or SkillsRequired -- SubTask.
+    /// Schedule()'s more complex branches aren't needed for the
+    /// migration/import use case this API serves.
+    /// </summary>
+    /// <param name="RTP">RTP of the existing Project to add this task to</param>
+    /// <param name="Name">Must be unique within the Project (Duty.ProjectAndServiceMgmt tasks are exempt -- same rule AddTask.razor enforces via SubTaskService.IsUniqueTaskNameInProject)</param>
+    /// <param name="TaskDuty">Must parse as a PPMTool.Data.Enums.Duty value</param>
+    /// <param name="StartDate"></param>
+    /// <param name="EndDate">Must be on or after StartDate</param>
+    /// <param name="Demand">FTE. Sets both Demand and OriginalDemand (there's no prior state at creation time) -- must be greater than zero, at most 3 decimal places</param>
+    /// <param name="Resourcing">Optional -- same shape as ImportProjectRequestDTO.Resourcing. AssignmentFTE is used; StartDate/EndDate on each row are not -- a Resource has no schedule of its own, it inherits the owning SubTask's, same as the existing Delivery-task resourcing code this mirrors</param>
+    public sealed record ImportTaskDTO(
+        int RTP,
+        string Name,
+        string TaskDuty,
+        DateTime StartDate,
+        DateTime EndDate,
+        double Demand,
+        IReadOnlyList<ImportResourcingDTO>? Resourcing
+    );
+
+    /// <summary>Response for a successful Task import.</summary>
+    /// <param name="SubTaskId"></param>
+    /// <param name="ResourcesCreated"></param>
+    public sealed record ImportTaskResponseDTO(
+        int SubTaskId,
+        int ResourcesCreated
+    );
+
+    /// <summary>
+    /// Request body for PUT /api/tasks/update. Identifies an existing
+    /// SubTask by SubTaskId (from GET /api/tasks/getAll); only fields
+    /// actually supplied are updated. Doesn't touch Resourcing --
+    /// additive, same as Project's own Resourcing/Comments split from
+    /// UpdateProjectRequestDTO. Demand updates only the current Demand,
+    /// never OriginalDemand -- OriginalDemand is a fixed historical
+    /// record of "the ask when the task was first created" (see the
+    /// entity's own doc comment) and a correction here shouldn't rewrite
+    /// that history.
+    /// </summary>
+    /// <param name="SubTaskId">SubTaskId of the Task to update (see GET /api/tasks/getAll)</param>
+    /// <param name="Name">New name, if changing (subject to the same uniqueness rule as creation)</param>
+    /// <param name="TaskDuty">Must parse as a PPMTool.Data.Enums.Duty value, if changing</param>
+    /// <param name="StartDate"></param>
+    /// <param name="EndDate">Must be on or after the resulting StartDate</param>
+    /// <param name="Demand">FTE, at most 3 decimal places. Updates the current Demand only -- see remarks</param>
+    public sealed record UpdateTaskRequestDTO(
+        int SubTaskId,
+        string? Name,
+        string? TaskDuty,
+        DateTime? StartDate,
+        DateTime? EndDate,
+        double? Demand
+    );
+
+    /// <summary>Response for a successful Task update.</summary>
+    /// <param name="SubTaskId"></param>
+    public sealed record UpdateTaskResponseDTO(
+        int SubTaskId
+    );
+
+    /// <summary>
     /// Request body for POST /api/timesheets/add. One week's actual
     /// hours for one person on one project, on a single InnateCodeTask
     /// under that project's InnateActivity code (every Project imported
