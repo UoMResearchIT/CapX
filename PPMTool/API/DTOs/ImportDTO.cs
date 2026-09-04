@@ -137,6 +137,30 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
+    /// Request body for POST /api/projects/notes/add. Adds Comments as
+    /// Notes to an existing Project, identified by RTP -- the counterpart
+    /// to ImportProjectRequestDTO.Comments for a project that's already
+    /// been created (that field only ever gets processed at creation
+    /// time; POST /api/projects/add's own Validate() rejects the whole
+    /// call outright once the RTP/Name already exists, so there was no
+    /// way to add Comments after the fact until this endpoint).
+    /// </summary>
+    /// <param name="RTP">RTP of the existing Project to add Notes to</param>
+    /// <param name="Comments"></param>
+    public sealed record ImportNotesRequestDTO(
+        int RTP,
+        IReadOnlyList<ImportCommentDTO> Comments
+    );
+
+    /// <summary>Response for a successful POST /api/projects/notes/add.</summary>
+    /// <param name="ProjectId"></param>
+    /// <param name="NotesCreated"></param>
+    public sealed record ImportNotesResponseDTO(
+        int ProjectId,
+        int NotesCreated
+    );
+
+    /// <summary>
     /// Request body for POST /api/projects/add. One project, with its
     /// resourcing and comments created in the same call. See MIGRATION.md
     /// (rse-project-scrape, Durham ARC) for the source-side worksheet this
@@ -386,5 +410,38 @@ namespace PPMTool.API.DTOs
         DateTime? StartDate,
         DateTime? EndDate,
         double? FTE
+    );
+
+    /// <summary>
+    /// Request body for POST /api/users/add. Creates an Access Control
+    /// User directly, general-purpose: a bare User (e.g. a synthetic
+    /// system account), or one linked to an existing Person via PersonId
+    /// (e.g. provisioning a second account -- Manager/Superuser/API -- on
+    /// a Person who already has one, the same way that's already
+    /// possible in the data model; see People.GetAllPeopleAsync's own
+    /// usernamesByPersonId comment). Not a substitute for normal SSO
+    /// first-login (which is how someone gets their own first CapX
+    /// account) -- for direct provisioning instead. One caller: the
+    /// migration tooling's own use of this to create
+    /// ImportService.FallbackAuthorUsername ("migration-import", the User
+    /// Notes attribute to when a comment's original author can't be
+    /// resolved) -- not what this endpoint is *for*, just one thing it's
+    /// used for.
+    /// </summary>
+    /// <param name="CASUserName">Must be unique (case/whitespace-insensitive, same check as every other User)</param>
+    /// <param name="Name">Display name -- required only when PersonId is omitted; when PersonId is given, the linked Person's own Name is used instead (same as the entity's own User.Person setter behaviour) and this is ignored</param>
+    /// <param name="PersonId">Existing Person to link, if any -- omit for a bare User with no linked Person</param>
+    /// <param name="RoleType">Must parse as a PPMTool.Data.Enums.RoleType value; defaults to "None" (no real permissions) if omitted</param>
+    public sealed record ImportUserDTO(
+        string CASUserName,
+        string? Name,
+        int? PersonId,
+        string? RoleType
+    );
+
+    /// <summary>Response for a successful User import.</summary>
+    /// <param name="UserId"></param>
+    public sealed record ImportUserResponseDTO(
+        int UserId
     );
 }

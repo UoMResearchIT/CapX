@@ -219,4 +219,48 @@ public static class Projects
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+
+    /// <summary>
+    /// Add Comments as Notes to an existing Project. Identified by RTP.
+    /// The counterpart to CreateProject's own Comments handling for a
+    /// project that's already been created -- CreateProject's Validate()
+    /// rejects the whole call once the RTP/Name already exists, so there
+    /// was previously no way to add Comments after the fact.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportNotesResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult AddNotes(
+        PPMToolContext context,
+        ImportService importService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] ImportNotesRequestDTO request)
+    {
+        try
+        {
+            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Projects.AddNotes");
+            if (!allowed) return gateResult!;
+
+            var errors = importService.ValidateNotesImport(context, request);
+            if (errors.Count > 0)
+            {
+                logger.LogWarning("API: Projects: notes import validation failed for RTP {RTP}: {Errors}", request.RTP, string.Join("; ", errors));
+                return Results.BadRequest(new ImportErrorDTO(errors));
+            }
+
+            var result = importService.AddNotes(context, request);
+            logger.LogInformation(
+                "API: Projects: added {NotesCreated} Note(s) to Project {ProjectId} (RTP {RTP}) by {User}",
+                result.NotesCreated, result.ProjectId, request.RTP, caller!.Name);
+            return Results.Json(result, statusCode: StatusCodes.Status201Created);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: Projects: error adding notes to RTP {RTP}", request.RTP);
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
 }
