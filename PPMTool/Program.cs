@@ -347,6 +347,7 @@ api.MapGet("/faculties/getAll", Faculties.GetAllFacultiesAsync);
 api.MapGet("/faculties/getById", Faculties.GetFacultyByIdAsync);
 api.MapGet("/financialreferences/getAll", FinancialReferences.GetAllFinancialReferencesAsync);
 api.MapGet("/financialreferences/getByFinancialYear", FinancialReferences.GetFinancialReferenceByFinancialYearAsync);
+api.MapGet("/projects/notes/getAll", Projects.GetNotes);
 
 // POST (write) endpoints (behind SettingType.ImportApiEnabled)
 api.MapPost("/faculties/add", Faculties.CreateFaculty);
@@ -364,6 +365,7 @@ api.MapPut("/faculties/update", Faculties.UpdateFaculty);
 api.MapPut("/schools/update", Schools.UpdateSchool);
 api.MapPut("/projects/update", Projects.UpdateProject);
 api.MapPut("/people/update", People.UpdatePerson);
+api.MapPut("/projects/notes/update", Projects.UpdateNote);
 
 // API middleware -- conditional on /api routes only
 app.UseWhen(

@@ -446,4 +446,26 @@ namespace PPMTool.API.DTOs
     public sealed record ImportUserResponseDTO(
         int UserId
     );
+
+    /// <summary>
+    /// Request body for PUT /api/projects/notes/update. Corrects an
+    /// existing Note's content -- identified by NoteId (from
+    /// GET /api/projects/notes/getAll), not by any natural key, since
+    /// unlike Timesheets/WorkloadModelChanges a Note has no unique
+    /// (RTP, date) pair to upsert on (a project can have several Notes
+    /// with the same CreatedDate). Doesn't touch Author -- an edit
+    /// corrects the text, it doesn't reassign who posted it.
+    /// </summary>
+    /// <param name="NoteId">NoteId of the Note to update</param>
+    /// <param name="HtmlContent">Replacement content (required, whole-value replace, not a diff/patch)</param>
+    public sealed record UpdateNoteRequestDTO(
+        int NoteId,
+        string HtmlContent
+    );
+
+    /// <summary>Response for a successful Note update.</summary>
+    /// <param name="NoteId"></param>
+    public sealed record UpdateNoteResponseDTO(
+        int NoteId
+    );
 }
