@@ -650,7 +650,79 @@ namespace PPMTool.Services
             return new ImportTimesheetResponseDTO(timesheet.TimesheetId, timesheetCreated, entryCreated, entry.TotalHours);
         }
 
+        /// <summary>
+        /// Validate a PUT /api/timesheets/update request without writing
+        /// anything.
+        /// </summary>
+        public List<string> ValidateTimesheetEntryUpdate(PPMToolContext context, UpdateTimesheetEntryRequestDTO request)
+        {
+            var errors = new List<string>();
+
+            var entry = FindTimesheetEntryById(context, request.TimesheetEntryId);
+            if (entry == null)
+            {
+                errors.Add($"TimesheetEntryId {request.TimesheetEntryId} does not exist");
+                return errors;
+            }
+
+            foreach (var (label, hours) in DayHours(request))
+            {
+                if (hours.HasValue && hours.Value < 0) errors.Add($"{label} cannot be negative");
+            }
+
+            if (request.NewTaskName != null)
+            {
+                var innateCode = entry.InnateCodeTask.InnateCode;
+                var newTask = innateCode.Tasks.FirstOrDefault(t => t.TaskName.Trim().Equals(request.NewTaskName.Trim(), StringComparison.OrdinalIgnoreCase));
+                if (newTask == null)
+                    errors.Add($"NewTaskName '{request.NewTaskName}' does not match any InnateCodeTask under this entry's InnateActivity ('{innateCode.ActivityName}'); available: {string.Join(", ", innateCode.Tasks.Select(t => t.TaskName))}");
+                else if (newTask.InnateCodeTaskId != entry.InnateCodeTaskId
+                         && entry.Timesheet.TimesheetEntries.Any(e => e.InnateCodeTaskId == newTask.InnateCodeTaskId && e.TimesheetEntryId != entry.TimesheetEntryId))
+                    errors.Add($"Timesheet {entry.TimesheetId} already has a separate entry for task '{newTask.TaskName}' -- can't move this entry there too");
+            }
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Update an existing TimesheetEntry's day hours and/or task.
+        /// Caller is responsible for validating first. Only fields actually
+        /// supplied in the request are touched.
+        /// </summary>
+        public UpdateTimesheetEntryResponseDTO UpdateTimesheetEntry(PPMToolContext context, UpdateTimesheetEntryRequestDTO request)
+        {
+            var entry = FindTimesheetEntryById(context, request.TimesheetEntryId)!;
+
+            if (request.NewTaskName != null)
+                entry.InnateCodeTask = entry.InnateCodeTask.InnateCode.Tasks.First(t => t.TaskName.Trim().Equals(request.NewTaskName.Trim(), StringComparison.OrdinalIgnoreCase));
+
+            if (request.MondayHours.HasValue) entry.MondayHours = request.MondayHours.Value;
+            if (request.TuesdayHours.HasValue) entry.TuesdayHours = request.TuesdayHours.Value;
+            if (request.WednesdayHours.HasValue) entry.WednesdayHours = request.WednesdayHours.Value;
+            if (request.ThursdayHours.HasValue) entry.ThursdayHours = request.ThursdayHours.Value;
+            if (request.FridayHours.HasValue) entry.FridayHours = request.FridayHours.Value;
+            if (request.SaturdayHours.HasValue) entry.SaturdayHours = request.SaturdayHours.Value;
+            if (request.SundayHours.HasValue) entry.SundayHours = request.SundayHours.Value;
+            entry.UpdateTotalHours();
+
+            _timesheetService.UpdateEntry(context, entry, commitChanges: false);
+            context.SaveChangesWithRetry();
+
+            return new UpdateTimesheetEntryResponseDTO(entry.TimesheetEntryId, entry.TotalHours);
+        }
+
         private static IEnumerable<(string Label, double Hours)> DayHours(ImportTimesheetEntryDTO request)
+        {
+            yield return ("MondayHours", request.MondayHours);
+            yield return ("TuesdayHours", request.TuesdayHours);
+            yield return ("WednesdayHours", request.WednesdayHours);
+            yield return ("ThursdayHours", request.ThursdayHours);
+            yield return ("FridayHours", request.FridayHours);
+            yield return ("SaturdayHours", request.SaturdayHours);
+            yield return ("SundayHours", request.SundayHours);
+        }
+
+        private static IEnumerable<(string Label, double? Hours)> DayHours(UpdateTimesheetEntryRequestDTO request)
         {
             yield return ("MondayHours", request.MondayHours);
             yield return ("TuesdayHours", request.TuesdayHours);
@@ -1039,6 +1111,20 @@ namespace PPMTool.Services
                 .Include(p => p.InnateActivity)
                     .ThenInclude(a => a!.Tasks)
                 .FirstOrDefault(p => p.ProjectId == projectId);
+
+        // Both include chains are required, not optional -- ValidateTimesheetEntryUpdate/
+        // UpdateTimesheetEntry read entry.Timesheet.TimesheetEntries (to check for a
+        // collision when moving to a different task) and entry.InnateCodeTask.InnateCode.Tasks
+        // (to resolve NewTaskName), same class of bug as FindUserByUsername's
+        // WorkloadModelChanges include above.
+        private static TimesheetEntry? FindTimesheetEntryById(PPMToolContext context, int timesheetEntryId) =>
+            context.TimesheetEntries
+                .Include(e => e.Timesheet)
+                    .ThenInclude(t => t.TimesheetEntries)
+                .Include(e => e.InnateCodeTask)
+                    .ThenInclude(t => t.InnateCode)
+                        .ThenInclude(c => c.Tasks)
+                .FirstOrDefault(e => e.TimesheetEntryId == timesheetEntryId);
 
         // ThenInclude(WorkloadModelChanges) is required, not optional -- AssignmentHelper.GetAssignmentChunks
         // (called via Project.UpdateProjectMetaData -> SubTask.UpdateSubTaskCosts -> Resource.UpdateResourceCosts)
