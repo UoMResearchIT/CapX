@@ -331,11 +331,20 @@ namespace PPMTool.API.DTOs
     /// code (see AddTask.razor.cs), so this is the real, native path for
     /// historical actuals -- not a bespoke side-channel field.
     ///
-    /// Re-importing the same (Username, WeekStartDate, TaskName) is safe:
+    /// Re-importing the same (Person, WeekStartDate, TaskName) is safe:
     /// the existing entry's hours are overwritten, not accumulated, so a
     /// repeated import doesn't double-count.
+    ///
+    /// Identify the person by exactly one of Username or PersonId --
+    /// Username for anyone with a real CapX login; PersonId for a bare
+    /// Person with no linked User (e.g. a departed RSE added via
+    /// POST /api/people/add specifically without one). Username has no
+    /// way to reach that second group at all, and PersonId is the same
+    /// identifier ImportPersonResponseDTO already hands back, so this
+    /// isn't a new concept, just a second path to the same Person.
     /// </summary>
-    /// <param name="Username">CapX Access Control username of an existing Person</param>
+    /// <param name="Username">CapX Access Control username of an existing Person -- exactly one of Username/PersonId required</param>
+    /// <param name="PersonId">PersonId of an existing bare Person with no linked User -- exactly one of Username/PersonId required</param>
     /// <param name="ProjectId">Must already have an InnateActivity code (see remarks)</param>
     /// <param name="WeekStartDate">Must be a Monday -- CapX Timesheets are always Monday-start weeks</param>
     /// <param name="TaskName">Must match one of the project's InnateActivity InnateCodeTask names (the default set is "Development", "Management", "Maintenance")</param>
@@ -347,7 +356,8 @@ namespace PPMTool.API.DTOs
     /// <param name="SaturdayHours"></param>
     /// <param name="SundayHours"></param>
     public sealed record ImportTimesheetEntryDTO(
-        string Username,
+        string? Username,
+        int? PersonId,
         int ProjectId,
         DateTime WeekStartDate,
         string TaskName,
