@@ -265,22 +265,25 @@ public static class Timesheets
             var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Timesheets.CreateTimesheetEntry");
             if (!allowed) return gateResult!;
 
+            var person = request.Username ?? $"PersonId {request.PersonId}";
+
             var errors = importService.ValidateTimesheetEntry(context, request);
             if (errors.Count > 0)
             {
-                logger.LogWarning("API: Timesheets: timesheet validation failed for '{Username}'/{ProjectId}/{Week}: {Errors}", request.Username, request.ProjectId, request.WeekStartDate, string.Join("; ", errors));
+                logger.LogWarning("API: Timesheets: timesheet validation failed for '{Person}'/{ProjectId}/{Week}: {Errors}", person, request.ProjectId, request.WeekStartDate, string.Join("; ", errors));
                 return Results.BadRequest(new ImportErrorDTO(errors));
             }
 
             var result = importService.CreateOrUpdateTimesheetEntry(context, request);
             logger.LogInformation(
-                "API: Timesheets: timesheet {TimesheetId} for {Username}, week {Week}, project {ProjectId}: {Hours}h ({Created}) by {User}",
-                result.TimesheetId, request.Username, request.WeekStartDate, request.ProjectId, result.TotalHours, result.EntryCreated ? "new entry" : "updated entry", caller!.Name);
+                "API: Timesheets: timesheet {TimesheetId} for {Person}, week {Week}, project {ProjectId}: {Hours}h ({Created}) by {User}",
+                result.TimesheetId, person, request.WeekStartDate, request.ProjectId, result.TotalHours, result.EntryCreated ? "new entry" : "updated entry", caller!.Name);
             return Results.Created($"/api/timesheets/{result.TimesheetId}", result);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "API: Timesheets: error creating timesheet entry for '{Username}'/{ProjectId}/{Week}", request.Username, request.ProjectId, request.WeekStartDate);
+            var person = request.Username ?? $"PersonId {request.PersonId}";
+            logger.LogError(ex, "API: Timesheets: error creating timesheet entry for '{Person}'/{ProjectId}/{Week}", person, request.ProjectId, request.WeekStartDate);
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
