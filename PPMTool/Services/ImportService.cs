@@ -793,8 +793,14 @@ namespace PPMTool.Services
         {
             var errors = new List<string>();
 
-            if (FindUserByUsername(context, request.Username)?.Person == null)
+            var hasUsername = !string.IsNullOrWhiteSpace(request.Username);
+            var hasPersonId = request.PersonId.HasValue;
+            if (hasUsername == hasPersonId)
+                errors.Add("Exactly one of Username or PersonId must be supplied");
+            else if (hasUsername && FindUserByUsername(context, request.Username!)?.Person == null)
                 errors.Add($"Username '{request.Username}' not found, or has no linked Person");
+            else if (hasPersonId && _personService.GetById(context, request.PersonId!.Value) == null)
+                errors.Add($"PersonId {request.PersonId} does not exist");
 
             if (request.WeekStartDate.DayOfWeek != DayOfWeek.Monday)
                 errors.Add($"WeekStartDate '{request.WeekStartDate:yyyy-MM-dd}' is a {request.WeekStartDate.DayOfWeek}, not a Monday -- CapX Timesheets are always Monday-start weeks");
@@ -818,13 +824,15 @@ namespace PPMTool.Services
         /// <summary>
         /// Create or update the Timesheet + TimesheetEntry for this
         /// person/week/task. Caller is responsible for validating first.
-        /// Idempotent: re-importing the same (Username, WeekStartDate,
+        /// Idempotent: re-importing the same (Person, WeekStartDate,
         /// TaskName) overwrites the existing entry's hours rather than
         /// accumulating on top of them.
         /// </summary>
         public ImportTimesheetResponseDTO CreateOrUpdateTimesheetEntry(PPMToolContext context, ImportTimesheetEntryDTO request)
         {
-            var person = FindUserByUsername(context, request.Username)!.Person!;
+            var person = !string.IsNullOrWhiteSpace(request.Username)
+                ? FindUserByUsername(context, request.Username)!.Person!
+                : _personService.GetById(context, request.PersonId!.Value);
             var project = FindProjectWithInnateActivity(context, request.ProjectId)!;
             var task = project.InnateActivity!.Tasks.First(t => t.TaskName.Trim().Equals(request.TaskName.Trim(), StringComparison.OrdinalIgnoreCase));
 
