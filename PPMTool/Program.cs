@@ -349,6 +349,7 @@ api.MapGet("/financialreferences/getAll", FinancialReferences.GetAllFinancialRef
 api.MapGet("/financialreferences/getByFinancialYear", FinancialReferences.GetFinancialReferenceByFinancialYearAsync);
 api.MapGet("/projects/notes/getAll", Projects.GetNotes);
 api.MapGet("/tasks/getAll", Tasks.GetTasks);
+api.MapGet("/tasks/resourcing/getAll", Tasks.GetResourcing);
 
 // POST (write) endpoints (behind SettingType.ImportApiEnabled)
 api.MapPost("/faculties/add", Faculties.CreateFaculty);
@@ -360,6 +361,7 @@ api.MapPost("/people/add", People.CreatePerson);
 api.MapPost("/users/add", Users.CreateUser);
 api.MapPost("/projects/notes/add", Projects.AddNotes);
 api.MapPost("/tasks/add", Tasks.CreateTask);
+api.MapPost("/tasks/resourcing/add", Tasks.AddResourcing);
 
 // PUT (update) endpoints (behind SettingType.ImportApiEnabled) -- workloadmodels/add
 // is already upsert-on-post, so no separate PUT for that.
@@ -370,6 +372,7 @@ api.MapPut("/people/update", People.UpdatePerson);
 api.MapPut("/projects/notes/update", Projects.UpdateNote);
 api.MapPut("/timesheets/update", Timesheets.UpdateTimesheetEntry);
 api.MapPut("/tasks/update", Tasks.UpdateTask);
+api.MapPut("/tasks/resourcing/update", Tasks.UpdateResourcing);
 
 // API middleware -- conditional on /api routes only
 app.UseWhen(

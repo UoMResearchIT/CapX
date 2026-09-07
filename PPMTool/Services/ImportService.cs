@@ -786,6 +786,237 @@ namespace PPMTool.Services
         }
 
         /// <summary>
+        /// Validate a GET /api/tasks/resourcing/getAll request without
+        /// reading anything.
+        /// </summary>
+        public List<string> ValidateTaskResourcingGet(PPMToolContext context, int rtp)
+        {
+            var errors = new List<string>();
+            if (FindProjectByRTP(context, rtp) == null)
+                errors.Add($"RTP {rtp} does not match any Project");
+            return errors;
+        }
+
+        /// <summary>
+        /// Every resourcing assignment across one Project's SubTasks.
+        /// Caller is responsible for validating the RTP first
+        /// (ValidateTaskResourcingGet).
+        ///
+        /// This is the read side the write endpoints need to be usable
+        /// safely: without it a caller can't tell which assignments
+        /// already exist, and an import either duplicates work or has to
+        /// track what it sent out-of-band.
+        /// </summary>
+        public List<TaskResourceDTO> GetResourcingForRTP(PPMToolContext context, int rtp)
+        {
+            var project = FindProjectByRTP(context, rtp)!;
+
+            // Person has no reverse nav to User, so usernames are looked up the
+            // other way round -- and a Person can legitimately back more than one
+            // User (no unique constraint on Users.PersonId), so dedupe
+            // deterministically on the lowest UserId rather than letting
+            // ToDictionary throw. Same shape, and the same reason, as
+            // People.GetAllPeople's own lookup.
+            var personIds = project.SubTasks
+                .SelectMany(t => t.AssignedResources)
+                .Select(r => r.Person.PersonId)
+                .Distinct()
+                .ToList();
+            var usernamesByPersonId = context.Users
+                .Where(u => u.Person != null && personIds.Contains(u.Person.PersonId))
+                .OrderBy(u => u.UserId)
+                .Select(u => new { u.Person!.PersonId, u.CASUserName })
+                .ToList()
+                .GroupBy(x => x.PersonId)
+                .ToDictionary(g => g.Key, g => g.First().CASUserName);
+
+            return project.SubTasks
+                .OrderBy(t => t.StartDate)
+                .SelectMany(t => t.AssignedResources.Select(r => new TaskResourceDTO(
+                    r.ResourceId,
+                    t.SubTaskId,
+                    rtp,
+                    t.Name,
+                    t.TaskDuty.ToString(),
+                    t.StartDate,
+                    t.EndDate,
+                    r.Person.PersonId,
+                    r.Person.Name,
+                    usernamesByPersonId.GetValueOrDefault(r.Person.PersonId),
+                    r.AssignmentFTE,
+                    r.IsProvisional
+                )))
+                .ToList();
+        }
+
+        /// <summary>
+        /// Validate a POST /api/tasks/resourcing/add request without
+        /// writing anything.
+        /// </summary>
+        public List<string> ValidateTaskResourcingAdd(PPMToolContext context, ImportTaskResourcingRequestDTO request)
+        {
+            var errors = new List<string>();
+
+            var found = FindProjectAndTaskById(context, request.SubTaskId);
+            if (found == null)
+            {
+                errors.Add($"SubTaskId {request.SubTaskId} does not exist");
+                return errors;
+            }
+            var (_, task) = found.Value;
+
+            var resourcing = request.Resourcing ?? Array.Empty<ImportResourceAssignmentDTO>();
+            if (resourcing.Count == 0)
+                errors.Add("Resourcing must contain at least one assignment");
+
+            var managerPersonIds = _userService.GetAllManagerPersonId(context);
+            var seenPersonIds = new List<int>();
+
+            foreach (var r in resourcing)
+            {
+                var (person, personErrors) = ResolveAssignmentPerson(context, r);
+                errors.AddRange(personErrors);
+
+                if (HasDigitsAfterThirdDecimalPlace(r.AssignmentFTE))
+                    errors.Add($"AssignmentFTE for '{DescribeAssignee(r)}' cannot have digits after the third decimal place");
+                else if (r.AssignmentFTE <= 0)
+                    errors.Add($"AssignmentFTE for '{DescribeAssignee(r)}' must be greater than zero");
+
+                if (person == null) continue;
+
+                // Only managers can be assigned to a leadership-duty task -- the same
+                // rule AddTask.razor enforces, and that ValidateTaskCreate already
+                // applies to create-time resourcing.
+                if (task.TaskDuty == Duty.ProjectAndServiceMgmt && !managerPersonIds.Contains(person.PersonId))
+                    errors.Add($"Only managers can be assigned to leadership tasks ('{DescribeAssignee(r)}')");
+
+                // Reject rather than merge or duplicate: silently adding a second
+                // assignment for the same person would double this task's resourcing
+                // on a re-run, and the caller has GET + update to do it deliberately.
+                if (task.AssignedResources.Any(existing => existing.Person.PersonId == person.PersonId))
+                    errors.Add($"'{DescribeAssignee(r)}' is already assigned to SubTaskId {request.SubTaskId} -- use PUT /api/tasks/resourcing/update to change the existing assignment");
+                if (seenPersonIds.Contains(person.PersonId))
+                    errors.Add($"'{DescribeAssignee(r)}' appears more than once in this request");
+                seenPersonIds.Add(person.PersonId);
+            }
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Add resourcing to an existing Task. Caller is responsible for
+        /// validating first.
+        /// </summary>
+        public ImportTaskResourcingResponseDTO AddTaskResourcing(PPMToolContext context, ImportTaskResourcingRequestDTO request)
+        {
+            var (project, task) = FindProjectAndTaskById(context, request.SubTaskId)!.Value;
+
+            var resourcesCreated = 0;
+            foreach (var r in request.Resourcing)
+            {
+                var (person, _) = ResolveAssignmentPerson(context, r);
+                context.Resources.Add(new Resource
+                {
+                    Person = person!,
+                    SubTask = task,
+                    AssignmentFTE = r.AssignmentFTE,
+                    // Imported resourcing is provisional unless the caller says
+                    // otherwise, matching ImportService.Create -- migrated data is
+                    // flagged for PM review rather than presented as confirmed.
+                    IsProvisional = r.IsProvisional ?? true,
+                });
+                resourcesCreated++;
+            }
+
+            RecalculateProject(context, project);
+
+            return new ImportTaskResourcingResponseDTO(task.SubTaskId, resourcesCreated);
+        }
+
+        /// <summary>
+        /// Validate a PUT /api/tasks/resourcing/update request without
+        /// writing anything.
+        /// </summary>
+        public List<string> ValidateTaskResourcingUpdate(PPMToolContext context, UpdateTaskResourcingRequestDTO request)
+        {
+            var errors = new List<string>();
+
+            var found = FindProjectAndResourceById(context, request.ResourceId);
+            if (found == null)
+            {
+                errors.Add($"ResourceId {request.ResourceId} does not exist");
+                return errors;
+            }
+            var (_, currentTask, resource) = found.Value;
+
+            if (request.AssignmentFTE.HasValue)
+            {
+                if (HasDigitsAfterThirdDecimalPlace(request.AssignmentFTE.Value))
+                    errors.Add("AssignmentFTE cannot have digits after the third decimal place");
+                else if (request.AssignmentFTE.Value < 0)
+                    errors.Add("AssignmentFTE cannot be negative");
+            }
+
+            var targetTask = currentTask;
+            if (request.NewSubTaskId.HasValue && request.NewSubTaskId.Value != currentTask.SubTaskId)
+            {
+                var target = FindProjectAndTaskById(context, request.NewSubTaskId.Value);
+                if (target == null)
+                {
+                    errors.Add($"NewSubTaskId {request.NewSubTaskId} does not exist");
+                    return errors;
+                }
+                targetTask = target.Value.Task;
+
+                if (targetTask.AssignedResources.Any(existing => existing.Person.PersonId == resource.Person.PersonId))
+                    errors.Add($"'{resource.Person.Name}' is already assigned to SubTaskId {request.NewSubTaskId} -- move would create a duplicate assignment");
+            }
+
+            // Re-checked against the task the assignment will end up on, not the one
+            // it started on: moving a non-manager onto a leadership task has to fail
+            // the same way assigning one there directly does.
+            if (targetTask.TaskDuty == Duty.ProjectAndServiceMgmt
+                && !_userService.GetAllManagerPersonId(context).Contains(resource.Person.PersonId))
+                errors.Add($"Only managers can be assigned to leadership tasks ('{resource.Person.Name}')");
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Update an existing resourcing assignment. Caller is
+        /// responsible for validating first. Only fields actually
+        /// supplied are touched.
+        /// </summary>
+        public UpdateTaskResourcingResponseDTO UpdateTaskResourcing(PPMToolContext context, UpdateTaskResourcingRequestDTO request)
+        {
+            var (project, currentTask, resource) = FindProjectAndResourceById(context, request.ResourceId)!.Value;
+
+            if (request.AssignmentFTE.HasValue) resource.AssignmentFTE = request.AssignmentFTE.Value;
+            if (request.IsProvisional.HasValue) resource.IsProvisional = request.IsProvisional.Value;
+
+            var landedOn = currentTask;
+            Project? movedFromProject = null;
+            if (request.NewSubTaskId.HasValue && request.NewSubTaskId.Value != currentTask.SubTaskId)
+            {
+                var (targetProject, targetTask) = FindProjectAndTaskById(context, request.NewSubTaskId.Value)!.Value;
+                resource.SubTask = targetTask;
+                landedOn = targetTask;
+
+                // A move across projects changes the cost picture on both sides, so
+                // the one being left has to be recalculated too, not just the one
+                // being joined.
+                if (targetProject.RTP != project.RTP) movedFromProject = project;
+                project = targetProject;
+            }
+
+            context.Resources.Update(resource);
+            if (movedFromProject != null) RecalculateProject(context, movedFromProject, commit: false);
+            RecalculateProject(context, project);
+
+            return new UpdateTaskResourcingResponseDTO(resource.ResourceId, landedOn.SubTaskId);
+        }
+
+        /// <summary>
         /// Validate a POST /api/timesheets/add request without writing
         /// anything.
         /// </summary>
@@ -1413,6 +1644,74 @@ namespace PPMTool.Services
             var project = FindProjectByRTP(context, rtp);
             var task = project?.SubTasks.FirstOrDefault(t => t.SubTaskId == subTaskId);
             return task == null ? null : (project!, task);
+        }
+
+        // Resolve the Person an assignment refers to, by exactly one of Username or
+        // PersonId. Returns the errors rather than throwing so the validate pass can
+        // report every bad row in one response, and is re-run (errors discarded) on
+        // the write path so resolution logic lives in exactly one place.
+        private (Person? Person, List<string> Errors) ResolveAssignmentPerson(
+            PPMToolContext context, ImportResourceAssignmentDTO assignment)
+        {
+            var errors = new List<string>();
+            var hasUsername = !string.IsNullOrWhiteSpace(assignment.Username);
+            var hasPersonId = assignment.PersonId.HasValue;
+
+            if (hasUsername == hasPersonId)
+            {
+                errors.Add($"Exactly one of Username or PersonId must be supplied (got '{DescribeAssignee(assignment)}')");
+                return (null, errors);
+            }
+
+            if (hasUsername)
+            {
+                var person = FindUserByUsername(context, assignment.Username!)?.Person;
+                if (person == null)
+                    errors.Add($"Username '{assignment.Username}' not found, or has no linked Person");
+                return (person, errors);
+            }
+
+            var byId = _personService.GetById(context, assignment.PersonId!.Value);
+            if (byId == null)
+                errors.Add($"PersonId {assignment.PersonId} does not exist");
+            return (byId, errors);
+        }
+
+        // Whichever identifier the caller actually supplied, for error messages --
+        // reporting a null Username at someone who supplied a PersonId is noise.
+        private static string DescribeAssignee(ImportResourceAssignmentDTO assignment) =>
+            !string.IsNullOrWhiteSpace(assignment.Username)
+                ? assignment.Username!
+                : assignment.PersonId.HasValue ? $"PersonId {assignment.PersonId}" : "(no Username or PersonId)";
+
+        // Same two-step as FindProjectAndTaskById, and for the same reason: callers
+        // need the fully-loaded owning Project for UpdateProjectMetaData, and the
+        // Resource/SubTask instances handed back are the tracked ones from that
+        // graph, so mutating them is what gets saved.
+        private (Project Project, SubTask Task, Resource Resource)? FindProjectAndResourceById(
+            PPMToolContext context, int resourceId)
+        {
+            var rtp = context.Resources
+                .Where(r => r.ResourceId == resourceId)
+                .Select(r => r.SubTask.OwningProject.RTP)
+                .FirstOrDefault();
+            if (rtp == 0) return null;
+
+            var project = FindProjectByRTP(context, rtp);
+            var task = project?.SubTasks.FirstOrDefault(t => t.AssignedResources.Any(r => r.ResourceId == resourceId));
+            var resource = task?.AssignedResources.FirstOrDefault(r => r.ResourceId == resourceId);
+            return resource == null ? null : (project!, task!, resource);
+        }
+
+        // Resourcing changes feed straight into cost calculation, so every write
+        // path has to re-run CapX's own engine rather than leaving the project's
+        // stored costs stale. Same call the create paths make.
+        private void RecalculateProject(PPMToolContext context, Project project, bool commit = true)
+        {
+            var financialReferences = _financialReferenceService.GetAllOrDefault(context);
+            var indirectsPercentage = _settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+            project.UpdateProjectMetaData(true, financialReferences, indirectsPercentage);
+            if (commit) context.SaveChangesWithRetry();
         }
 
         // Same check AddTask.razor's HandleSubmit runs before saving (Demand/
