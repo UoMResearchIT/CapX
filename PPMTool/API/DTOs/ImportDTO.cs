@@ -321,6 +321,101 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
+    /// One resourcing assignment to add to an existing SubTask via
+    /// POST /api/tasks/resourcing/add.
+    ///
+    /// Identify the person by exactly one of Username or PersonId --
+    /// Username for anyone with a real CapX login, PersonId for a bare
+    /// Person with no linked User. That second path matters here for the
+    /// same reason it does on timesheets/add: historical resourcing
+    /// routinely belongs to people who have since left and were added
+    /// via POST /api/people/add specifically without a User, and
+    /// ImportResourcingDTO (create-time, username-only) cannot express
+    /// them at all.
+    ///
+    /// Deliberately carries no dates: a Resource has none. The
+    /// assignment's period is its SubTask's period, so an allocation
+    /// covering a different period belongs on a different task rather
+    /// than being expressed as a date range here. (ImportResourcingDTO
+    /// does accept StartDate/EndDate at project-create time, but nothing
+    /// reads them -- see ImportService.Create.)
+    /// </summary>
+    /// <param name="Username">Access Control username of an existing Person -- exactly one of Username/PersonId required</param>
+    /// <param name="PersonId">PersonId of an existing Person, including one with no linked User -- exactly one of Username/PersonId required</param>
+    /// <param name="AssignmentFTE">FTE, greater than zero, at most 3 decimal places</param>
+    /// <param name="IsProvisional">Defaults to true when omitted -- imported resourcing is flagged for PM review rather than treated as confirmed, matching ImportService.Create</param>
+    public sealed record ImportResourceAssignmentDTO(
+        string? Username,
+        int? PersonId,
+        double AssignmentFTE,
+        bool? IsProvisional
+    );
+
+    /// <summary>
+    /// Request body for POST /api/tasks/resourcing/add. Adds one or more
+    /// resourcing assignments to an existing SubTask, identified by
+    /// SubTaskId (from GET /api/tasks/getAll).
+    ///
+    /// Additive, and not idempotent on its own: assigning a Person who
+    /// already has an assignment on this task is rejected rather than
+    /// merged or duplicated, so a re-run can't silently double a task's
+    /// resourcing. Read GET /api/tasks/resourcing/getAll first and use
+    /// PUT /api/tasks/resourcing/update to change an existing one.
+    /// </summary>
+    /// <param name="SubTaskId">SubTaskId of the Task to resource (see GET /api/tasks/getAll)</param>
+    /// <param name="Resourcing">One or more assignments to add</param>
+    public sealed record ImportTaskResourcingRequestDTO(
+        int SubTaskId,
+        IReadOnlyList<ImportResourceAssignmentDTO> Resourcing
+    );
+
+    /// <summary>Response for a successful resourcing import.</summary>
+    /// <param name="SubTaskId"></param>
+    /// <param name="ResourcesCreated"></param>
+    public sealed record ImportTaskResourcingResponseDTO(
+        int SubTaskId,
+        int ResourcesCreated
+    );
+
+    /// <summary>
+    /// Request body for PUT /api/tasks/resourcing/update. Identifies an
+    /// existing assignment by ResourceId (from
+    /// GET /api/tasks/resourcing/getAll); only fields actually supplied
+    /// are updated.
+    ///
+    /// NewSubTaskId moves the assignment to a different task, mirroring
+    /// what PUT /api/timesheets/update already allows for a timesheet
+    /// entry. Because a Resource has no dates of its own, moving it to a
+    /// task with different dates IS how an assignment's period gets
+    /// corrected -- there is no other way to express it.
+    ///
+    /// AssignmentFTE may be set to zero here, unlike on add, matching how
+    /// Demand behaves on PUT /api/tasks/update. With no DELETE on this
+    /// API (a deliberate standing choice -- Superuser-only writes into a
+    /// live database with no soft-delete or audit story designed yet),
+    /// zeroing an assignment is the available way to retract one while
+    /// leaving it visible and attributable.
+    /// </summary>
+    /// <param name="ResourceId">ResourceId of the assignment to update (see GET /api/tasks/resourcing/getAll)</param>
+    /// <param name="AssignmentFTE">New FTE if changing -- may be zero, at most 3 decimal places</param>
+    /// <param name="NewSubTaskId">SubTaskId of a different existing Task to move this assignment to, if reassigning</param>
+    /// <param name="IsProvisional">Whether the assignment is provisional, if changing</param>
+    public sealed record UpdateTaskResourcingRequestDTO(
+        int ResourceId,
+        double? AssignmentFTE,
+        int? NewSubTaskId,
+        bool? IsProvisional
+    );
+
+    /// <summary>Response for a successful resourcing update.</summary>
+    /// <param name="ResourceId"></param>
+    /// <param name="SubTaskId">The task the assignment now belongs to</param>
+    public sealed record UpdateTaskResourcingResponseDTO(
+        int ResourceId,
+        int SubTaskId
+    );
+
+    /// <summary>
     /// Request body for POST /api/timesheets/add. One week's actual
     /// hours for one person on one project, on a single InnateCodeTask
     /// under that project's InnateActivity code (every Project imported
