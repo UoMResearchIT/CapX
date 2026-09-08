@@ -191,9 +191,10 @@ public static class People
     }
 
     /// <summary>
-    /// Update an existing bare Person's Name, StartDate, EndDate, and/or
-    /// FTE. Identified by PersonId. Superuser-only write access, gated
-    /// behind SettingType.ImportApiEnabled -- see UoMResearchIT/CapX#1310.
+    /// Update an existing bare Person's Name, StartDate, EndDate, FTE
+    /// and/or LineManager. Identified by PersonId. Superuser-only write
+    /// access, gated behind SettingType.ImportApiEnabled -- see
+    /// UoMResearchIT/CapX#1310.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ImportPersonResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
