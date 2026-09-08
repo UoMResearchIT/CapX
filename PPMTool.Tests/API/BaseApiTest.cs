@@ -4,6 +4,8 @@
 
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Enums;
 
@@ -11,39 +13,84 @@ namespace PPMTool.Tests.API
 {
     public abstract class BaseApiTest
     {
-        public static string? ManagerApiKey { get; private set; }
-        public static string? ManagerName { get; private set; }
-        public static string? ManagerReport { get; private set; }
+        protected static string? ManagerApiKey { get; private set; }
+        protected static string? ManagerName { get; private set; }
+        protected static string? ManagerReport { get; private set; }
+        protected static string? DeveloperApiKey { get; private set; }
+        protected static string? PersonName { get; private set; }
+        protected static int PersonId { get; private set; }
+        protected static int ProjectId { get; private set; }
+        protected static string? TimesheetCode { get; private set; }
 
         /// <summary>
         /// Provides a configured HttpClient for making requests to the API with an API key for a manager.
         /// </summary>
         /// <returns></returns>
-        public static HttpClient GetClientAsManager()
+        protected static HttpClient GetClientAsManager()
         {
-            var client = new HttpClient();
-            client.BaseAddress = new Uri(Setup.BaseUrl);
-            client.DefaultRequestHeaders.Add("x-api-key", new List<string> { ManagerApiKey! });
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+            };
+            var client = new HttpClient(handler);
+            // IMPORTANT: Trailing slash MUST be preserved in BaseAddress to ensure relative paths are appended correctly
+            client.BaseAddress = new Uri($"{Setup.BaseUrl}/api/");
+            client.DefaultRequestHeaders.Add("x-api-key", ManagerApiKey!);
+            return client;
+        }
+
+        /// <summary>
+        /// Provides a configured HttpClient for making requests to the API with an API key for a developer.
+        /// </summary>
+        /// <returns></returns>
+        protected static HttpClient GetClientAsDeveloper()
+        {
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+            };
+            var client = new HttpClient(handler);
+            client.BaseAddress = new Uri($"{Setup.BaseUrl}/api/");
+            client.DefaultRequestHeaders.Add("x-api-key", DeveloperApiKey!);
             return client;
         }
 
         [OneTimeSetUp]
-        public virtual void OneTimeSetup()
+        protected virtual void OneTimeSetup()
         {
             SetupForAPI();
         }
 
-        public void SetupForAPI()
+        /// <summary>
+        /// Setup for API tests. Retrieved the API keys for a manager and developer from the database and sets them for use in tests.
+        /// </summary>
+        /// <exception cref="Exception"></exception>
+        protected void SetupForAPI()
         {
-            // Get the API key to use from the database
-            // TODO: This needs to use the DbProvider options in the environment variables instead of hardcoding the path and provider
-            var dbPath = Path.Combine(AppContext.BaseDirectory, "../../../../PPMTool/PPMTool.db");
-            var options = new DbContextOptionsBuilder<PPMToolContext>()
-                .UseSqlite($"Data Source={dbPath};Cache=Shared;")
-                .Options;
-            Debug.WriteLine($"** Using DB at: {dbPath}");
+            // Build configuration from user secrets and environment variables
+            var config = new ConfigurationBuilder()
+                .AddUserSecrets<Setup>(optional: true)
+                .AddEnvironmentVariables()
+                .Build();
 
-            using (var context = new PPMToolContext(options))
+            // Get the connection string and db provider from configuration
+            var connectionString = config.GetConnectionString("PPMToolContextConnection");
+            var dbProvider = (config.GetValue<string>("DbProvider") ?? "sqlite").ToLower();
+
+            // If no connection string is configured, fall back to local SQLite database
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                var dbPath = Path.Combine(AppContext.BaseDirectory, "../../../../PPMTool/PPMTool.db");
+                connectionString = $"Data Source={dbPath};Cache=Shared;";
+            }
+
+            Debug.WriteLine($"** Using DB Provider: {dbProvider}");
+            Debug.WriteLine($"** Using Connection String: {connectionString}");
+
+            var options = new DbContextOptionsBuilder<PPMToolContext>();
+            options.AddDbProvider(connectionString, dbProvider);
+
+            using (var context = new PPMToolContext(options.Options))
             {
                 // Get valid API keys with related owner and person data
                 var keys = context.ApiKeys
@@ -64,6 +111,27 @@ namespace PPMTool.Tests.API
                 {
                     throw new Exception("No valid API keys found for a manager in the database. Please create one for testing.");
                 }
+
+                // Get developer keys
+                var developerKey = keys
+                    .FirstOrDefault(k => k.Owner.RoleType == RoleType.Developer);
+
+                if (developerKey == null)
+                {
+                    throw new Exception("No valid API keys found for a developer in the database. Please create one for testing.");
+                }
+                DeveloperApiKey = developerKey.Key;
+
+                // Get a person from the database for API tests
+                var firstPerson = context.People.FirstOrDefault(x => !string.IsNullOrEmpty(x.Name));
+                PersonName = firstPerson?.Name?.Replace(" ", "_");
+                PersonId = firstPerson?.PersonId ?? 0;
+
+                // Get a project RTP ID from the database for API tests
+                ProjectId = context.Projects.OrderBy(x => x.RTP).Select(x => x.RTP).FirstOrDefault();
+
+                // Set a timesheet code to be used for the timesheet tests
+                TimesheetCode = context.InnateCodes.FirstOrDefault()?.ActivityCode;
 
                 // Get the first report of a manager
                 foreach (var key in managerKey)

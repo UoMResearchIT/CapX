@@ -70,7 +70,14 @@ public static class Skills
     {
         try
         {
-            // Find the person by name.
+            // If no name then return bad request
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                logger.LogWarning("API: GetAllSkillsTagsForPerson: No name provided!");
+                return Results.BadRequest("Missing query parameter: name");
+            }
+
+            // Find the person by name
             var person = await GeneralHelpers.FindPersonWithLineManagerByNameAsync(context, name);
             if (person == null)
             {

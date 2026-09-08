@@ -4,6 +4,7 @@ on:
   push:
     branches: [dev]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -18,17 +19,18 @@ jobs:
       LEAVEBOOKINGS_CONNECTION_STRING: Data Source=/app/state/LeaveBookings.db;Cache=Shared;Mode=ReadWriteCreate;
       CAPX_HTTP_PORT: 3000
       CAPX_STATE_DIR: ./capx-state
+      SEED_DUMMY_DATA: "TRUE"
       SUPERUSER_NAME: "Captain Marvel"
       SUPERUSER_USERNAME: c123456m
       SUPERUSER_EMAIL: captain.marvel@manchester.ac.uk
     steps:
       - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
       - name: Create state directory for bind mount
         run: mkdir -p capx-state
@@ -48,6 +50,27 @@ jobs:
         run: |
           curl --fail --silent --show-error http://localhost:${CAPX_HTTP_PORT}/swagger/index.html | grep -q 'swagger'
           echo "API test passed"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore solution
+        run: dotnet restore PPMTool/PPMTool.sln
+
+      - name: Install Playwright
+        run: |
+          dotnet build PPMTool.Tests/PPMTool.Tests.csproj -c Release
+          pwsh PPMTool.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps
+
+      - name: Run Tests
+        env:
+          TEST_BASE_URL: http://localhost:${{ env.CAPX_HTTP_PORT }}
+          ConnectionStrings__PPMToolContextConnection: Data Source=${{ github.workspace }}/capx-state/PPMTool.db;Cache=Shared;Mode=ReadWriteCreate;
+          DbProvider: sqlite
+        run: |
+          dotnet test PPMTool.Tests/PPMTool.Tests.csproj -c Release --verbosity normal --logger "console;verbosity=detailed" --no-build
 
       - name: Show container logs on failure
         if: failure()

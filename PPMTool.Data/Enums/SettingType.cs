@@ -78,6 +78,22 @@ namespace PPMTool.Data.Enums
 
         [Description("URL to documentation that provides help for the timesheet functionality.")]
         [DefaultSettingValue("")]
-        TimesheetHelpUrl = 16
+        TimesheetHelpUrl = 16,
+
+        [Description("The percentage overspend planned vs budget on a project permitted before overbudget warning becomes an error.")]
+        [DefaultSettingValue("10")]
+        OverbudgetThreshold = 17,
+
+        [Description("The name of the application as it appears in the application header.")]
+        [DefaultSettingValue("CapX - RSE Operational Management Tool")]
+        ApplicationName = 18,
+
+        [Description("The length of time in calendar days that a request is expected to be open at the start of the demand process. Affects the timers on the MyProjects page.")]
+        [DefaultSettingValue("14")]
+        RequestDurationLimit = 19,
+
+        [Description("The percentage of the planned cost that can be underclaimed (requested) for a given financial year.")]
+        [DefaultSettingValue("10")]
+        UnderclaimedFundsThreshold = 20
     }
 }

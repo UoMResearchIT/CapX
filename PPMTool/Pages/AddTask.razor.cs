@@ -12,6 +12,7 @@ using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
 using PPMTool.Services;
+using PPMTool.Services.StatusEvaluators;
 using Radzen;
 using Radzen.Blazor;
 using static PPMTool.Shared.MainLayout;
@@ -67,6 +68,9 @@ namespace PPMTool.Pages
 
         [Inject]
         private FundingSourceService FundingSourceService { get; set; }
+
+        [Inject]
+        private SubTaskStatusEvaluator SubTaskStatusEvaluator { get; set; }
 
         [Parameter]
         public int? ProjectId { get; set; }
@@ -127,6 +131,7 @@ namespace PPMTool.Pages
         private IList<Person> people = new List<Person>();
         private IList<Person> filteredPeople = new List<Person>();
         private IEnumerable<Rate> availableRates = new List<Rate>();
+        private IEnumerable<Duty> allowedTaskDuties = new List<Duty>();
         private IEnumerable<FundingSource> availableSources = new List<FundingSource>();
         private bool startDateDisabled;
         private bool workDisabled;
@@ -235,6 +240,9 @@ namespace PPMTool.Pages
             availableRates = Enum.GetValues<Rate>().ToList();
             availableSources = FundingSourceService.GetFundingSources(Context, ProjectId ?? 0).ToList();
 
+            // Limit the number of task duties for now as this is a new feature and integral to a lot of the in-built calculations
+            allowedTaskDuties = new List<Duty>() { Duty.ProjectWork, Duty.BAU, Duty.ProjectAndServiceMgmt };
+
             // No project then stop initialising
             if (ProjectModel == null)
             {
@@ -299,8 +307,8 @@ namespace PPMTool.Pages
             // Assign edit context
             editContext = new EditContext(TaskModel);
 
-            // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser
-            EditAuthorised = ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager && ProjectModel.ProjectManager.PersonId == ActiveUser?.Person.PersonId);
+            // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser or the request owner if in a request state
+            EditAuthorised = projectModel.ActiveUserHasEditAccessToProject(ActiveUser);
 
             LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetSensibleObjectName()} | Copy = {IsCopy} | Split = {IsSplit}" : $"Adding new task to {ProjectModel?.GetSensibleObjectName()}");
 
@@ -834,7 +842,7 @@ namespace PPMTool.Pages
             }
 
             // Check that assigned resources are managers
-            if (TaskModel.IsLeadershipTask)
+            if (TaskModel.TaskDuty == Duty.ProjectAndServiceMgmt)
             {
                 var managerIds = UserService.GetAllManagerPersonId(Context);
                 if (TaskModel.AssignedResources.Any(x => !managerIds.Contains(x.Person.PersonId)))
@@ -1003,7 +1011,7 @@ namespace PPMTool.Pages
         private void UpdatePeopleDropdownSource(LoadDataArgs args)
         {
             var temp = people.AsQueryable();
-            if (taskModel.IsLeadershipTask)
+            if (taskModel.TaskDuty == Duty.ProjectAndServiceMgmt)
             {
                 var managerId = UserService.GetAllManagerPersonId(Context);
                 temp = temp.Where(x => managerId.Contains(x.PersonId));

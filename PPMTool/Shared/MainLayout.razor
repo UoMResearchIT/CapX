@@ -54,7 +54,7 @@ else
                         <img class="header-logo" src="@logo" alt="Organisation Logo" />
                     }
                 }
-                <RadzenText TextStyle="TextStyle.DisplayH5" TagName="TagName.H1" class="@($"header-footer-text {(Environment.IsDevelopment() ? "header-footer-text-dev" : "")}")">CapX - RSE Operational Management Tool</RadzenText>
+                <RadzenText TextStyle="TextStyle.DisplayH5" TagName="TagName.H1" class="@($"header-footer-text {(Environment.IsDevelopment() ? "header-footer-text-dev" : "")}")">@SettingsService.GetSetting(SettingType.ApplicationName)</RadzenText>
             </RadzenStack>
             @if (Environment.IsDevelopment())
             {
@@ -95,7 +95,7 @@ else
                                         <RadzenPanelMenuItem Path="managefinancialitems" Text="Manage Finance" Icon="payments" />
                                     </Authorized>
                                 </AuthorizeView>
-                                <AuthorizeView Roles="Superuser,Manager,Reader,Finance">
+                                <AuthorizeView Roles="Superuser,Manager,Finance">
                                     <Authorized Context="sub_context_3">
                                         <RadzenPanelMenuItem Path="estimatecost" Text="Estimate Project Cost" Icon="calculate" />
                                     </Authorized>
@@ -121,6 +121,7 @@ else
                     {
                         <RadzenPanelMenuItem Text="Capacity" Icon="lists" Expanded="true">
                             <RadzenPanelMenuItem Path="capacity" Text="Development" Icon="deployed_code_account" />
+                            <RadzenPanelMenuItem Path="baselinecapacity" Text="Core" Icon="person_heart" />
                             <AuthorizeView Roles="Superuser,Manager,Reader">
                                 <Authorized Context="sub_context_1">
                                     <RadzenPanelMenuItem Path="managementcapacity" Text="Management" Icon="supervisor_account" />

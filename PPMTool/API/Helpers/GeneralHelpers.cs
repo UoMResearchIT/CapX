@@ -93,6 +93,27 @@ public static class GeneralHelpers
     }
 
     /// <summary>
+    /// Whether the caller is a manager or super-user or matches the person ID given.
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="http"></param>
+    /// <param name="personId"></param>
+    /// <returns></returns>
+    internal static bool IsSuperUserOrManagerOrSelf(PPMToolContext context, HttpContext http, int personId)
+    {
+        var caller = GetCurrentUser(http);
+        var callerPersonId = caller.Person?.PersonId ?? 0;
+
+        // Self?
+        var isSelf = callerPersonId != 0 && callerPersonId == personId;
+
+        // Manager or SU?
+        var isSUorMan = IsSuperUserOrManager(caller);
+
+        return isSelf || isSUorMan;
+    }
+
+    /// <summary>
     /// Determines if a caller can view sensitive timesheet data for a specific person.
     /// Sensitive data can only be viewed by superusers, the person themselves, or their direct line manager.
     /// </summary>
@@ -166,7 +187,7 @@ public static class GeneralHelpers
 
     /// <summary>
     /// Formats a single object value for inclusion in a CSV field.
-    /// It handles nulls and wraps strings containing commas in double quotes.
+    /// It handles nulls and applies RFC 4180 escaping for commas, quotes, and line terminators.
     /// </summary>
     private static string FormatCsvField(object field)
     {
@@ -188,12 +209,16 @@ public static class GeneralHelpers
             return "";
         }
 
-        if (value.Contains(","))
+        // Escape double quotes anywhere in the string by doubling them
+        var escapedValue = value.Replace("\"", "\"\"");
+
+        // If the original value contains a comma, double quote, or line break, enclose the whole string in double quotes
+        if (value.IndexOfAny([',', '\"', '\r', '\n']) >= 0)
         {
-            // Wrap fields with commas in double quotes.
-            return $"\"{value}\"";
+            return $"\"{escapedValue}\"";
         }
-        return value;
+
+        return escapedValue;
     }
 
     /// <summary>

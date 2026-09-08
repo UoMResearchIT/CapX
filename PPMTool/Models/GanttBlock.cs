@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: apache-2.0
 
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 using PPMTool.Models.Interfaces;
 
 namespace PPMTool.Models
@@ -12,12 +13,12 @@ namespace PPMTool.Models
     /// </summary>
     public class GanttBlock : IChartItem
     {
-        public GanttBlock(SubTask t, string groupName, bool isFake = false, bool isLeadershipTask = false)
+        public GanttBlock(SubTask t, string groupName, bool isFake = false, Duty duty = Duty.ProjectWork)
         {
             Task = t;
             PredecessorGroupName = groupName;
             this.isFake = isFake;
-            this.IsLeadershipTask = isLeadershipTask;
+            this.BlockDuty = duty;
         }
 
         /// <summary>
@@ -32,20 +33,24 @@ namespace PPMTool.Models
 
         /// <summary>
         /// Whether this task is a fake task which exists in either the provisional or confirmed series so they both match in length.
-        /// This is to workaround a bug in Apex Charts where the sorting doesn't work if the series aren't all the same length
+        /// This is to workaround a bug in Apex Charts where the sorting doesn't work if the series aren't all the same length.
         /// </summary>
         private bool isFake;
 
         /// <summary>
-        /// Whether this task is a leaderhsip task and hence doesn't have a proper subtask object associated with it in the DB.
+        /// What duty this task this block aligns to based on the subtask that it relates to.
         /// </summary>
-        public bool IsLeadershipTask { get; private set; }
+        public Duty BlockDuty { get; private set; }
 
         public bool IsFake()
         {
             return isFake;
         }
 
+        /// <summary>
+        /// Whether any of the assigned resources are marked as provisional
+        /// </summary>
+        /// <returns></returns>
         public bool IsHatched()
         {
             return Task.AssignedResources.Any(x => x.IsProvisional);

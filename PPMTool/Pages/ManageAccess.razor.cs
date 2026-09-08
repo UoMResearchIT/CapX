@@ -22,6 +22,8 @@ namespace PPMTool.Pages
         private List<Person> people;
         private List<RoleType> roles;
 
+        protected override string GetStorageTag() => "access-control";
+
         protected override void OnInitialized()
         {
             base.OnInitialized();

@@ -174,6 +174,6 @@ SPDX-License-Identifier: apache-2.0
     {
         var days = ((ApiKeyExpirationOptions)value).GetAttribute<ExpirationInDaysAttribute>().Days;
         apiKey.ExpiresAt = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(days), DateTimeKind.Unspecified);
-        Debug.WriteLine($"Expiry set to {apiKey.ExpiresAt.ToString("R")} => {days} Days");
+        Debug.WriteLine($"** Expiry set to {apiKey.ExpiresAt.ToString("R")} => {days} Days");
     }
 }

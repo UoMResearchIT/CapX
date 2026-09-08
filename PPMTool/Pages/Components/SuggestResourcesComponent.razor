@@ -169,7 +169,7 @@ SPDX-License-Identifier: apache-2.0
 
         Task.Run(() =>
         {
-            Debug.WriteLine($"** Running {(TaskModel.IsLeadershipTask ? "leadership" : "non-leadership")} resource query {TaskModel.StartDate.ToShortDateString()} - {TaskModel.EndDate.ToShortDateString()} @ {TaskModel.UnmetDemand} with skills {string.Join('|', TaskModel?.SkillsRequired?.Select(x => x.Name) ?? new List<string>())}...");
+            Debug.WriteLine($"** Running {(TaskModel.TaskDuty == Duty.ProjectAndServiceMgmt ? "leadership" : "non-leadership")} resource query {TaskModel.StartDate.ToShortDateString()} - {TaskModel.EndDate.ToShortDateString()} @ {TaskModel.UnmetDemand} with skills {string.Join('|', TaskModel?.SkillsRequired?.Select(x => x.Name) ?? new List<string>())}...");
 
             // Re-initialise the results
             chartModel = null;
@@ -190,7 +190,7 @@ SPDX-License-Identifier: apache-2.0
             IEnumerable<Person> candidatePeople;
 
             // Different logic for leadership vs non-leadership tasks when getting candidate people
-            if (TaskModel.IsLeadershipTask)
+            if (TaskModel.TaskDuty == Duty.ProjectAndServiceMgmt)
             {
                 // For leadership tasks, find all people with PSM allowance
                 candidatePeople = PersonService.GetPeopleWithProjectManagementAllowanceDuringWindow(context, TaskModel.StartDate.Date, TaskModel.EndDate.Date);
@@ -231,7 +231,7 @@ SPDX-License-Identifier: apache-2.0
                 foreach (var project in validProjects)
                 {
                     // Filter tasks based on whether they are leadership or not
-                    foreach (var subTask in project.SubTasks.Where(x => TaskModel.IsLeadershipTask == x.IsLeadershipTask))
+                    foreach (var subTask in project.SubTasks.Where(x => TaskModel.TaskDuty == x.TaskDuty))
                     {
                         // Don't use the task model from the DB list but instead use the current model as it might not have been saved yet
                         if (subTask.SubTaskId == TaskModel.SubTaskId)
@@ -264,7 +264,7 @@ SPDX-License-Identifier: apache-2.0
                     assignments,
                     (assignments, currentDay) =>
                     {
-                        var available = TaskModel.IsLeadershipTask 
+                        var available = TaskModel.TaskDuty == Duty.ProjectAndServiceMgmt
                             ? person.GetProjectManagementCapacityOnDate(currentDay)
                             : person.GetProjectWorkAvailabilityOnDate(currentDay);
                         var assignmentsOnDay = assignments.Sum(assignment =>
@@ -304,7 +304,7 @@ SPDX-License-Identifier: apache-2.0
                     (assignments, value1, currentDay) =>
                     {
                         // Compute what the remaining demand would be if the person's provisional assignments were removed
-                        var available = TaskModel.IsLeadershipTask
+                        var available = TaskModel.TaskDuty == Duty.ProjectAndServiceMgmt
                             ? person.GetProjectManagementCapacityOnDate(currentDay)
                             : person.GetProjectWorkAvailabilityOnDate(currentDay);
                         var confirmedAssignmentsOnDay = assignments.Sum(assignment =>
@@ -323,9 +323,9 @@ SPDX-License-Identifier: apache-2.0
                     },
                     gapFillingFunction: (person, gapStart, gapEnd) =>
                     {
-                        // Logic varies for gaps based on whether this is leaderhsip task or not
+                        // Logic varies for gaps based on whether this is leadership task or not
                         Func<WorkloadModelChange, double> fteFunctionValue = 
-                            TaskModel.IsLeadershipTask ?
+                            TaskModel.TaskDuty == Duty.ProjectAndServiceMgmt ?
                             (wlm => Math.Round(wlm?.ProjectManagementFTE ?? 0, 3)) :
                             (wlm => Math.Round(wlm?.ProjectWorkFTE ?? 0, 3));
 

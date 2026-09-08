@@ -50,12 +50,16 @@ As CapX supports multiple DB providers, the migrations required to set up the da
 
 ```
 dotnet ef migrations add NameOfMigrationHere --context PPMToolContext --project PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj --startup-project PPMTool/PPMTool.csproj
+dotnet ef migrations add NameOfMigrationHere --context PPMToolContext --project PPMTool.Migrations.SqlServer/PPMTool.Migrations.SqlServer.csproj --startup-project PPMTool/PPMTool.csproj
+dotnet ef migrations add NameOfMigrationHere --context PPMToolContext --project PPMTool.Migrations.PostgreSql/PPMTool.Migrations.PostgreSql.csproj --startup-project PPMTool/PPMTool.csproj
 ```
 
 The database can be updated manually with the following command but the web app calls `context.Database.Migrate();` anyway so the database will be created/updated as soon as the app runs making manual update rarely necessary.
 
 ```
 dotnet ef database update --context PPMToolContext --project PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj --startup-project PPMTool/PPMTool.csproj
+dotnet ef database update --context PPMToolContext --project PPMTool.Migrations.SqlServer/PPMTool.Migrations.SqlServer.csproj --startup-project PPMTool/PPMTool.csproj
+dotnet ef database update --context PPMToolContext --project PPMTool.Migrations.PostgreSql/PPMTool.Migrations.PostgreSql.csproj --startup-project PPMTool/PPMTool.csproj
 ```
 
 > [!WARNING] 

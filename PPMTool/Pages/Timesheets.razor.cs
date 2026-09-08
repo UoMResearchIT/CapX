@@ -19,9 +19,6 @@ namespace PPMTool.Pages
         private TimesheetService TimesheetService { get; set; }
 
         [Inject]
-        private ISessionStorageService SessionStorage { get; set; }
-
-        [Inject]
         private PersonService PersonService { get; set; }
 
         private bool showAllMyTimesheets;
@@ -115,6 +112,8 @@ namespace PPMTool.Pages
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
+            await base.OnAfterRenderAsync(firstRender);
+
             if (!firstRender) return;
 
             // Load state from session storage and once finished, load the data

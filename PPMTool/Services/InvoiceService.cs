@@ -68,5 +68,44 @@ namespace PPMTool.Services
                 .Where(x => x.Project.ProjectId == projectId && x.Status != InvoiceStatus.Cancelled)
                 .RoundedSum(x => x.Value, 0);
         }
+
+        /// <summary>
+        /// Gets the funds requested from non-cancelled invoices in the given financial year.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="projectId"></param>
+        /// <param name="financialYear"></param>
+        /// <returns></returns>
+        public double GetFundsRequestedForFinancialYear(PPMToolContext context, int projectId, int financialYear)
+        {
+            var financialYearStart = new DateTime(financialYear, 8, 1);
+            var financialYearEnd = new DateTime(financialYear + 1, 7, 31);
+
+            return context.Invoices
+                .Where(x => x.Project.ProjectId == projectId
+                    && x.Status != InvoiceStatus.Cancelled
+                    && x.KeyDate.Date >= financialYearStart.Date
+                    && x.KeyDate.Date <= financialYearEnd.Date)
+                .RoundedSum(x => x.Value, 0);
+        }
+
+        /// <summary>
+        /// Whether there is at least one non-cancelled invoice for the project in the given financial year.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="projectId"></param>
+        /// <param name="financialYear"></param>
+        /// <returns></returns>
+        public bool HasInvoiceInFinancialYear(PPMToolContext context, int projectId, int financialYear)
+        {
+            var financialYearStart = new DateTime(financialYear, 8, 1);
+            var financialYearEnd = new DateTime(financialYear + 1, 7, 31);
+
+            return context.Invoices
+                .Any(x => x.Project.ProjectId == projectId
+                    && x.Status != InvoiceStatus.Cancelled
+                    && x.KeyDate.Date >= financialYearStart.Date
+                    && x.KeyDate.Date <= financialYearEnd.Date);
+        }
     }
 }

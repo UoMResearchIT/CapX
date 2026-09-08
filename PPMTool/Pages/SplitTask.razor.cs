@@ -179,7 +179,7 @@ namespace PPMTool.Pages
             }
             catch (Exception e)
             {
-                Debug.WriteLine($"Exception when splitting tasks! {e}");
+                Debug.WriteLine($"** Exception when splitting tasks! {e}");
             }
         }
 

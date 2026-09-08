@@ -258,5 +258,16 @@ namespace PPMTool.Services
                 })
                 .ToList();
         }
+
+        /// <summary>
+        /// Get a shallow load of a person based on their short name.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="shortName"></param>
+        /// <returns></returns>
+        public Person GetByShortName(PPMToolContext context, string shortName)
+        {
+            return context.People.FirstOrDefault(x => x.ShortName.ToLower() == shortName.ToLower());
+        }
     }
 }

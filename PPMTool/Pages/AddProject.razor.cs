@@ -52,10 +52,26 @@ namespace PPMTool.Pages
         [Inject]
         private SchoolService SchoolService { get; set; }
 
+        [Inject]
+        private HtmlContentSanitizerService HtmlContentSanitizer { get; set; }
+
         [Parameter]
         public int ProjectId { get; set; }
 
         private Project projectModel = new Project();
+
+        /// <summary>
+        /// Intermediate property to bind the editor to so we can sanitise before updating the actual model
+        /// </summary>
+        private string ProjectDescriptionValue
+        {
+            get => projectModel?.Description ?? string.Empty;
+            set
+            {
+                if (projectModel == null) return;
+                projectModel.Description = HtmlContentSanitizer.Sanitize(value);
+            }
+        }
         private bool gotoDetails = false;
         private bool discardChanges = true;
         private bool showOrgUnitsRequiredWarning = false;
@@ -78,6 +94,7 @@ namespace PPMTool.Pages
 
             if (!firstRender) return;
 
+            // Edit project
             if (ProjectId > 0)
             {
                 projectModel = ProjectService.GetById(Context, ProjectId);
@@ -88,8 +105,8 @@ namespace PPMTool.Pages
                 // Get funds received
                 fundsReceived = PaymentService.GetFundsReceived(Context, projectModel?.ProjectId ?? 0);
 
-                // If editing a project, only allow the project manager to edit it or a superuser
-                EditAuthorised = ActiveUserRoleType == RoleType.Superuser || projectModel.ProjectManager.PersonId == ActiveUser?.Person?.PersonId;
+                // If editing a project, there is specific logic to follow
+                EditAuthorised = projectModel?.ActiveUserHasEditAccessToProject(ActiveUser) ?? false;
 
                 // Populate school list
                 schools = SchoolService.GetSchoolsForFaculty(Context, projectModel.School.Faculty.FacultyId);
@@ -97,15 +114,19 @@ namespace PPMTool.Pages
                 // Populate funding source list
                 availableFundingSources = FundingSourceService.GetFundingSources(Context, ProjectId);
             }
+
+            // New project
             else
             {
+                // Set default day rate value
                 projectModel.DayRate = GetSetting(SettingType.DayRateDefault, 0f);
 
                 // Auto generate the RTP number based on the highest in the DB
                 projectModel.RTP = ProjectService.GetAll(Context).Select(x => x.RTP).DefaultIfEmpty(0).Max() + 1;
 
-                // Set the active user as the PM by default
+                // Set the active user as the PM and request owner by default
                 projectModel.ProjectManager = ActiveUser?.Person;
+                projectModel.RequestOwnerId = ActiveUser?.Person?.PersonId ?? 0;
 
                 // Specific check for when Finance feature has not been enabled and a new
                 // project is being added, as Faculties/Schools are required
@@ -121,8 +142,18 @@ namespace PPMTool.Pages
 
             // Add default buttons with handlers
             SetDefaultActionBar(
-                () => { gotoDetails = true; discardChanges = false; HandleSubmit(); },
-                () => { gotoDetails = ProjectId > 0; discardChanges = true; HandleSubmit(); }
+                async () =>
+                {
+                    gotoDetails = true;
+                    discardChanges = false;
+                    await HandleSubmitAsync();
+                },
+                async () =>
+                {
+                    gotoDetails = ProjectId > 0;
+                    discardChanges = true;
+                    await HandleSubmitAsync();
+                }
             );
 
             // Initially load data
@@ -130,14 +161,23 @@ namespace PPMTool.Pages
             innateActivities = innateActivityQuery.ToList();
             faculties = FacultyService.GetAllActive(Context).ToList();
             statuses = Enum.GetValues<ProjectStatus>().ToList();
+            costModels = DisplayOrderHelper.GetOrderListOfCostModels();
+
+            // Get all the people in the system and order by name for the dropdowns
             var people = PersonService.GetAll(Context).OrderBy(x => x.Name).ToList();
+
+            // Get list of managers and superusers who are also team members (i.e. have a person record associated)
             var users = UserService.GetAll(Context)
                 .Where(x =>
                     (x.RoleType == RoleType.Manager || x.RoleType == RoleType.Superuser)
                     && x.Person != null
                 );
-            projectManagers = people.Where(x => users.Any(y => y.Person.PersonId == x.PersonId)).ToList();
-            costModels = DisplayOrderHelper.GetOrderListOfCostModels();
+
+            // Just set the project managers to the subset of users above but who haven't left yet
+            projectManagers = people
+                .Where(x => users.Any(y => y.Person.PersonId == x.PersonId))
+                .Where(x => x.EndDate == null || x.EndDate >= DateTime.Today)
+                .ToList();
 
             // Create edit context and message store
             editContext = new EditContext(projectModel);
@@ -199,19 +239,43 @@ namespace PPMTool.Pages
         /// <param name="value"></param>
         private void OnProjectManagerChosen(object value)
         {
+            // Convert the value to the person chosen
             Person pm = value as Person;
 
-            // If the PM is not null and is not the current user then warn of loss of access if not superuser
-            if (pm != null && pm.PersonId != ActiveUser?.Person?.PersonId && ActiveUser.RoleType != RoleType.Superuser)
+            // Present warning dialog if necessary
+            PresentDialogForAccessLoss(pm?.PersonId ?? 0, projectModel.RequestOwnerId);
+        }
+
+        /// <summary>
+        /// Callback after request owner is chosen in the dropdown
+        /// </summary>
+        /// <param name="value"></param>
+        private void OnRequestOwnerChosen(object value)
+        {
+            // Convert the value to the person chosen
+            Person requestOwner = value as Person;
+
+            PresentDialogForAccessLoss(projectModel.ProjectManager?.PersonId ?? 0, requestOwner?.PersonId ?? 0);
+        }
+
+        /// <summary>
+        /// Method to present a dialog to the user on access loss if necessary.
+        /// </summary>
+        /// <param name="projectManagerId"></param>
+        /// <param name="requestOwnerId"></param>
+        private void PresentDialogForAccessLoss(int projectManagerId, int requestOwnerId)
+        {
+            // Check edit access
+            if (!projectModel.ActiveUserHasEditAccessToProject(ActiveUser, projectManagerId, requestOwnerId))
             {
-                DialogService.Alert("By changing the project manager of this project to someone other than you, you will lose edit access to the project on saving.", "Warning!", new AlertOptions() { OkButtonText = "OK" });
+                DialogService.Alert("Based on the project manager, request owner, project status and your role, you will lose edit access to the project if you save your changes.", "Warning!", new AlertOptions() { OkButtonText = "OK" });
             }
         }
 
         /// <summary>
         /// Fired when the save button is clicked
         /// </summary>
-        private void HandleSubmit()
+        private async Task HandleSubmitAsync()
         {
             // Clear the action bar messages
             ClearErrorMessage();
@@ -230,6 +294,33 @@ namespace PPMTool.Pages
                     {
                         UpdateErrorOnActionBarFromContextMessageStore();
                         return;
+                    }
+
+                    // Get new and old status
+                    var oldStatus = ProjectService.GetOldStatus(Context, projectModel);
+                    var newStatus = projectModel.ProjectStatus;
+
+                    // If the status is changing and old or new status is NewRequest then there are timestampas involved so we need
+                    // be sure that the user is aware of this and wants to continue
+                    var confirmed = true;
+                    if (oldStatus != newStatus && oldStatus == ProjectStatus.NewRequest)
+                    {
+                        confirmed = await DialogService.Confirm(
+                            $"You are about to change the status of {ProjectService.GetFullName(projectModel)} such that it will end the request phase. " +
+                            $"This will stop the request duration clock. Are you sure you want to continue?",
+                            "Continue?",
+                            new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" }
+                        ) ?? false;
+
+                        // If confirmed then set the timestamp for request completed
+                        if (confirmed)
+                        {
+                            projectModel.RequestCompletedDate = DateTime.Today;
+                        }
+                        else
+                        {
+                            return;
+                        }
                     }
 
                     // Update the project summary values
@@ -257,15 +348,16 @@ namespace PPMTool.Pages
                             projectModel.Followers.Clear();
                         }
 
-                        // Set the actuals last updated if changed status to active from anything other than paused
-                        var oldStatus = ProjectService.GetOldStatus(Context, projectModel);
+                        // Check if the status is changing
                         if (oldStatus != projectModel.ProjectStatus)
                         {
                             LogInformation($"Project status change: {oldStatus} -> {projectModel.ProjectStatus}");
-                        }
-                        if (oldStatus != ProjectStatus.Paused && projectModel.ProjectStatus == ProjectStatus.Active)
-                        {
-                            projectModel.ActualsLastUpdated = DateTime.Now.ToString("R");
+
+                            // Set the actuals last updated if changed status to active from anything other than paused
+                            if (oldStatus != ProjectStatus.Paused && projectModel.ProjectStatus == ProjectStatus.Active)
+                            {
+                                projectModel.ActualsLastUpdated = DateTime.Now.ToString("R");
+                            }
                         }
 
                         LogInformation($"Saving project {projectModel?.GetSensibleObjectName()}...");

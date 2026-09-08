@@ -22,8 +22,10 @@ using PPMTool.API.Filters;
 using PPMTool.API.Services;
 using PPMTool.Data;
 using PPMTool.Data.Context;
+using PPMTool.Data.Enums;
 using PPMTool.Helpers;
 using PPMTool.Services;
+using PPMTool.Services.StatusEvaluators;
 using Radzen;
 using EnvironmentHelper = PPMTool.Helpers.EnvironmentHelper;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -82,10 +84,14 @@ builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<FundingSourceService>();
 builder.Services.AddScoped<FacultyService>();
 builder.Services.AddScoped<SchoolService>();
+builder.Services.AddScoped<HtmlContentSanitizerService>();
 builder.Services.AddScoped<CssVariableService>();
 builder.Services.AddSingleton<APIAuthService>();
 builder.Services.AddSingleton<FeatureService>();
 builder.Services.AddSingleton<SettingsService>();
+builder.Services.AddScoped<PersonStatusEvaluator>();
+builder.Services.AddScoped<SubTaskStatusEvaluator>();
+builder.Services.AddScoped<ProjectStatusEvaluator>();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -309,13 +315,18 @@ app.MapBlazorHub();
 
 // Map API endpoints
 var api = app.MapGroup("/api");
-api.MapGet($"/skills/getAll", Skills.GetAllSkillTagsAsync);
-api.MapGet($"/skills/getAllForPerson", Skills.GetAllSkillsTagsForPersonAsync);
-api.MapGet($"/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
-api.MapGet($"/timesheets/getEntries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
-api.MapGet($"/timesheets/getByCodeTask", Timesheets.GetTimesheetBookingsByCodeAndTask);
-api.MapGet($"/wlm/getAnalysis", WorkloadModelAnalysis.GetWorkloadAnalysisData);
-api.MapGet($"/leavebookings/getForSelfAndStaff", LeaveBookings.GetStaffBookingsForYearAsync);
+api.MapGet("/skills/getAll", Skills.GetAllSkillTagsAsync);
+api.MapGet("/skills/getAllForPerson", Skills.GetAllSkillsTagsForPersonAsync);
+api.MapGet("/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
+api.MapGet("/timesheets/getEntries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
+api.MapGet("/timesheets/getByCodeTask", Timesheets.GetTimesheetBookingsByCodeAndTask);
+api.MapGet("/wlm/getAnalysis", WorkloadModelAnalysis.GetWorkloadAnalysisData);
+api.MapGet("/leavebookings/getForSelfAndStaff", LeaveBookings.GetStaffBookingsForYearAsync);
+api.MapGet("/assignments/getAssignments", Assignments.GetAssignmentDataAsync);
+api.MapGet("/projects/getAll", Projects.GetAllProjectsAsync);
+api.MapGet("/projects/getById", Projects.GetProjectByIdAsync);
+api.MapGet("/people/getAll", People.GetAllPeopleAsync);
+api.MapGet("/people/getById", People.GetPersonByIdAsync);
 
 // API middleware -- conditional on /api routes only
 app.UseWhen(
@@ -383,6 +394,7 @@ using (var context = dbContextFactory.CreateDbContext())
         SeedHelper.SeedPeople(scope.ServiceProvider);
         SeedHelper.SeedAbsences(scope.ServiceProvider);
         SeedHelper.SeedUsers(scope.ServiceProvider);
+        SeedHelper.SeedApiKeys(scope.ServiceProvider);
         SeedHelper.SeedWorkloadModelChanges(scope.ServiceProvider);
         SeedHelper.SeedSkillTags(scope.ServiceProvider);
         SeedHelper.SeedOwnedSkillsForPeople(scope.ServiceProvider);
@@ -408,8 +420,11 @@ using (var context = dbContextFactory.CreateDbContext())
     await featureService.IntialiseServiceCacheAsync(context);
 
     // Update the project meta data for all projects in the database
-    var projectService = scope.ServiceProvider.GetRequiredService<ProjectService>();
-    projectService.UpdateAllProjectMetaData(context);
+    if (featureService.IsFeatureEnabled(FeatureType.ProjectFinance))
+    {
+        var projectService = scope.ServiceProvider.GetRequiredService<ProjectService>();
+        projectService.UpdateAllProjectMetaData(context);
+    }
 }
 
 // Clean local application file path

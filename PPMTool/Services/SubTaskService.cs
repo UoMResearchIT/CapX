@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Services
 {
@@ -115,7 +116,7 @@ namespace PPMTool.Services
         internal bool IsUniqueTaskNameInProject(Project projectModel, SubTask taskModel)
         {
             // Leadership tasks have a fixed name
-            if (taskModel.IsLeadershipTask) return true;
+            if (taskModel.TaskDuty == Duty.ProjectAndServiceMgmt) return true;
 
             // Check other tasks
             var subSet = projectModel.SubTasks.Where(x => x.SubTaskId != taskModel.SubTaskId);
@@ -200,6 +201,32 @@ namespace PPMTool.Services
                 .FirstOrDefault(x => x.ProjectId == projectId)
                 .SubTasks?
                 .RoundedSum(x => x.ActualWorkHours) ?? 0;
+        }
+
+        /// <summary>
+        /// Filters the given list of people to just those with assignments that match the duties given
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="cachedPeople"></param>
+        /// <param name="duties"></param>
+        /// <returns></returns>
+        internal IEnumerable<Person> GetPeopleWithAssignmentsWithDuty(PPMToolContext context, IEnumerable<Person> cachedPeople, Duty[] duties)
+        {
+            // Find all subtasks that belong to that duty
+            var subtasks = context.SubTasks
+                .Include(x => x.AssignedResources)
+                    .ThenInclude(x => x.Person)
+                .Where(x => duties.Contains(x.TaskDuty))
+                .ToList();
+
+            // Get the resources people on them
+            var people = subtasks
+                .SelectMany(st => st.AssignedResources)
+                .Select(ar => ar.Person.PersonId)
+                .Distinct();
+
+            // Filter the list
+            return cachedPeople.Where(p => people.Contains(p.PersonId));
         }
     }
 }

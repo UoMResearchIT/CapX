@@ -9,87 +9,89 @@ SPDX-License-Identifier: apache-2.0
 @using PPMTool.Data
 @using PPMTool.Data.Helpers
 @using PPMTool.Data.Enums
-@using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
-@using System.Diagnostics
 @using System.ComponentModel.DataAnnotations
-@using static PPMTool.Data.Entities.Project
 <PageTitle>Estimate Cost - CapX</PageTitle>
 
+<FeatureCheckComponent Feature="FeatureType.ProjectFinance">
 
-<div class="container">
-    <div class="row">
-        <div class="col-auto">
-            <h1>Estimate Project Cost</h1>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col">
-            <p>Tool for estimating the cost of a project based on the established costing approach.</p>
-        </div>
-    </div>
-    <hr />
-    @if (Loading)
-    {
-        <LoadingComponent />
-    }
-    else if (!isUsable)
-    {
-        <StatusMessageComponent Message="@(new StatusMessage("There are no financial references available in the system. You must add at least one before this page can be used.", StatusMessage.MessageType.Error))" />
-    }
-    else
-    {
-        <RadzenCard>
-            <h2>Project Details</h2>
-            <div class="row">
-                <div class="col">
-                    <RadzenLabel class="radzen-form-label"
-                                 Text="Cost Model"
-                                 Component="CostModel" /><br />
-                    <RadzenDropDown class="radzen-dropdown"
-                                    @bind-Value="CostModel"
-                                    Data="@DisplayOrderHelper.GetOrderListOfCostModels()"
-                                    Name="CostModel">
-                        <Template Context="cost">
-                            @($"{((CostModel)cost).GetAttribute<DisplayAttribute>().Name} : {((CostModel)cost).GetDescription()}")
-                        </Template>
-                    </RadzenDropDown>
-                </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-auto">
+                <h1>Estimate Project Cost</h1>
             </div>
-            <HintComponent Message="This section represents the summary for the project. The values are read-only as they are driven by the individual resource details below." />
-            <TaskConfigurationComponent Context=Context
-                                        ReadOnly="true"
-                                        ShowSummaryOnly="true"
-                                        Model="summaryModel" />
-            <hr />
-            <div class="row">
-                <div class="col">
-                    <h2>Resources</h2>
-                </div>
-                <div class="col-auto">
-                    <RadzenButton Text="Add" Icon="add" Click="@AddResource" />
-                </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <p>Tool for estimating the cost of a project based on the established costing approach.</p>
             </div>
-            <HintComponent Message="If your chosen cost model includes leadership then a leadership resource is displayed. It cannot be deleted." />
-            @foreach (var resource in models)
-            {
-                if (ShouldIncludeResource(resource))
-                {
-                    <div class="row">
-                        <div class="col">
-                            <h3>@resource.Key</h3>
-                        </div>
-                        <div class="col-auto">
-                            <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteResource(resource.Key))" Disabled="@(resource.Key == "Leadership")" />
-                        </div>
+        </div>
+        <hr />
+        @if (Loading)
+        {
+            <LoadingComponent />
+        }
+        else if (!isUsable)
+        {
+            <StatusMessageComponent Message="@(new StatusMessage("There are no financial references available in the system. You must add at least one before this page can be used.", StatusMessage.MessageType.Error))" />
+        }
+        else
+        {
+            <RadzenCard>
+                <h2>Project Details</h2>
+                <div class="row">
+                    <div class="col">
+                        <RadzenLabel class="radzen-form-label"
+                                     Text="Cost Model"
+                                     Component="CostModel" /><br />
+                        <RadzenDropDown class="radzen-dropdown"
+                                        @bind-Value="CostModel"
+                                        Data="@DisplayOrderHelper.GetOrderListOfCostModels()"
+                                        Name="CostModel">
+                            <Template Context="cost">
+                                @($"{((CostModel)cost).GetAttribute<DisplayAttribute>().Name} : {((CostModel)cost).GetDescription()}")
+                            </Template>
+                        </RadzenDropDown>
                     </div>
-                    <TaskConfigurationComponent Context=Context
-                                                Model="resource.Value"
-                                                ConfigModelUpdated="UpdateSummaryComponent"
-                                                IsLeadershipComponent="@(resource.Key == "Leadership")"/>
-                    <hr />
+                </div>
+                <HintComponent Message="This section represents the summary for the project. The values are read-only as they are driven by the individual resource details below." />
+                <TaskConfigurationComponent Context=Context
+                                            ReadOnly="true"
+                                            ShowSummaryOnly="true"
+                                            Model="summaryModel" />
+                <hr />
+                <div class="row">
+                    <div class="col">
+                        <h2>Resources</h2>
+                    </div>
+                    <div class="col-auto">
+                        <RadzenButton Text="Add" Icon="add" Click="@AddResource" />
+                    </div>
+                </div>
+                <HintComponent Message="If your chosen cost model includes leadership then a leadership resource is displayed. It cannot be deleted." />
+                @foreach (var resource in models)
+                {
+                    // Allow resources to be deleted if there are more than a single one (non leadership)
+                    bool CanDeleteResource = models.Where(x => x.Key != "Leadership").Count() > 1;
+
+                    if (ShouldIncludeResource(resource) )
+                    {
+                        <div class="row">
+                            <div class="col">
+                                <h3>@resource.Key</h3>
+                            </div>
+                            <div class="col-auto">
+                                <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteResource(resource.Key))" Disabled="@(resource.Key == "Leadership" || !CanDeleteResource)" />
+                            </div>
+                        </div>
+                        <TaskConfigurationComponent Context=Context
+                                                    Model="resource.Value"
+                                                    ConfigModelUpdated="UpdateSummaryComponent"
+                                                    IsLeadershipComponent="@(resource.Key == "Leadership")"/>
+                        <hr />
+                    }
                 }
-            }
-        </RadzenCard>
-    }
-</div>
+            </RadzenCard>
+        }
+    </div>
+</FeatureCheckComponent>

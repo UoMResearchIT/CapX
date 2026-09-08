@@ -7,7 +7,6 @@ SPDX-License-Identifier: apache-2.0
 @page "/projects/addproject/{ProjectId:int}"
 @inherits BasePage
 @using PPMTool.Data.Enums
-@using PPMTool.Data
 @using PPMTool.Data.Entities
 @using PPMTool.Pages.Components
 @using System.ComponentModel.DataAnnotations
@@ -53,9 +52,13 @@ SPDX-License-Identifier: apache-2.0
                 <RadzenCard>
                     <EditForm EditContext="editContext">
                         <div class="row">
-                            <div class="col-8">
+                            <div class="col-6">
                                 <RadzenLabel class="radzen-form-label" Text="Project Name" Component="Name" /><br />
                                 <RadzenTextBox class="radzen-text-box" Name="Name" @bind-Value="projectModel.Name" />
+                            </div>
+                            <div class="col-2">
+                                <RadzenLabel class="radzen-form-label" Text="RTP Number" /><br />
+                                <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Step="1" @bind-Value="projectModel.RTP" />
                             </div>
                             <div class="col-4">
                                 <RadzenLabel class="radzen-form-label" Text="Project Status" /><br />
@@ -68,17 +71,17 @@ SPDX-License-Identifier: apache-2.0
                         </div>
                         <div class="row">
                             <div class="col-4">
-                                <RadzenLabel class="radzen-form-label" Text="RTP Number" /><br />
-                                <RadzenNumeric class="radzen-numeric" TValue="int" Min="0" Step="1" @bind-Value="projectModel.RTP" />
+                                <RadzenLabel class="radzen-form-label" Text="Principal Investigator" /><br />
+                                <RadzenTextBox class="radzen-text-box" @bind-Value="projectModel.PI" />
                             </div>
                             <div class="col-4">
                                 <RadzenLabel class="radzen-form-label" Text="Faculty" /><br />
                                 <RadzenDropDown class="radzen-dropdown"
-                                TValue="Faculty"
-                                Data="@faculties"
-                                Change="OnFacultyChosen"
-                                Placeholder="Select a faculty"
-                                Value="@chosenFaculty">
+                                                TValue="Faculty"
+                                                Data="@faculties"
+                                                Change="OnFacultyChosen"
+                                                Placeholder="Select a faculty"
+                                                Value="@chosenFaculty">
                                     <Template Context="x">
                                         @x.GetSensibleObjectName()
                                     </Template>
@@ -87,10 +90,10 @@ SPDX-License-Identifier: apache-2.0
                             <div class="col-4">
                                 <RadzenLabel class="radzen-form-label" Text="School" /><br />
                                 <RadzenDropDown class="radzen-dropdown"
-                                TValue="School"
-                                @bind-Value="projectModel.School"
-                                Data="@schools"
-                                Placeholder="Select a school">
+                                                TValue="School"
+                                                @bind-Value="projectModel.School"
+                                                Data="@schools"
+                                                Placeholder="Select a school">
                                     <Template Context="x">
                                         @x.GetSensibleObjectName()
                                     </Template>
@@ -99,12 +102,22 @@ SPDX-License-Identifier: apache-2.0
                         </div>
                         <div class="row">
                             <div class="col-4">
-                                <RadzenLabel class="radzen-form-label" Text="Principal Investigator" /><br />
-                                <RadzenTextBox class="radzen-text-box" @bind-Value="projectModel.PI" />
+                                <RadzenLabel class="radzen-form-label" Text="Request Owner" />
+                                <RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="This is the person who is handling the scoping activity. It can be different to the project manager who owners the delivery of the project. This can only be changed while the project is still considered a new request." /><br />
+                                <RadzenDropDown class="radzen-dropdown"
+                                                @bind-Value="projectModel.RequestOwnerId"
+                                                TextProperty="Name"
+                                                ValueProperty="PersonId"
+                                                Data="@projectManagers"
+                                                Change="OnRequestOwnerChosen"
+                                                Disabled="@(projectModel.ProjectStatus != ProjectStatus.NewRequest)" />
                             </div>
                             <div class="col-4">
                                 <RadzenLabel class="radzen-form-label" Text="Project Manager" /><br />
-                                <RadzenDropDown class="radzen-dropdown"  @bind-Value="projectModel.ProjectManager" Data="@projectManagers" Change="OnProjectManagerChosen">
+                                <RadzenDropDown class="radzen-dropdown"
+                                                @bind-Value="projectModel.ProjectManager"
+                                                Data="@projectManagers"
+                                                Change="OnProjectManagerChosen">
                                     <Template Context="person">
                                         @person.Name
                                     </Template>
@@ -114,9 +127,14 @@ SPDX-License-Identifier: apache-2.0
                                 @if (FeatureService.IsFeatureEnabled(FeatureType.Timesheets))
                                 {
                                     <RadzenLabel class="radzen-form-label" Text="Timesheet Activity" /><br />
-                                    <RadzenDropDown class="radzen-dropdown" @bind-Value="projectModel.InnateActivity" Data="@innateActivities" 
-                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true" AllowClear="true"
-                                    LoadData="@LoadInnateDropdownData">
+                                    <RadzenDropDown class="radzen-dropdown"
+                                                    @bind-Value="projectModel.InnateActivity"
+                                                    Data="@innateActivities"
+                                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                    FilterOperator="StringFilterOperator.Contains"
+                                                    AllowFiltering="true"
+                                                    AllowClear="true"
+                                                    LoadData="@LoadInnateDropdownData">
                                         <Template Context="activity">
                                             @activity.GetCodeAsString()
                                         </Template>
@@ -128,7 +146,7 @@ SPDX-License-Identifier: apache-2.0
                             <div class="col">
                                 <RadzenLabel class="radzen-form-label" Text="Description" />
                                 <HintComponent Message="Remember that this description is visible to the whole department. Do not put anything in this field that you would not be happy to share with the wider institution." /><br/>
-                                <RadzenHtmlEditor @bind-Value="@projectModel.Description" Style="min-height: 10rem" Placeholder="Note that this description will be displayed on the project bullentin board and will be visible to all users!" />
+                                <RadzenHtmlEditor @bind-Value="@ProjectDescriptionValue" Style="min-height: 10rem" Placeholder="Note that this description will be displayed on the project bullentin board and will be visible to all users!" />
                             </div>
                         </div>
                         <div class="row">
@@ -137,7 +155,7 @@ SPDX-License-Identifier: apache-2.0
                                 <RadzenTextBox class="radzen-text-box" @bind-Value="projectModel.RequestDocLink" Placeholder="https://..."  />
                             </div>
                             <div class="col-6">
-                                <RadzenLabel class="radzen-form-label" Text="Link to Scrum Project" /><br />
+                                <RadzenLabel class="radzen-form-label" Text="@($"Link to {GetSetting(SettingType.ProjectBoardName)}")" /><br />
                                 <RadzenTextBox class="radzen-text-box" @bind-Value="projectModel.ScrumProjectLink" Placeholder="https://..." />
                             </div>
                         </div>

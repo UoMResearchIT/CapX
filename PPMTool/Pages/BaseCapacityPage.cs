@@ -4,13 +4,11 @@
 
 using System.Diagnostics;
 using ApexCharts;
-using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
-using PPMTool.Enums;
 using PPMTool.Helpers;
 using PPMTool.Models;
 using PPMTool.Services;
@@ -38,14 +36,22 @@ namespace PPMTool.Pages
         protected ProjectService ProjectService { get; set; }
 
         [Inject]
-        protected IJSRuntime JSRuntime { get; set; }
+        protected SubTaskService SubTaskService { get; set; }
 
         [Inject]
-        protected ISessionStorageService SessionStorage { get; set; }
+        protected IJSRuntime JSRuntime { get; set; }
 
         [Parameter]
         [SupplyParameterFromQuery(Name = "filterid")]
         public int? FilterPersonId { get; set; }
+
+        protected bool IsDeveloper() => ActiveUserRoleType == RoleType.Developer;
+
+        /// <summary>
+        /// Whether the user can change the dropdown selections and click the generate button to update the chart.
+        /// </summary>
+        /// <returns></returns>
+        protected bool CanCustomise() => EditAuthorised || ActiveUserRoleType == RoleType.Reader;
 
         protected CancellationTokenSource configureChartTaskCancellationTokenSource = null;
         protected Task configureChartTask = null;
@@ -59,6 +65,7 @@ namespace PPMTool.Pages
         protected bool includeUnFunded = true;
         protected bool includeLeavers = false;
         protected bool includeFinished = false;
+        protected bool chartNeedsRegeneration = false;
 
         /// <summary>
         /// Change callback for unfunded switch
@@ -66,7 +73,8 @@ namespace PPMTool.Pages
         protected async Task UnFundedSwitchChangedAsync(bool value)
         {
             includeUnFunded = value;
-            await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-unfunded", value);
+            chartNeedsRegeneration = true;
+            await SessionStorage.SetItemAsync<bool?>($"{GetStorageTag()}-include-unfunded", value);
         }
 
         /// <summary>
@@ -75,7 +83,8 @@ namespace PPMTool.Pages
         protected async Task LeaversSwitchChangedAsync(bool value)
         {
             includeLeavers = value;
-            await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-leavers", value);
+            chartNeedsRegeneration = true;
+            await SessionStorage.SetItemAsync<bool?>($"{GetStorageTag()}-include-leavers", value);
             await ReloadDropDownSourcesAsync();
         }
 
@@ -85,13 +94,14 @@ namespace PPMTool.Pages
         protected async Task FinishedSwitchChangedAsync(bool value)
         {
             includeFinished = value;
-            await SessionStorage.SetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished", value);
+            chartNeedsRegeneration = true;
+            await SessionStorage.SetItemAsync<bool?>($"{GetStorageTag()}-include-finished", value);
         }
 
         /// <summary>
         /// Save the chosen people to session storage
         /// </summary>
-        protected async Task SavePeopleStateAsync() => await SessionStorage.SetItemAsync($"{GetSessionStorageTag()}-chosen-people", chosenPeople);
+        protected async Task SavePeopleStateAsync() => await SessionStorage.SetItemAsync($"{GetStorageTag()}-chosen-people", chosenPeople);
 
         /// <summary>
         /// Fire and forget when selection of the multi-select people down changes
@@ -101,6 +111,7 @@ namespace PPMTool.Pages
         {
             var items = selectedOptions as IEnumerable<string>;
             Debug.WriteLine($"** Selected People: {(items != null ? string.Join('|', items) : "")}");
+            chartNeedsRegeneration = true;
 
             // Save the new state
             await SavePeopleStateAsync();
@@ -129,6 +140,7 @@ namespace PPMTool.Pages
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <param name="person"></param>
+        /// <param name="totalAssignmentsByDay"></param>
         /// <param name="isTotalRow"></param>
         /// <returns></returns>
         protected abstract IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
@@ -137,6 +149,7 @@ namespace PPMTool.Pages
             DateTime startDate,
             DateTime endDate,
             Person person,
+            IReadOnlyDictionary<DateTime, double> totalAssignmentsByDay,
             bool isTotalRow = false
         );
 
@@ -189,7 +202,13 @@ namespace PPMTool.Pages
             // Add the project unconfirmed warning to the tooltip if project is unconfirmed
             if (assignmentsWithinBlock.Any(x => x.ProjectStatus.IsUnconfirmed()))
             {
-                messages += "<h3 class=\"me-1 text-warning\"> &#x26A0; [PROJECT UNCONFIRMED]</h3>";
+                messages += "<h3 class=\"mt-1 text-warning\"> &#x26A0; [PROJECT UNCONFIRMED]</h3>";
+            }
+
+            // Add the provisional resource warning to the tooltip if chosen person is provisional on the project
+            if (assignmentsWithinBlock.Any(x => x?.SubTask.AssignedResources.Any(x => x.Person.PersonId == personOfInterest.PersonId && x.IsProvisional) ?? false))
+            {
+                messages += "<h3 class=\"mt-1 text-warning\"> &#x26A0; [PROVISIONAL ASSIGNMENT]</h3>";
             }
 
             return messages;
@@ -201,12 +220,12 @@ namespace PPMTool.Pages
         /// <param name="projects"></param>
         /// <param name="people"></param>
         /// <param name="isPersonMode"></param>
-        /// <param name="taskSet">What subset of the tasks should be used to populate the dictionary</param>
+        /// <param name="dutySet">What subset of the tasks should be used to populate the dictionary based on the duty associated with the demand</param>
         protected virtual void PopulateGroupedAssignmentsForPeople(
             IEnumerable<Project> projects,
             IEnumerable<Person> people,
             bool isPersonMode,
-            TaskSubset taskSet = TaskSubset.TechOnly)
+            Duty[] dutySet = null)
         {
             // Reset existing dictionary
             groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
@@ -226,7 +245,7 @@ namespace PPMTool.Pages
                     var assignments = new List<Assignment>();
                     foreach (var project in projects)
                     {
-                        var subTasks = GetFilteredSubTasks(project, person, taskSet);
+                        var subTasks = GetFilteredSubTasks(project, person, dutySet);
 
                         // Build assignments
                         foreach (var subTask in subTasks)
@@ -248,7 +267,7 @@ namespace PPMTool.Pages
                 foreach (var project in projects)
                 {
                     var assignments = new List<Assignment>();
-                    var subTasks = GetFilteredSubTasks(project, person, taskSet);
+                    var subTasks = GetFilteredSubTasks(project, person, dutySet);
 
                     foreach (var subTask in subTasks)
                     {
@@ -266,9 +285,9 @@ namespace PPMTool.Pages
         /// </summary>
         /// <param name="project"></param>
         /// <param name="person"></param>
-        /// <param name="taskSet"></param>
+        /// <param name="dutySet"></param>
         /// <returns></returns>
-        private IEnumerable<SubTask> GetFilteredSubTasks(Project project, Person person, TaskSubset taskSet)
+        private IEnumerable<SubTask> GetFilteredSubTasks(Project project, Person person, Duty[] dutySet)
         {
             // Filter list
             var subTasks = project.SubTasks
@@ -276,14 +295,10 @@ namespace PPMTool.Pages
                     .Any(z => z.Person.PersonId == person.PersonId)
                 );
 
-            // Filter again
-            if (taskSet == TaskSubset.TechOnly)
+            // Filter again if there is a subset indicated
+            if (dutySet is not null && dutySet.Any())
             {
-                subTasks = subTasks.Where(x => !x.IsLeadershipTask);
-            }
-            else if (taskSet == TaskSubset.LeadershipOnly)
-            {
-                subTasks = subTasks.Where(x => x.IsLeadershipTask);
+                subTasks = subTasks.Where(x => dutySet.Contains(x.TaskDuty));
             }
             return subTasks;
         }
@@ -304,6 +319,7 @@ namespace PPMTool.Pages
             Func<bool> projectModeCondition = null)
         {
             Debug.WriteLine("** Configuring Chart Source...");
+            chartNeedsRegeneration = false;
             Loading = true;
             StateHasChanged();
             await Task.Yield();
@@ -400,6 +416,18 @@ namespace PPMTool.Pages
 
                             // Build chart source from the grouped data
                             Debug.WriteLine($"** {person.Name} has {groupedAssignments.Count} projects");
+
+                            // Flatten once so all rows can reference the same total assignment data per day
+                            var allProjectAssignments = groupedAssignments.SelectMany(x => x.Value).ToList();
+                            var totalAssignmentsByDay = new Dictionary<DateTime, double>();
+                            for (var currentDay = startDate.Date; currentDay < endDate.Date; currentDay = currentDay.AddDays(1))
+                            {
+                                var totalAssignedForDay = allProjectAssignments
+                                    .Where(x => x.IsWithin(currentDay))
+                                    .RoundedSum(x => x.SubTask.GetAssignmentValueForPerson(person));
+                                totalAssignmentsByDay[currentDay] = totalAssignedForDay;
+                            }
+
                             foreach (var group in groupedAssignments)
                             {
                                 // Compute chart items from the grouped assignments
@@ -410,13 +438,13 @@ namespace PPMTool.Pages
                                         group,
                                         startDate,
                                         endDate,
-                                        person
+                                        person,
+                                        totalAssignmentsByDay
                                     )
                                 );
                             }
 
                             // Total row needs to repeat the above logic but on the flattened set of subtasks
-                            var allProjectAssignments = groupedAssignments.SelectMany(x => x.Value);
                             var rowName = "Total";
                             groupedAssignments = new Dictionary<object, IEnumerable<Assignment>>();
                             chartSourceTemp.AddRange(
@@ -426,6 +454,7 @@ namespace PPMTool.Pages
                                     startDate,
                                     endDate,
                                     person,
+                                    totalAssignmentsByDay,
                                     isTotalRow: true
                                 )
                             );
@@ -500,12 +529,6 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Method to get a unique session storage tag for the page
-        /// </summary>
-        /// <returns></returns>
-        protected abstract string GetSessionStorageTag();
-
-        /// <summary>
         /// Get managers from a list of people
         /// </summary>
         /// <param name="people"></param>
@@ -518,6 +541,18 @@ namespace PPMTool.Pages
                     && x.Person != null
                 );
             return people.Where(x => users.Any(y => y.Person.PersonId == x.PersonId)).ToList();
+        }
+
+        /// <summary>
+        /// Filters the cached people to just those with assignments with the duties listed
+        /// </summary>
+        /// <param name="cachedPeople"></param>
+        /// <param name="duties"></param>
+        /// <returns></returns>
+        protected IEnumerable<Person> GetPeopleWithAssignmentsWithDuty(IEnumerable<Person> cachedPeople, Duty[] duties)
+        {
+            // Ask the subtask service to filter based on assigned resources and duties
+            return SubTaskService.GetPeopleWithAssignmentsWithDuty(Context, cachedPeople, duties);
         }
 
         /// <summary>
@@ -565,6 +600,13 @@ namespace PPMTool.Pages
 
             if (!firstRender) return;
 
+            // Navigate away if feature not enabled
+            if (!FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
+            {
+                Navigation.NavigateTo("people");
+                return;
+            }
+
             // Get all projects not finished or cancelled
             cachedProjects = ProjectService.GetAll(Context).Where(x => !x.ProjectStatus.IsCancelled());
 
@@ -574,7 +616,7 @@ namespace PPMTool.Pages
             // Load dropdown sources
             await ReloadDropDownSourcesAsync();
 
-            chosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>($"{GetSessionStorageTag()}-chosen-people");
+            chosenPeople = await SessionStorage.GetItemAsync<IEnumerable<string>>($"{GetStorageTag()}-chosen-people");
             Debug.WriteLine($"** From session storage: {(chosenPeople != null ? string.Join('|', chosenPeople) : "")}");
 
             // If there is a query parameter then use it
@@ -591,17 +633,17 @@ namespace PPMTool.Pages
             }
 
             // Check that the boolean flags are not null (i.e. that they exist in session storage) before overwriting defaults
-            var temp = await SessionStorage.GetItemAsync<bool?>($"{GetSessionStorageTag()}-include-leavers");
+            var temp = await SessionStorage.GetItemAsync<bool?>($"{GetStorageTag()}-include-leavers");
             if (temp != null)
             {
                 includeLeavers = temp ?? false;
             }
-            temp = await SessionStorage.GetItemAsync<bool?>($"{GetSessionStorageTag()}-include-unfunded");
+            temp = await SessionStorage.GetItemAsync<bool?>($"{GetStorageTag()}-include-unfunded");
             if (temp != null)
             {
                 includeUnFunded = temp ?? false;
             }
-            temp = await SessionStorage.GetItemAsync<bool?>($"{GetSessionStorageTag()}-include-finished");
+            temp = await SessionStorage.GetItemAsync<bool?>($"{GetStorageTag()}-include-finished");
             if (temp != null)
             {
                 includeFinished = temp ?? false;
@@ -618,6 +660,15 @@ namespace PPMTool.Pages
         protected bool PeopleChosen()
         {
             return chosenPeople != null && chosenPeople.Count() > 0;
+        }
+
+        /// <summary>
+        /// Gets the css classes for the generate button and adds a pulse nudge when chart options changed.
+        /// </summary>
+        /// <returns></returns>
+        protected string GetGenerateButtonCssClass()
+        {
+            return chartNeedsRegeneration ? "capacity-gen-button capacity-gen-button-pulse" : "capacity-gen-button";
         }
 
         /// <summary>

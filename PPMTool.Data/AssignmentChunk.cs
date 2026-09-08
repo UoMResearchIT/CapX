@@ -5,6 +5,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using PPMTool.Data.Entities;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Data
 {
@@ -86,8 +87,8 @@ namespace PPMTool.Data
         [Description("Supplementary notes on what we know about the funding source used to cover the cost of this assignment")]
         public string? FundingSourceDescription { get; set; }
 
-        [Description("Whether the assignment is a leadership assignment which are not always rechargeable")]
-        public bool IsLeadershipAssignment { get; set; }
+        [Description("What type of duty this assignment represents - some types of work are not necessarily rechargeable")]
+        public string AssignmentType { get; set; } = Duty.ProjectWork.GetDescription();
 
         /// <summary>
         /// This is the unique key which identifies the resource from which this chunk was defined
@@ -126,7 +127,7 @@ namespace PPMTool.Data
             BudgetStatus = taskToCopy.BudgetStatus;
             SalaryCostEstimate = taskToCopy.SalaryCostEstimate;
             PlannedCost = taskToCopy.PlannedCost;
-            IsLeadershipAssignment = taskToCopy.IsLeadershipAssignment;
+            AssignmentType = taskToCopy.AssignmentType;
             UniqueResourceKey = taskToCopy.UniqueResourceKey;
         }
 

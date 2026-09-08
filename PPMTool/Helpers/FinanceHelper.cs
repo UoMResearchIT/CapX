@@ -41,14 +41,14 @@ namespace PPMTool.Helpers
 
             // DI is based on the salary costs and assignments of the resources
             var di = subTasks
-                .Where(x => !x.IsLeadershipTask)
+                .Where(x => x.TaskDuty != Duty.ProjectAndServiceMgmt)
                 .SelectMany(x => x.AssignedResources)
                 .Where(x => x.FundedFrom?.FundingSourceType == FundingSourceType.DI)
                 .RoundedSum(x => x.PlannedCost, 2);
 
             // Add to these totals the leadership costs that are funded through DI
             var leadershipCostsThatAreDI = subTasks
-                .Where(x => x.IsLeadershipTask && x.AssignedResources
+                .Where(x => x.TaskDuty == Duty.ProjectAndServiceMgmt && x.AssignedResources
                     .Any(x => x.FundedFrom?.FundingSourceType == FundingSourceType.DI))
                 .RoundedSum(x => x.PlannedCost, 2);
             if (costModel.HasLeadership())
@@ -78,7 +78,7 @@ namespace PPMTool.Helpers
                 var subtasks = project.SubTasks.ToList();
                 if (!project.CostModel.HasLeadership())
                 {
-                    subtasks = subtasks.Where(x => !x.IsLeadershipTask).ToList();
+                    subtasks = subtasks.Where(x => x.TaskDuty != Duty.ProjectAndServiceMgmt).ToList();
                 }
 
                 // Get all the resource assignments with funding sources
