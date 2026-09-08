@@ -610,18 +610,33 @@ namespace PPMTool.API.DTOs
     /// request leaves the existing EndDate unchanged. There's no way to
     /// clear an already-set EndDate back to null via this endpoint -- do
     /// that directly in the UI.
+    ///
+    /// LineManager can be given either as LineManagerPersonId or
+    /// LineManagerUsername, at most one of the two. Both forms exist for
+    /// the same reason POST /api/timesheets/add takes either: a Person
+    /// created by POST /api/people/add has no linked User at all, so a
+    /// username cannot name one. That applies to the line manager
+    /// themselves, not just the person being updated -- a departed team
+    /// lead is exactly the case the UI's own picker cannot express, since
+    /// AddPerson.razor.cs builds its dropdown from Users holding a
+    /// Manager/Superuser role, which a bare imported Person never has.
+    /// Like the other fields here, it can be set but not cleared.
     /// </summary>
     /// <param name="PersonId">PersonId of the Person to update</param>
     /// <param name="Name">New full name, if changing -- ShortName is re-derived automatically</param>
     /// <param name="StartDate"></param>
     /// <param name="EndDate">See remarks -- can only be set, not cleared, via this endpoint</param>
     /// <param name="FTE">0.0-1.0</param>
+    /// <param name="LineManagerPersonId">PersonId of the line manager. Mutually exclusive with LineManagerUsername.</param>
+    /// <param name="LineManagerUsername">Username of the line manager, who must have a linked Person. Mutually exclusive with LineManagerPersonId.</param>
     public sealed record UpdatePersonRequestDTO(
         int PersonId,
         string? Name,
         DateTime? StartDate,
         DateTime? EndDate,
-        double? FTE
+        double? FTE,
+        int? LineManagerPersonId = null,
+        string? LineManagerUsername = null
     );
 
     /// <summary>

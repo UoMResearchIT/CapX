@@ -1334,13 +1334,68 @@ namespace PPMTool.Services
                     errors.Add($"A different Person with initials '{probe.ShortName}' already exists");
             }
 
+            errors.AddRange(ValidateLineManagerFields(context, request, person.PersonId));
+
             return errors;
         }
 
         /// <summary>
-        /// Update the Person's Name, StartDate, EndDate, and/or FTE. Caller
-        /// is responsible for validating first. See UpdatePersonRequestDTO
-        /// remarks -- EndDate can only be set, not cleared, here.
+        /// Shared validation for the optional line-manager fields on
+        /// PUT /api/people/update. Returns an empty list when neither is
+        /// supplied, since line manager is optional on an update.
+        /// </summary>
+        private List<string> ValidateLineManagerFields(PPMToolContext context, UpdatePersonRequestDTO request, int subjectPersonId)
+        {
+            var errors = new List<string>();
+
+            var hasId = request.LineManagerPersonId.HasValue;
+            var hasUsername = !string.IsNullOrWhiteSpace(request.LineManagerUsername);
+
+            if (hasId && hasUsername)
+            {
+                errors.Add("Supply at most one of LineManagerPersonId or LineManagerUsername, not both");
+                return errors;
+            }
+
+            if (!hasId && !hasUsername) return errors;
+
+            var manager = ResolveLineManager(context, request);
+            if (manager == null)
+            {
+                errors.Add(hasId
+                    ? $"LineManagerPersonId {request.LineManagerPersonId} does not exist"
+                    : $"LineManagerUsername '{request.LineManagerUsername}' not found, or has no linked Person");
+            }
+            else if (manager.PersonId == subjectPersonId)
+            {
+                // Mirrors AddPerson.razor.cs, which excludes the person being edited from
+                // its own line-manager dropdown.
+                errors.Add("A Person cannot be their own line manager");
+            }
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Resolve the line manager named by whichever of the two fields was
+        /// supplied, or null if neither was supplied or it did not resolve.
+        /// </summary>
+        private Person? ResolveLineManager(PPMToolContext context, UpdatePersonRequestDTO request)
+        {
+            if (request.LineManagerPersonId.HasValue)
+                return _personService.GetById(context, request.LineManagerPersonId.Value);
+
+            if (!string.IsNullOrWhiteSpace(request.LineManagerUsername))
+                return FindUserByUsername(context, request.LineManagerUsername)?.Person;
+
+            return null;
+        }
+
+        /// <summary>
+        /// Update the Person's Name, StartDate, EndDate, FTE and/or
+        /// LineManager. Caller is responsible for validating first. See
+        /// UpdatePersonRequestDTO remarks -- EndDate and LineManager can
+        /// only be set, not cleared, here.
         /// </summary>
         public ImportPersonResponseDTO UpdatePerson(PPMToolContext context, UpdatePersonRequestDTO request)
         {
@@ -1350,6 +1405,9 @@ namespace PPMTool.Services
             if (request.StartDate.HasValue) person.StartDate = AsUnspecifiedKind(request.StartDate.Value);
             if (request.EndDate.HasValue) person.EndDate = AsUnspecifiedKind(request.EndDate.Value);
             if (request.FTE.HasValue) person.FTE = request.FTE.Value;
+
+            var lineManager = ResolveLineManager(context, request);
+            if (lineManager != null) person.LineManager = lineManager;
 
             var result = _personService.Update(context, person);
             if (result < 0)
