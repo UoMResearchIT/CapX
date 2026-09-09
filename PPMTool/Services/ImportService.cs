@@ -22,16 +22,16 @@ namespace PPMTool.Services
     {
         public const string FallbackAuthorUsername = "migration-import";
 
-        private readonly FacultyService _facultyService;
-        private readonly SchoolService _schoolService;
-        private readonly ProjectService _projectService;
-        private readonly SubTaskService _subTaskService;
-        private readonly NoteService _noteService;
-        private readonly FinancialReferenceService _financialReferenceService;
-        private readonly SettingsService _settingsService;
-        private readonly TimesheetService _timesheetService;
-        private readonly PersonService _personService;
-        private readonly UserService _userService;
+        private readonly FacultyService facultyService;
+        private readonly SchoolService schoolService;
+        private readonly ProjectService projectService;
+        private readonly SubTaskService subTaskService;
+        private readonly NoteService noteService;
+        private readonly FinancialReferenceService financialReferenceService;
+        private readonly SettingsService settingsService;
+        private readonly TimesheetService timesheetService;
+        private readonly PersonService personService;
+        private readonly UserService userService;
 
         public ImportService(
             FacultyService facultyService,
@@ -45,16 +45,16 @@ namespace PPMTool.Services
             PersonService personService,
             UserService userService)
         {
-            _facultyService = facultyService;
-            _schoolService = schoolService;
-            _projectService = projectService;
-            _subTaskService = subTaskService;
-            _noteService = noteService;
-            _financialReferenceService = financialReferenceService;
-            _settingsService = settingsService;
-            _timesheetService = timesheetService;
-            _personService = personService;
-            _userService = userService;
+            this.facultyService = facultyService;
+            this.schoolService = schoolService;
+            this.projectService = projectService;
+            this.subTaskService = subTaskService;
+            this.noteService = noteService;
+            this.financialReferenceService = financialReferenceService;
+            this.settingsService = settingsService;
+            this.timesheetService = timesheetService;
+            this.personService = personService;
+            this.userService = userService;
         }
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace PPMTool.Services
             if (string.IsNullOrWhiteSpace(request.Name)) errors.Add("Name is required");
             if (string.IsNullOrWhiteSpace(request.Code)) errors.Add("Code is required");
             if (!string.IsNullOrWhiteSpace(request.Name) && !string.IsNullOrWhiteSpace(request.Code)
-                && _facultyService.DuplicateDetected(context, new Faculty { Name = request.Name, Code = request.Code }))
+                && facultyService.DuplicateDetected(context, new Faculty { Name = request.Name, Code = request.Code }))
                 errors.Add($"A Faculty named '{request.Name}' or with code '{request.Code}' already exists");
 
             var seenCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -94,7 +94,7 @@ namespace PPMTool.Services
                 Name = request.Name,
                 Code = request.Code,
             };
-            var facultyId = _facultyService.Add(context, faculty);
+            var facultyId = facultyService.Add(context, faculty);
             if (facultyId < 0)
                 throw new InvalidOperationException($"FacultyService.Add returned {facultyId} (duplicate) despite passing ValidateFaculty() -- possible race condition");
 
@@ -107,7 +107,7 @@ namespace PPMTool.Services
                     Code = s.Code,
                     Faculty = faculty,
                 };
-                var schoolId = _schoolService.Add(context, school);
+                var schoolId = schoolService.Add(context, school);
                 if (schoolId < 0)
                     throw new InvalidOperationException($"SchoolService.Add returned {schoolId} for School '{s.Name}' despite passing ValidateFaculty()");
                 schoolIds.Add(schoolId);
@@ -146,7 +146,7 @@ namespace PPMTool.Services
                 Name = request.Name ?? faculty.Name,
                 Code = request.NewCode ?? faculty.Code,
             };
-            if (_facultyService.DuplicateDetected(context, probe))
+            if (facultyService.DuplicateDetected(context, probe))
                 errors.Add($"A different Faculty named '{probe.Name}' or with code '{probe.Code}' already exists");
 
             return errors;
@@ -162,7 +162,7 @@ namespace PPMTool.Services
             if (request.Name != null) faculty.Name = request.Name;
             if (request.NewCode != null) faculty.Code = request.NewCode;
 
-            var result = _facultyService.Update(context, faculty);
+            var result = facultyService.Update(context, faculty);
             if (result < 0)
                 throw new InvalidOperationException($"FacultyService.Update returned {result} (duplicate) despite passing ValidateFacultyUpdate() -- possible race condition");
 
@@ -189,7 +189,7 @@ namespace PPMTool.Services
                     errors.Add($"FacultyCode '{request.FacultyCode}' does not match any Faculty");
                 }
                 else if (!string.IsNullOrWhiteSpace(request.Name) && !string.IsNullOrWhiteSpace(request.Code)
-                    && _schoolService.DuplicateDetected(context, new School { Name = request.Name, Code = request.Code, Faculty = faculty }))
+                    && schoolService.DuplicateDetected(context, new School { Name = request.Name, Code = request.Code, Faculty = faculty }))
                 {
                     errors.Add($"A School named '{request.Name}' or with code '{request.Code}' already exists under Faculty '{faculty.Name}'");
                 }
@@ -211,7 +211,7 @@ namespace PPMTool.Services
                 Code = request.Code,
                 Faculty = faculty,
             };
-            var schoolId = _schoolService.Add(context, school);
+            var schoolId = schoolService.Add(context, school);
             if (schoolId < 0)
                 throw new InvalidOperationException($"SchoolService.Add returned {schoolId} for School '{request.Name}' despite passing ValidateSchool() -- possible race condition");
 
@@ -259,7 +259,7 @@ namespace PPMTool.Services
                     Code = request.NewCode ?? school.Code,
                     Faculty = faculty,
                 };
-                if (_schoolService.DuplicateDetected(context, probe))
+                if (schoolService.DuplicateDetected(context, probe))
                     errors.Add($"A different School named '{probe.Name}' or with code '{probe.Code}' already exists under Faculty '{faculty.Name}'");
             }
 
@@ -277,7 +277,7 @@ namespace PPMTool.Services
             if (request.NewCode != null) school.Code = request.NewCode;
             if (request.NewFacultyCode != null) school.Faculty = FindFacultyByCode(context, request.NewFacultyCode)!;
 
-            var result = _schoolService.Update(context, school);
+            var result = schoolService.Update(context, school);
             if (result < 0)
                 throw new InvalidOperationException($"SchoolService.Update returned {result} (duplicate) despite passing ValidateSchoolUpdate() -- possible race condition");
 
@@ -301,7 +301,7 @@ namespace PPMTool.Services
                 errors.Add($"Caller '{caller.CASUserName}' has no linked Person -- required to set as the imported Project's RequestOwner");
 
             if (string.IsNullOrWhiteSpace(request.Name)) errors.Add("Name is required");
-            else if (_projectService.DuplicateDetected(context, new Project { Name = request.Name }))
+            else if (projectService.DuplicateDetected(context, new Project { Name = request.Name }))
                 errors.Add($"A Project named '{request.Name}' already exists");
             if (context.Projects.Any(p => p.RTP == request.RTP))
                 errors.Add($"A Project with RTP {request.RTP} already exists");
@@ -362,7 +362,7 @@ namespace PPMTool.Services
                 RequestDocLink = request.RequestDocLink,
                 ScrumProjectLink = string.IsNullOrWhiteSpace(request.ScrumProjectLink) ? null : request.ScrumProjectLink,
             };
-            var projectId = _projectService.Add(context, project); // commits, assigns ProjectId
+            var projectId = projectService.Add(context, project); // commits, assigns ProjectId
             if (projectId < 0)
                 throw new InvalidOperationException($"ProjectService.Add returned {projectId} (duplicate name/RTP) despite passing Validate() -- possible race condition");
 
@@ -395,7 +395,7 @@ namespace PPMTool.Services
             // start/end, FixedDuration, demand from the same setting the UI
             // defaults to. OriginalDemand must be > 0 (see AddTask.razor.cs)
             // so it can't be left at the entity default.
-            var managementFte = _settingsService.GetSetting(SettingType.TechnicalLeadershipDefaultFTE, 0.05f);
+            var managementFte = settingsService.GetSetting(SettingType.TechnicalLeadershipDefaultFTE, 0.05f);
             var managementTask = new SubTask
             {
                 Name = "Leadership",
@@ -410,7 +410,7 @@ namespace PPMTool.Services
                 EndDate = request.ManagementEndDate,
             };
             managementTask.Schedule();
-            _subTaskService.Add(context, managementTask);
+            subTaskService.Add(context, managementTask);
 
             var resourcesCreated = 0;
             var resourcing = request.Resourcing ?? Array.Empty<ImportResourcingDTO>();
@@ -431,7 +431,7 @@ namespace PPMTool.Services
                     EndDate = request.ManagementEndDate,
                 };
                 delivery.Schedule();
-                _subTaskService.Add(context, delivery);
+                subTaskService.Add(context, delivery);
 
                 foreach (var r in resourcing)
                 {
@@ -462,7 +462,7 @@ namespace PPMTool.Services
                     : c.ContentHtml;
 
                 var createdDate = AsUnspecifiedKind(c.CreatedDate);
-                _noteService.Add(context, new Note
+                noteService.Add(context, new Note
                 {
                     Project = project,
                     Author = author,
@@ -473,8 +473,8 @@ namespace PPMTool.Services
                 notesCreated++;
             }
 
-            var financialReferences = _financialReferenceService.GetAllOrDefault(context);
-            var indirectsPercentage = _settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+            var financialReferences = financialReferenceService.GetAllOrDefault(context);
+            var indirectsPercentage = settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
             project.UpdateProjectMetaData(true, financialReferences, indirectsPercentage);
             context.SaveChangesWithRetry();
 
@@ -500,7 +500,7 @@ namespace PPMTool.Services
             {
                 if (string.IsNullOrWhiteSpace(request.Name))
                     errors.Add("Name cannot be blank");
-                else if (_projectService.DuplicateDetected(context, new Project { ProjectId = project.ProjectId, Name = request.Name }))
+                else if (projectService.DuplicateDetected(context, new Project { ProjectId = project.ProjectId, Name = request.Name }))
                     errors.Add($"A different Project named '{request.Name}' already exists");
             }
 
@@ -555,12 +555,12 @@ namespace PPMTool.Services
             if (request.RequestDocLink != null) project.RequestDocLink = request.RequestDocLink;
             if (request.ScrumProjectLink != null) project.ScrumProjectLink = request.ScrumProjectLink == "" ? null : request.ScrumProjectLink;
 
-            var result = _projectService.Update(context, project);
+            var result = projectService.Update(context, project);
             if (result < 0)
                 throw new InvalidOperationException($"ProjectService.Update returned {result} (duplicate) despite passing ValidateProjectUpdate() -- possible race condition");
 
-            var financialReferences = _financialReferenceService.GetAllOrDefault(context);
-            var indirectsPercentage = _settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+            var financialReferences = financialReferenceService.GetAllOrDefault(context);
+            var indirectsPercentage = settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
             project.UpdateProjectMetaData(true, financialReferences, indirectsPercentage);
             context.SaveChangesWithRetry();
 
@@ -644,7 +644,7 @@ namespace PPMTool.Services
                     errors.Add($"Resourcing AssignmentFTE for '{r.Username}' cannot have digits after the third decimal place");
 
                 // Only managers can be assigned to a leadership-duty task -- same rule AddTask.razor enforces.
-                if (person != null && duty == Duty.ProjectAndServiceMgmt && !_userService.GetAllManagerPersonId(context).Contains(person.PersonId))
+                if (person != null && duty == Duty.ProjectAndServiceMgmt && !userService.GetAllManagerPersonId(context).Contains(person.PersonId))
                     errors.Add($"Only managers can be assigned to leadership tasks (Resourcing Username '{r.Username}')");
             }
 
@@ -683,7 +683,7 @@ namespace PPMTool.Services
                 EndDate = AsUnspecifiedKind(request.EndDate),
             };
             task.Schedule();
-            _subTaskService.Add(context, task);
+            subTaskService.Add(context, task);
 
             var resourcesCreated = 0;
             foreach (var r in request.Resourcing ?? Array.Empty<ImportResourcingDTO>())
@@ -699,8 +699,8 @@ namespace PPMTool.Services
                 resourcesCreated++;
             }
 
-            var financialReferences = _financialReferenceService.GetAllOrDefault(context);
-            var indirectsPercentage = _settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+            var financialReferences = financialReferenceService.GetAllOrDefault(context);
+            var indirectsPercentage = settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
             project.UpdateProjectMetaData(true, financialReferences, indirectsPercentage);
             context.SaveChangesWithRetry();
 
@@ -775,10 +775,10 @@ namespace PPMTool.Services
             if (request.EndDate.HasValue) task.EndDate = AsUnspecifiedKind(request.EndDate.Value);
             if (request.Demand.HasValue) task.Demand = request.Demand.Value;
             task.Schedule();
-            _subTaskService.Update(context, task);
+            subTaskService.Update(context, task);
 
-            var financialReferences = _financialReferenceService.GetAllOrDefault(context);
-            var indirectsPercentage = _settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+            var financialReferences = financialReferenceService.GetAllOrDefault(context);
+            var indirectsPercentage = settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
             project.UpdateProjectMetaData(true, financialReferences, indirectsPercentage);
             context.SaveChangesWithRetry();
 
@@ -869,7 +869,7 @@ namespace PPMTool.Services
             if (resourcing.Count == 0)
                 errors.Add("Resourcing must contain at least one assignment");
 
-            var managerPersonIds = _userService.GetAllManagerPersonId(context);
+            var managerPersonIds = userService.GetAllManagerPersonId(context);
             var seenPersonIds = new List<int>();
 
             foreach (var r in resourcing)
@@ -976,7 +976,7 @@ namespace PPMTool.Services
             // it started on: moving a non-manager onto a leadership task has to fail
             // the same way assigning one there directly does.
             if (targetTask.TaskDuty == Duty.ProjectAndServiceMgmt
-                && !_userService.GetAllManagerPersonId(context).Contains(resource.Person.PersonId))
+                && !userService.GetAllManagerPersonId(context).Contains(resource.Person.PersonId))
                 errors.Add($"Only managers can be assigned to leadership tasks ('{resource.Person.Name}')");
 
             return errors;
@@ -1030,7 +1030,7 @@ namespace PPMTool.Services
                 errors.Add("Exactly one of Username or PersonId must be supplied");
             else if (hasUsername && FindUserByUsername(context, request.Username!)?.Person == null)
                 errors.Add($"Username '{request.Username}' not found, or has no linked Person");
-            else if (hasPersonId && _personService.GetById(context, request.PersonId!.Value) == null)
+            else if (hasPersonId && personService.GetById(context, request.PersonId!.Value) == null)
                 errors.Add($"PersonId {request.PersonId} does not exist");
 
             if (request.WeekStartDate.DayOfWeek != DayOfWeek.Monday)
@@ -1063,7 +1063,7 @@ namespace PPMTool.Services
         {
             var person = !string.IsNullOrWhiteSpace(request.Username)
                 ? FindUserByUsername(context, request.Username)!.Person!
-                : _personService.GetById(context, request.PersonId!.Value);
+                : personService.GetById(context, request.PersonId!.Value);
             var project = FindProjectWithInnateActivity(context, request.ProjectId)!;
             var task = project.InnateActivity!.Tasks.First(t => t.TaskName.Trim().Equals(request.TaskName.Trim(), StringComparison.OrdinalIgnoreCase));
 
@@ -1081,7 +1081,7 @@ namespace PPMTool.Services
                     Status = TimesheetStatus.Approved, // historical actuals -- not pending review
                     DateStatusChanged = DateTime.Now,
                 };
-                var timesheetId = _timesheetService.Add(context, timesheet);
+                var timesheetId = timesheetService.Add(context, timesheet);
                 if (timesheetId < 0)
                     throw new InvalidOperationException($"TimesheetService.Add returned {timesheetId} (duplicate) despite passing ValidateTimesheetEntry() -- possible race condition");
             }
@@ -1091,7 +1091,7 @@ namespace PPMTool.Services
             if (entry == null)
             {
                 entry = new TimesheetEntry { Timesheet = timesheet, InnateCodeTask = task };
-                _timesheetService.AddEntry(context, entry, commitChanges: false);
+                timesheetService.AddEntry(context, entry, commitChanges: false);
             }
 
             entry.MondayHours = request.MondayHours;
@@ -1162,7 +1162,7 @@ namespace PPMTool.Services
             if (request.SundayHours.HasValue) entry.SundayHours = request.SundayHours.Value;
             entry.UpdateTotalHours();
 
-            _timesheetService.UpdateEntry(context, entry, commitChanges: false);
+            timesheetService.UpdateEntry(context, entry, commitChanges: false);
             context.SaveChangesWithRetry();
 
             return new UpdateTimesheetEntryResponseDTO(entry.TimesheetEntryId, entry.TotalHours);
@@ -1271,9 +1271,9 @@ namespace PPMTool.Services
                 // ShortName is derived the same way (Person.Name's setter)
                 // rather than re-implementing GetInitials() here.
                 var probe = new Person { Name = request.Name.Trim() };
-                if (_personService.DuplicateDetected(context, probe))
+                if (personService.DuplicateDetected(context, probe))
                     errors.Add($"A Person named '{request.Name}' already exists");
-                else if (_personService.DuplicateInitialsDetected(context, probe))
+                else if (personService.DuplicateInitialsDetected(context, probe))
                     errors.Add($"A Person with initials '{probe.ShortName}' already exists");
             }
 
@@ -1294,7 +1294,7 @@ namespace PPMTool.Services
                 EndDate = request.EndDate.HasValue ? AsUnspecifiedKind(request.EndDate.Value) : null,
                 FTE = request.FTE,
             };
-            _personService.Add(context, person);
+            personService.Add(context, person);
 
             return new ImportPersonResponseDTO(person.PersonId, person.ShortName);
         }
@@ -1307,7 +1307,7 @@ namespace PPMTool.Services
         {
             var errors = new List<string>();
 
-            var person = _personService.GetById(context, request.PersonId);
+            var person = personService.GetById(context, request.PersonId);
             if (person == null)
             {
                 errors.Add($"PersonId {request.PersonId} does not exist");
@@ -1328,9 +1328,9 @@ namespace PPMTool.Services
             if (!string.IsNullOrWhiteSpace(request.Name))
             {
                 var probe = new Person { PersonId = person.PersonId, Name = request.Name.Trim() };
-                if (_personService.DuplicateDetected(context, probe))
+                if (personService.DuplicateDetected(context, probe))
                     errors.Add($"A different Person named '{request.Name}' already exists");
-                else if (_personService.DuplicateInitialsDetected(context, probe))
+                else if (personService.DuplicateInitialsDetected(context, probe))
                     errors.Add($"A different Person with initials '{probe.ShortName}' already exists");
             }
 
@@ -1383,7 +1383,7 @@ namespace PPMTool.Services
         private Person? ResolveLineManager(PPMToolContext context, UpdatePersonRequestDTO request)
         {
             if (request.LineManagerPersonId.HasValue)
-                return _personService.GetById(context, request.LineManagerPersonId.Value);
+                return personService.GetById(context, request.LineManagerPersonId.Value);
 
             if (!string.IsNullOrWhiteSpace(request.LineManagerUsername))
                 return FindUserByUsername(context, request.LineManagerUsername)?.Person;
@@ -1399,7 +1399,7 @@ namespace PPMTool.Services
         /// </summary>
         public ImportPersonResponseDTO UpdatePerson(PPMToolContext context, UpdatePersonRequestDTO request)
         {
-            var person = _personService.GetById(context, request.PersonId)!;
+            var person = personService.GetById(context, request.PersonId)!;
 
             if (request.Name != null) person.Name = request.Name.Trim(); // setter also re-derives ShortName
             if (request.StartDate.HasValue) person.StartDate = AsUnspecifiedKind(request.StartDate.Value);
@@ -1409,7 +1409,7 @@ namespace PPMTool.Services
             var lineManager = ResolveLineManager(context, request);
             if (lineManager != null) person.LineManager = lineManager;
 
-            var result = _personService.Update(context, person);
+            var result = personService.Update(context, person);
             if (result < 0)
                 throw new InvalidOperationException($"PersonService.Update returned {result} (duplicate) despite passing ValidatePersonUpdate() -- possible race condition");
 
@@ -1417,7 +1417,7 @@ namespace PPMTool.Services
             // linked User (this endpoint isn't restricted to the bare, login-less People
             // POST /api/people/add creates), whose display name would otherwise go stale.
             if (request.Name != null)
-                _userService.UpdateDisplayName(context, person);
+                userService.UpdateDisplayName(context, person);
 
             return new ImportPersonResponseDTO(person.PersonId, person.ShortName);
         }
@@ -1437,7 +1437,7 @@ namespace PPMTool.Services
             Person? person = null;
             if (request.PersonId.HasValue)
             {
-                person = _personService.GetById(context, request.PersonId.Value);
+                person = personService.GetById(context, request.PersonId.Value);
                 if (person == null)
                     errors.Add($"PersonId {request.PersonId} does not exist");
             }
@@ -1452,7 +1452,7 @@ namespace PPMTool.Services
             if (!string.IsNullOrWhiteSpace(request.CASUserName))
             {
                 var probe = new User { CASUserName = request.CASUserName.Trim(), Name = person?.Name ?? request.Name?.Trim() ?? "" };
-                if (_userService.DuplicateDetected(context, probe))
+                if (userService.DuplicateDetected(context, probe))
                     errors.Add($"A User named '{request.CASUserName}' already exists");
             }
 
@@ -1473,8 +1473,8 @@ namespace PPMTool.Services
                 RoleType = string.IsNullOrWhiteSpace(request.RoleType) ? RoleType.None : Enum.Parse<RoleType>(request.RoleType),
             };
             if (request.PersonId.HasValue)
-                user.Person = _personService.GetById(context, request.PersonId.Value); // Name re-set from Person.Name by the setter
-            _userService.Add(context, user);
+                user.Person = personService.GetById(context, request.PersonId.Value); // Name re-set from Person.Name by the setter
+            userService.Add(context, user);
 
             return new ImportUserResponseDTO(user.UserId);
         }
@@ -1525,7 +1525,7 @@ namespace PPMTool.Services
                     : c.ContentHtml;
 
                 var createdDate = AsUnspecifiedKind(c.CreatedDate);
-                _noteService.Add(context, new Note
+                noteService.Add(context, new Note
                 {
                     Project = project,
                     Author = author,
@@ -1602,7 +1602,7 @@ namespace PPMTool.Services
             note.HtmlContent = request.HtmlContent;
             note.Editor = caller;
             note.EditedDate = AsUnspecifiedKind(DateTime.UtcNow);
-            _noteService.Update(context, note);
+            noteService.Update(context, note);
             context.SaveChangesWithRetry();
 
             return new UpdateNoteResponseDTO(note.NoteId);
@@ -1682,7 +1682,7 @@ namespace PPMTool.Services
         // the ProjectService.GetAll() include list, and the class of bug noted on
         // SchoolService.GetAllActive() elsewhere in this codebase).
         private Project? FindProjectByRTP(PPMToolContext context, int rtp) =>
-            _projectService.GetAll(context).FirstOrDefault(p => p.RTP == rtp);
+            projectService.GetAll(context).FirstOrDefault(p => p.RTP == rtp);
 
         // Two queries rather than one Include chain on SubTasks directly: the caller
         // (ValidateTaskUpdate/UpdateTask) needs the fully-loaded owning Project too, for
@@ -1729,7 +1729,7 @@ namespace PPMTool.Services
                 return (person, errors);
             }
 
-            var byId = _personService.GetById(context, assignment.PersonId!.Value);
+            var byId = personService.GetById(context, assignment.PersonId!.Value);
             if (byId == null)
                 errors.Add($"PersonId {assignment.PersonId} does not exist");
             return (byId, errors);
@@ -1766,8 +1766,8 @@ namespace PPMTool.Services
         // stored costs stale. Same call the create paths make.
         private void RecalculateProject(PPMToolContext context, Project project, bool commit = true)
         {
-            var financialReferences = _financialReferenceService.GetAllOrDefault(context);
-            var indirectsPercentage = _settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
+            var financialReferences = financialReferenceService.GetAllOrDefault(context);
+            var indirectsPercentage = settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
             project.UpdateProjectMetaData(true, financialReferences, indirectsPercentage);
             if (commit) context.SaveChangesWithRetry();
         }
