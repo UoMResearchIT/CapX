@@ -18,6 +18,11 @@ namespace PPMTool.API.DTOs
     /// <param name="RequestDocLink">The request document link.</param>
     /// <param name="ScrumProjectLink">The scrum project link.</param>
     /// <param name="ProjectStatus">The current project status.</param>
+    /// <param name="SchoolCode">The code of the School the project sits in, as accepted by PUT /api/projects/update.</param>
+    /// <param name="Budget">The amount the PI has requested from the funder.</param>
+    /// <param name="CostModel">The cost model's enum name (e.g. "TechOnly"), as accepted by PUT /api/projects/update.</param>
+    /// <param name="DayRate">The day rate; zero unless CostModel is DayRate.</param>
+    /// <param name="Description">The project description, as HTML.</param>
     public sealed record ProjectDTO(
         int ProjectId,
         int CapXProjectId,
@@ -29,6 +34,11 @@ namespace PPMTool.API.DTOs
         string TimesheetActivityName,
         string RequestDocLink,
         string ScrumProjectLink,
-        string ProjectStatus
+        string ProjectStatus,
+        string SchoolCode,
+        double Budget,
+        string CostModel,
+        double DayRate,
+        string Description
     );
 }

@@ -42,6 +42,7 @@ public static class Projects
             var projects = await context.Projects
                 .Include(x => x.ProjectManager)
                 .Include(x => x.InnateActivity)
+                .Include(x => x.School)
                 .OrderBy(x => x.RTP)
                 .ToListAsync();
 
@@ -56,7 +57,12 @@ public static class Projects
                 TimesheetActivityName: x.InnateActivity?.ActivityName,
                 RequestDocLink: x.RequestDocLink,
                 ScrumProjectLink: x.ScrumProjectLink,
-                ProjectStatus: x.ProjectStatus.GetDescription()
+                ProjectStatus: x.ProjectStatus.GetDescription(),
+                SchoolCode: x.School.Code,
+                Budget: x.Budget,
+                CostModel: x.CostModel.ToString(),
+                DayRate: x.DayRate,
+                Description: x.Description
             )).ToList();
 
             logger.LogInformation("API: GetAllProjects: Returned {Count} project records.", projectDtos.Count);
@@ -106,6 +112,7 @@ public static class Projects
             var project = await context.Projects
                 .Include(x => x.ProjectManager)
                 .Include(x => x.InnateActivity)
+                .Include(x => x.School)
                 .FirstOrDefaultAsync(x => x.RTP == projectId);
 
             if (project == null)
@@ -125,7 +132,12 @@ public static class Projects
                 TimesheetActivityName: project.InnateActivity?.ActivityName,
                 RequestDocLink: project.RequestDocLink,
                 ScrumProjectLink: project.ScrumProjectLink,
-                ProjectStatus: project.ProjectStatus.GetDescription()
+                ProjectStatus: project.ProjectStatus.GetDescription(),
+                SchoolCode: project.School.Code,
+                Budget: project.Budget,
+                CostModel: project.CostModel.ToString(),
+                DayRate: project.DayRate,
+                Description: project.Description
             );
 
             logger.LogInformation("API: GetProjectById: Returned project record for projectId {ProjectId}", projectId);
