@@ -22,6 +22,10 @@ namespace PPMTool.Services
     {
         public const string FallbackAuthorUsername = "migration-import";
 
+        // Every request body that names a Project by RTP declares it as a
+        // non-nullable int, so an omitted RTP binds to 0 rather than failing.
+        private const string rtpRequired = "RTP is required and must be greater than zero";
+
         private readonly FacultyService facultyService;
         private readonly SchoolService schoolService;
         private readonly ProjectService projectService;
@@ -309,7 +313,10 @@ namespace PPMTool.Services
             if (string.IsNullOrWhiteSpace(request.Name)) errors.Add("Name is required");
             else if (projectService.DuplicateDetected(context, new Project { Name = request.Name }))
                 errors.Add($"A Project named '{request.Name}' already exists");
-            if (context.Projects.Any(p => p.RTP == request.RTP))
+            // RTP is a non-nullable int on the DTO, so an omitted field binds to 0.
+            if (request.RTP <= 0)
+                errors.Add(rtpRequired);
+            else if (context.Projects.Any(p => p.RTP == request.RTP))
                 errors.Add($"A Project with RTP {request.RTP} already exists");
             if (string.IsNullOrWhiteSpace(request.PI)) errors.Add("PI is required");
             if (string.IsNullOrWhiteSpace(request.RequestDocLink)) errors.Add("RequestDocLink is required");
@@ -505,6 +512,11 @@ namespace PPMTool.Services
         {
             var errors = new List<string>();
 
+            if (request.RTP <= 0)
+            {
+                errors.Add(rtpRequired);
+                return errors;
+            }
             var project = FindProjectByRTP(context, request.RTP);
             if (project == null)
             {
@@ -622,6 +634,11 @@ namespace PPMTool.Services
         {
             var errors = new List<string>();
 
+            if (request.RTP <= 0)
+            {
+                errors.Add(rtpRequired);
+                return errors;
+            }
             var project = FindProjectByRTP(context, request.RTP);
             if (project == null)
             {
@@ -1578,7 +1595,9 @@ namespace PPMTool.Services
         {
             var errors = new List<string>();
 
-            if (FindProjectByRTP(context, request.RTP) == null)
+            if (request.RTP <= 0)
+                errors.Add(rtpRequired);
+            else if (FindProjectByRTP(context, request.RTP) == null)
                 errors.Add($"RTP {request.RTP} does not match any Project");
 
             if (request.Comments.Count == 0)
@@ -1784,13 +1803,14 @@ namespace PPMTool.Services
         // identity map returns the same tracked SubTask instance either way.
         private (Project Project, SubTask Task)? FindProjectAndTaskById(PPMToolContext context, int subTaskId)
         {
+            // Nullable, so "no such task" can't be confused with a project whose RTP is 0.
             var rtp = context.SubTasks
                 .Where(t => t.SubTaskId == subTaskId)
-                .Select(t => t.OwningProject.RTP)
+                .Select(t => (int?)t.OwningProject.RTP)
                 .FirstOrDefault();
-            if (rtp == 0) return null;
+            if (rtp == null) return null;
 
-            var project = FindProjectByRTP(context, rtp);
+            var project = FindProjectByRTP(context, rtp.Value);
             var task = project?.SubTasks.FirstOrDefault(t => t.SubTaskId == subTaskId);
             return task == null ? null : (project!, task);
         }
@@ -1842,11 +1862,11 @@ namespace PPMTool.Services
         {
             var rtp = context.Resources
                 .Where(r => r.ResourceId == resourceId)
-                .Select(r => r.SubTask.OwningProject.RTP)
+                .Select(r => (int?)r.SubTask.OwningProject.RTP)
                 .FirstOrDefault();
-            if (rtp == 0) return null;
+            if (rtp == null) return null;
 
-            var project = FindProjectByRTP(context, rtp);
+            var project = FindProjectByRTP(context, rtp.Value);
             var task = project?.SubTasks.FirstOrDefault(t => t.AssignedResources.Any(r => r.ResourceId == resourceId));
             var resource = task?.AssignedResources.FirstOrDefault(r => r.ResourceId == resourceId);
             return resource == null ? null : (project!, task!, resource);
