@@ -178,7 +178,12 @@ public static class Projects
                 return Results.BadRequest(new ImportErrorDTO(errors));
             }
 
+            // Create saves several times (the Project, its InnateActivity, its tasks,
+            // its Notes), so without a transaction a failure part-way through leaves
+            // a half-created Project that a retry then rejects as a duplicate RTP.
+            using var transaction = context.Database.BeginTransaction();
             var result = importService.Create(context, request, caller!);
+            transaction.Commit();
             logger.LogInformation(
                 "API: Projects: created Project {ProjectId} '{Name}' ({ResourceCount} resources, {NoteCount} notes) by {User}",
                 result.ProjectId, request.Name, result.ResourcesCreated, result.NotesCreated, caller!.Name);

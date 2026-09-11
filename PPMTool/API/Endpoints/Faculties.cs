@@ -48,7 +48,11 @@ public static class Faculties
                 return Results.BadRequest(new ImportErrorDTO(errors));
             }
 
+            // The Faculty and each School commit separately, so a failure on a
+            // School would otherwise leave the Faculty behind and block a retry.
+            using var transaction = context.Database.BeginTransaction();
             var result = importService.CreateFaculty(context, request);
+            transaction.Commit();
             logger.LogInformation(
                 "API: Faculties: created Faculty {FacultyId} '{Name}' ({SchoolCount} schools) by {User}",
                 result.FacultyId, request.Name, result.SchoolIds.Count, caller!.Name);
