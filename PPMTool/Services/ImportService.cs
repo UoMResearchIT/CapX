@@ -433,18 +433,22 @@ namespace PPMTool.Services
                 delivery.Schedule();
                 subTaskService.Add(context, delivery);
 
+                var created = new List<Resource>();
                 foreach (var r in resourcing)
                 {
                     var person = FindUserByUsername(context, r.Username)!.Person!;
-                    context.Resources.Add(new Resource
+                    var resource = new Resource
                     {
                         Person = person,
                         SubTask = delivery,
                         AssignmentFTE = r.AssignmentFTE,
                         IsProvisional = true, // migrated data -- flag for PM review, not treated as confirmed
-                    });
+                    };
+                    context.Resources.Add(resource);
+                    created.Add(resource);
                     resourcesCreated++;
                 }
+                RefreshUnmetDemand(delivery, including: created);
                 context.SaveChangesWithRetry();
             }
 
@@ -685,26 +689,29 @@ namespace PPMTool.Services
             task.Schedule();
             subTaskService.Add(context, task);
 
-            var resourcesCreated = 0;
+            var created = new List<Resource>();
             foreach (var r in request.Resourcing ?? Array.Empty<ImportResourcingDTO>())
             {
                 var person = FindUserByUsername(context, r.Username)!.Person!;
-                context.Resources.Add(new Resource
+                var resource = new Resource
                 {
                     Person = person,
                     SubTask = task,
                     AssignmentFTE = r.AssignmentFTE,
                     IsProvisional = true, // migrated data -- flag for PM review, not treated as confirmed
-                });
-                resourcesCreated++;
+                };
+                context.Resources.Add(resource);
+                created.Add(resource);
             }
+            // Demand's setter computed UnmetDemand before any resource existed.
+            RefreshUnmetDemand(task, including: created);
 
             var financialReferences = financialReferenceService.GetAllOrDefault(context);
             var indirectsPercentage = settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
             project.UpdateProjectMetaData(true, financialReferences, indirectsPercentage);
             context.SaveChangesWithRetry();
 
-            return new ImportTaskResponseDTO(task.SubTaskId, resourcesCreated);
+            return new ImportTaskResponseDTO(task.SubTaskId, created.Count);
         }
 
         /// <summary>
@@ -911,11 +918,11 @@ namespace PPMTool.Services
         {
             var (project, task) = FindProjectAndTaskById(context, request.SubTaskId)!.Value;
 
-            var resourcesCreated = 0;
+            var created = new List<Resource>();
             foreach (var r in request.Resourcing)
             {
                 var (person, _) = ResolveAssignmentPerson(context, r);
-                context.Resources.Add(new Resource
+                var resource = new Resource
                 {
                     Person = person!,
                     SubTask = task,
@@ -924,13 +931,15 @@ namespace PPMTool.Services
                     // otherwise, matching ImportService.Create -- migrated data is
                     // flagged for PM review rather than presented as confirmed.
                     IsProvisional = r.IsProvisional ?? true,
-                });
-                resourcesCreated++;
+                };
+                context.Resources.Add(resource);
+                created.Add(resource);
             }
 
+            RefreshUnmetDemand(task, including: created);
             RecalculateProject(context, project);
 
-            return new ImportTaskResourcingResponseDTO(task.SubTaskId, resourcesCreated);
+            return new ImportTaskResourcingResponseDTO(task.SubTaskId, created.Count);
         }
 
         /// <summary>
@@ -1010,10 +1019,33 @@ namespace PPMTool.Services
             }
 
             context.Resources.Update(resource);
+            if (landedOn != currentTask)
+            {
+                RefreshUnmetDemand(currentTask, excluding: resource);
+                RefreshUnmetDemand(landedOn, including: new[] { resource });
+            }
+            else
+            {
+                RefreshUnmetDemand(currentTask);
+            }
             if (movedFromProject != null) RecalculateProject(context, movedFromProject, commit: false);
             RecalculateProject(context, project);
 
             return new UpdateTaskResourcingResponseDTO(resource.ResourceId, landedOn.SubTaskId);
+        }
+
+        // The Data Dashboard sums SubTask.UnmetDemand as stored, and only the UI's
+        // resource grid (AddTask.razor.cs) ever recalculated it, so every API path
+        // that changes a task's assignments has to recalculate it too. The
+        // resources are passed in explicitly rather than trusting AssignedResources:
+        // whether EF has fixed a newly added or moved Resource into (or out of) the
+        // collection yet depends on when it last detected changes.
+        private static void RefreshUnmetDemand(SubTask task, IEnumerable<Resource>? including = null, Resource? excluding = null)
+        {
+            var resources = (task.AssignedResources ?? new List<Resource>()).AsEnumerable();
+            if (including != null) resources = resources.Union(including);
+            if (excluding != null) resources = resources.Where(r => !ReferenceEquals(r, excluding));
+            task.UpdateUnmetDemand(resources.ToList());
         }
 
         /// <summary>
