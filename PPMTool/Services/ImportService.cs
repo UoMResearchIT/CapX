@@ -71,10 +71,16 @@ namespace PPMTool.Services
                 && facultyService.DuplicateDetected(context, new Faculty { Name = request.Name, Code = request.Code }))
                 errors.Add($"A Faculty named '{request.Name}' or with code '{request.Code}' already exists");
 
+            // SchoolService.DuplicateDetected rejects a repeated name as well as a
+            // repeated code within one Faculty, so both are checked here: otherwise
+            // the second School fails only after the Faculty has been written.
             var seenCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var seenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var s in request.Schools ?? Array.Empty<ImportSchoolDTO>())
             {
                 if (string.IsNullOrWhiteSpace(s.Name)) errors.Add($"School Name is required (code '{s.Code}')");
+                else if (!seenNames.Add(s.Name.Trim().ToLowerInvariant()))
+                    errors.Add($"Duplicate School name '{s.Name}' within this request");
                 if (string.IsNullOrWhiteSpace(s.Code)) errors.Add($"School Code is required (name '{s.Name}')");
                 else if (!seenCodes.Add(s.Code.Trim().ToLowerInvariant()))
                     errors.Add($"Duplicate School code '{s.Code}' within this request");
