@@ -1637,10 +1637,12 @@ namespace PPMTool.Services
             else if (FindProjectByRTP(context, request.RTP) == null)
                 errors.Add($"RTP {request.RTP} does not match any Project");
 
-            if (request.Comments.Count == 0)
+            // Non-nullable in C#, but an omitted or null JSON value still binds as null.
+            var comments = request.Comments ?? Array.Empty<ImportCommentDTO>();
+            if (comments.Count == 0)
                 errors.Add("Comments must contain at least one entry");
 
-            if (request.Comments.Count > 0 && FindUserByUsername(context, FallbackAuthorUsername) == null)
+            if (comments.Count > 0 && FindUserByUsername(context, FallbackAuthorUsername) == null)
                 errors.Add($"Fallback author User '{FallbackAuthorUsername}' does not exist -- create it (POST /api/users/add) before importing comments");
 
             return errors;
