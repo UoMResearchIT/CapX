@@ -87,7 +87,11 @@ public static class Tasks
                 return Results.BadRequest(new ImportErrorDTO(errors));
             }
 
+            // CreateTask saves more than once (SubTaskService.Add commits), so a
+            // failure part-way through would otherwise leave a partial write.
+            using var transaction = context.Database.BeginTransaction();
             var result = importService.CreateTask(context, request);
+            transaction.Commit();
             logger.LogInformation("API: Tasks: created SubTask {SubTaskId} ('{Name}') on RTP {RTP} by {User}", result.SubTaskId, request.Name, request.RTP, caller!.Name);
             return Results.Created($"/api/tasks/{result.SubTaskId}", result);
         }

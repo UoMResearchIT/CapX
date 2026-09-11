@@ -274,7 +274,11 @@ public static class Timesheets
                 return Results.BadRequest(new ImportErrorDTO(errors));
             }
 
+            // A new Timesheet is committed before its entry is saved, so a failure
+            // on the entry would otherwise leave an empty Timesheet behind.
+            using var transaction = context.Database.BeginTransaction();
             var result = importService.CreateOrUpdateTimesheetEntry(context, request);
+            transaction.Commit();
             logger.LogInformation(
                 "API: Timesheets: timesheet {TimesheetId} for {Person}, week {Week}, project {ProjectId}: {Hours}h ({Created}) by {User}",
                 result.TimesheetId, person, request.WeekStartDate, request.ProjectId, result.TotalHours, result.EntryCreated ? "new entry" : "updated entry", caller!.Name);
