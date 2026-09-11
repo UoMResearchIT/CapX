@@ -121,8 +121,11 @@ public static class People
                 return Results.NotFound();
             }
 
+            // A Person can back more than one User; take the lowest UserId, the same
+            // choice GetAllPeopleAsync makes, so both endpoints agree.
             var username = await context.Users
                 .Where(u => u.Person != null && u.Person.PersonId == person.PersonId)
+                .OrderBy(u => u.UserId)
                 .Select(u => u.CASUserName)
                 .FirstOrDefaultAsync();
 
