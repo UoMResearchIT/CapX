@@ -1470,6 +1470,20 @@ namespace PPMTool.Services
             if (resolvedEnd.HasValue && resolvedEnd.Value < resolvedStart)
                 errors.Add("EndDate cannot be before StartDate");
 
+            // A later start than a task this person is already assigned to is what
+            // SubTask.Schedule() refuses, so every later write to that task would fail.
+            if (request.StartDate.HasValue)
+            {
+                // Npgsql rejects a Kind=Utc parameter against this timestamp-without-tz column.
+                var newStart = AsUnspecifiedKind(request.StartDate.Value);
+                var earlierTasks = context.Resources
+                    .Where(r => r.Person.PersonId == person.PersonId && r.SubTask.StartDate < newStart)
+                    .Select(r => new { r.SubTask.SubTaskId, r.SubTask.Name, r.SubTask.StartDate, r.SubTask.OwningProject.RTP })
+                    .ToList();
+                foreach (var t in earlierTasks)
+                    errors.Add($"StartDate {newStart:yyyy-MM-dd} is after the start date {t.StartDate:yyyy-MM-dd} of task '{t.Name}' (SubTaskId {t.SubTaskId}, RTP {t.RTP}), which this person is assigned to");
+            }
+
             if (!string.IsNullOrWhiteSpace(request.Name))
             {
                 var probe = new Person { PersonId = person.PersonId, Name = request.Name.Trim() };
