@@ -795,6 +795,15 @@ namespace PPMTool.Services
             }
             var resolvedDuty = newDuty ?? task.TaskDuty;
 
+            // Making a task a leadership task has to meet the same managers-only rule
+            // as assigning someone to one, or it would get round that rule.
+            if (resolvedDuty == Duty.ProjectAndServiceMgmt && task.TaskDuty != Duty.ProjectAndServiceMgmt)
+            {
+                var managerPersonIds = userService.GetAllManagerPersonId(context).ToHashSet();
+                foreach (var r in task.AssignedResources.Where(r => !managerPersonIds.Contains(r.Person.PersonId)))
+                    errors.Add($"Only managers can be assigned to leadership tasks ('{r.Person.Name}' is assigned to this task)");
+            }
+
             if (request.Name != null)
             {
                 if (string.IsNullOrWhiteSpace(request.Name))
