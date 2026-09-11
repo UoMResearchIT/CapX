@@ -1785,14 +1785,16 @@ namespace PPMTool.Services
                 .Include(s => s.Faculty)
                 .FirstOrDefault(s => s.Code.Trim().ToLower() == code.Trim().ToLower());
 
-        // Reuses ProjectService.GetAll()'s own Include chain rather than assembling a
-        // partial one here -- UpdateProject's call to project.UpdateProjectMetaData needs
-        // the same full graph (SubTasks/AssignedResources/Person/WorkloadModelChanges,
-        // FundingSources, etc.) that method's NRE-prone dependencies read directly (see
-        // the ProjectService.GetAll() include list, and the class of bug noted on
-        // SchoolService.GetAllActive() elsewhere in this codebase).
+        // Goes through ProjectService.GetByRTP rather than a query of its own:
+        // UpdateProject's call to project.UpdateProjectMetaData needs the same full
+        // graph (SubTasks/AssignedResources/Person/WorkloadModelChanges,
+        // FundingSources, etc.) that ProjectService.GetAll() includes, and whose
+        // NRE-prone dependencies read directly (see the class of bug noted on
+        // SchoolService.GetAllActive() elsewhere in this codebase). GetByRTP currently
+        // loads every project to find one; any optimisation there (#301) applies
+        // here with no further change.
         private Project? FindProjectByRTP(PPMToolContext context, int rtp) =>
-            projectService.GetAll(context).FirstOrDefault(p => p.RTP == rtp);
+            projectService.GetByRTP(context, rtp);
 
         // Two queries rather than one Include chain on SubTasks directly: the caller
         // (ValidateTaskUpdate/UpdateTask) needs the fully-loaded owning Project too, for
