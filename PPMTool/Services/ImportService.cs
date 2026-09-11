@@ -329,14 +329,17 @@ namespace PPMTool.Services
             if (!string.IsNullOrWhiteSpace(request.ProjectManagerUsername) && FindUserByUsername(context, request.ProjectManagerUsername)?.Person == null)
                 errors.Add($"ProjectManagerUsername '{request.ProjectManagerUsername}' not found, or has no linked Person");
 
+            var assignments = new List<(Person? Person, string Assignee, double FTE)>();
             foreach (var r in request.Resourcing ?? Array.Empty<ImportResourcingDTO>())
             {
                 var person = FindUserByUsername(context, r.Username)?.Person;
                 if (person == null)
                     errors.Add($"Resourcing username '{r.Username}' not found, or has no linked Person");
-                else if (AssigneeStartsTooLate(person, request.ManagementStartDate) is { } tooLate)
-                    errors.Add($"Resourcing: {tooLate}");
+                assignments.Add((person, r.Username, r.AssignmentFTE));
             }
+            // Create puts create-time resourcing on its Delivery task: ProjectWork,
+            // starting on ManagementStartDate.
+            errors.AddRange(ValidateAssignments(context, assignments, Duty.ProjectWork, request.ManagementStartDate));
 
             if ((request.Comments?.Count ?? 0) > 0 && FindUserByUsername(context, FallbackAuthorUsername) == null)
                 errors.Add($"Fallback author User '{FallbackAuthorUsername}' does not exist -- create it before importing comments");
@@ -647,22 +650,16 @@ namespace PPMTool.Services
             else if (request.Demand <= 0)
                 errors.Add("Demand must be greater than zero");
 
-            var resourcing = request.Resourcing ?? Array.Empty<ImportResourcingDTO>();
-            foreach (var r in resourcing)
+            var assignments = new List<(Person? Person, string Assignee, double FTE)>();
+            foreach (var r in request.Resourcing ?? Array.Empty<ImportResourcingDTO>())
             {
                 var person = FindUserByUsername(context, r.Username)?.Person;
                 if (person == null)
                     errors.Add($"Resourcing Username '{r.Username}' not found, or has no linked Person");
-                if (HasDigitsAfterThirdDecimalPlace(r.AssignmentFTE))
-                    errors.Add($"Resourcing AssignmentFTE for '{r.Username}' cannot have digits after the third decimal place");
-
-                // Only managers can be assigned to a leadership-duty task -- same rule AddTask.razor enforces.
-                if (person != null && duty == Duty.ProjectAndServiceMgmt && !userService.GetAllManagerPersonId(context).Contains(person.PersonId))
-                    errors.Add($"Only managers can be assigned to leadership tasks (Resourcing Username '{r.Username}')");
-
-                if (person != null && AssigneeStartsTooLate(person, request.StartDate) is { } tooLate)
-                    errors.Add($"Resourcing: {tooLate}");
+                assignments.Add((person, r.Username, r.AssignmentFTE));
             }
+            // An unparseable TaskDuty is already reported above; the other rules still apply.
+            errors.AddRange(ValidateAssignments(context, assignments, duty ?? Duty.ProjectWork, request.StartDate));
 
             return errors;
         }
@@ -897,38 +894,62 @@ namespace PPMTool.Services
             if (resourcing.Count == 0)
                 errors.Add("Resourcing must contain at least one assignment");
 
-            var managerPersonIds = userService.GetAllManagerPersonId(context);
-            var seenPersonIds = new List<int>();
-
+            var assignments = new List<(Person? Person, string Assignee, double FTE)>();
             foreach (var r in resourcing)
             {
                 var (person, personErrors) = ResolveAssignmentPerson(context, r);
                 errors.AddRange(personErrors);
+                assignments.Add((person, DescribeAssignee(r), r.AssignmentFTE));
+            }
+            errors.AddRange(ValidateAssignments(context, assignments, task.TaskDuty, task.StartDate, existingTask: task));
 
-                if (HasDigitsAfterThirdDecimalPlace(r.AssignmentFTE))
-                    errors.Add($"AssignmentFTE for '{DescribeAssignee(r)}' cannot have digits after the third decimal place");
-                else if (r.AssignmentFTE <= 0)
-                    errors.Add($"AssignmentFTE for '{DescribeAssignee(r)}' must be greater than zero");
+            return errors;
+        }
+
+        // The per-assignment rules every resourcing path shares, so create-time
+        // resourcing (projects/add, tasks/add) can't accept what tasks/resourcing/add
+        // refuses. Resolving each Person stays with the caller, since the
+        // create-time DTO is username-only; a row whose Person didn't resolve has
+        // already been reported, and gets only the FTE checks. existingTask is the
+        // task being added to, when it already exists.
+        private List<string> ValidateAssignments(
+            PPMToolContext context,
+            IEnumerable<(Person? Person, string Assignee, double FTE)> assignments,
+            Duty duty,
+            DateTime taskStart,
+            SubTask? existingTask = null)
+        {
+            var errors = new List<string>();
+            var managerPersonIds = duty == Duty.ProjectAndServiceMgmt
+                ? userService.GetAllManagerPersonId(context).ToHashSet()
+                : null;
+            var seenPersonIds = new HashSet<int>();
+
+            foreach (var (person, assignee, fte) in assignments)
+            {
+                if (HasDigitsAfterThirdDecimalPlace(fte))
+                    errors.Add($"AssignmentFTE for '{assignee}' cannot have digits after the third decimal place");
+                else if (fte <= 0)
+                    errors.Add($"AssignmentFTE for '{assignee}' must be greater than zero");
 
                 if (person == null) continue;
 
                 // Only managers can be assigned to a leadership-duty task -- the same
-                // rule AddTask.razor enforces, and that ValidateTaskCreate already
-                // applies to create-time resourcing.
-                if (task.TaskDuty == Duty.ProjectAndServiceMgmt && !managerPersonIds.Contains(person.PersonId))
-                    errors.Add($"Only managers can be assigned to leadership tasks ('{DescribeAssignee(r)}')");
+                // rule AddTask.razor enforces.
+                if (managerPersonIds != null && !managerPersonIds.Contains(person.PersonId))
+                    errors.Add($"Only managers can be assigned to leadership tasks ('{assignee}')");
 
-                if (AssigneeStartsTooLate(person, task.StartDate) is { } tooLate)
+                if (AssigneeStartsTooLate(person, taskStart) is { } tooLate)
                     errors.Add(tooLate);
 
-                // Reject rather than merge or duplicate: silently adding a second
-                // assignment for the same person would double this task's resourcing
-                // on a re-run, and the caller has GET + update to do it deliberately.
-                if (task.AssignedResources.Any(existing => existing.Person.PersonId == person.PersonId))
-                    errors.Add($"'{DescribeAssignee(r)}' is already assigned to SubTaskId {request.SubTaskId} -- use PUT /api/tasks/resourcing/update to change the existing assignment");
-                if (seenPersonIds.Contains(person.PersonId))
-                    errors.Add($"'{DescribeAssignee(r)}' appears more than once in this request");
-                seenPersonIds.Add(person.PersonId);
+                // Reject rather than merge or duplicate: a second assignment for the
+                // same person would double this task's resourcing (on a re-run, for
+                // an existing task), and the caller has GET + update to do it
+                // deliberately.
+                if (existingTask != null && existingTask.AssignedResources.Any(existing => existing.Person.PersonId == person.PersonId))
+                    errors.Add($"'{assignee}' is already assigned to SubTaskId {existingTask.SubTaskId} -- use PUT /api/tasks/resourcing/update to change the existing assignment");
+                if (!seenPersonIds.Add(person.PersonId))
+                    errors.Add($"'{assignee}' appears more than once in this request");
             }
 
             return errors;
