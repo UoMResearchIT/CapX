@@ -318,6 +318,27 @@ namespace PPMTool.Services
                 errors.Add(rtpRequired);
             else if (context.Projects.Any(p => p.RTP == request.RTP))
                 errors.Add($"A Project with RTP {request.RTP} already exists");
+            else
+            {
+                // Create reuses an existing code for this RTP, so it must not already
+                // be another Project's; a new code must not repeat another code's
+                // name, which InnateCodeService.DuplicateDetected treats as a duplicate.
+                var existingCode = FindInnateCodeForRTP(context, request.RTP);
+                if (existingCode != null)
+                {
+                    var linkedRtp = context.Projects
+                        .Where(p => p.InnateActivity != null && p.InnateActivity.InnateCodeId == existingCode.InnateCodeId)
+                        .Select(p => (int?)p.RTP)
+                        .FirstOrDefault();
+                    if (linkedRtp != null)
+                        errors.Add($"Timesheet code '{existingCode.ActivityCode}' already belongs to the Project with RTP {linkedRtp}");
+                }
+                else if (!string.IsNullOrWhiteSpace(request.Name)
+                         && context.InnateCodes.Any(c => c.ActivityName.Trim().ToLower() == request.Name.Trim().ToLower()))
+                {
+                    errors.Add($"A timesheet code named '{request.Name}' already exists, so a new code for this Project would duplicate it");
+                }
+            }
             if (string.IsNullOrWhiteSpace(request.PI)) errors.Add("PI is required");
             if (string.IsNullOrWhiteSpace(request.RequestDocLink)) errors.Add("RequestDocLink is required");
             if (!Enum.TryParse<CostModel>(request.CostModel, out var costModel))
@@ -395,18 +416,25 @@ namespace PPMTool.Services
             // attach to. Mirrors SeedHelper.EnsureInnateCodeExists/GetDefaultInnateCodeTasks
             // exactly: one InnateCode per project keyed "S-RES-RTP-{RTP}", with the same
             // three default tasks.
-            project.InnateActivity = new InnateCode
+            //
+            // Like EnsureInnateCodeExists, an existing code for this RTP is reused
+            // rather than duplicated (Validate() has rejected one another Project
+            // already uses): hours already logged against it then count as this
+            // Project's actuals. Any default task it lacks is added, so
+            // timesheets/add can still find each one by name.
+            var innateActivity = FindInnateCodeForRTP(context, project.RTP) ?? new InnateCode
             {
-                ActivityCode = $"S-RES-RTP-{project.RTP}",
+                ActivityCode = InnateActivityCodeFor(project.RTP),
                 ActivityName = project.Name,
                 IsActive = true,
-                Tasks = new List<InnateCodeTask>
-                {
-                    new() { TaskName = "Development", Duty = Duty.ProjectWork },
-                    new() { TaskName = "Management", Duty = Duty.ProjectAndServiceMgmt },
-                    new() { TaskName = "Maintenance", Duty = Duty.ProjectWork },
-                },
+                Tasks = new List<InnateCodeTask>(),
             };
+            foreach (var defaultTask in DefaultInnateCodeTasks())
+            {
+                if (!innateActivity.Tasks.Any(t => t.TaskName.Trim().Equals(defaultTask.TaskName, StringComparison.OrdinalIgnoreCase)))
+                    innateActivity.Tasks.Add(defaultTask);
+            }
+            project.InnateActivity = innateActivity;
             context.SaveChangesWithRetry();
 
             // Every Project needs a task carrying Duty.ProjectAndServiceMgmt --
@@ -1784,6 +1812,24 @@ namespace PPMTool.Services
             context.Schools
                 .Include(s => s.Faculty)
                 .FirstOrDefault(s => s.Code.Trim().ToLower() == code.Trim().ToLower());
+
+        private static string InnateActivityCodeFor(int rtp) => $"S-RES-RTP-{rtp}";
+
+        private static InnateCode? FindInnateCodeForRTP(PPMToolContext context, int rtp)
+        {
+            var activityCode = InnateActivityCodeFor(rtp).ToLower();
+            return context.InnateCodes
+                .Include(c => c.Tasks)
+                .FirstOrDefault(c => c.ActivityCode.Trim().ToLower() == activityCode);
+        }
+
+        // The same three tasks SeedHelper.GetDefaultInnateCodeTasks gives every project code.
+        private static List<InnateCodeTask> DefaultInnateCodeTasks() => new()
+        {
+            new() { TaskName = "Development", Duty = Duty.ProjectWork },
+            new() { TaskName = "Management", Duty = Duty.ProjectAndServiceMgmt },
+            new() { TaskName = "Maintenance", Duty = Duty.ProjectWork },
+        };
 
         // Goes through ProjectService.GetByRTP rather than a query of its own:
         // UpdateProject's call to project.UpdateProjectMetaData needs the same full
