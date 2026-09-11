@@ -331,8 +331,11 @@ namespace PPMTool.Services
 
             foreach (var r in request.Resourcing ?? Array.Empty<ImportResourcingDTO>())
             {
-                if (FindUserByUsername(context, r.Username)?.Person == null)
+                var person = FindUserByUsername(context, r.Username)?.Person;
+                if (person == null)
                     errors.Add($"Resourcing username '{r.Username}' not found, or has no linked Person");
+                else if (AssigneeStartsTooLate(person, request.ManagementStartDate) is { } tooLate)
+                    errors.Add($"Resourcing: {tooLate}");
             }
 
             if ((request.Comments?.Count ?? 0) > 0 && FindUserByUsername(context, FallbackAuthorUsername) == null)
@@ -441,7 +444,6 @@ namespace PPMTool.Services
                 delivery.Schedule();
                 subTaskService.Add(context, delivery);
 
-                var created = new List<Resource>();
                 foreach (var r in resourcing)
                 {
                     var person = FindUserByUsername(context, r.Username)!.Person!;
@@ -453,10 +455,9 @@ namespace PPMTool.Services
                         IsProvisional = true, // migrated data -- flag for PM review, not treated as confirmed
                     };
                     context.Resources.Add(resource);
-                    created.Add(resource);
                     resourcesCreated++;
                 }
-                RefreshUnmetDemand(delivery, including: created);
+                Reschedule(context, delivery);
                 context.SaveChangesWithRetry();
             }
 
@@ -658,6 +659,9 @@ namespace PPMTool.Services
                 // Only managers can be assigned to a leadership-duty task -- same rule AddTask.razor enforces.
                 if (person != null && duty == Duty.ProjectAndServiceMgmt && !userService.GetAllManagerPersonId(context).Contains(person.PersonId))
                     errors.Add($"Only managers can be assigned to leadership tasks (Resourcing Username '{r.Username}')");
+
+                if (person != null && AssigneeStartsTooLate(person, request.StartDate) is { } tooLate)
+                    errors.Add($"Resourcing: {tooLate}");
             }
 
             return errors;
@@ -711,8 +715,9 @@ namespace PPMTool.Services
                 context.Resources.Add(resource);
                 created.Add(resource);
             }
-            // Demand's setter computed UnmetDemand before any resource existed.
-            RefreshUnmetDemand(task, including: created);
+            // The task was scheduled before any resource existed, so it is scheduled
+            // again now they do: that is what gives each one its PlannedWorkHours.
+            Reschedule(context, task);
 
             var financialReferences = financialReferenceService.GetAllOrDefault(context);
             var indirectsPercentage = settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
@@ -762,6 +767,14 @@ namespace PPMTool.Services
             if (resolvedEnd.Date < resolvedStart.Date)
                 errors.Add("EndDate must be on or after StartDate");
 
+            // Starting the task before one of its assignees starts is what Schedule()
+            // refuses, so it is refused here rather than failing on save.
+            foreach (var r in task.AssignedResources)
+            {
+                if (AssigneeStartsTooLate(r.Person, resolvedStart) is { } tooLate)
+                    errors.Add(tooLate);
+            }
+
             if (request.Demand.HasValue)
             {
                 if (HasDigitsAfterThirdDecimalPlace(request.Demand.Value))
@@ -789,7 +802,7 @@ namespace PPMTool.Services
             if (request.StartDate.HasValue) task.StartDate = AsUnspecifiedKind(request.StartDate.Value);
             if (request.EndDate.HasValue) task.EndDate = AsUnspecifiedKind(request.EndDate.Value);
             if (request.Demand.HasValue) task.Demand = request.Demand.Value;
-            task.Schedule();
+            Reschedule(context, task);
             subTaskService.Update(context, task);
 
             var financialReferences = financialReferenceService.GetAllOrDefault(context);
@@ -905,6 +918,9 @@ namespace PPMTool.Services
                 if (task.TaskDuty == Duty.ProjectAndServiceMgmt && !managerPersonIds.Contains(person.PersonId))
                     errors.Add($"Only managers can be assigned to leadership tasks ('{DescribeAssignee(r)}')");
 
+                if (AssigneeStartsTooLate(person, task.StartDate) is { } tooLate)
+                    errors.Add(tooLate);
+
                 // Reject rather than merge or duplicate: silently adding a second
                 // assignment for the same person would double this task's resourcing
                 // on a re-run, and the caller has GET + update to do it deliberately.
@@ -944,7 +960,7 @@ namespace PPMTool.Services
                 created.Add(resource);
             }
 
-            RefreshUnmetDemand(task, including: created);
+            Reschedule(context, task);
             RecalculateProject(context, project);
 
             return new ImportTaskResourcingResponseDTO(task.SubTaskId, created.Count);
@@ -996,6 +1012,9 @@ namespace PPMTool.Services
                 && !userService.GetAllManagerPersonId(context).Contains(resource.Person.PersonId))
                 errors.Add($"Only managers can be assigned to leadership tasks ('{resource.Person.Name}')");
 
+            if (AssigneeStartsTooLate(resource.Person, targetTask.StartDate) is { } tooLate)
+                errors.Add(tooLate);
+
             return errors;
         }
 
@@ -1028,33 +1047,42 @@ namespace PPMTool.Services
 
             context.Resources.Update(resource);
             if (landedOn != currentTask)
-            {
-                RefreshUnmetDemand(currentTask, excluding: resource);
-                RefreshUnmetDemand(landedOn, including: new[] { resource });
-            }
+                Reschedule(context, currentTask, landedOn);
             else
-            {
-                RefreshUnmetDemand(currentTask);
-            }
+                Reschedule(context, currentTask);
             if (movedFromProject != null) RecalculateProject(context, movedFromProject, commit: false);
             RecalculateProject(context, project);
 
             return new UpdateTaskResourcingResponseDTO(resource.ResourceId, landedOn.SubTaskId);
         }
 
-        // The Data Dashboard sums SubTask.UnmetDemand as stored, and only the UI's
-        // resource grid (AddTask.razor.cs) ever recalculated it, so every API path
-        // that changes a task's assignments has to recalculate it too. The
-        // resources are passed in explicitly rather than trusting AssignedResources:
-        // whether EF has fixed a newly added or moved Resource into (or out of) the
-        // collection yet depends on when it last detected changes.
-        private static void RefreshUnmetDemand(SubTask task, IEnumerable<Resource>? including = null, Resource? excluding = null)
+        // Every API path that changes a task's assignments has to do what the UI's
+        // resource grid (AddTask.razor.cs) does on save: Schedule() is the only
+        // thing that sets each Resource's PlannedWorkHours, which DayRate costs
+        // are computed from, and the Data Dashboard sums SubTask.UnmetDemand as
+        // stored. Both read AssignedResources, so change detection runs first:
+        // whether EF has fixed a newly added or moved Resource into (or out of)
+        // the collection yet otherwise depends on when it last detected changes.
+        // Validation already rejects everything Schedule() can refuse here (an
+        // assignee who starts after the task), so an error is a bug, not a 400.
+        private static void Reschedule(PPMToolContext context, params SubTask[] tasks)
         {
-            var resources = (task.AssignedResources ?? new List<Resource>()).AsEnumerable();
-            if (including != null) resources = resources.Union(including);
-            if (excluding != null) resources = resources.Where(r => !ReferenceEquals(r, excluding));
-            task.UpdateUnmetDemand(resources.ToList());
+            context.ChangeTracker.DetectChanges();
+            foreach (var task in tasks)
+            {
+                var error = task.Schedule();
+                if (error != null)
+                    throw new InvalidOperationException($"SubTask.Schedule() failed for SubTaskId {task.SubTaskId} despite passing validation: {error}");
+                task.UpdateUnmetDemand();
+            }
         }
+
+        // The one condition under which Schedule() refuses a task's assignments:
+        // someone assigned who starts after the task does. The UI refuses the same.
+        private static string? AssigneeStartsTooLate(Person person, DateTime taskStart) =>
+            person.StartDate > taskStart
+                ? $"'{person.Name}' does not start until {person.StartDate:yyyy-MM-dd}, after the task's start date {taskStart:yyyy-MM-dd}"
+                : null;
 
         /// <summary>
         /// Validate a POST /api/timesheets/add request without writing
