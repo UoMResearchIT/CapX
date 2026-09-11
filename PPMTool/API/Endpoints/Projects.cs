@@ -268,7 +268,12 @@ public static class Projects
                 return Results.BadRequest(new ImportErrorDTO(errors));
             }
 
+            // NoteService.Add commits each Note, and nothing de-duplicates them, so
+            // without a transaction a failure part-way through leaves some Notes
+            // behind that a retry of the whole request then adds a second time.
+            using var transaction = context.Database.BeginTransaction();
             var result = importService.AddNotes(context, request);
+            transaction.Commit();
             logger.LogInformation(
                 "API: Projects: added {NotesCreated} Note(s) to Project {ProjectId} (RTP {RTP}) by {User}",
                 result.NotesCreated, result.ProjectId, request.RTP, caller!.Name);
