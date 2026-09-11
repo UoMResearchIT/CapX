@@ -319,6 +319,8 @@ namespace PPMTool.Services
                 errors.Add("DayRate must be greater than zero when CostModel is 'DayRate'");
             if (!Enum.TryParse<ProjectStatus>(request.ProjectStatus, out _))
                 errors.Add($"ProjectStatus '{request.ProjectStatus}' is not a valid value");
+            if (request.ManagementEndDate.Date < request.ManagementStartDate.Date)
+                errors.Add("ManagementEndDate must be on or after ManagementStartDate");
 
             var school = FindActiveSchoolByCode(context, request.SchoolCode);
             if (school == null)
@@ -412,8 +414,8 @@ namespace PPMTool.Services
                 Demand = managementFte,
                 OriginalDemand = managementFte,
                 OwningProject = project,
-                StartDate = request.ManagementStartDate,
-                EndDate = request.ManagementEndDate,
+                StartDate = AsUnspecifiedKind(request.ManagementStartDate),
+                EndDate = AsUnspecifiedKind(request.ManagementEndDate),
             };
             managementTask.Schedule();
             subTaskService.Add(context, managementTask);
@@ -433,8 +435,8 @@ namespace PPMTool.Services
                     Demand = totalFte,
                     OriginalDemand = totalFte,
                     OwningProject = project,
-                    StartDate = request.ManagementStartDate,
-                    EndDate = request.ManagementEndDate,
+                    StartDate = AsUnspecifiedKind(request.ManagementStartDate),
+                    EndDate = AsUnspecifiedKind(request.ManagementEndDate),
                 };
                 delivery.Schedule();
                 subTaskService.Add(context, delivery);
@@ -1104,10 +1106,11 @@ namespace PPMTool.Services
                 : personService.GetById(context, request.PersonId!.Value);
             var project = FindProjectWithInnateActivity(context, request.ProjectId)!;
             var task = project.InnateActivity!.Tasks.First(t => t.TaskName.Trim().Equals(request.TaskName.Trim(), StringComparison.OrdinalIgnoreCase));
+            var weekStartDate = AsUnspecifiedKind(request.WeekStartDate);
 
             var timesheet = context.Timesheets
                 .Include(t => t.TimesheetEntries)
-                .FirstOrDefault(t => t.Owner.PersonId == person.PersonId && t.StartDate == request.WeekStartDate);
+                .FirstOrDefault(t => t.Owner.PersonId == person.PersonId && t.StartDate == weekStartDate);
 
             var timesheetCreated = timesheet == null;
             if (timesheet == null)
@@ -1115,7 +1118,7 @@ namespace PPMTool.Services
                 timesheet = new Timesheet
                 {
                     Owner = person,
-                    StartDate = request.WeekStartDate,
+                    StartDate = weekStartDate,
                     Status = TimesheetStatus.Approved, // historical actuals -- not pending review
                     DateStatusChanged = DateTime.Now,
                 };
@@ -1263,7 +1266,8 @@ namespace PPMTool.Services
         {
             var person = FindUserByUsername(context, request.Username)!.Person!;
 
-            var change = person.WorkloadModelChanges.FirstOrDefault(c => c.ChangeDate == request.ChangeDate);
+            var changeDate = AsUnspecifiedKind(request.ChangeDate);
+            var change = person.WorkloadModelChanges.FirstOrDefault(c => c.ChangeDate == changeDate);
             var created = change == null;
             if (change == null)
             {
@@ -1271,7 +1275,7 @@ namespace PPMTool.Services
                 context.WorkloadModelChanges.Add(change);
             }
 
-            change.ChangeDate = request.ChangeDate;
+            change.ChangeDate = changeDate;
             change.Grade = request.Grade;
             change.ProjectWorkFTE = request.ProjectWorkFTE;
             change.BusinessAsUsualFTE = request.BusinessAsUsualFTE;
