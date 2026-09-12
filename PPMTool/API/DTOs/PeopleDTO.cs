@@ -15,6 +15,7 @@ namespace PPMTool.API.DTOs
     /// <param name="EndDate">The end date for the person, if they have left.</param>
     /// <param name="LineManagerId">The person ID of their line manager, if present.</param>
     /// <param name="LineManagerName">The name of their line manager, if present.</param>
+    /// <param name="Username">CapX Access Control username (CASUserName) of the linked User, if any -- null if this Person has no login. Needed to target this person via the Superuser "/add" import endpoints, which resolve by username, not PersonId.</param>
     public sealed record PersonDTO(
         int PersonId,
         string Name,
@@ -23,6 +24,7 @@ namespace PPMTool.API.DTOs
         DateTime StartDate,
         DateTime? EndDate,
         int? LineManagerId,
-        string LineManagerName
+        string LineManagerName,
+        string? Username
     );
 }

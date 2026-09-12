@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
 using PPMTool.API.Helpers;
 using PPMTool.Data.Context;
+using PPMTool.Services;
 
 namespace PPMTool.API.Endpoints;
 
@@ -41,6 +42,20 @@ public static class People
                 .OrderBy(x => x.Name)
                 .ToListAsync();
 
+            // Person has no reverse nav to User -- look usernames up the other way round.
+            // A Person can legitimately be linked to more than one User (no unique
+            // constraint on Users.PersonId, e.g. a Manager account and a separate
+            // Superuser/API account both linked to the same real person) -- ToDictionary
+            // would throw on the duplicate key, so dedupe deterministically (lowest
+            // UserId, i.e. the earliest-created linked account) instead of crashing.
+            var usernamesByPersonId = (await context.Users
+                .Where(u => u.Person != null)
+                .OrderBy(u => u.UserId)
+                .Select(u => new { u.Person!.PersonId, u.CASUserName })
+                .ToListAsync())
+                .GroupBy(x => x.PersonId)
+                .ToDictionary(g => g.Key, g => g.First().CASUserName);
+
             var personDtos = people.Select(x => new PersonDTO(
                 PersonId: x.PersonId,
                 Name: x.Name,
@@ -49,7 +64,8 @@ public static class People
                 StartDate: x.StartDate,
                 EndDate: x.EndDate,
                 LineManagerId: x.LineManager?.PersonId,
-                LineManagerName: x.LineManager?.Name
+                LineManagerName: x.LineManager?.Name,
+                Username: usernamesByPersonId.GetValueOrDefault(x.PersonId)
             )).ToList();
 
             logger.LogInformation("API: GetAllPeople: Returned {Count} people records.", personDtos.Count);
@@ -105,6 +121,14 @@ public static class People
                 return Results.NotFound();
             }
 
+            // A Person can back more than one User; take the lowest UserId, the same
+            // choice GetAllPeopleAsync makes, so both endpoints agree.
+            var username = await context.Users
+                .Where(u => u.Person != null && u.Person.PersonId == person.PersonId)
+                .OrderBy(u => u.UserId)
+                .Select(u => u.CASUserName)
+                .FirstOrDefaultAsync();
+
             var dto = new PersonDTO(
                 PersonId: person.PersonId,
                 Name: person.Name,
@@ -113,7 +137,8 @@ public static class People
                 StartDate: person.StartDate,
                 EndDate: person.EndDate,
                 LineManagerId: person.LineManager?.PersonId,
-                LineManagerName: person.LineManager?.Name
+                LineManagerName: person.LineManager?.Name,
+                Username: username
             );
 
             logger.LogInformation("API: GetPersonById: Returned person record for personId {PersonId}", personId);
@@ -122,6 +147,91 @@ public static class People
         catch (Exception ex)
         {
             logger.LogError(ex, "API: GetPersonById: error");
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Create a bare Person record, with no linked User/Access-Control
+    /// account. Superuser-only write access, gated behind
+    /// SettingType.ImportApiEnabled -- see UoMResearchIT/CapX#1310.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportPersonResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult CreatePerson(
+        PPMToolContext context,
+        ImportService importService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] ImportPersonDTO request)
+    {
+        try
+        {
+            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "People.CreatePerson");
+            if (!allowed) return gateResult!;
+
+            var errors = importService.ValidatePerson(context, request);
+            if (errors.Count > 0)
+            {
+                logger.LogWarning("API: People: person validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors));
+                return Results.BadRequest(new ImportErrorDTO(errors));
+            }
+
+            var result = importService.CreatePerson(context, request);
+            logger.LogInformation(
+                "API: People: created Person {PersonId} '{Name}' ({ShortName}) by {User}",
+                result.PersonId, request.Name, result.ShortName, caller!.Name);
+            return Results.Created($"/api/people/getById?personId={result.PersonId}", result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: People: error creating person '{Name}'", request.Name);
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Update an existing bare Person's Name, StartDate, EndDate, FTE
+    /// and/or LineManager. Identified by PersonId. Superuser-only write
+    /// access, gated behind SettingType.ImportApiEnabled -- see
+    /// UoMResearchIT/CapX#1310.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ImportPersonResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult UpdatePerson(
+        PPMToolContext context,
+        ImportService importService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] UpdatePersonRequestDTO request)
+    {
+        try
+        {
+            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "People.UpdatePerson");
+            if (!allowed) return gateResult!;
+
+            var errors = importService.ValidatePersonUpdate(context, request);
+            if (errors.Count > 0)
+            {
+                logger.LogWarning("API: People: person update validation failed for PersonId {PersonId}: {Errors}", request.PersonId, string.Join("; ", errors));
+                return Results.BadRequest(new ImportErrorDTO(errors));
+            }
+
+            var result = importService.UpdatePerson(context, request);
+            logger.LogInformation(
+                "API: People: updated Person {PersonId} ('{ShortName}') by {User}",
+                result.PersonId, result.ShortName, caller!.Name);
+            return Results.Ok(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: People: error updating person {PersonId}", request.PersonId);
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
