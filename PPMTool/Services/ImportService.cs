@@ -1190,6 +1190,10 @@ namespace PPMTool.Services
 
             if (request.WeekStartDate.DayOfWeek != DayOfWeek.Monday)
                 errors.Add($"WeekStartDate '{request.WeekStartDate:yyyy-MM-dd}' is a {request.WeekStartDate.DayOfWeek}, not a Monday -- CapX Timesheets are always Monday-start weeks");
+            // The week is matched on the exact stored value, so a time of day would
+            // create a second Timesheet for a week that already exists at midnight.
+            if (request.WeekStartDate.TimeOfDay != TimeSpan.Zero)
+                errors.Add($"WeekStartDate '{request.WeekStartDate:O}' must be a date with no time of day");
 
             foreach (var (label, hours) in DayHours(request))
             {
@@ -1356,6 +1360,11 @@ namespace PPMTool.Services
 
             if (FindUserByUsername(context, request.Username)?.Person == null)
                 errors.Add($"Username '{request.Username}' not found, or has no linked Person");
+
+            // Matched on the exact stored value, so a time of day would add a second
+            // change for a date that already has one.
+            if (request.ChangeDate.TimeOfDay != TimeSpan.Zero)
+                errors.Add($"ChangeDate '{request.ChangeDate:O}' must be a date with no time of day");
 
             if (request.Grade < 4 || request.Grade > 9)
                 errors.Add($"Grade {request.Grade} is out of range (must be 4-9)");
