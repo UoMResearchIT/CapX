@@ -1200,12 +1200,17 @@ namespace PPMTool.Services
                 if (hours < 0) errors.Add($"{label} cannot be negative");
             }
 
+            // Non-nullable in C#, but an omitted or null JSON value still binds as null.
+            var hasTaskName = !string.IsNullOrWhiteSpace(request.TaskName);
+            if (!hasTaskName)
+                errors.Add("TaskName is required");
+
             var project = FindProjectWithInnateActivity(context, request.ProjectId);
             if (project == null)
                 errors.Add($"ProjectId {request.ProjectId} does not exist");
             else if (project.InnateActivity == null)
                 errors.Add($"Project {request.ProjectId} ('{project.Name}') has no InnateActivity code -- only projects created via POST /api/projects/add (or otherwise already linked) can receive imported timesheet entries");
-            else if (!project.InnateActivity.Tasks.Any(t => t.TaskName.Trim().Equals(request.TaskName.Trim(), StringComparison.OrdinalIgnoreCase)))
+            else if (hasTaskName && !project.InnateActivity.Tasks.Any(t => t.TaskName.Trim().Equals(request.TaskName.Trim(), StringComparison.OrdinalIgnoreCase)))
                 errors.Add($"TaskName '{request.TaskName}' does not match any InnateCodeTask under project {request.ProjectId}'s InnateActivity ('{project.InnateActivity.ActivityName}'); available: {string.Join(", ", project.InnateActivity.Tasks.Select(t => t.TaskName))}");
 
             return errors;
