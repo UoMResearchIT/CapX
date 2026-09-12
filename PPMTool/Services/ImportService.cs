@@ -341,11 +341,11 @@ namespace PPMTool.Services
             }
             if (string.IsNullOrWhiteSpace(request.PI)) errors.Add("PI is required");
             if (string.IsNullOrWhiteSpace(request.RequestDocLink)) errors.Add("RequestDocLink is required");
-            if (!Enum.TryParse<CostModel>(request.CostModel, out var costModel))
+            if (!TryParseDefined<CostModel>(request.CostModel, out var costModel))
                 errors.Add($"CostModel '{request.CostModel}' is not a valid value");
             else if (costModel == CostModel.DayRate && request.DayRate <= 0)
                 errors.Add("DayRate must be greater than zero when CostModel is 'DayRate'");
-            if (!Enum.TryParse<ProjectStatus>(request.ProjectStatus, out _))
+            if (!TryParseDefined<ProjectStatus>(request.ProjectStatus, out _))
                 errors.Add($"ProjectStatus '{request.ProjectStatus}' is not a valid value");
             if (request.ManagementEndDate.Date < request.ManagementStartDate.Date)
                 errors.Add("ManagementEndDate must be on or after ManagementStartDate");
@@ -563,7 +563,7 @@ namespace PPMTool.Services
             CostModel? costModel = null;
             if (request.CostModel != null)
             {
-                if (!Enum.TryParse<CostModel>(request.CostModel, out var parsed))
+                if (!TryParseDefined<CostModel>(request.CostModel, out var parsed))
                     errors.Add($"CostModel '{request.CostModel}' is not a valid value");
                 else
                     costModel = parsed;
@@ -573,7 +573,7 @@ namespace PPMTool.Services
             if (resolvedCostModel == CostModel.DayRate && resolvedDayRate <= 0)
                 errors.Add("DayRate must be greater than zero when CostModel is 'DayRate'");
 
-            if (request.ProjectStatus != null && !Enum.TryParse<ProjectStatus>(request.ProjectStatus, out _))
+            if (request.ProjectStatus != null && !TryParseDefined<ProjectStatus>(request.ProjectStatus, out _))
                 errors.Add($"ProjectStatus '{request.ProjectStatus}' is not a valid value");
 
             if (request.SchoolCode != null && FindActiveSchoolByCode(context, request.SchoolCode) == null)
@@ -678,7 +678,7 @@ namespace PPMTool.Services
                 errors.Add("Name cannot be blank");
 
             Duty? duty = null;
-            if (!Enum.TryParse<Duty>(request.TaskDuty, out var parsedDuty))
+            if (!TryParseDefined<Duty>(request.TaskDuty, out var parsedDuty))
                 errors.Add($"TaskDuty '{request.TaskDuty}' is not a valid value");
             else
                 duty = parsedDuty;
@@ -788,7 +788,7 @@ namespace PPMTool.Services
             Duty? newDuty = null;
             if (request.TaskDuty != null)
             {
-                if (!Enum.TryParse<Duty>(request.TaskDuty, out var parsed))
+                if (!TryParseDefined<Duty>(request.TaskDuty, out var parsed))
                     errors.Add($"TaskDuty '{request.TaskDuty}' is not a valid value");
                 else
                     newDuty = parsed;
@@ -1605,7 +1605,7 @@ namespace PPMTool.Services
                 errors.Add("Name is required when PersonId is not given");
             }
 
-            if (!string.IsNullOrWhiteSpace(request.RoleType) && !Enum.TryParse<RoleType>(request.RoleType, out _))
+            if (!string.IsNullOrWhiteSpace(request.RoleType) && !TryParseDefined<RoleType>(request.RoleType, out _))
                 errors.Add($"RoleType '{request.RoleType}' is not a valid value");
 
             if (!string.IsNullOrWhiteSpace(request.CASUserName))
@@ -1960,6 +1960,11 @@ namespace PPMTool.Services
         // OriginalDemand/AssignmentFTE) -- EF/Postgres would happily store more
         // precision, but the UI treats it as invalid, so the API rejects it too
         // rather than silently accepting data the UI itself would refuse.
+        // Enum.TryParse accepts any integer string ("99"), whether or not a member
+        // has that value, and would let an undefined value be stored.
+        private static bool TryParseDefined<TEnum>(string? value, out TEnum result) where TEnum : struct, Enum =>
+            Enum.TryParse(value, out result) && Enum.IsDefined(result);
+
         private static bool HasDigitsAfterThirdDecimalPlace(double number)
         {
             var truncated = Math.Truncate(number * 1000) / 1000;
