@@ -149,6 +149,12 @@ namespace PPMTool.Services
 
             if (request.Name == null && request.NewCode == null)
                 errors.Add("At least one of Name or NewCode must be supplied");
+            // Null means "leave unchanged"; a blank would be saved, and a blank Code
+            // leaves the Faculty unreachable by this API.
+            if (request.Name != null && string.IsNullOrWhiteSpace(request.Name))
+                errors.Add("Name cannot be blank");
+            if (request.NewCode != null && string.IsNullOrWhiteSpace(request.NewCode))
+                errors.Add("NewCode cannot be blank");
 
             var probe = new Faculty
             {
@@ -251,6 +257,12 @@ namespace PPMTool.Services
 
             if (request.Name == null && request.NewCode == null && request.NewFacultyCode == null)
                 errors.Add("At least one of Name, NewCode, or NewFacultyCode must be supplied");
+            // Null means "leave unchanged"; a blank would be saved, and a blank Code
+            // leaves the School unreachable by this API.
+            if (request.Name != null && string.IsNullOrWhiteSpace(request.Name))
+                errors.Add("Name cannot be blank");
+            if (request.NewCode != null && string.IsNullOrWhiteSpace(request.NewCode))
+                errors.Add("NewCode cannot be blank");
 
             var faculty = school.Faculty;
             if (request.NewFacultyCode != null)
