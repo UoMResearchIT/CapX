@@ -1,4 +1,8 @@
-﻿using System.Text;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using PPMTool.Data.Context;

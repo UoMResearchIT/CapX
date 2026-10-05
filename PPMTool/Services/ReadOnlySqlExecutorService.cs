@@ -1,4 +1,8 @@
-﻿using System.Text.Json;
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using Npgsql;
 using PPMTool.Data;
