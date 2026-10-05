@@ -74,6 +74,12 @@ There are two _solution_ configurations: `Local` and `Release` that combine proj
 > [!TIP]
 > The `ASPNETCORE_ENVIRONMENT` variable is used to specify whether the app should run in production or development mode. This is a runtime variable and has nothing to do with the compile-time _build_ configuration.
 
+### Local AI Support
+Superusers have access to an AI assistant to help pull out information and trends from the data model in the database. Settings are used to specify an endpoint and model as required by the chat component Radzen supply.
+
+> [!TIP]
+> The recommended configuration is to run a local model in [ollama](https://ollama.com/download) running in a docker container with the agent given a readonly connection to the CapX database. 
+
 ### Running with Docker Compose
 Docker Compose runs a single container with a single volume containing the database.
 

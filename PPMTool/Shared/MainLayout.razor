@@ -136,7 +136,7 @@ else
                 <Authorized>
                     <RadzenPanelMenuItem Text="People" Icon="people" Expanded="true">
                         <RadzenPanelMenuItem Path="people" Text="@(activeUserRoleType == RoleType.Developer ? "My Details" : "Manage People")" Icon="manage_accounts" />
-                        @if (activeUserId != null && FeatureService.IsFeatureEnabled(FeatureType.Skills))
+                        @if (activeUserPersonId != null && FeatureService.IsFeatureEnabled(FeatureType.Skills))
                         {
                             <RadzenPanelMenuItem Path="skills" Icon="military_tech">
                                 <Template>
@@ -253,6 +253,7 @@ else
     </RadzenSidebar>
 
     <RadzenBody class="p-0">
+        @* Can the popup go here for the AI chat? *@
         <div class="body-wrapper">
             <div class="content-area rz-p-4">
                 <CascadingValue Value="this">
@@ -296,6 +297,12 @@ else
                                            aria-label="Search bar to navigate to project or person" />
                         </div>
                         <RadzenButton ButtonStyle="ButtonStyle.Light" ButtonType="ButtonType.Button" Click="ClearMagicBar" Icon="close" />
+                        @if (activeUserRoleType == RoleType.Superuser && 
+                                !string.IsNullOrWhiteSpace(SettingsService.GetSetting(SettingType.LLMEndPoint)) &&
+                                !string.IsNullOrWhiteSpace(SettingsService.GetSetting(SettingType.LLMModel)))
+                        {
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" ButtonType="ButtonType.Button" Click="ToggleAiChatAsync" Icon="chat" />
+                        }
                     </RadzenStack>
                 </Authorized>
             </AuthorizeView>

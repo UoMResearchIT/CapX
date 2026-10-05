@@ -94,6 +94,14 @@ namespace PPMTool.Data.Enums
 
         [Description("The percentage of the planned cost that can be underclaimed (requested) for a given financial year.")]
         [DefaultSettingValue("10")]
-        UnderclaimedFundsThreshold = 20
+        UnderclaimedFundsThreshold = 20,
+
+        [Description("The endpoint for the LLM API driving the AI chat functionality.")]
+        [DefaultSettingValue("")]
+        LLMEndPoint = 21,
+
+        [Description("The model for the LLM API driving the AI chat functionality.")]
+        [DefaultSettingValue("")]
+        LLMModel = 22,
     }
 }

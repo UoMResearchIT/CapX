@@ -12,6 +12,7 @@ using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
+using PPMTool.Pages.Components;
 using PPMTool.Services;
 using Radzen;
 
@@ -55,6 +56,9 @@ namespace PPMTool.Shared
         [Inject]
         private CssVariableService CssVariableService { get; set; }
 
+        [Inject]
+        private DialogService DialogService { get; set; }
+
         /// <summary>
         /// Whether there are any buttons or error messages to show in the action bar.
         /// </summary>
@@ -79,8 +83,40 @@ namespace PPMTool.Shared
         private int totalTimesheetCodesToDeactivate;
         private int totalIncompleteSkills;
         private bool adminMenuItemExpanded = false;
-        private int? activeUserId;
+        private int? activeUserPersonId;
         private RoleType activeUserRoleType;
+        private int activeUserId;
+        private AIChatComponent chatComponent;
+
+        /// <summary>
+        /// Method to toggle the AI chat component.
+        /// This method opens a side dialog containing the AI chat interface, allowing users to interact with the AI chat feature.
+        /// </summary>
+        /// <returns></returns>
+        private async Task ToggleAiChatAsync()
+        {
+            if (chatComponent is null)
+            {
+                chatComponent = await DialogService.OpenSideAsync<AIChatComponent>(
+                    $"{SettingsService.GetSetting(SettingType.ApplicationName)} Data Agent",
+                    new Dictionary<string, object>()
+                    {
+                        [nameof(AIChatComponent.ActiveUserId)] = activeUserId
+                    },
+                    new SideDialogOptions
+                    {
+                        Width = "600px",
+                        Resizable = true,
+                        CssClass = "capx-ai-dialog"
+                    }
+                );
+            }
+            else
+            {
+                await DialogService.CloseSideAsync(chatComponent);
+                chatComponent = null;
+            }
+        }
 
         /// <summary>
         /// Determines the CSS color variable to use for the banner based on the current environment and settings.
@@ -183,21 +219,21 @@ namespace PPMTool.Shared
                 await ThemeService.SetDarkLightAsync(useDarkMode, SettingsService, CssVariableService);
             }
 
-            // Set the user id to show the skills tab
-            if (activeUserId == null)
+            // Set the person ID to show the skills tab
+            if (activeUserPersonId == null)
             {
-                using (var context = ContextFactory.CreateDbContext())
-                {
-                    // Store the active user ID
-                    activeUserId = loginView.ActiveUser?.Person?.PersonId;
-                    activeUserRoleType = loginView.ActiveUser?.RoleType ?? RoleType.None;
-                }
+                // Store the active user person ID if they are associate with a person
+                activeUserPersonId = loginView.ActiveUser?.Person?.PersonId;
+                activeUserRoleType = loginView.ActiveUser?.RoleType ?? RoleType.None;
 
-                if (activeUserId != null)
+                if (activeUserPersonId != null)
                 {
                     StateHasChanged();
                 }
             }
+
+            // Set the user ID
+            activeUserId = loginView.ActiveUser?.UserId ?? 0;
 
             // Update the badges in the sidebar if necessary
             if (loginView != null && loginView.ActiveUser != null)
@@ -206,7 +242,7 @@ namespace PPMTool.Shared
                 {
                     // Update timesheet badge
                     var oldTimesheetIssuesValue = totalTimesheetIssues;
-                    totalTimesheetIssues = await TimesheetService.GetIssueCountAsync(context, activeUserId ?? 0);
+                    totalTimesheetIssues = await TimesheetService.GetIssueCountAsync(context, activeUserPersonId ?? 0);
 
                     // Update timesheet code badge
                     var oldTimesheetCodeIssuesValue = totalTimesheetCodesToDeactivate;
@@ -214,7 +250,7 @@ namespace PPMTool.Shared
 
                     // Update skills badge
                     var oldIncompleteSkillsValue = totalIncompleteSkills;
-                    totalIncompleteSkills = await SkillTagService.GetIncompleteRecordCountAsync(context, activeUserId ?? 0);
+                    totalIncompleteSkills = await SkillTagService.GetIncompleteRecordCountAsync(context, activeUserPersonId ?? 0);
 
                     // Only call state has changed when something has changed
                     if (oldTimesheetCodeIssuesValue != totalTimesheetCodesToDeactivate ||

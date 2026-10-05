@@ -1,0 +1,81 @@
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@using System.Diagnostics
+@using Microsoft.EntityFrameworkCore
+@using PPMTool.Data.Context
+@using PPMTool.Data.Enums
+@using PPMTool.Services
+
+<RadzenCard Variant="Variant.Outlined"
+            class="ai-chat-card">
+    <RadzenStack Orientation="Radzen.Orientation.Vertical"
+                 Gap="0.5rem"
+                 class="ai-chat-stack">
+        <HintComponent Message="The agent runs a local LLM alongside the web application. It is fed a system prompt containing the DB schema and some semantic rules. THe LLM does not have direct access to the DB. You can use the agent to ask natural language queries about the data. For example, 'How many projects did we do for the faculty of humanities in 2026?'" />
+        <RadzenAIChat UserAvatarText="@avatarText"
+                      SessionId="@chatSessionId"
+                      Placeholder="Ask me anything..."
+                      Endpoint="@llmEndpoint"
+                      Model="@llmModel"
+                      ShowDateSeparator="true"
+                      class="ai-chat-window" />
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter]
+    public int? ActiveUserId { get; set; }
+
+    [Inject]
+    private UserService UserService { get; set; }
+
+    [Inject]
+    private IDbContextFactory<PPMToolContext> ContextFactory { get; set; }
+
+    [Inject]
+    private SettingsService SettingsService { get; set; }
+
+    [Inject]
+    private DatabaseSchemaPromptService DatabaseSchemaPromptService { get; set; }
+
+    [Inject]
+    private ILogger<AIChatComponent> Logger { get; set; }
+
+    private string avatarText;
+    private string llmEndpoint;
+    private string llmModel;
+    private string chatSessionId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        // Go get the person from the DB
+        if (ActiveUserId.HasValue)
+        {
+            using (var context = ContextFactory.CreateDbContext())
+            {
+                var user = UserService.GetById(context, ActiveUserId.Value);
+                if (user != null)
+                {
+                    avatarText = user.GetInitials();
+                }
+            }
+        }
+
+        // Cook up chat session ID from the user ID
+        chatSessionId = $"user-{ActiveUserId}";
+        
+        // Get the LLM endpoint from the settings
+        llmEndpoint = SettingsService.GetSetting(SettingType.LLMEndPoint);
+        Debug.WriteLine($"** LLM Endpoint = '{llmEndpoint}'");
+
+        // Get the LLM model from the settings
+        llmModel = SettingsService.GetSetting(SettingType.LLMModel);
+        Debug.WriteLine($"** LLM Model = '{llmModel}'");
+    }
+}
