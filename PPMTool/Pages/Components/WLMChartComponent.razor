@@ -22,116 +22,108 @@ SPDX-License-Identifier: apache-2.0
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
                                  SeriesType="@SeriesType.Bar"
-                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(0).GetDescription()"
+                                 Name="@Duty.ProjectWork.GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(0).Value)))"
-                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(1).GetBackgroundColourCode()" />
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty[Duty.ProjectWork])))"
+                                 Color="@Duty.ProjectWork.GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
                                  SeriesType="@SeriesType.Bar"
-                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(1).GetDescription()"
+                                 Name="@Duty.BAU.GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(1).Value)))"
-                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(1).GetBackgroundColourCode()" />
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty[Duty.BAU])))"
+                                 Color="@Duty.BAU.GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
                                  SeriesType="@SeriesType.Bar"
-                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(2).GetDescription()"
+                                 Name="@Duty.PersonalDevelopment.GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(2).Value)))"
-                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(2).GetBackgroundColourCode()" />
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty[Duty.PersonalDevelopment])))"
+                                 Color="@Duty.PersonalDevelopment.GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
                                  SeriesType="@SeriesType.Bar"
-                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(3).GetDescription()"
+                                 Name="@Duty.StaffMgmt.GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(3).Value)))"
-                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(3).GetBackgroundColourCode()" />
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty[Duty.StaffMgmt])))"
+                                 Color="@Duty.StaffMgmt.GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
                                  SeriesType="@SeriesType.Bar"
-                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(4).GetDescription()"
+                                 Name="@Duty.ProjectAndServiceMgmt.GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(4).Value)))"
-                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(4).GetBackgroundColourCode()" />
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty[Duty.ProjectAndServiceMgmt])))"
+                                 Color="@Duty.ProjectAndServiceMgmt.GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
                                  SeriesType="@SeriesType.Bar"
-                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(5).GetDescription()"
+                                 Name="@Duty.RSA.GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(5).Value)))"
-                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(5).GetBackgroundColourCode()" />
-
-                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
-                                 Items="ChartItems"
-                                 SeriesType="@SeriesType.Bar"
-                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(6).GetDescription()"
-                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(6).Value)))"
-                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(6).GetBackgroundColourCode()" />
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty[Duty.RSA])))"
+                                 Color="@Duty.RSA.GetBackgroundColourCode()" />
             }
             else
             {
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
                                  SeriesType="@SeriesType.Bar"
-                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(0).GetDescription()"
+                                 Name="@Duty.Other.GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(0).Value)))"
-                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(1).GetBackgroundColourCode()" />
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty[Duty.Other])))"
+                                 Color="@Duty.Other.GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
                                  SeriesType="@SeriesType.Bar"
-                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(1).GetDescription()"
+                                 Name="@Duty.ProjectWork.GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(1).Value)))"
-                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(1).GetBackgroundColourCode()" />
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty[Duty.ProjectWork])))"
+                                 Color="@Duty.ProjectWork.GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
                                  SeriesType="@SeriesType.Bar"
-                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(2).GetDescription()"
+                                 Name="@Duty.BAU.GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(2).Value)))"
-                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(2).GetBackgroundColourCode()" />
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty[Duty.BAU])))"
+                                 Color="@Duty.BAU.GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
                                  SeriesType="@SeriesType.Bar"
-                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(3).GetDescription()"
+                                 Name="@Duty.PersonalDevelopment.GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(3).Value)))"
-                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(3).GetBackgroundColourCode()" />
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty[Duty.PersonalDevelopment])))"
+                                 Color="@Duty.PersonalDevelopment.GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
                                  SeriesType="@SeriesType.Bar"
-                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(4).GetDescription()"
+                                 Name="@Duty.StaffMgmt.GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(4).Value)))"
-                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(4).GetBackgroundColourCode()" />
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty[Duty.StaffMgmt])))"
+                                 Color="@Duty.StaffMgmt.GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
                                  SeriesType="@SeriesType.Bar"
-                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(5).GetDescription()"
+                                 Name="@Duty.ProjectAndServiceMgmt.GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(5).Value)))"
-                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(5).GetBackgroundColourCode()" />
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty[Duty.ProjectAndServiceMgmt])))"
+                                 Color="@Duty.ProjectAndServiceMgmt.GetBackgroundColourCode()" />
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
                                  SeriesType="@SeriesType.Bar"
-                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(6).GetDescription()"
+                                 Name="@Duty.RSA.GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(6).Value)))"
-                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(6).GetBackgroundColourCode()" />
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty[Duty.RSA])))"
+                                 Color="@Duty.RSA.GetBackgroundColourCode()" />
             }
         </ApexChart>
         <hr />
