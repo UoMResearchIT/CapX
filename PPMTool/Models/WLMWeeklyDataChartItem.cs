@@ -10,6 +10,16 @@ namespace PPMTool.Models
     {
         public DateTime WeekStart { get; set; }
 
+        /// <summary>
+        /// Raw hours booked by duty. This is the source data and is not modified
+        /// when the display options change.
+        /// </summary>
+        public Dictionary<Duty, float> WeeklyHoursByDuty { get; set; }
+
+        /// <summary>
+        /// Values prepared for raw chart display. These are either FTE values
+        /// or fractions of all booked hours, depending on the selected mode.
+        /// </summary>
         public Dictionary<Duty, float> WeeklyValuesByDuty { get; set; }
 
         public Dictionary<Duty, float> WLMWeeklyTargetsByDuty { get; set; } = null!;
@@ -31,62 +41,121 @@ namespace PPMTool.Models
 
         public WLMWeeklyDataChartItem()
         {
+            // Initialise
+            WeeklyHoursByDuty = new Dictionary<Duty, float>();
             WeeklyValuesByDuty = new Dictionary<Duty, float>();
-            foreach (Duty duty in Enum.GetValues(typeof(Duty)))
-            {
-                WeeklyValuesByDuty.Add(duty, 0f);
-            }
-
             WLMNetByDuty = new Dictionary<Duty, float>();
+
             foreach (Duty duty in Enum.GetValues(typeof(Duty)))
             {
+                WeeklyHoursByDuty.Add(duty, 0f);
+                WeeklyValuesByDuty.Add(duty, 0f);
                 WLMNetByDuty.Add(duty, 0f);
             }
         }
 
         /// <summary>
-        /// Method which updates the difference between the weekly values and the weekly targets based on WLM
+        /// Rebuilds the values used for raw chart display from the original
+        /// booked hours.
         /// </summary>
-        public void UpdateWLMNetValues(bool toTotalHours = false)
+        /// <param name="toTotalHours">
+        /// If true, values are expressed as a fraction of all booked hours,
+        /// including Duty.Other. Otherwise, values are expressed as FTE based
+        /// on a standard 35-hour week.
+        /// </param>
+        public void UpdateWeeklyValues(bool toTotalHours = false)
         {
-            // Total hours expected from targets
-            var totalExpectedFromWLM = WLMWeeklyTargetsByDuty.Sum(x => x.Value);
-
-            // Loop over all the duties
-            foreach (var duty in WeeklyValuesByDuty.Keys)
+            foreach (var duty in WeeklyHoursByDuty.Keys)
             {
-                // Update the net values so they are either FTE or Percent based on the chosen normalisation
+                // Undo normalisation
                 if (toTotalHours)
                 {
-                    // Difference between percentage of time booked against duty and the expected percentage of time based on targets
-                    WLMNetByDuty[duty] = (TotalHoursBookedForWeek == 0 || totalExpectedFromWLM == 0) ? 0 : WeeklyValuesByDuty[duty] - (WLMWeeklyTargetsByDuty[duty] / totalExpectedFromWLM);
+                    WeeklyValuesByDuty[duty] =
+                        TotalHoursBookedForWeek == 0
+                            ? 0f
+                            : WeeklyHoursByDuty[duty] / TotalHoursBookedForWeek;
                 }
+
+                // Normalise by 35 hours to get FTE values
                 else
                 {
-                    // Difference between the FTE booked against duty and the expected FTE based on targets
-                    WLMNetByDuty[duty] = TotalHoursBookedForWeek == 0 ? 0 : WeeklyValuesByDuty[duty] - WLMWeeklyTargetsByDuty[duty];
+                    WeeklyValuesByDuty[duty] =
+                        WeeklyHoursByDuty[duty] / 35f;
                 }
             }
-
-            // Update the min from the size of the aggregates
-            IEnumerable<float> flattenedData = WLMNetByDuty.Select(x => x.Value < 0 ? x.Value : 0);
-            MinNet = flattenedData.Sum();
-            flattenedData = WLMNetByDuty.Select(x => x.Value > 0 ? x.Value : 0);
-            MaxNet = flattenedData.Sum();
         }
 
         /// <summary>
-        /// Method to switch between normalisation approaches
+        /// Updates the difference between booked time and the weekly targets
+        /// defined by the WLM.
         /// </summary>
-        /// <param name="toTotalHours">Assumes data is already normalised to standard 35 and converts to normalising by total hours and vice versa</param>
-        public void SwitchNormalisation(bool toTotalHours)
+        /// <param name="compareProportion">
+        /// If true, compares the proportion of working time booked against each
+        /// duty with the expected WLM proportion. Duty.Other is excluded from
+        /// both the actual and expected proportions.
+        /// </param>
+        public void UpdateWLMNetValues(bool compareProportion)
         {
-            // Reverse the normalisation in play and apply new one
-            foreach (var duty in WeeklyValuesByDuty.Keys)
+            var wlmDuties = WLMWeeklyTargetsByDuty
+                .Where(x => x.Key != Duty.Other);
+
+            var totalExpectedFromWLM = wlmDuties.Sum(x => x.Value);
+
+            foreach (var duty in WeeklyHoursByDuty.Keys)
             {
-                WeeklyValuesByDuty[duty] *= toTotalHours ? 35f : TotalHoursBookedForWeek == 0 ? 35 : TotalHoursBookedForWeek;
-                WeeklyValuesByDuty[duty] /= toTotalHours ? TotalHoursBookedForWeek == 0 ? 35 : TotalHoursBookedForWeek : 35f;
+                // Other is not part of a WLM and must not contribute to the
+                // comparison chart or its axis limits.
+                if (duty == Duty.Other)
+                {
+                    WLMNetByDuty[duty] = 0f;
+                    continue;
+                }
+
+                // Data to display is a comparison of proportions of booked time against the WLM targets
+                if (compareProportion)
+                {
+                    // If no working time was booked, there is no meaningful
+                    // proportional comparison to make for this week.
+                    if (TotalHoursBookedForWeekExcludingOther == 0 ||
+                        totalExpectedFromWLM == 0)
+                    {
+                        WLMNetByDuty[duty] = 0f;
+                        continue;
+                    }
+
+                    var actualProportion =
+                        WeeklyHoursByDuty[duty] /
+                        TotalHoursBookedForWeekExcludingOther;
+
+                    var expectedProportion =
+                        WLMWeeklyTargetsByDuty[duty] /
+                        totalExpectedFromWLM;
+
+                    // Comparison of the proportions
+                    WLMNetByDuty[duty] =
+                        actualProportion - expectedProportion;
+                }
+
+                // Data to display is a comparison of FTE values against the WLM targets
+                else
+                {
+                    WLMNetByDuty[duty] =
+                        WeeklyValuesByDuty[duty] -
+                        WLMWeeklyTargetsByDuty[duty];
+                }
             }
+
+            var comparisonValues = WLMNetByDuty
+                .Where(x => x.Key != Duty.Other)
+                .Select(x => x.Value);
+
+            MinNet = comparisonValues
+                .Where(value => value < 0)
+                .Sum();
+
+            MaxNet = comparisonValues
+                .Where(value => value > 0)
+                .Sum();
         }
     }
 }

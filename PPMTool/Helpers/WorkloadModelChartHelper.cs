@@ -35,6 +35,7 @@ namespace PPMTool.Helpers
             // Loop over each task in the current timesheet
             var currentTimesheet = timesheets.FirstOrDefault(x => x.StartDate.Date == startDate);
 
+            // Populate the weekly hours by duty from the timesheet entries
             if (currentTimesheet != null)
             {
                 foreach (var entry in currentTimesheet.TimesheetEntries)
@@ -43,39 +44,34 @@ namespace PPMTool.Helpers
                     entry.UpdateTotalHours();
 
                     // Add the hours for the task to the relevant item in the dictionary
-                    item.WeeklyValuesByDuty[entry.InnateCodeTask.Duty] += (float)entry.TotalHours;
+                    item.WeeklyHoursByDuty[entry.InnateCodeTask.Duty] += (float)entry.TotalHours;
                 }
             }
 
             // Find total hours booked from timesheet and update the values in the model
-            item.TotalHoursBookedForWeekExcludingOther = 0f;
-            item.TotalHoursBookedForWeek = 0f;
-            foreach (var duty in item.WeeklyValuesByDuty.Keys)
-            {
-                item.TotalHoursBookedForWeekExcludingOther += duty != Duty.Other ? item.WeeklyValuesByDuty[duty] : 0;
-                item.TotalHoursBookedForWeek += item.WeeklyValuesByDuty[duty];
-            }
+            item.TotalHoursBookedForWeek = item.WeeklyHoursByDuty.Sum(x => x.Value);
+            item.TotalHoursBookedForWeekExcludingOther =
+                item.WeeklyHoursByDuty
+                    .Where(x => x.Key != Duty.Other)
+                    .Sum(x => x.Value);
 
             // How many hours expected from WLM
             var wlmTargetTotalHours = item.WLMWeeklyTargetsByDuty.Sum(x => x.Value) * 35f;
 
-            // Convert raw hours to FTE based on standard week
-            foreach (var duty in item.WeeklyValuesByDuty.Keys)
-            {
-                item.WeeklyValuesByDuty[duty] /= 35f;
-            }
-
             // If underbooked due to other bookings such as (leave, closure, sickness) then scale WLM targets for the week
-            if (item.TotalHoursBookedForWeekExcludingOther < wlmTargetTotalHours)
+            if (wlmTargetTotalHours > 0 && item.TotalHoursBookedForWeekExcludingOther < wlmTargetTotalHours)
             {
                 var fractionWorking = item.TotalHoursBookedForWeekExcludingOther / wlmTargetTotalHours;
-                foreach (var duty in item.WeeklyValuesByDuty.Keys)
+                foreach (var duty in item.WLMWeeklyTargetsByDuty.Keys)
                 {
                     item.WLMWeeklyTargetsByDuty[duty] *= fractionWorking;
                 }
             }
 
-            item.UpdateWLMNetValues();
+            // Initialise the derived values in their default FTE form
+            item.UpdateWeeklyValues(false);
+            item.UpdateWLMNetValues(false);
+
             return item;
         }
 

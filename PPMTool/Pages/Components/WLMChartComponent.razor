@@ -17,113 +17,18 @@ SPDX-License-Identifier: apache-2.0
                    OnDataPointSelection="@(args => OnDataPointSelected?.Invoke(args, Title))"
                    @ref="chart">
 
-            @if (CompareToWorkloadModel)
+            @foreach (var displayedDuty in DisplayedDuties)
             {
-                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
-                                 Items="ChartItems"
-                                 SeriesType="@SeriesType.Bar"
-                                 Name="@Duty.ProjectWork.GetDescription()"
-                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty[Duty.ProjectWork])))"
-                                 Color="@Duty.ProjectWork.GetBackgroundColourCode()" />
+                var duty = displayedDuty;
 
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
                                  SeriesType="@SeriesType.Bar"
-                                 Name="@Duty.BAU.GetDescription()"
-                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty[Duty.BAU])))"
-                                 Color="@Duty.BAU.GetBackgroundColourCode()" />
-
-                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
-                                 Items="ChartItems"
-                                 SeriesType="@SeriesType.Bar"
-                                 Name="@Duty.PersonalDevelopment.GetDescription()"
-                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty[Duty.PersonalDevelopment])))"
-                                 Color="@Duty.PersonalDevelopment.GetBackgroundColourCode()" />
-
-                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
-                                 Items="ChartItems"
-                                 SeriesType="@SeriesType.Bar"
-                                 Name="@Duty.StaffMgmt.GetDescription()"
-                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty[Duty.StaffMgmt])))"
-                                 Color="@Duty.StaffMgmt.GetBackgroundColourCode()" />
-
-                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
-                                 Items="ChartItems"
-                                 SeriesType="@SeriesType.Bar"
-                                 Name="@Duty.ProjectAndServiceMgmt.GetDescription()"
-                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty[Duty.ProjectAndServiceMgmt])))"
-                                 Color="@Duty.ProjectAndServiceMgmt.GetBackgroundColourCode()" />
-
-                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
-                                 Items="ChartItems"
-                                 SeriesType="@SeriesType.Bar"
-                                 Name="@Duty.RSA.GetDescription()"
-                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty[Duty.RSA])))"
-                                 Color="@Duty.RSA.GetBackgroundColourCode()" />
-            }
-            else
-            {
-                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
-                                 Items="ChartItems"
-                                 SeriesType="@SeriesType.Bar"
-                                 Name="@Duty.Other.GetDescription()"
-                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty[Duty.Other])))"
-                                 Color="@Duty.Other.GetBackgroundColourCode()" />
-
-                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
-                                 Items="ChartItems"
-                                 SeriesType="@SeriesType.Bar"
-                                 Name="@Duty.ProjectWork.GetDescription()"
-                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty[Duty.ProjectWork])))"
-                                 Color="@Duty.ProjectWork.GetBackgroundColourCode()" />
-
-                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
-                                 Items="ChartItems"
-                                 SeriesType="@SeriesType.Bar"
-                                 Name="@Duty.BAU.GetDescription()"
-                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty[Duty.BAU])))"
-                                 Color="@Duty.BAU.GetBackgroundColourCode()" />
-
-                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
-                                 Items="ChartItems"
-                                 SeriesType="@SeriesType.Bar"
-                                 Name="@Duty.PersonalDevelopment.GetDescription()"
-                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty[Duty.PersonalDevelopment])))"
-                                 Color="@Duty.PersonalDevelopment.GetBackgroundColourCode()" />
-
-                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
-                                 Items="ChartItems"
-                                 SeriesType="@SeriesType.Bar"
-                                 Name="@Duty.StaffMgmt.GetDescription()"
-                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty[Duty.StaffMgmt])))"
-                                 Color="@Duty.StaffMgmt.GetBackgroundColourCode()" />
-
-                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
-                                 Items="ChartItems"
-                                 SeriesType="@SeriesType.Bar"
-                                 Name="@Duty.ProjectAndServiceMgmt.GetDescription()"
-                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty[Duty.ProjectAndServiceMgmt])))"
-                                 Color="@Duty.ProjectAndServiceMgmt.GetBackgroundColourCode()" />
-
-                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
-                                 Items="ChartItems"
-                                 SeriesType="@SeriesType.Bar"
-                                 Name="@Duty.RSA.GetDescription()"
-                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
-                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty[Duty.RSA])))"
-                                 Color="@Duty.RSA.GetBackgroundColourCode()" />
+                                 Name="@duty.GetDescription()"
+                                 XValue="@(item => item.WeekStart.ToUnixTimeMilliseconds())"
+                                 YAggregate="@(items => Convert.ToDecimal(
+                                         items.Sum(item => GetChartValue(item, duty))))"
+                                 Color="@duty.GetBackgroundColourCode()" />
             }
         </ApexChart>
         <hr />
@@ -132,7 +37,7 @@ SPDX-License-Identifier: apache-2.0
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        @foreach (var duty in Enum.GetValues<Duty>().Where(x => x != Duty.Other))
+                        @foreach (var duty in DisplayedDuties)
                         {
                             <th><RadzenText Text="@duty.GetDescription()" TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2" Style="@($"color: {duty.GetBackgroundColourCode()}")" /></th>
                         }
@@ -140,10 +45,20 @@ SPDX-License-Identifier: apache-2.0
                 </thead>
                 <tbody>
                     <tr>
-                        @foreach (var duty in Enum.GetValues<Duty>().Where(x => x != Duty.Other))
+                        @foreach (var duty in DisplayedDuties)
                         {
+                            var value = GetTableValue(duty);
+                            var colour = compareToWorkloadModel
+                                ? Math.Abs(value) > 0.1
+                                    ? "var(--rz-danger)"
+                                    : "var(--rz-success)"
+                                : duty.GetBackgroundColourCode();
+
                             <td>
-                                <RadzenText Text="@GetTableValue(duty).ToString()" TextAlign="TextAlign.Center" Style="@($"color: {(Math.Abs(GetTableValue(duty)) > 0.1 ? "var(--rz-danger)" : "var(--rz-success)")};")" TextStyle="TextStyle.Subtitle1" />
+                                <RadzenText Text="@value.ToString()"
+                                            TextAlign="TextAlign.Center"
+                                            Style="@($"color: {colour};")"
+                                            TextStyle="TextStyle.Subtitle1" />
                             </td>
                         }
                     </tr>
@@ -176,6 +91,12 @@ SPDX-License-Identifier: apache-2.0
     [Parameter]
     public bool UseStackedBars { get; set; }
 
+    /// <summary>
+    /// Other is meaningful in raw views but is never part of a WLM
+    /// comparison.
+    /// </summary>
+    private IEnumerable<Duty> DisplayedDuties => Enum.GetValues<Duty>().Where(duty => !compareToWorkloadModel || duty != Duty.Other);
+
     public float? Min { get; private set; }
     public float? Max { get; private set; }
 
@@ -184,94 +105,189 @@ SPDX-License-Identifier: apache-2.0
     private bool compareToWorkloadModel;
     private bool useStackedBars;
 
-    /// <summary>
-    /// In response to changes in the parameters to the component update local values and execute methods
+    //// <summary>
+    /// In response to changes in the component parameters, rebuild the
+    /// derived display values and update the chart limits.
     /// </summary>
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
 
-        var updateMinMax = false;
-        if (NormalisedByTotalHours != normalisedByTotalHours)
-        {
-            normalisedByTotalHours = NormalisedByTotalHours;
+        // Check the parameter changes to see if we need to update the chart data or the chart limits
+        var dataDisplayChanged =
+            NormalisedByTotalHours != normalisedByTotalHours ||
+            CompareToWorkloadModel != compareToWorkloadModel;
+        var chartDisplayChanged =
+            dataDisplayChanged ||
+            UseStackedBars != useStackedBars;
 
+        // Update the stored values for the next time this method is called
+        normalisedByTotalHours = NormalisedByTotalHours;
+        compareToWorkloadModel = CompareToWorkloadModel;
+        useStackedBars = UseStackedBars;
+
+        // If the data display has changed, update the derived values for each chart item
+        if (dataDisplayChanged)
+        {
             foreach (var item in ChartItems)
             {
-                // Change the normalisation on the data
-                item.SwitchNormalisation(normalisedByTotalHours);
+                // Raw display values include Other in the denominator.
+                item.UpdateWeeklyValues(normalisedByTotalHours);
 
-                // Recompute the net values
+                // WLM comparison values always exclude Other.
                 item.UpdateWLMNetValues(normalisedByTotalHours);
             }
-            updateMinMax = true;            
         }
 
-        if (CompareToWorkloadModel != compareToWorkloadModel)
-        {
-            compareToWorkloadModel = CompareToWorkloadModel;
-            updateMinMax = true;
-        }
-
-        if (UseStackedBars != useStackedBars)
-        {
-            useStackedBars = UseStackedBars;
-            updateMinMax = true;
-        }
-
-        // Recompute min-max
-        if (updateMinMax)
+        // If the chart display has changed, update the chart limits
+        if (chartDisplayChanged)
         {
             UpdateMinMax();
         }
 
-        // Update the chart options with the new object
+        // Refresh the options on the chart
         chart?.UpdateOptionsAsync(true, false, false);
     }
 
     /// <summary>
-    /// Updates the vertical axis limits based on the limits of the individual chart items
+    /// Updates the vertical axis limits based on the current display and
+    /// stacking options.
     /// </summary>
     private void UpdateMinMax()
     {
+        // If there are no chart items, set the limits to a default range
+        if (!ChartItems.Any())
+        {
+            Min = 0;
+            Max = 1;
+            return;
+        }
+
+        var displayedDuties = DisplayedDuties.ToList();
+
+        // If not comparing to the workload model, the minimum and maximum are based on the raw values for each duty across all weeks
         if (!compareToWorkloadModel)
         {
+            // Raw display values are always non-negative, so the minimum is zero
+            Min = 0;
+
             if (normalisedByTotalHours)
             {
-                Min = 0;
+                // Percentages, including Other, sum to one
+                Max = 1;
+            }
+
+            // If not normalised, the maximum is the largest sum of all duties for any week
+            else if (useStackedBars)
+            {
+                var maximum = ChartItems.Max(item =>
+                    displayedDuties.Sum(
+                        duty => item.WeeklyValuesByDuty[duty]));
+
+                Max = RoundAxisMaximum(maximum);
+            }
+
+            // If not normalised and not stacked, the maximum is the largest value for any duty in any week
+            else
+            {
+                var maximum = ChartItems.Max(item =>
+                    displayedDuties.Max(
+                        duty => item.WeeklyValuesByDuty[duty]));
+
+                Max = RoundAxisMaximum(maximum);
+            }
+        }
+
+        // If comparing to the workload model, the minimum and maximum are based on the net values for each duty across all weeks
+        else if (useStackedBars)
+        {
+            Min = (float)Math.Floor(
+                Convert.ToDecimal(
+                    ChartItems.Min(item => item.MinNet) * 100)) / 100f;
+
+            Max = (float)Math.Ceiling(
+                Convert.ToDecimal(
+                    ChartItems.Max(item => item.MaxNet) * 100)) / 100f;
+        }
+        else
+        {
+            var values = ChartItems.SelectMany(item =>
+                displayedDuties.Select(
+                    duty => item.WLMNetByDuty[duty]));
+
+            Min = (float)Math.Floor(
+                Convert.ToDecimal(values.Min() * 100)) / 100f;
+
+            Max = (float)Math.Ceiling(
+                Convert.ToDecimal(values.Max() * 100)) / 100f;
+        }
+
+        // Avoid giving ApexCharts identical limits for entirely zero data as it doesn't like this
+        if (Min == Max)
+        {
+            if (Min == 0)
+            {
                 Max = 1;
             }
             else
             {
-                Min = 0;
-                Max = (float)Math.Round(Convert.ToDecimal(ChartItems.Max(x => x.WeeklyValuesByDuty.Where(x => x.Key != Duty.Other).Sum(x => x.Value))), 1);
+                Min -= 0.1f;
+                Max += 0.1f;
             }
-        }
-        else
-        {
-            Min = (float)Math.Floor(Convert.ToDecimal(ChartItems.Min(x => x.MinNet) * 100)) / 100f;
-            Max = (float)Math.Ceiling(Convert.ToDecimal(ChartItems.Max(x => x.MaxNet) * 100)) / 100f;
         }
 
         Debug.WriteLine($"** Setting Max = {Max}; Min = {Min}");
-
         ChartOptions.Yaxis.First().Min = Min;
         ChartOptions.Yaxis.First().Max = Max;
     }
 
     /// <summary>
-    /// Method to get the values in the averages table based on the switch settings
+    /// Rounds the maximum value of the y-axis to 1dp
     /// </summary>
-    /// <param name="duty"></param>
+    /// <param name="value"></param>
     /// <returns></returns>
+    private static float RoundAxisMaximum(float value)
+    {
+        return (float)Math.Ceiling(
+            Convert.ToDecimal(value * 10)) / 10f;
+    }
+
+    /// <summary>
+    /// Gets the average displayed value for a duty across weeks containing
+    /// relevant booked time.
+    /// </summary>
     private double GetTableValue(Duty duty)
     {
-        var subset = ChartItems.Where(x => x.TotalHoursBookedForWeek > 0);
-        if (subset.Count() == 0) return 0;
-        if (compareToWorkloadModel)
+        var subset = compareToWorkloadModel
+            ? ChartItems.Where(
+                x => x.TotalHoursBookedForWeekExcludingOther > 0)
+            : ChartItems.Where(
+                x => x.TotalHoursBookedForWeek > 0);
+
+        // If there are no weeks with booked time, return 0 to avoid division by zero
+        if (!subset.Any())
         {
-            return Math.Round(subset.Average(x => x.WLMNetByDuty[duty]), 2);
+            return 0;
         }
-        return Math.Round(subset.Average(x => x.WeeklyValuesByDuty[duty]), 2);
+        
+        // Calculate the average value for the duty across the relevant weeks
+        var average = compareToWorkloadModel
+            ? subset.Average(x => x.WLMNetByDuty[duty])
+            : subset.Average(x => x.WeeklyValuesByDuty[duty]);
+
+        // Round the average to 2 decimal places for display
+        return Math.Round(average, 2);
+    }
+
+    /// <summary>
+    /// Gets the appropriate chart value for the current display mode.
+    /// </summary>
+    private float GetChartValue(
+        WLMWeeklyDataChartItem item,
+        Duty duty)
+    {
+        return compareToWorkloadModel
+            ? item.WLMNetByDuty[duty]
+            : item.WeeklyValuesByDuty[duty];
     }
 }
