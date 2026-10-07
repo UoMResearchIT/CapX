@@ -11,11 +11,26 @@ namespace PPMTool.Data.Enums.Attributes
     {
         public string BackgroundColourCode { get; }
         public string TextColourCode { get; }
+        public string BackgroundColourCodeDark { get; }
+        public string TextColourCodeDark { get; }
 
-        public ColourAttribute(string backgroundColourCode, string textColourCode = "#FFF")
+        /// <summary>
+        /// Provide background and foreground (text) colour codes with optional dark mode versions.
+        /// </summary>
+        /// <param name="backgroundColourCode"></param>
+        /// <param name="textColourCode"></param>
+        /// <param name="backgroundColourCodeDark"></param>
+        /// <param name="textColourCodeDark"></param>
+        public ColourAttribute(string backgroundColourCode, string textColourCode = "#FFF", string backgroundColourCodeDark = null, string textColourCodeDark = null)
         {
             BackgroundColourCode = backgroundColourCode;
             TextColourCode = textColourCode;
+
+            // If no dark mode variants provided then dark mode is assumed same as light mode
+            if (backgroundColourCodeDark == null) BackgroundColourCodeDark = backgroundColourCode;
+            else BackgroundColourCodeDark = backgroundColourCodeDark;
+            if (textColourCodeDark == null) TextColourCodeDark = textColourCode;
+            else TextColourCodeDark = textColourCodeDark;
         }
     }
 }
