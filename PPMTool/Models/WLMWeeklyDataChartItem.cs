@@ -50,28 +50,28 @@ namespace PPMTool.Models
         public void UpdateWLMNetValues(bool toTotalHours = false)
         {
             // Total hours expected from targets
-            var totalExpectedFromWLM = WLMWeeklyTargetsByDuty.Sum(x => x.Key == Duty.Other ? 0 : x.Value);
+            var totalExpectedFromWLM = WLMWeeklyTargetsByDuty.Sum(x => x.Value);
 
-            // Loop over all the duties but not including the other category
-            foreach (var duty in WeeklyValuesByDuty.Keys.Where(x => x != Duty.Other))
+            // Loop over all the duties
+            foreach (var duty in WeeklyValuesByDuty.Keys)
             {
                 // Update the net values so they are either FTE or Percent based on the chosen normalisation
                 if (toTotalHours)
                 {
                     // Difference between percentage of time booked against duty and the expected percentage of time based on targets
-                    WLMNetByDuty[duty] = (TotalHoursBookedForWeekExcludingOther == 0 || totalExpectedFromWLM == 0) ? 0 : WeeklyValuesByDuty[duty] - (WLMWeeklyTargetsByDuty[duty] / totalExpectedFromWLM);
+                    WLMNetByDuty[duty] = (TotalHoursBookedForWeek == 0 || totalExpectedFromWLM == 0) ? 0 : WeeklyValuesByDuty[duty] - (WLMWeeklyTargetsByDuty[duty] / totalExpectedFromWLM);
                 }
                 else
                 {
                     // Difference between the FTE booked against duty and the expected FTE based on targets
-                    WLMNetByDuty[duty] = TotalHoursBookedForWeekExcludingOther == 0 ? 0 : WeeklyValuesByDuty[duty] - WLMWeeklyTargetsByDuty[duty];
+                    WLMNetByDuty[duty] = TotalHoursBookedForWeek == 0 ? 0 : WeeklyValuesByDuty[duty] - WLMWeeklyTargetsByDuty[duty];
                 }
             }
 
             // Update the min from the size of the aggregates
-            IEnumerable<float> flattenedData = WLMNetByDuty.Where(x => x.Key != Duty.Other).Select(x => x.Value < 0 ? x.Value : 0);
+            IEnumerable<float> flattenedData = WLMNetByDuty.Select(x => x.Value < 0 ? x.Value : 0);
             MinNet = flattenedData.Sum();
-            flattenedData = WLMNetByDuty.Where(x => x.Key != Duty.Other).Select(x => x.Value > 0 ? x.Value : 0);
+            flattenedData = WLMNetByDuty.Select(x => x.Value > 0 ? x.Value : 0);
             MaxNet = flattenedData.Sum();
         }
 
@@ -84,8 +84,8 @@ namespace PPMTool.Models
             // Reverse the normalisation in play and apply new one
             foreach (var duty in WeeklyValuesByDuty.Keys)
             {
-                WeeklyValuesByDuty[duty] *= toTotalHours ? 35f : TotalHoursBookedForWeekExcludingOther == 0 ? 35 : TotalHoursBookedForWeekExcludingOther;
-                WeeklyValuesByDuty[duty] /= toTotalHours ? TotalHoursBookedForWeekExcludingOther == 0 ? 35 : TotalHoursBookedForWeekExcludingOther : 35f;
+                WeeklyValuesByDuty[duty] *= toTotalHours ? 35f : TotalHoursBookedForWeek == 0 ? 35 : TotalHoursBookedForWeek;
+                WeeklyValuesByDuty[duty] /= toTotalHours ? TotalHoursBookedForWeek == 0 ? 35 : TotalHoursBookedForWeek : 35f;
             }
         }
     }

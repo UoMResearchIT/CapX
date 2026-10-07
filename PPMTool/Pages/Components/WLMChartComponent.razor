@@ -22,6 +22,14 @@ SPDX-License-Identifier: apache-2.0
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
                                  SeriesType="@SeriesType.Bar"
+                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(0).GetDescription()"
+                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(0).Value)))"
+                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(1).GetBackgroundColourCode()" />
+
+                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
+                                 Items="ChartItems"
+                                 SeriesType="@SeriesType.Bar"
                                  Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(1).GetDescription()"
                                  XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
                                  YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WLMNetByDuty.ElementAt(1).Value)))"
@@ -69,6 +77,14 @@ SPDX-License-Identifier: apache-2.0
             }
             else
             {
+                <ApexPointSeries TItem="WLMWeeklyDataChartItem"
+                                 Items="ChartItems"
+                                 SeriesType="@SeriesType.Bar"
+                                 Name="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(0).GetDescription()"
+                                 XValue="@(e => e.WeekStart.ToUnixTimeMilliseconds())"
+                                 YAggregate="@(e => Convert.ToDecimal(e.Sum(e => e.WeeklyValuesByDuty.ElementAt(0).Value)))"
+                                 Color="@ChartItems.First().WeeklyValuesByDuty.Keys.ElementAt(1).GetBackgroundColourCode()" />
+
                 <ApexPointSeries TItem="WLMWeeklyDataChartItem"
                                  Items="ChartItems"
                                  SeriesType="@SeriesType.Bar"
@@ -258,7 +274,7 @@ SPDX-License-Identifier: apache-2.0
     /// <returns></returns>
     private double GetTableValue(Duty duty)
     {
-        var subset = ChartItems.Where(x => x.TotalHoursBookedForWeekExcludingOther > 0);
+        var subset = ChartItems.Where(x => x.TotalHoursBookedForWeek > 0);
         if (subset.Count() == 0) return 0;
         if (compareToWorkloadModel)
         {
