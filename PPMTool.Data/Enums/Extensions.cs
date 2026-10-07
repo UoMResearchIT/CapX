@@ -115,7 +115,7 @@ namespace PPMTool.Data.Enums
                 if (attribute != null)
                 {
                     return darkMode
-                        ? attribute.DarkBackgroundColourCode
+                        ? attribute.BackgroundColourCodeDark
                         : attribute.BackgroundColourCode;
                 }
             }
@@ -143,7 +143,7 @@ namespace PPMTool.Data.Enums
                 if (attribute != null)
                 {
                     return darkMode
-                        ? attribute.DarkTextColourCode
+                        ? attribute.TextColourCodeDark
                         : attribute.TextColourCode;
                 }
             }
