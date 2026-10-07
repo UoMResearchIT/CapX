@@ -96,39 +96,55 @@ namespace PPMTool.Data.Enums
         }
 
         /// <summary>
-        /// Gets the background colour code from the enum if it has the attribute. Otherwise returns UoM purple.
+        /// Gets the background colour code from the enum if it has the attribute. Otherwise returns purple.
         /// </summary>
         /// <param name="enumValue"></param>
+        /// <param name="darkMode"></param>
         /// <returns></returns>
-        public static string GetBackgroundColourCode(this Enum enumValue)
+        public static string GetBackgroundColourCode(this Enum enumValue, bool darkMode = false)
         {
             MemberInfo[] member = enumValue.GetType().GetMember(enumValue.ToString());
-            if (member != null && member.Length != 0)
+
+            if (member.Length > 0)
             {
-                object[] customAttributes = member[0].GetCustomAttributes(typeof(ColourAttribute), inherit: false);
-                if (customAttributes != null && customAttributes.Count() > 0)
+                var attribute = member[0]
+                    .GetCustomAttributes(typeof(ColourAttribute), false)
+                    .Cast<ColourAttribute>()
+                    .FirstOrDefault();
+
+                if (attribute != null)
                 {
-                    return ((ColourAttribute)customAttributes.ElementAt(0)).BackgroundColourCode;
+                    return darkMode
+                        ? attribute.DarkBackgroundColourCode
+                        : attribute.BackgroundColourCode;
                 }
             }
 
-            return "#609";
+            return darkMode ? "#7B61FF" : "#609";
         }
 
         /// <summary>
         /// Gets the text colour code from the enum if it has the attribute. Otherwise returns white.
         /// </summary>
         /// <param name="enumValue"></param>
+        /// <param name="darkMode"></param>
         /// <returns></returns>
-        public static string GetTextColourCode(this Enum enumValue)
+        public static string GetTextColourCode(this Enum enumValue, bool darkMode = false)
         {
             MemberInfo[] member = enumValue.GetType().GetMember(enumValue.ToString());
-            if (member != null && member.Length != 0)
+
+            if (member.Length > 0)
             {
-                object[] customAttributes = member[0].GetCustomAttributes(typeof(ColourAttribute), inherit: false);
-                if (customAttributes != null && customAttributes.Count() > 0)
+                var attribute = member[0]
+                    .GetCustomAttributes(typeof(ColourAttribute), false)
+                    .Cast<ColourAttribute>()
+                    .FirstOrDefault();
+
+                if (attribute != null)
                 {
-                    return ((ColourAttribute)customAttributes.ElementAt(0)).TextColourCode;
+                    return darkMode
+                        ? attribute.DarkTextColourCode
+                        : attribute.TextColourCode;
                 }
             }
 
