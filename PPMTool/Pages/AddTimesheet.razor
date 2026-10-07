@@ -315,7 +315,7 @@ SPDX-License-Identifier: apache-2.0
                                                 Duty duty = item.Key;
                                                 double value = item.Value;
                                                 string dutyDescription = duty.GetDescription() ?? "NOT SET";
-                                                string wlmBackgroundColour = duty.GetBackgroundColourCode();
+                                                string wlmBackgroundColour = duty.GetBackgroundColourCode(ThemeService.IsDarkTheme());
                                                 string wlmTextColour = duty.GetTextColourCode();
 
                                                 // If the timesheet total goes above 1 FTE then we have to shrink the bars to match the scale
@@ -355,7 +355,7 @@ SPDX-License-Identifier: apache-2.0
                                                     Duty duty = item.Key;
                                                     double value = item.Value;
                                                     string dutyDescription = duty.GetDescription() ?? "NOT SET";
-                                                    string wlmBackgroundColour = duty.GetBackgroundColourCode();
+                                                    string wlmBackgroundColour = duty.GetBackgroundColourCode(ThemeService.IsDarkTheme());
                                                     string wlmTextColour = duty.GetTextColourCode();
 
                                                     // If the timesheet total goes above 1 FTE then we have to shrink the bars to match the scale

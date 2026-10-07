@@ -230,7 +230,7 @@ SPDX-License-Identifier: apache-2.0
                                                  Name="@Duty.RSA.GetDescription()"
                                                  XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(0))"
                                                  YValue="@(e => Convert.ToDecimal(e.RSAShortfall))"
-                                                 Color="@Duty.RSA.GetBackgroundColourCode()" />
+                                                 Color="@Duty.RSA.GetBackgroundColourCode(ThemeService.IsDarkTheme())" />
 
                                 <ApexPointSeries TItem="DutyChartItem"
                                                  Items="dutyChartItems"
@@ -238,7 +238,7 @@ SPDX-License-Identifier: apache-2.0
                                                  Name="@Duty.StaffMgmt.GetDescription()"
                                                  XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(0))"
                                                  YValue="@(e => Convert.ToDecimal(e.StaffManagementShortfall))"
-                                                 Color="@Duty.StaffMgmt.GetBackgroundColourCode()" />
+                                                 Color="@Duty.StaffMgmt.GetBackgroundColourCode(ThemeService.IsDarkTheme())" />
 
                                 <ApexPointSeries TItem="DutyChartItem"
                                                  Items="dutyChartItems"
@@ -246,7 +246,7 @@ SPDX-License-Identifier: apache-2.0
                                                  Name="@Duty.ProjectAndServiceMgmt.GetDescription()"
                                                  XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(0))"
                                                  YValue="@(e => Convert.ToDecimal(e.PSManagementShortfall))"
-                                                 Color="@Duty.ProjectAndServiceMgmt.GetBackgroundColourCode()" />
+                                                 Color="@Duty.ProjectAndServiceMgmt.GetBackgroundColourCode(ThemeService.IsDarkTheme())" />
 
                                 <ApexPointSeries TItem="DutyChartItem"
                                                  Items="dutyChartItems"
@@ -254,7 +254,7 @@ SPDX-License-Identifier: apache-2.0
                                                  Name="@Duty.ProjectWork.GetDescription()"
                                                  XValue="@(e => (dutyChartOptions.Xaxis.Categories as string[])?.ElementAt(0))"
                                                  YValue="@(e => Convert.ToDecimal(e.ProjectShortfall))"
-                                                 Color="@Duty.ProjectWork.GetBackgroundColourCode()" />
+                                                 Color="@Duty.ProjectWork.GetBackgroundColourCode(ThemeService.IsDarkTheme())" />
 
                             </ApexChart>
                         }

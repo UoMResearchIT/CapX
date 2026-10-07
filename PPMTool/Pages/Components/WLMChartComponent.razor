@@ -7,6 +7,7 @@ SPDX-License-Identifier: apache-2.0
 @using System.Diagnostics
 @using PPMTool.Data.Enums
 @using PPMTool.Models
+@inject ThemeService ThemeService
 
 <RadzenColumn Style="min-width: 50rem">
     <RadzenCard>
@@ -28,7 +29,7 @@ SPDX-License-Identifier: apache-2.0
                                  XValue="@(item => item.WeekStart.ToUnixTimeMilliseconds())"
                                  YAggregate="@(items => Convert.ToDecimal(
                                          items.Sum(item => GetChartValue(item, duty))))"
-                                 Color="@duty.GetBackgroundColourCode()" />
+                                 Color="@duty.GetBackgroundColourCode(ThemeService.IsDarkTheme())" />
             }
         </ApexChart>
         <hr />
@@ -39,7 +40,7 @@ SPDX-License-Identifier: apache-2.0
                     <tr>
                         @foreach (var duty in DisplayedDuties)
                         {
-                            <th><RadzenText Text="@duty.GetDescription()" TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2" Style="@($"color: {duty.GetBackgroundColourCode()}")" /></th>
+                            <th><RadzenText Text="@duty.GetDescription()" TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle2" Style="@($"color: {duty.GetBackgroundColourCode(ThemeService.IsDarkTheme())}")" /></th>
                         }
                     </tr>
                 </thead>
@@ -52,7 +53,7 @@ SPDX-License-Identifier: apache-2.0
                                 ? Math.Abs(value) > 0.1
                                     ? "var(--rz-danger)"
                                     : "var(--rz-success)"
-                                : duty.GetBackgroundColourCode();
+                                : duty.GetBackgroundColourCode(ThemeService.IsDarkTheme());
 
                             <td>
                                 <RadzenText Text="@value.ToString()"
