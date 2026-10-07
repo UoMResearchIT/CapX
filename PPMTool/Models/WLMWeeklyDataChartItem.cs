@@ -16,13 +16,18 @@ namespace PPMTool.Models
 
         public Dictionary<Duty, float> WLMNetByDuty { get; set; }
 
-        public float? MinNet { get; private set; }
-        public float? MaxNet { get; private set; }
+        public float MinNet { get; private set; } = 0;
+        public float MaxNet { get; private set; } = 0;
 
         /// <summary>
-        /// Total hours spent on work this week (excludes time spent in Duty.Other category inc. leave and sickness)
+        /// Total hours booked on timesheets this week (excludes time spent in Duty.Other category inc. leave and sickness)
         /// </summary>
-        public float? TotalHoursForWeek { get; set; }
+        public float TotalHoursBookedForWeekExcludingOther { get; set; } = 0;
+
+        /// <summary>
+        /// Total hours booked on timesheets this week
+        /// </summary>
+        public float TotalHoursBookedForWeek { get; set; } = 0;
 
         public WLMWeeklyDataChartItem()
         {
@@ -54,12 +59,12 @@ namespace PPMTool.Models
                 if (toTotalHours)
                 {
                     // Difference between percentage of time booked against duty and the expected percentage of time based on targets
-                    WLMNetByDuty[duty] = (TotalHoursForWeek == 0 || totalExpectedFromWLM == 0) ? 0 : WeeklyValuesByDuty[duty] - (WLMWeeklyTargetsByDuty[duty] / totalExpectedFromWLM);
+                    WLMNetByDuty[duty] = (TotalHoursBookedForWeekExcludingOther == 0 || totalExpectedFromWLM == 0) ? 0 : WeeklyValuesByDuty[duty] - (WLMWeeklyTargetsByDuty[duty] / totalExpectedFromWLM);
                 }
                 else
                 {
                     // Difference between the FTE booked against duty and the expected FTE based on targets
-                    WLMNetByDuty[duty] = TotalHoursForWeek == 0 ? 0 : WeeklyValuesByDuty[duty] - WLMWeeklyTargetsByDuty[duty];
+                    WLMNetByDuty[duty] = TotalHoursBookedForWeekExcludingOther == 0 ? 0 : WeeklyValuesByDuty[duty] - WLMWeeklyTargetsByDuty[duty];
                 }
             }
 
@@ -74,19 +79,13 @@ namespace PPMTool.Models
         /// Method to switch between normalisation approaches
         /// </summary>
         /// <param name="toTotalHours">Assumes data is already normalised to standard 35 and converts to normalising by total hours and vice versa</param>
-        /// <exception cref="Exception"></exception>
         public void SwitchNormalisation(bool toTotalHours)
         {
-            if (TotalHoursForWeek == null)
-            {
-                throw new Exception("The total hours for the week for this item has never been set!");
-            }
-
             // Reverse the normalisation in play and apply new one
             foreach (var duty in WeeklyValuesByDuty.Keys)
             {
-                WeeklyValuesByDuty[duty] *= toTotalHours ? 35f : (TotalHoursForWeek ?? 0) == 0 ? 35 : (TotalHoursForWeek ?? 0);
-                WeeklyValuesByDuty[duty] /= toTotalHours ? (TotalHoursForWeek ?? 0) == 0 ? 35 : (TotalHoursForWeek ?? 0) : 35f;
+                WeeklyValuesByDuty[duty] *= toTotalHours ? 35f : TotalHoursBookedForWeekExcludingOther == 0 ? 35 : TotalHoursBookedForWeekExcludingOther;
+                WeeklyValuesByDuty[duty] /= toTotalHours ? TotalHoursBookedForWeekExcludingOther == 0 ? 35 : TotalHoursBookedForWeekExcludingOther : 35f;
             }
         }
     }

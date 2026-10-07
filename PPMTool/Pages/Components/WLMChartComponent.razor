@@ -258,7 +258,7 @@ SPDX-License-Identifier: apache-2.0
     /// <returns></returns>
     private double GetTableValue(Duty duty)
     {
-        var subset = ChartItems.Where(x => x.TotalHoursForWeek > 0);
+        var subset = ChartItems.Where(x => x.TotalHoursBookedForWeekExcludingOther > 0);
         if (subset.Count() == 0) return 0;
         if (compareToWorkloadModel)
         {
