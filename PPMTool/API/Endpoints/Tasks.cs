@@ -11,10 +11,7 @@ using PPMTool.Services;
 namespace PPMTool.API.Endpoints;
 
 /// <summary>
-/// SubTasks on a Project -- Superuser-only write access. Covers
-/// only the fixed-duration, no-predecessor shape ImportService.Create
-/// already uses for the auto-created Leadership/Delivery tasks; see
-/// ImportTaskDTO remarks for what's deliberately out of scope.
+/// Methods for manipulating subtasks through the API.
 /// </summary>
 public static class Tasks
 {
@@ -37,7 +34,7 @@ public static class Tasks
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Tasks.GetTasks");
+            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Tasks.GetTasks");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidateTasksGet(context, rtp);
@@ -76,7 +73,7 @@ public static class Tasks
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Tasks.CreateTask");
+            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Tasks.CreateTask");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidateTaskCreate(context, request);
@@ -120,7 +117,7 @@ public static class Tasks
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Tasks.UpdateTask");
+            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Tasks.UpdateTask");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidateTaskUpdate(context, request);
@@ -160,7 +157,7 @@ public static class Tasks
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Tasks.GetResourcing");
+            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Tasks.GetResourcing");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidateTaskResourcingGet(context, rtp);
@@ -199,7 +196,7 @@ public static class Tasks
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Tasks.AddResourcing");
+            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Tasks.AddResourcing");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidateTaskResourcingAdd(context, request);
@@ -240,7 +237,7 @@ public static class Tasks
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Tasks.UpdateResourcing");
+            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Tasks.UpdateResourcing");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidateTaskResourcingUpdate(context, request);
