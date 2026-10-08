@@ -410,125 +410,200 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Handle the validation of the timesheet
+        /// Handle the validation and submission of the timesheet.
         /// </summary>
-        private async void HandleValidSubmit()
+        private async Task HandleValidSubmit()
         {
-            // Check if submitting with inactive Task Codes (only if being submitted but not from a rejected state)
-            if (timesheet.TimesheetEntries.Count > 0 && newStatus == TimesheetStatus.Submitted && timesheet.Status != TimesheetStatus.Rejected)
-            {
-                // Present an error and exit early if trying to book to an inactive task
-                if (timesheet.TimesheetEntries.Any(x => (!x.InnateCodeTask.IsActive || !x.InnateCodeTask.InnateCode.IsActive) && x.TotalHours > 0))
-                {
-                    var inactiveTasksCheck = await DialogService.Alert(
-                        $"You cannot submit a timesheet which uses an inactive activity or task." +
-                        $"If you need a code to be reactivated then contact your project manager to organise this.",
-                        "Booked to Inactive Code"
-                    ) ?? false;
-                    return;
-                }
-            }
+            // Validate before making any changes
+            if (!await CanChangeStatus()) return;
 
-            // Prompt to change of status
-            var confirmed = await DialogService.Confirm($"By continuing you will change the status of this timesheet to \"{newStatus}\".", "Change Timesheet Status") ?? false;
+            // Confirm the status change
+            var confirmed = await DialogService.Confirm(
+                $"By continuing you will change the status of this timesheet to \"{newStatus}\".",
+                "Change Timesheet Status") ?? false;
 
             if (!confirmed) return;
 
-            // If rejecting then show the dialog for the note
-            var timesheetRejectionNote = string.Empty;
+            // Get rejection note if required
+            var rejectionNote = string.Empty;
             if (newStatus == TimesheetStatus.Rejected)
             {
-                (var status, var note) = await ShowRejectionNoteDialog();
-                if (!status)
-                {
-                    // User cancelled the rejection note dialog, so do not proceed with status change
-                    return;
-                }
-                timesheetRejectionNote = note;
+                // Present the dialog and handle button clicks
+                var (confirmedRejection, note) = await ShowRejectionNoteDialog();
+                if (!confirmedRejection) return;
+                rejectionNote = note;
             }
 
-            // Set status variables
+            // Store status and update the current timesheet model
             var oldStatus = timesheet.Status;
             timesheet.Status = newStatus;
 
-            // Reset error message
+            // Reset the errors
             ClearErrorMessage();
 
-            // Validation on minimum hours etc. and show a status message
-            if ((timesheet.Status == TimesheetStatus.Submitted || SubmittingAsSelfApprover()) && dataGridEntities.Count == 0)
+            // A submitted timesheet must contain at least one entry
+            if (IsSubmitting() && dataGridEntities.Count == 0)
             {
-                SetErrorMessage(new StatusMessage("You must have at least one entry in your timesheet to submit it!", StatusMessage.MessageType.Error));
-                timesheet.Status = TimesheetStatus.New;
+                SetErrorMessage(new StatusMessage(
+                    "You must have at least one entry in your timesheet to submit it!",
+                    StatusMessage.MessageType.Error));
+
+                timesheet.Status = oldStatus;
                 return;
             }
 
-            // Decide what to do based on the status of the timesheet (if being submitted or saved or self-approved)
-            if (timesheet.Status == TimesheetStatus.New || timesheet.Status == TimesheetStatus.Submitted || SubmittingAsSelfApprover())
-            {
-                // Reset the timesheet entries on the model
-                timesheet.TimesheetEntries.Clear();
+            // Update the timesheet entries in the database if the status allows editing
+            if (IsEditableStatus())
+                UpdateTimesheetEntries();
 
-                // Take a copy as the datagrid entities will change inside a foreach loop
-                var temp = dataGridEntities.ToList();
-                Debug.WriteLine($"** {temp.Count} items in the datagrid");
+            // Set the status change details if applicable
+            SetStatusChangeDetails(oldStatus);
 
-                // Add the timesheet entries from the datagrid to the timesheet model
-                foreach (var entry in temp)
-                {
-                    // If a timesheet entry has no hours associated with it then
-                    // delete it from the database and do not add it to the model
-                    if (entry.TotalHours == 0 && (timesheet.Status == TimesheetStatus.Submitted || SubmittingAsSelfApprover()))
-                    {
-                        LogInformation($"Removing blank timesheet entry from DB for {entry.GetSensibleObjectName()}...");
-                        TimesheetService.DeleteEntry(Context, entry, false);
-                    }
-                    else
-                    {
-                        Debug.WriteLine($"** Adding entry {entry.GetSensibleObjectName()} to timesheet");
-                        timesheet.TimesheetEntries.Add(entry);
-                    }
-                }
-            }
+            // Save
+            LogInformation(
+                $"Saving timesheet {timesheet.CreatedDate.ToShortDateString()} for {timesheet.Owner.Name}. " +
+                $"New status = {timesheet.Status.ToNiceString()}...");
 
-            // Set status changed information
-            if (timesheet.Status != TimesheetStatus.New || oldStatus == TimesheetStatus.Submitted)
-            {
-                timesheet.DateStatusChanged = DateTime.Now;
-                timesheet.StatusChangedBy = ActiveUser?.Person;
-            }
-
-            // Save to database
-            LogInformation($"Saving timesheet {timesheet.CreatedDate.ToShortDateString()} for {timesheet.Owner.Name}. New status = {timesheet.Status.ToNiceString()}...");
             TimesheetService.Update(Context, timesheet);
-            await TimesheetService.GetIssueCountAsync(Context, ActiveUser?.Person?.PersonId ?? 0);
 
-            // Send an email to the Line Manager if status change is due to user submitting their own timesheet but not retracting it
-            if (timesheet.Owner == ActiveUser?.Person && oldStatus != TimesheetStatus.Submitted)
-            {
-                Debug.WriteLine("** Sending an email to the Line Manager...");
+            // Send notifications
+            SendStatusChangeNotification(oldStatus, rejectionNote);
 
-                // Fire and forget the send request
-                _ = EmailService.SendTimesheetSubmissionEmailNotificationAsync(ActiveUser?.Person, timesheet);
-            }
-
-            // Send an email to the owner if status change is a rejection and not changing their own timesheet (self-approvers)
-            if (timesheet.Status == TimesheetStatus.Rejected && timesheet.Owner != ActiveUser?.Person)
-            {
-                Debug.WriteLine("** Sending an email to the Timesheet Owner...");
-
-                // Fire and forget the send request
-                _ = EmailService.SendTimesheetRejectionEmailNotificationAsync(timesheet, timesheetRejectionNote);
-            }
-
-            // Only navigate away if the status is new as this means the save button has been clicked
+            // Saving leaves us on the page; status changes return to the list
             if (timesheet.Status != TimesheetStatus.New)
             {
                 Navigation.NavigateTo("timesheets");
+                return;
             }
 
-            // Refresh the data grid
             await dataGrid.Reload();
             StateHasChanged();
+        }
+
+        /// <summary>
+        /// Send an email notification to the relevant parties based on the status change of the timesheet.
+        /// </summary>
+        /// <param name="oldStatus"></param>
+        /// <param name="rejectionNote"></param>
+        private void SendStatusChangeNotification(
+            TimesheetStatus oldStatus,
+            string rejectionNote)
+        {
+            // User submitted their own timesheet
+            if (timesheet.Owner == ActiveUser?.Person &&
+                oldStatus != TimesheetStatus.Submitted)
+            {
+                Debug.WriteLine("** Sending an email to the Line Manager...");
+
+                _ = EmailService.SendTimesheetSubmissionEmailNotificationAsync(
+                    ActiveUser?.Person,
+                    timesheet);
+            }
+
+            // Someone else rejected the owner's timesheet
+            if (timesheet.Status == TimesheetStatus.Rejected &&
+                timesheet.Owner != ActiveUser?.Person)
+            {
+                Debug.WriteLine("** Sending an email to the Timesheet Owner...");
+
+                _ = EmailService.SendTimesheetRejectionEmailNotificationAsync(
+                    timesheet,
+                    rejectionNote);
+            }
+        }
+
+        /// <summary>
+        /// Set the date and user for the status change if applicable
+        /// </summary>
+        /// <param name="oldStatus"></param>
+        private void SetStatusChangeDetails(TimesheetStatus oldStatus)
+        {
+            if (timesheet.Status == TimesheetStatus.New &&
+                oldStatus != TimesheetStatus.Submitted)
+            {
+                return;
+            }
+
+            timesheet.DateStatusChanged = DateTime.Now;
+            timesheet.StatusChangedBy = ActiveUser?.Person;
+        }
+
+        /// <summary>
+        /// Check whether the timesheet can be submitted based on whether it contains any inactive tasks or activities
+        /// </summary>
+        /// <returns></returns>
+        private async Task<bool> CanChangeStatus()
+        {
+            // Inactive codes are checked when submitting, except when
+            // resubmitting a previously rejected timesheet.
+            if (newStatus != TimesheetStatus.Submitted ||
+                timesheet.Status == TimesheetStatus.Rejected ||
+                timesheet.TimesheetEntries.Count == 0)
+            {
+                return true;
+            }
+
+            var hasInactiveTask = timesheet.TimesheetEntries.Any(x =>
+                (!x.InnateCodeTask.IsActive || !x.InnateCodeTask.InnateCode.IsActive) &&
+                x.TotalHours > 0);
+
+            // Exit early if we are OK on task active status
+            if (!hasInactiveTask) return true;
+
+            await DialogService.Alert(
+                "You cannot submit a timesheet which uses an inactive activity or task. " +
+                "If you need a code to be reactivated then contact your project manager to organise this.",
+                "Booked to Inactive Code");
+
+            return false;
+        }
+
+        /// <summary>
+        /// Check whether the timesheet is being submitted (or resubmitted after being rejected)
+        /// </summary>
+        /// <returns></returns>
+        private bool IsSubmitting()
+        {
+            return timesheet.Status == TimesheetStatus.Submitted ||
+                   SubmittingAsSelfApprover();
+        }
+
+        /// <summary>
+        /// Check whether the timesheet is in a status that allows editing of the entries
+        /// </summary>
+        /// <returns></returns>
+        private bool IsEditableStatus()
+        {
+            return timesheet.Status == TimesheetStatus.New ||
+                   timesheet.Status == TimesheetStatus.Submitted ||
+                   SubmittingAsSelfApprover();
+        }
+
+        /// <summary>
+        /// Update the timesheet entries in the database based on the current state of the datagrid.
+        /// This method clears the existing entries in the timesheet and adds the current entries from the datagrid, removing any blank entries if the timesheet is being submitted.
+        /// </summary>
+        private void UpdateTimesheetEntries()
+        {
+            timesheet.TimesheetEntries.Clear();
+
+            // Take a copy because dataGridEntities may change during processing
+            var entries = dataGridEntities.ToList();
+
+            Debug.WriteLine($"** {entries.Count} items in the datagrid");
+
+            foreach (var entry in entries)
+            {
+                if (entry.TotalHours == 0 && IsSubmitting())
+                {
+                    LogInformation($"Removing blank timesheet entry from DB for {entry.GetSensibleObjectName()}...");
+                    TimesheetService.DeleteEntry(Context, entry, false);
+                    continue;
+                }
+
+                Debug.WriteLine($"** Adding entry {entry.GetSensibleObjectName()} to timesheet");
+                timesheet.TimesheetEntries.Add(entry);
+            }
         }
 
         /// <summary>
@@ -662,8 +737,9 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override async Task DeleteRow(TimesheetEntry entity)
         {
-            bool confirmDeletion = await DialogService.Confirm($"This task will be removed from your timesheet template. If you want the task to still be added to future timesheets automatically (but just don't need it for this one) then just leave it empty when you submit the timesheet.",
-                   "Delete Task Row") ?? false;
+            bool confirmDeletion = await DialogService.Confirm(
+                $"This task will be removed from your timesheet template. If you want the task to still be added to future timesheets automatically (but just don't need it for this one) then just leave it empty when you submit the timesheet.",
+                "Delete Task Row") ?? false;
             if (confirmDeletion)
             {
                 TimesheetService.DeleteFromTemplate(Context, ActiveUser?.Person, entity.InnateCodeTask);
