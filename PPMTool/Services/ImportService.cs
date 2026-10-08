@@ -14,9 +14,8 @@ using PPMTool.Data.Enums;
 namespace PPMTool.Services
 {
     /// <summary>
-    /// Backs the Superuser-only bulk-write "/add" endpoints (Faculties,
-    /// Schools, Projects, Timesheets, WorkloadModels), gated behind
-    /// SettingType.ImportApiEnabled (towards #1310).
+    /// Provides methods to validate and create entities from import DTOs, without exposing the full API surface.
+    /// Used by the writing and updating API endpoints.
     /// </summary>
     public class ImportService
     {

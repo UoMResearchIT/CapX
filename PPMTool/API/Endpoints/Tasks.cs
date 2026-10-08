@@ -11,8 +11,7 @@ using PPMTool.Services;
 namespace PPMTool.API.Endpoints;
 
 /// <summary>
-/// SubTasks on a Project -- Superuser-only writes, gated behind
-/// SettingType.ImportApiEnabled -- see UoMResearchIT/CapX#1310. Covers
+/// SubTasks on a Project -- Superuser-only write access. Covers
 /// only the fixed-duration, no-predecessor shape ImportService.Create
 /// already uses for the auto-created Leadership/Delivery tasks; see
 /// ImportTaskDTO remarks for what's deliberately out of scope.
