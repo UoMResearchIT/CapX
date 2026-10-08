@@ -62,24 +62,32 @@ namespace PPMTool.Services
             };
             mailMessage.To.Add(to);
 
-            Logger.LogInformation($"Sending email to {AnonymiseEmail(to)}, subject {mailMessage.Subject}");
-
-#if RELEASE
-            // Launch a background task to do the sending
-            Task.Run(() =>
+            // If an SMTP server is configured then send the email
+            var server = Configuration["Email:SmtpServer"];
+            if (!string.IsNullOrWhiteSpace(server))
             {
-                try
+                Logger.LogInformation($"SMTP server is specified. Sending email to {AnonymiseEmail(to)}, subject {mailMessage.Subject}");
+
+                // Launch a background task to do the sending
+                Task.Run(() =>
                 {
-                    // Send
-                    using var client = new SmtpClient(Configuration["Email:SmtpServer"]);
-                    client.Send(mailMessage);
-                }
-                catch (Exception)
-                {
-                    Logger.LogInformation($"Failed to send email to {AnonymiseEmail(to)}, subject {mailMessage.Subject}");
-                }
-            });
-#endif
+                    try
+                    {
+                        // Split the server config to get any port
+                        var parts = server.Split(':', 2);
+
+                        // Send
+                        using var client = parts.Length == 2 && int.TryParse(parts[1], out var port)
+                            ? new SmtpClient(parts[0], port)
+                            : new SmtpClient(parts[0]);
+                        client.Send(mailMessage);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError($"Failed to send email to {AnonymiseEmail(to)}, subject {mailMessage.Subject} | {e.GetAllMessages()}");
+                    }
+                });
+            }
         }
 
         /// <summary>
