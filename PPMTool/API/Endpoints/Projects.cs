@@ -159,7 +159,7 @@ public static class Projects
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult CreateProject(
         PPMToolContext context,
-        ImportService importService,
+        ImportProjectService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -167,7 +167,7 @@ public static class Projects
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Projects.CreateProject");
+            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Projects.CreateProject");
             if (!allowed) return gateResult!;
 
             var errors = importService.Validate(context, request, caller!);
@@ -205,7 +205,7 @@ public static class Projects
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult UpdateProject(
         PPMToolContext context,
-        ImportService importService,
+        ImportProjectService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -213,7 +213,7 @@ public static class Projects
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Projects.UpdateProject");
+            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Projects.UpdateProject");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidateProjectUpdate(context, request);
@@ -249,7 +249,7 @@ public static class Projects
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult AddNotes(
         PPMToolContext context,
-        ImportService importService,
+        ImportProjectService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -257,7 +257,7 @@ public static class Projects
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Projects.AddNotes");
+            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Projects.AddNotes");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidateNotesImport(context, request);
@@ -295,7 +295,7 @@ public static class Projects
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult GetNotes(
         PPMToolContext context,
-        ImportService importService,
+        ImportProjectService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -303,7 +303,7 @@ public static class Projects
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Projects.GetNotes");
+            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Projects.GetNotes");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidateNotesGet(context, rtp);
@@ -334,7 +334,7 @@ public static class Projects
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult UpdateNote(
         PPMToolContext context,
-        ImportService importService,
+        ImportProjectService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -342,7 +342,7 @@ public static class Projects
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Projects.UpdateNote");
+            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Projects.UpdateNote");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidateNoteUpdate(context, request);
