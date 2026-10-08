@@ -35,33 +35,24 @@ public static class Faculties
         HttpContext http,
         [FromBody] ImportFacultyRequestDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Faculties.CreateFaculty");
-            if (!allowed) return gateResult!;
-
-            var errors = importService.ValidateFaculty(context, request);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(Faculties)}.{nameof(CreateFaculty)}",
+            request,
+            validate: () => importService.ValidateFaculty(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Faculties: faculty validation failed for '{Name}': {Errors}", request.Name, string.Join("|", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: Faculties: faculty validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
+                var result = importService.CreateFaculty(context, request);
 
-            // The Faculty and each School commit separately, so a failure on a
-            // School would otherwise leave the Faculty behind and block a retry.
-            using var transaction = context.Database.BeginTransaction();
-            var result = importService.CreateFaculty(context, request);
-            transaction.Commit();
-            logger.LogInformation(
-                "API: Faculties: created Faculty {FacultyId} '{Name}' ({SchoolCount} schools) by {User}",
-                result.FacultyId, request.Name, result.SchoolIds.Count, caller!.Name);
-            return Results.Created($"/api/faculties/{result.FacultyId}", result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "API: Faculties: error creating faculty '{Name}'", request.Name);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                logger.LogInformation(
+                    "API: Faculties: created Faculty {FacultyId} '{Name}' ({SchoolCount} schools) by {User}",
+                    result.FacultyId, request.Name, result.SchoolIds.Count, caller.Name);
+                return Results.Created($"/api/faculties/{result.FacultyId}", result);
+            },
+            logException: ex => logger.LogError(ex, "API: Faculties: error creating faculty '{Name}'", request.Name));
     }
 
     /// <summary>
@@ -80,28 +71,22 @@ public static class Faculties
         HttpContext http,
         [FromBody] UpdateFacultyRequestDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Faculties.UpdateFaculty");
-            if (!allowed) return gateResult!;
-
-            var errors = importService.ValidateFacultyUpdate(context, request);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(Faculties)}.{nameof(UpdateFaculty)}",
+            request,
+            validate: () => importService.ValidateFacultyUpdate(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Faculties: faculty update validation failed for '{Code}': {Errors}", request.Code, string.Join("|", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: Faculties: faculty update validation failed for '{Code}': {Errors}", request.Code, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
-
-            var result = importService.UpdateFaculty(context, request);
-            logger.LogInformation(
-                "API: Faculties: updated Faculty {FacultyId} (was '{Code}') by {User}",
-                result.FacultyId, request.Code, caller!.Name);
-            return Results.Ok(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "API: Faculties: error updating faculty '{Code}'", request.Code);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                var result = importService.UpdateFaculty(context, request);
+                logger.LogInformation(
+                    "API: Faculties: updated Faculty {FacultyId} (was '{Code}') by {User}",
+                    result.FacultyId, request.Code, caller.Name);
+                return Results.Ok(result);
+            },
+            logException: ex => logger.LogError(ex, "API: Faculties: error updating faculty '{Code}'", request.Code));
     }
 }

@@ -36,7 +36,7 @@ public static class WorkloadModels
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "WorkloadModels.CreateWorkloadModelChange");
+            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "WorkloadModels.CreateWorkloadModelChange");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidateWorkloadModelChange(context, request);

@@ -84,6 +84,7 @@ builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<FundingSourceService>();
 builder.Services.AddScoped<FacultyService>();
 builder.Services.AddScoped<SchoolService>();
+builder.Services.AddScoped<ImportOrgUnitService>();
 builder.Services.AddScoped<HtmlContentSanitizerService>();
 builder.Services.AddScoped<ImportService>();
 builder.Services.AddScoped<CssVariableService>();

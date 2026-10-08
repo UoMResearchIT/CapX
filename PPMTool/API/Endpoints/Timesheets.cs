@@ -259,7 +259,7 @@ public static class Timesheets
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Timesheets.CreateTimesheetEntry");
+            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Timesheets.CreateTimesheetEntry");
             if (!allowed) return gateResult!;
 
             var person = request.Username ?? $"PersonId {request.PersonId}";
@@ -308,7 +308,7 @@ public static class Timesheets
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Timesheets.UpdateTimesheetEntry");
+            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Timesheets.UpdateTimesheetEntry");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidateTimesheetEntryUpdate(context, request);
