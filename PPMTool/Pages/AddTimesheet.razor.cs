@@ -9,6 +9,7 @@ using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
 using PPMTool.Helpers;
 using PPMTool.Models;
+using PPMTool.Pages.Components;
 using PPMTool.Services;
 using Radzen;
 
@@ -433,6 +434,19 @@ namespace PPMTool.Pages
 
             if (!confirmed) return;
 
+            // If rejecting then show the dialog for the note
+            var timesheetRejectionNote = string.Empty;
+            if (newStatus == TimesheetStatus.Rejected)
+            {
+                (var status, var note) = await ShowRejectionNoteDialog();
+                if (!status)
+                {
+                    // User cancelled the rejection note dialog, so do not proceed with status change
+                    return;
+                }
+                timesheetRejectionNote = note;
+            }
+
             // Set status variables
             var oldStatus = timesheet.Status;
             timesheet.Status = newStatus;
@@ -488,14 +502,22 @@ namespace PPMTool.Pages
             TimesheetService.Update(Context, timesheet);
             await TimesheetService.GetIssueCountAsync(Context, ActiveUser?.Person?.PersonId ?? 0);
 
-            // Send an email to the Line Manager if status change is due to user changing their own timesheet
-            // but not for retractions
+            // Send an email to the Line Manager if status change is due to user submitting their own timesheet but not retracting it
             if (timesheet.Owner == ActiveUser?.Person && oldStatus != TimesheetStatus.Submitted)
             {
-                Debug.Write("** Sending an email to the Line Manager...");
+                Debug.WriteLine("** Sending an email to the Line Manager...");
 
                 // Fire and forget the send request
                 _ = EmailService.SendTimesheetSubmissionEmailNotificationAsync(ActiveUser?.Person, timesheet);
+            }
+
+            // Send an email to the owner if status change is a rejection and not changing their own timesheet (self-approvers)
+            if (timesheet.Status == TimesheetStatus.Rejected && timesheet.Owner != ActiveUser?.Person)
+            {
+                Debug.WriteLine("** Sending an email to the Timesheet Owner...");
+
+                // Fire and forget the send request
+                _ = EmailService.SendTimesheetRejectionEmailNotificationAsync(timesheet, timesheetRejectionNote);
             }
 
             // Only navigate away if the status is new as this means the save button has been clicked
@@ -806,7 +828,32 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Callback which runs when the form closes
+        /// Show the dialog to input a rejection note
+        /// </summary>
+        /// <returns>A tuple containing the status and the note.</returns>
+        private async Task<(bool, string)> ShowRejectionNoteDialog()
+        {
+            var status = false;
+            var note = string.Empty;
+
+            // Show dialog and pass back the data in the callback
+            var dialog = await DialogService.OpenAsync<TimesheetRejectedNoteComponent>($"Reject Timesheet for Week {timesheet.StartDate.ToShortDateString()}",
+               new Dictionary<string, object>()
+               {
+                   {
+                       nameof(TimesheetRejectedNoteComponent.OnNoteSubmitted), (Action<bool, string>)((submitted, text) => { status = submitted; note = text; })
+                   }
+               },
+               new DialogOptions()
+               {
+                   ShowClose = false,
+                   Width = "50%"
+               });
+            return (status, note);
+        }
+
+        /// <summary>
+        /// Callback which runs when the template edit form closes
         /// </summary>
         private void FormClosedHandler()
         {
