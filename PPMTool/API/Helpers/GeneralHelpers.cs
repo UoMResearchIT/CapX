@@ -197,7 +197,7 @@ public static class GeneralHelpers
     internal static (bool allowed, User caller, IResult result) CheckImportApiGate(
         SettingsService settingsService, HttpContext http, ILogger logger, string endpointName)
     {
-        if (!settingsService.GetSetting(SettingType.ImportApiEnabled, false))
+        if (!settingsService.GetSetting(SettingType.WriteApiEndpointsEnabled, false))
         {
             logger.LogWarning("API: {Endpoint}: rejected, ImportApiEnabled setting is off", endpointName);
             return (false, null, Results.StatusCode(StatusCodes.Status403Forbidden));
