@@ -26,6 +26,7 @@ namespace PPMTool.Services
         private const string rtpRequired = "RTP is required and must be greater than zero";
 
         private readonly ImportOrgUnitService importOrgUnitService;
+        private readonly ImportPersonService importPersonService;
         private readonly ProjectService projectService;
         private readonly SubTaskService subTaskService;
         private readonly NoteService noteService;
@@ -37,6 +38,7 @@ namespace PPMTool.Services
 
         public ImportService(
             ImportOrgUnitService importOrgUnitService,
+            ImportPersonService importPersonService,
             ProjectService projectService,
             SubTaskService subTaskService,
             NoteService noteService,
@@ -47,6 +49,7 @@ namespace PPMTool.Services
             UserService userService)
         {
             this.importOrgUnitService = importOrgUnitService;
+            this.importPersonService = importPersonService;
             this.projectService = projectService;
             this.subTaskService = subTaskService;
             this.noteService = noteService;
@@ -1259,31 +1262,7 @@ namespace PPMTool.Services
         /// </summary>
         public List<string> ValidatePerson(PPMToolContext context, ImportPersonDTO request)
         {
-            var errors = new List<string>();
-
-            if (string.IsNullOrWhiteSpace(request.Name))
-                errors.Add("Name is required");
-
-            if (request.FTE < 0.0 || request.FTE > 1.0)
-                errors.Add($"FTE {request.FTE} is out of range (must be 0.0-1.0)");
-
-            if (request.EndDate.HasValue && request.EndDate.Value < request.StartDate)
-                errors.Add("EndDate cannot be before StartDate");
-
-            if (!string.IsNullOrWhiteSpace(request.Name))
-            {
-                // Same duplicate checks Pages/AddPerson.razor.cs runs via
-                // PersonService.Add -- probe with an unsaved Person so
-                // ShortName is derived the same way (Person.Name's setter)
-                // rather than re-implementing GetInitials() here.
-                var probe = new Person { Name = request.Name.Trim() };
-                if (personService.DuplicateDetected(context, probe))
-                    errors.Add($"A Person named '{request.Name}' already exists");
-                else if (personService.DuplicateInitialsDetected(context, probe))
-                    errors.Add($"A Person with initials '{probe.ShortName}' already exists");
-            }
-
-            return errors;
+            return importPersonService.ValidatePerson(context, request);
         }
 
         /// <summary>
@@ -1291,18 +1270,7 @@ namespace PPMTool.Services
         /// </summary>
         public ImportPersonResponseDTO CreatePerson(PPMToolContext context, ImportPersonDTO request)
         {
-            var person = new Person
-            {
-                Name = request.Name.Trim(),
-                // Same Npgsql Kind bug as Note/SubTask -- People.StartDate/EndDate is
-                // also "timestamp without time zone".
-                StartDate = AsUnspecifiedKind(request.StartDate),
-                EndDate = request.EndDate.HasValue ? AsUnspecifiedKind(request.EndDate.Value) : null,
-                FTE = request.FTE,
-            };
-            personService.Add(context, person);
-
-            return new ImportPersonResponseDTO(person.PersonId, person.ShortName);
+            return importPersonService.CreatePerson(context, request);
         }
 
         /// <summary>
@@ -1311,104 +1279,7 @@ namespace PPMTool.Services
         /// </summary>
         public List<string> ValidatePersonUpdate(PPMToolContext context, UpdatePersonRequestDTO request)
         {
-            var errors = new List<string>();
-
-            var person = personService.GetById(context, request.PersonId);
-            if (person == null)
-            {
-                errors.Add($"PersonId {request.PersonId} does not exist");
-                return errors;
-            }
-
-            if (request.Name != null && string.IsNullOrWhiteSpace(request.Name))
-                errors.Add("Name cannot be blank");
-
-            if (request.FTE.HasValue && (request.FTE.Value < 0.0 || request.FTE.Value > 1.0))
-                errors.Add($"FTE {request.FTE} is out of range (must be 0.0-1.0)");
-
-            var resolvedStart = request.StartDate ?? person.StartDate;
-            var resolvedEnd = request.EndDate ?? person.EndDate;
-            if (resolvedEnd.HasValue && resolvedEnd.Value < resolvedStart)
-                errors.Add("EndDate cannot be before StartDate");
-
-            // A later start than a task this person is already assigned to is what
-            // SubTask.Schedule() refuses, so every later write to that task would fail.
-            if (request.StartDate.HasValue)
-            {
-                // Npgsql rejects a Kind=Utc parameter against this timestamp-without-tz column.
-                var newStart = AsUnspecifiedKind(request.StartDate.Value);
-                var earlierTasks = context.Resources
-                    .Where(r => r.Person.PersonId == person.PersonId && r.SubTask.StartDate < newStart)
-                    .Select(r => new { r.SubTask.SubTaskId, r.SubTask.Name, r.SubTask.StartDate, r.SubTask.OwningProject.RTP })
-                    .ToList();
-                foreach (var t in earlierTasks)
-                    errors.Add($"StartDate {newStart:yyyy-MM-dd} is after the start date {t.StartDate:yyyy-MM-dd} of task '{t.Name}' (SubTaskId {t.SubTaskId}, RTP {t.RTP}), which this person is assigned to");
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.Name))
-            {
-                var probe = new Person { PersonId = person.PersonId, Name = request.Name.Trim() };
-                if (personService.DuplicateDetected(context, probe))
-                    errors.Add($"A different Person named '{request.Name}' already exists");
-                else if (personService.DuplicateInitialsDetected(context, probe))
-                    errors.Add($"A different Person with initials '{probe.ShortName}' already exists");
-            }
-
-            errors.AddRange(ValidateLineManagerFields(context, request, person.PersonId));
-
-            return errors;
-        }
-
-        /// <summary>
-        /// Shared validation for the optional line-manager fields on
-        /// PUT /api/people/update. Returns an empty list when neither is
-        /// supplied, since line manager is optional on an update.
-        /// </summary>
-        private List<string> ValidateLineManagerFields(PPMToolContext context, UpdatePersonRequestDTO request, int subjectPersonId)
-        {
-            var errors = new List<string>();
-
-            var hasId = request.LineManagerPersonId.HasValue;
-            var hasUsername = !string.IsNullOrWhiteSpace(request.LineManagerUsername);
-
-            if (hasId && hasUsername)
-            {
-                errors.Add("Supply at most one of LineManagerPersonId or LineManagerUsername, not both");
-                return errors;
-            }
-
-            if (!hasId && !hasUsername) return errors;
-
-            var manager = ResolveLineManager(context, request);
-            if (manager == null)
-            {
-                errors.Add(hasId
-                    ? $"LineManagerPersonId {request.LineManagerPersonId} does not exist"
-                    : $"LineManagerUsername '{request.LineManagerUsername}' not found, or has no linked Person");
-            }
-            else if (manager.PersonId == subjectPersonId)
-            {
-                // Mirrors AddPerson.razor.cs, which excludes the person being edited from
-                // its own line-manager dropdown.
-                errors.Add("A Person cannot be their own line manager");
-            }
-
-            return errors;
-        }
-
-        /// <summary>
-        /// Resolve the line manager named by whichever of the two fields was
-        /// supplied, or null if neither was supplied or it did not resolve.
-        /// </summary>
-        private Person? ResolveLineManager(PPMToolContext context, UpdatePersonRequestDTO request)
-        {
-            if (request.LineManagerPersonId.HasValue)
-                return personService.GetById(context, request.LineManagerPersonId.Value);
-
-            if (!string.IsNullOrWhiteSpace(request.LineManagerUsername))
-                return FindUserByUsername(context, request.LineManagerUsername)?.Person;
-
-            return null;
+            return importPersonService.ValidatePersonUpdate(context, request);
         }
 
         /// <summary>
@@ -1419,27 +1290,7 @@ namespace PPMTool.Services
         /// </summary>
         public ImportPersonResponseDTO UpdatePerson(PPMToolContext context, UpdatePersonRequestDTO request)
         {
-            var person = personService.GetById(context, request.PersonId)!;
-
-            if (request.Name != null) person.Name = request.Name.Trim(); // setter also re-derives ShortName
-            if (request.StartDate.HasValue) person.StartDate = AsUnspecifiedKind(request.StartDate.Value);
-            if (request.EndDate.HasValue) person.EndDate = AsUnspecifiedKind(request.EndDate.Value);
-            if (request.FTE.HasValue) person.FTE = request.FTE.Value;
-
-            var lineManager = ResolveLineManager(context, request);
-            if (lineManager != null) person.LineManager = lineManager;
-
-            var result = personService.Update(context, person);
-            if (result < 0)
-                throw new InvalidOperationException($"PersonService.Update returned {result} (duplicate) despite passing ValidatePersonUpdate() -- possible race condition");
-
-            // Mirrors AddPerson.razor.cs's own edit flow -- a renamed Person may have a
-            // linked User (this endpoint isn't restricted to the bare, login-less People
-            // POST /api/people/add creates), whose display name would otherwise go stale.
-            if (request.Name != null)
-                userService.UpdateDisplayName(context, person);
-
-            return new ImportPersonResponseDTO(person.PersonId, person.ShortName);
+            return importPersonService.UpdatePerson(context, request);
         }
 
         /// <summary>
@@ -1639,13 +1490,13 @@ namespace PPMTool.Services
         /// <returns></returns>
         private static IEnumerable<(string Label, double FTE)> DutyFTEs(ImportWorkloadModelChangeDTO request)
         {
-            yield return ("ProjectWorkFTE", request.ProjectWorkFTE);
-            yield return ("BusinessAsUsualFTE", request.BusinessAsUsualFTE);
-            yield return ("PersonalDevelopmentFTE", request.PersonalDevelopmentFTE);
-            yield return ("StaffManagementFTE", request.StaffManagementFTE);
-            yield return ("ArchitectureFTE", request.ArchitectureFTE);
-            yield return ("ServiceManagementFTE", request.ServiceManagementFTE);
-            yield return ("ProjectManagementFTE", request.ProjectManagementFTE);
+            yield return (nameof(WorkloadModelChange.ProjectWorkFTE), request.ProjectWorkFTE);
+            yield return (nameof(WorkloadModelChange.BusinessAsUsualFTE), request.BusinessAsUsualFTE);
+            yield return (nameof(WorkloadModelChange.PersonalDevelopmentFTE), request.PersonalDevelopmentFTE);
+            yield return (nameof(WorkloadModelChange.StaffManagementFTE), request.StaffManagementFTE);
+            yield return (nameof(WorkloadModelChange.ArchitectureFTE), request.ArchitectureFTE);
+            yield return (nameof(WorkloadModelChange.ServiceManagementFTE), request.ServiceManagementFTE);
+            yield return (nameof(WorkloadModelChange.ProjectManagementFTE), request.ProjectManagementFTE);
         }
 
         /// <summary>
@@ -1722,7 +1573,7 @@ namespace PPMTool.Services
         {
             new() { TaskName = "Development", Duty = Duty.ProjectWork },
             new() { TaskName = "Management", Duty = Duty.ProjectAndServiceMgmt },
-            new() { TaskName = "Maintenance", Duty = Duty.ProjectWork },
+            new() { TaskName = "Maintenance", Duty = Duty.ProjectWork }
         };
 
         /// <summary>
