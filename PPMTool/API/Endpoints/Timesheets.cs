@@ -251,7 +251,7 @@ public static class Timesheets
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult CreateTimesheetEntry(
         PPMToolContext context,
-        ImportService importService,
+        ImportTimesheetService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -300,7 +300,7 @@ public static class Timesheets
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult UpdateTimesheetEntry(
         PPMToolContext context,
-        ImportService importService,
+        ImportTimesheetService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,

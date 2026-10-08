@@ -287,7 +287,7 @@ public static class WorkloadModels
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult CreateWorkloadModelChange(
         PPMToolContext context,
-        ImportService importService,
+        ImportWorkloadModelService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,

@@ -27,7 +27,7 @@ public static class Users
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult CreateUser(
         PPMToolContext context,
-        ImportService importService,
+        ImportUserService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,

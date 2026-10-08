@@ -144,7 +144,7 @@ public static class Faculties
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult CreateFaculty(
         PPMToolContext context,
-        ImportService importService,
+        ImportOrgUnitService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -180,7 +180,7 @@ public static class Faculties
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult UpdateFaculty(
         PPMToolContext context,
-        ImportService importService,
+        ImportOrgUnitService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,

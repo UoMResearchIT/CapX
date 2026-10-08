@@ -28,12 +28,12 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Creates a new Faculty and its associated Schools in a single transaction. If any part of the operation fails, the entire transaction is rolled back.
+        /// Creates a new faculty and its associated schools in a single transaction.
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <param name="context">Database context.</param>
+        /// <param name="request">Incoming faculty creation request.</param>
+        /// <returns>Identifier payload for the created faculty and school identifiers.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when persistence reports a duplicate despite successful validation.</exception>
         public ImportFacultyResponseDTO CreateFaculty(PPMToolContext context, ImportFacultyRequestDTO request)
         {
             using var transaction = context.Database.BeginTransaction();
@@ -67,12 +67,12 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Updates an existing Faculty's details. If the update fails due to a duplicate code, an InvalidOperationException is thrown.
+        /// Updates an existing faculty.
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <param name="context">Database context.</param>
+        /// <param name="request">Incoming faculty update request.</param>
+        /// <returns>Identifier payload for the updated faculty.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when persistence reports a duplicate despite successful validation.</exception>
         public UpdateFacultyResponseDTO UpdateFaculty(PPMToolContext context, UpdateFacultyRequestDTO request)
         {
             var faculty = FindFacultyByCode(context, request.Code)!;
@@ -87,12 +87,12 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Creates a new School and associates it with an existing Faculty. If the creation fails due to a duplicate code, an InvalidOperationException is thrown.
+        /// Creates a new school and associates it with an existing faculty.
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <param name="context">Database context.</param>
+        /// <param name="request">Incoming school creation request.</param>
+        /// <returns>Identifier payload for the created school and its faculty.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when persistence reports a duplicate despite successful validation.</exception>
         public ImportSchoolResponseDTO CreateSchool(PPMToolContext context, ImportSchoolRequestDTO request)
         {
             var faculty = FindFacultyByCode(context, request.FacultyCode)!;
@@ -110,12 +110,12 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Updates an existing School's details, including its name, code, and associated Faculty. If the update fails due to a duplicate code, an InvalidOperationException is thrown.
+        /// Updates an existing school, including optional faculty reassignment.
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <param name="context">Database context.</param>
+        /// <param name="request">Incoming school update request.</param>
+        /// <returns>Identifier payload for the updated school and its faculty.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when persistence reports a duplicate despite successful validation.</exception>
         public ImportSchoolResponseDTO UpdateSchool(PPMToolContext context, UpdateSchoolRequestDTO request)
         {
             var school = FindSchoolByCode(context, request.Code)!;
@@ -131,32 +131,32 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Finds a Faculty entity by its code, ignoring case and whitespace. Returns null if no matching Faculty is found.
+        /// Finds a faculty by code.
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="code"></param>
-        /// <returns></returns>
+        /// <param name="context">Database context.</param>
+        /// <param name="code">Faculty code to resolve.</param>
+        /// <returns>The matching faculty, or <c>null</c> when none exists.</returns>
         private static Faculty? FindFacultyByCode(PPMToolContext context, string code) =>
             context.Faculties
                 .FirstOrDefault(f => f.Code.Trim().ToLower() == code.Trim().ToLower());
 
         /// <summary>
-        /// Finds a School entity by its code, ignoring case and whitespace. Returns null if no matching School is found.
+        /// Finds a school by code.
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="code"></param>
-        /// <returns></returns>
+        /// <param name="context">Database context.</param>
+        /// <param name="code">School code to resolve.</param>
+        /// <returns>The matching school, or <c>null</c> when none exists.</returns>
         private static School? FindSchoolByCode(PPMToolContext context, string code) =>
             context.Schools
                 .Include(s => s.Faculty)
                 .FirstOrDefault(s => s.Code.Trim().ToLower() == code.Trim().ToLower());
 
         /// <summary>
-        /// Validates the given ImportFacultyRequestDTO and returns a list of error messages if any validation errors are found.
+        /// Validates a faculty creation request without writing to the database.
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="request"></param>
-        /// <returns></returns>
+        /// <param name="context">Database context.</param>
+        /// <param name="request">Incoming faculty creation request.</param>
+        /// <returns>Validation errors, or an empty list when valid.</returns>
         public List<string> ValidateFaculty(PPMToolContext context, ImportFacultyRequestDTO request)
         {
             var errors = new List<string>();
@@ -183,11 +183,11 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Validates the given UpdateFacultyRequestDTO and returns a list of error messages if any validation errors are found.
+        /// Validates a faculty update request without writing to the database.
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="request"></param>
-        /// <returns></returns>
+        /// <param name="context">Database context.</param>
+        /// <param name="request">Incoming faculty update request.</param>
+        /// <returns>Validation errors, or an empty list when valid.</returns>
         public List<string> ValidateFacultyUpdate(PPMToolContext context, UpdateFacultyRequestDTO request)
         {
             var errors = new List<string>();
@@ -225,11 +225,11 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Validates the given ImportSchoolRequestDTO and returns a list of error messages if any validation errors are found.
+        /// Validates a school creation request without writing to the database.
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="request"></param>
-        /// <returns></returns>
+        /// <param name="context">Database context.</param>
+        /// <param name="request">Incoming school creation request.</param>
+        /// <returns>Validation errors, or an empty list when valid.</returns>
         public List<string> ValidateSchool(PPMToolContext context, ImportSchoolRequestDTO request)
         {
             var errors = new List<string>();
@@ -256,11 +256,11 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Validates the given UpdateSchoolRequestDTO and returns a list of error messages if any validation errors are found.
+        /// Validates a school update request without writing to the database.
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="request"></param>
-        /// <returns></returns>
+        /// <param name="context">Database context.</param>
+        /// <param name="request">Incoming school update request.</param>
+        /// <returns>Validation errors, or an empty list when valid.</returns>
         public List<string> ValidateSchoolUpdate(PPMToolContext context, UpdateSchoolRequestDTO request)
         {
             var errors = new List<string>();

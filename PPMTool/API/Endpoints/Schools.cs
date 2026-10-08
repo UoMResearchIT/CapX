@@ -148,7 +148,7 @@ public static class Schools
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult CreateSchool(
         PPMToolContext context,
-        ImportService importService,
+        ImportOrgUnitService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -183,7 +183,7 @@ public static class Schools
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult UpdateSchool(
         PPMToolContext context,
-        ImportService importService,
+        ImportOrgUnitService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,

@@ -26,7 +26,7 @@ public static class Tasks
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult GetTasks(
         PPMToolContext context,
-        ImportService importService,
+        ImportTaskService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -65,7 +65,7 @@ public static class Tasks
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult CreateTask(
         PPMToolContext context,
-        ImportService importService,
+        ImportTaskService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -109,7 +109,7 @@ public static class Tasks
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult UpdateTask(
         PPMToolContext context,
-        ImportService importService,
+        ImportTaskService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -149,7 +149,7 @@ public static class Tasks
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult GetResourcing(
         PPMToolContext context,
-        ImportService importService,
+        ImportTaskService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -188,7 +188,7 @@ public static class Tasks
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult AddResourcing(
         PPMToolContext context,
-        ImportService importService,
+        ImportTaskService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -229,7 +229,7 @@ public static class Tasks
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult UpdateResourcing(
         PPMToolContext context,
-        ImportService importService,
+        ImportTaskService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,

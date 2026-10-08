@@ -169,7 +169,7 @@ public static class People
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult CreatePerson(
         PPMToolContext context,
-        ImportService importService,
+        ImportPersonService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -211,7 +211,7 @@ public static class People
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult UpdatePerson(
         PPMToolContext context,
-        ImportService importService,
+        ImportPersonService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,

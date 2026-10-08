@@ -4,8 +4,8 @@
 
 #nullable enable
 
-using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
+using PPMTool.API.Helpers;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
@@ -19,6 +19,11 @@ namespace PPMTool.Services
         private readonly PersonService personService;
         private readonly UserService userService;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ImportPersonService"/> class.
+        /// </summary>
+        /// <param name="personService">Service used to validate and persist people.</param>
+        /// <param name="userService">Service used to keep linked user display names in sync.</param>
         public ImportPersonService(
             PersonService personService,
             UserService userService)
@@ -30,6 +35,9 @@ namespace PPMTool.Services
         /// <summary>
         /// Validate a POST /api/people/add request without writing anything.
         /// </summary>
+        /// <param name="context">Database context.</param>
+        /// <param name="request">Incoming person creation request.</param>
+        /// <returns>Validation errors, or an empty list when valid.</returns>
         public List<string> ValidatePerson(PPMToolContext context, ImportPersonDTO request)
         {
             var errors = new List<string>();
@@ -58,13 +66,16 @@ namespace PPMTool.Services
         /// <summary>
         /// Create the Person. Caller is responsible for validating first.
         /// </summary>
+        /// <param name="context">Database context.</param>
+        /// <param name="request">Incoming person creation request.</param>
+        /// <returns>Identifier payload for the created person.</returns>
         public ImportPersonResponseDTO CreatePerson(PPMToolContext context, ImportPersonDTO request)
         {
             var person = new Person
             {
                 Name = request.Name.Trim(),
-                StartDate = AsUnspecifiedKind(request.StartDate),
-                EndDate = request.EndDate.HasValue ? AsUnspecifiedKind(request.EndDate.Value) : null,
+                StartDate = ImportHelper.AsUnspecifiedKind(request.StartDate),
+                EndDate = request.EndDate.HasValue ? ImportHelper.AsUnspecifiedKind(request.EndDate.Value) : null,
                 FTE = request.FTE,
             };
             personService.Add(context, person);
@@ -75,6 +86,9 @@ namespace PPMTool.Services
         /// <summary>
         /// Validate a PUT /api/people/update request without writing anything.
         /// </summary>
+        /// <param name="context">Database context.</param>
+        /// <param name="request">Incoming person update request.</param>
+        /// <returns>Validation errors, or an empty list when valid.</returns>
         public List<string> ValidatePersonUpdate(PPMToolContext context, UpdatePersonRequestDTO request)
         {
             var errors = new List<string>();
@@ -99,7 +113,7 @@ namespace PPMTool.Services
 
             if (request.StartDate.HasValue)
             {
-                var newStart = AsUnspecifiedKind(request.StartDate.Value);
+                var newStart = ImportHelper.AsUnspecifiedKind(request.StartDate.Value);
                 var earlierTasks = context.Resources
                     .Where(r => r.Person.PersonId == person.PersonId && r.SubTask.StartDate < newStart)
                     .Select(r => new { r.SubTask.SubTaskId, r.SubTask.Name, r.SubTask.StartDate, r.SubTask.OwningProject.RTP })
@@ -125,13 +139,16 @@ namespace PPMTool.Services
         /// <summary>
         /// Update the Person's Name, StartDate, EndDate, FTE and/or LineManager.
         /// </summary>
+        /// <param name="context">Database context.</param>
+        /// <param name="request">Incoming person update request.</param>
+        /// <returns>Identifier payload for the updated person.</returns>
         public ImportPersonResponseDTO UpdatePerson(PPMToolContext context, UpdatePersonRequestDTO request)
         {
             var person = personService.GetById(context, request.PersonId)!;
 
             if (request.Name != null) person.Name = request.Name.Trim();
-            if (request.StartDate.HasValue) person.StartDate = AsUnspecifiedKind(request.StartDate.Value);
-            if (request.EndDate.HasValue) person.EndDate = AsUnspecifiedKind(request.EndDate.Value);
+            if (request.StartDate.HasValue) person.StartDate = ImportHelper.AsUnspecifiedKind(request.StartDate.Value);
+            if (request.EndDate.HasValue) person.EndDate = ImportHelper.AsUnspecifiedKind(request.EndDate.Value);
             if (request.FTE.HasValue) person.FTE = request.FTE.Value;
 
             var lineManager = ResolveLineManager(context, request);
@@ -148,12 +165,12 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Validate the LineManagerPersonId and LineManagerUsername fields in an UpdatePersonRequestDTO.
+        /// Validates line-manager fields in an update person request.
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="request"></param>
-        /// <param name="subjectPersonId"></param>
-        /// <returns></returns>
+        /// <param name="context">Database context.</param>
+        /// <param name="request">Incoming person update request.</param>
+        /// <param name="subjectPersonId">Identifier of the person being updated.</param>
+        /// <returns>Validation errors, or an empty list when valid.</returns>
         private List<string> ValidateLineManagerFields(PPMToolContext context, UpdatePersonRequestDTO request, int subjectPersonId)
         {
             var errors = new List<string>();
@@ -185,39 +202,20 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Resolve the line manager Person from an UpdatePersonRequestDTO, using either LineManagerPersonId or LineManagerUsername.
+        /// Resolves the requested line manager from person ID or username fields.
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="request"></param>
-        /// <returns></returns>
+        /// <param name="context">Database context.</param>
+        /// <param name="request">Incoming person update request.</param>
+        /// <returns>The resolved manager, or <c>null</c> when no change is requested.</returns>
         private Person? ResolveLineManager(PPMToolContext context, UpdatePersonRequestDTO request)
         {
             if (request.LineManagerPersonId.HasValue)
                 return personService.GetById(context, request.LineManagerPersonId.Value);
 
             if (!string.IsNullOrWhiteSpace(request.LineManagerUsername))
-                return FindUserByUsername(context, request.LineManagerUsername)?.Person;
+                return ImportHelper.FindUserByUsername(context, request.LineManagerUsername)?.Person;
 
             return null;
         }
-
-        /// <summary>
-        /// Finds a User by username with linked Person and WorkloadModelChanges.
-        /// </summary>
-        /// <param name="context">The database context.</param>
-        /// <param name="username">The username to search for.</param>
-        private static User? FindUserByUsername(PPMToolContext context, string username) =>
-            context.Users
-                .Include(u => u.Person)
-                    .ThenInclude(p => p!.WorkloadModelChanges)
-                .FirstOrDefault(u => u.CASUserName.Trim().ToLower() == username.Trim().ToLower());
-
-        /// <summary>
-        /// Ensure a DateTime is of Kind Unspecified, converting if necessary. This is important for storing dates in the database without timezone information.
-        /// </summary>
-        /// <param name="dt"></param>
-        /// <returns></returns>
-        private static DateTime AsUnspecifiedKind(DateTime dt) =>
-            dt.Kind == DateTimeKind.Unspecified ? dt : DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
     }
 }
