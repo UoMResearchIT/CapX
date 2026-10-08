@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+#nullable enable
+
 namespace PPMTool.API.DTOs
 {
     /// <summary>
