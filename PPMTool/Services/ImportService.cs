@@ -972,12 +972,14 @@ namespace PPMTool.Services
             return errors;
         }
 
-        // The per-assignment rules every resourcing path shares, so create-time
-        // resourcing (projects/add, tasks/add) can't accept what tasks/resourcing/add
-        // refuses. Resolving each Person stays with the caller, since the
-        // create-time DTO is username-only; a row whose Person didn't resolve has
-        // already been reported, and gets only the FTE checks. existingTask is the
-        // task being added to, when it already exists.
+        /// <summary>
+        /// Applies the per-assignment validation rules shared by every resourcing path,
+        /// so create-time resourcing (projects/add, tasks/add) cannot accept what
+        /// tasks/resourcing/add refuses. Resolving each Person stays with the caller,
+        /// since the create-time DTO is username-only; a row whose Person did not
+        /// resolve has already been reported and gets only the FTE checks.
+        /// <paramref name="existingTask"/> is the task being added to when it already exists.
+        /// </summary>
         private List<string> ValidateAssignments(
             PPMToolContext context,
             IEnumerable<(Person? Person, string Assignee, double FTE)> assignments,
@@ -1143,15 +1145,13 @@ namespace PPMTool.Services
             return new UpdateTaskResourcingResponseDTO(resource.ResourceId, landedOn.SubTaskId);
         }
 
-        // Every API path that changes a task's assignments has to do what the UI's
-        // resource grid (AddTask.razor.cs) does on save: Schedule() is the only
-        // thing that sets each Resource's PlannedWorkHours, which DayRate costs
-        // are computed from, and the Data Dashboard sums SubTask.UnmetDemand as
-        // stored. Both read AssignedResources, so change detection runs first:
-        // whether EF has fixed a newly added or moved Resource into (or out of)
-        // the collection yet otherwise depends on when it last detected changes.
-        // Validation already rejects everything Schedule() can refuse here (an
-        // assignee who starts after the task), so an error is a bug, not a 400.
+        /// <summary>
+        /// Reschedules tasks after assignment changes, matching the UI resource-grid
+        /// save behaviour. Schedule() sets each Resource's PlannedWorkHours, from which
+        /// DayRate costs are computed, and SubTask.UnmetDemand is stored for the Data
+        /// Dashboard. Change detection runs first so newly added or moved Resources are
+        /// reflected in AssignedResources before scheduling.
+        /// </summary>
         private static void Reschedule(PPMToolContext context, params SubTask[] tasks)
         {
             context.ChangeTracker.DetectChanges();
@@ -1164,8 +1164,10 @@ namespace PPMTool.Services
             }
         }
 
-        // The one condition under which Schedule() refuses a task's assignments:
-        // someone assigned who starts after the task does. The UI refuses the same.
+        /// <summary>
+        /// Checks the condition under which Schedule() refuses a task assignment:
+        /// an assignee whose start date is after the task start date.
+        /// </summary>
         private static string? AssigneeStartsTooLate(Person person, DateTime taskStart) =>
             person.StartDate > taskStart
                 ? $"'{person.Name}' does not start until {person.StartDate:yyyy-MM-dd}, after the task's start date {taskStart:yyyy-MM-dd}"
@@ -1333,6 +1335,11 @@ namespace PPMTool.Services
             return new UpdateTimesheetEntryResponseDTO(entry.TimesheetEntryId, entry.TotalHours);
         }
 
+        /// <summary>
+        /// Enumerates the day hours from an ImportTimesheetEntryDTO.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         private static IEnumerable<(string Label, double Hours)> DayHours(ImportTimesheetEntryDTO request)
         {
             yield return ("MondayHours", request.MondayHours);
@@ -1344,6 +1351,11 @@ namespace PPMTool.Services
             yield return ("SundayHours", request.SundayHours);
         }
 
+        /// <summary>
+        /// Enumerates the day hours from an UpdateTimesheetEntryRequestDTO, returning null for any days that were not supplied in the request.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         private static IEnumerable<(string Label, double? Hours)> DayHours(UpdateTimesheetEntryRequestDTO request)
         {
             yield return ("MondayHours", request.MondayHours);
@@ -1797,6 +1809,11 @@ namespace PPMTool.Services
             return new UpdateNoteResponseDTO(note.NoteId);
         }
 
+        /// <summary>
+        /// Yield the seven duty FTEs from a workload-model-change request, with labels for error messages.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         private static IEnumerable<(string Label, double FTE)> DutyFTEs(ImportWorkloadModelChangeDTO request)
         {
             yield return ("ProjectWorkFTE", request.ProjectWorkFTE);
@@ -1808,21 +1825,21 @@ namespace PPMTool.Services
             yield return ("ProjectManagementFTE", request.ProjectManagementFTE);
         }
 
-        // .Include(InnateActivity.Tasks) is required, not optional -- same class of bug as
-        // FindUserByUsername's WorkloadModelChanges include (see below): without it,
-        // project.InnateActivity.Tasks is null/empty after materialization even for a
-        // project that has tasks in the DB, so task-name matching would silently fail.
+        /// <summary>
+        /// Finds a Project by ID with its InnateActivity and Tasks loaded.
+        /// The Tasks include is required because task-name matching depends on the
+        /// navigation collection being materialized.
+        /// </summary>
         private static Project? FindProjectWithInnateActivity(PPMToolContext context, int projectId) =>
             context.Projects
                 .Include(p => p.InnateActivity)
                     .ThenInclude(a => a!.Tasks)
                 .FirstOrDefault(p => p.ProjectId == projectId);
 
-        // Both include chains are required, not optional -- ValidateTimesheetEntryUpdate/
-        // UpdateTimesheetEntry read entry.Timesheet.TimesheetEntries (to check for a
-        // collision when moving to a different task) and entry.InnateCodeTask.InnateCode.Tasks
-        // (to resolve NewTaskName), same class of bug as FindUserByUsername's
-        // WorkloadModelChanges include above.
+        /// <summary>
+        /// Finds a TimesheetEntry by ID with the Timesheet entries and InnateCode tasks
+        /// required to validate and resolve task changes.
+        /// </summary>
         private static TimesheetEntry? FindTimesheetEntryById(PPMToolContext context, int timesheetEntryId) =>
             context.TimesheetEntries
                 .Include(e => e.Timesheet)
@@ -1832,40 +1849,59 @@ namespace PPMTool.Services
                         .ThenInclude(c => c.Tasks)
                 .FirstOrDefault(e => e.TimesheetEntryId == timesheetEntryId);
 
-        // ThenInclude(WorkloadModelChanges) is required, not optional -- AssignmentHelper.GetAssignmentChunks
-        // (called via Project.UpdateProjectMetaData -> SubTask.UpdateSubTaskCosts -> Resource.UpdateResourceCosts)
-        // reads person.WorkloadModelChanges directly. EF leaves un-included navigation collections null after
-        // a query (the entity's C# field initializer doesn't survive materialization), so omitting this NREs
-        // deep inside cost calculation instead of failing validation up front.
+        /// <summary>
+        /// Finds a User by username with the linked Person and WorkloadModelChanges
+        /// required by assignment and project cost calculations.
+        /// </summary>
         private static User? FindUserByUsername(PPMToolContext context, string username) =>
             context.Users
                 .Include(u => u.Person)
                     .ThenInclude(p => p!.WorkloadModelChanges)
                 .FirstOrDefault(u => u.CASUserName.Trim().ToLower() == username.Trim().ToLower());
 
-        // .Include(s => s.Faculty) is required, not optional -- same class of bug as
-        // FindUserByUsername's WorkloadModelChanges include. AssignmentHelper.GetAssignmentChunks
-        // reads project.School.Faculty.Name directly; SchoolService.GetAllActive() doesn't include
-        // it (returns IEnumerable<School>, not IQueryable, so callers can't add it after the fact
-        // either), so this needs its own query rather than reusing that service method.
+        /// <summary>
+        /// Finds an active School by code with its Faculty loaded. The Faculty include
+        /// is required because assignment cost calculation reads project.School.Faculty
+        /// directly.
+        /// </summary>
         private static School? FindActiveSchoolByCode(PPMToolContext context, string code) =>
             context.Schools
                 .Include(s => s.Faculty)
                 .FirstOrDefault(s => s.IsActive && s.Code.Trim().ToLower() == code.Trim().ToLower());
 
+        /// <summary>
+        /// Finds a Faculty by code. The Faculty include is required because assignment cost calculation reads project.School.Faculty
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="code"></param>
+        /// <returns></returns>
         private static Faculty? FindFacultyByCode(PPMToolContext context, string code) =>
             context.Faculties
                 .FirstOrDefault(f => f.Code.Trim().ToLower() == code.Trim().ToLower());
 
-        // Unlike FindActiveSchoolByCode, not filtered to IsActive -- update needs to
-        // find (and potentially reactivate) an inactive School too.
+        /// <summary>
+        /// Finds a School by code with its Faculty loaded. Unlike
+        /// <see cref="FindActiveSchoolByCode"/>, this is not restricted to active
+        /// Schools because update operations must also be able to find inactive Schools.
+        /// </summary>
         private static School? FindSchoolByCode(PPMToolContext context, string code) =>
             context.Schools
                 .Include(s => s.Faculty)
                 .FirstOrDefault(s => s.Code.Trim().ToLower() == code.Trim().ToLower());
 
+        /// <summary>
+        /// Returns the InnateActivity code that SeedHelper uses for a given RTP, so the importer can find the same InnateCode.
+        /// </summary>
+        /// <param name="rtp"></param>
+        /// <returns></returns>
         private static string InnateActivityCodeFor(int rtp) => $"S-RES-RTP-{rtp}";
 
+        /// <summary>
+        /// Finds the InnateCode for a given RTP, or null if none exists. The InnateCode is found by matching the InnateActivity code that SeedHelper uses for that RTP.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="rtp"></param>
+        /// <returns></returns>
         private static InnateCode? FindInnateCodeForRTP(PPMToolContext context, int rtp)
         {
             var activityCode = InnateActivityCodeFor(rtp).ToLower();
@@ -1874,7 +1910,10 @@ namespace PPMTool.Services
                 .FirstOrDefault(c => c.ActivityCode.Trim().ToLower() == activityCode);
         }
 
-        // The same three tasks SeedHelper.GetDefaultInnateCodeTasks gives every project code.
+        /// <summary>
+        /// Returns the same three default tasks that SeedHelper.GetDefaultInnateCodeTasks
+        /// gives every project code.
+        /// </summary>
         private static List<InnateCodeTask> DefaultInnateCodeTasks() => new()
         {
             new() { TaskName = "Development", Duty = Duty.ProjectWork },
@@ -1882,24 +1921,18 @@ namespace PPMTool.Services
             new() { TaskName = "Maintenance", Duty = Duty.ProjectWork },
         };
 
-        // Goes through ProjectService.GetByRTP rather than a query of its own:
-        // UpdateProject's call to project.UpdateProjectMetaData needs the same full
-        // graph (SubTasks/AssignedResources/Person/WorkloadModelChanges,
-        // FundingSources, etc.) that ProjectService.GetAll() includes, and whose
-        // NRE-prone dependencies read directly (see the class of bug noted on
-        // SchoolService.GetAllActive() elsewhere in this codebase). GetByRTP currently
-        // loads every project to find one; any optimisation there (#301) applies
-        // here with no further change.
+        /// <summary>
+        /// Finds a Project by RTP through ProjectService.GetByRTP so callers receive
+        /// the fully loaded graph required by project metadata and cost calculations.
+        /// </summary>
         private Project? FindProjectByRTP(PPMToolContext context, int rtp) =>
             projectService.GetByRTP(context, rtp);
 
-        // Two queries rather than one Include chain on SubTasks directly: the caller
-        // (ValidateTaskUpdate/UpdateTask) needs the fully-loaded owning Project too, for
-        // IsUniqueTaskNameInProject and UpdateProjectMetaData -- both NRE-prone against a
-        // partial graph, same class of bug as FindUserByUsername's WorkloadModelChanges
-        // include above. Reusing FindProjectByRTP's own full Include chain for that is
-        // simpler than assembling an equivalent one from the SubTask side, and EF's
-        // identity map returns the same tracked SubTask instance either way.
+        /// <summary>
+        /// Finds a SubTask and its fully loaded owning Project by SubTask ID.
+        /// The two-step lookup allows the Project to be loaded through
+        /// <see cref="FindProjectByRTP"/>.
+        /// </summary>
         private (Project Project, SubTask Task)? FindProjectAndTaskById(PPMToolContext context, int subTaskId)
         {
             // Nullable, so "no such task" can't be confused with a project whose RTP is 0.
@@ -1914,10 +1947,11 @@ namespace PPMTool.Services
             return task == null ? null : (project!, task);
         }
 
-        // Resolve the Person an assignment refers to, by exactly one of Username or
-        // PersonId. Returns the errors rather than throwing so the validate pass can
-        // report every bad row in one response, and is re-run (errors discarded) on
-        // the write path so resolution logic lives in exactly one place.
+        /// <summary>
+        /// Resolves the Person referenced by exactly one of Username or PersonId.
+        /// Returns validation errors rather than throwing so a validation pass can
+        /// report every invalid assignment in one response.
+        /// </summary>
         private (Person? Person, List<string> Errors) ResolveAssignmentPerson(
             PPMToolContext context, ImportResourceAssignmentDTO assignment)
         {
@@ -1945,17 +1979,20 @@ namespace PPMTool.Services
             return (byId, errors);
         }
 
-        // Whichever identifier the caller actually supplied, for error messages --
-        // reporting a null Username at someone who supplied a PersonId is noise.
+        /// <summary>
+        /// Returns a description using whichever assignee identifier the caller supplied,
+        /// for use in validation error messages.
+        /// </summary>
         private static string DescribeAssignee(ImportResourceAssignmentDTO assignment) =>
             !string.IsNullOrWhiteSpace(assignment.Username)
                 ? assignment.Username!
                 : assignment.PersonId.HasValue ? $"PersonId {assignment.PersonId}" : "(no Username or PersonId)";
 
-        // Same two-step as FindProjectAndTaskById, and for the same reason: callers
-        // need the fully-loaded owning Project for UpdateProjectMetaData, and the
-        // Resource/SubTask instances handed back are the tracked ones from that
-        // graph, so mutating them is what gets saved.
+        /// <summary>
+        /// Finds a Resource, its SubTask, and its fully loaded owning Project by
+        /// Resource ID. The returned Resource and SubTask are the tracked instances
+        /// from the Project graph.
+        /// </summary>
         private (Project Project, SubTask Task, Resource Resource)? FindProjectAndResourceById(
             PPMToolContext context, int resourceId)
         {
@@ -1971,9 +2008,10 @@ namespace PPMTool.Services
             return resource == null ? null : (project!, task!, resource);
         }
 
-        // Resourcing changes feed straight into cost calculation, so every write
-        // path has to re-run CapX's own engine rather than leaving the project's
-        // stored costs stale. Same call the create paths make.
+        /// <summary>
+        /// Recalculates project metadata and costs after a resourcing change and,
+        /// optionally, commits the changes.
+        /// </summary>
         private void RecalculateProject(PPMToolContext context, Project project, bool commit = true)
         {
             var financialReferences = financialReferenceService.GetAllOrDefault(context);
@@ -1982,29 +2020,29 @@ namespace PPMTool.Services
             if (commit) context.SaveChangesWithRetry();
         }
 
-        // Same check AddTask.razor's HandleSubmit runs before saving (Demand/
-        // OriginalDemand/AssignmentFTE) -- EF/Postgres would happily store more
-        // precision, but the UI treats it as invalid, so the API rejects it too
-        // rather than silently accepting data the UI itself would refuse.
-        // Enum.TryParse accepts any integer string ("99"), whether or not a member
-        // has that value, and would let an undefined value be stored.
+        /// <summary>
+        /// Parses an enum value only when it corresponds to a defined member, preventing
+        /// numeric strings such as "99" from being accepted as undefined enum values.
+        /// </summary>
         private static bool TryParseDefined<TEnum>(string? value, out TEnum result) where TEnum : struct, Enum =>
             Enum.TryParse(value, out result) && Enum.IsDefined(result);
 
+        /// <summary>
+        /// Checks whether a number has digits beyond the third decimal place, matching
+        /// the precision validation used by the UI for Demand, OriginalDemand, and
+        /// AssignmentFTE.
+        /// </summary>
         private static bool HasDigitsAfterThirdDecimalPlace(double number)
         {
             var truncated = Math.Truncate(number * 1000) / 1000;
             return number != truncated;
         }
 
-        // Note.CreatedDate/EditedDate map to Postgres "timestamp without time
-        // zone" columns. A DateTime deserialized from an ISO-8601 JSON value
-        // ending in "Z" (as every real ImportCommentDTO.CreatedDate does)
-        // carries Kind=Utc, which Npgsql now hard-rejects for that column
-        // type ("Cannot write DateTime with Kind=UTC to PostgreSQL type
-        // 'timestamp without time zone'") -- confirmed live, 2026-09-04, on
-        // the first real notes/add call. Strip the Kind rather than convert
-        // the value; the column has no timezone to convert to anyway.
+        /// <summary>
+        /// Removes the DateTime Kind without changing its value so it can be written to
+        /// PostgreSQL timestamp-without-time-zone columns. Npgsql rejects DateTime values
+        /// with Kind=Utc for those columns.
+        /// </summary>
         private static DateTime AsUnspecifiedKind(DateTime dt) =>
             DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
     }
