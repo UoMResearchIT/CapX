@@ -24,7 +24,8 @@ namespace PPMTool.Services
             UserService userService,
             PersonService personService,
             IDbContextFactory<PPMToolContext> dbContextFactory,
-            ILogger logger
+            ILogger logger,
+            SettingsService settingsService
         )
         {
             Configuration = configuration;
@@ -33,6 +34,7 @@ namespace PPMTool.Services
             PersonService = personService;
             DbContextFactory = dbContextFactory;
             Logger = logger;
+            SettingsService = settingsService;
         }
 
         public IConfiguration Configuration { get; }
@@ -41,6 +43,7 @@ namespace PPMTool.Services
         public PersonService PersonService { get; }
         public IDbContextFactory<PPMToolContext> DbContextFactory { get; }
         public ILogger Logger { get; }
+        public SettingsService SettingsService { get; }
 
         /// <summary>
         /// Send an email to the recipient provided.
@@ -87,6 +90,7 @@ namespace PPMTool.Services
         public async Task SendTimesheetSubmissionEmailNotificationAsync(Person staff, Timesheet timesheet)
         {
             List<string> recipients = new List<string>();
+            var appName = SettingsService.GetSetting(SettingType.ApplicationName);
 
             // Run a background thread to do the sending and updating
             await Task.Run(async () =>
@@ -120,8 +124,8 @@ namespace PPMTool.Services
                                 body.Append($"<p>Dear {lineManager.Name},</p>");
                                 body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailBody"]} by {staff.Name} for the week commencing {timesheet.StartDate.ToString("dd/MM/yy")}.</p>");
                                 body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailEndBody"]}</p>");
-                                body.Append($"<p><a href=\"{Configuration["Authentication:HostUrl"]}/timesheets/addtimesheet/{timesheet.TimesheetId.ToString()}\">Review this timesheet on CapX</a></p>");
-                                body.Append("<p><em>Sent from CapX</em></p>");
+                                body.Append($"<p><a href=\"{Configuration["Authentication:HostUrl"]}/timesheets/addtimesheet/{timesheet.TimesheetId.ToString()}\">Review this timesheet on {appName}</a></p>");
+                                body.Append($"<p><em>Sent from {appName}</em></p>");
 
                                 // Send email
                                 Debug.WriteLine($"** Sending Timesheet Submission email to {string.Join("|", recipients.Select(AnonymiseEmail))}");
@@ -136,7 +140,7 @@ namespace PPMTool.Services
                 }
                 catch (Exception e)
                 {
-                    Logger.LogError($"Timesheet email failure: {e}");
+                    Logger.LogError($"Timesheet submission email failure: {e}");
                 }
             });
         }
@@ -154,6 +158,8 @@ namespace PPMTool.Services
             IEnumerable<IGrouping<Absence, EntityDiff<Absence>>> modifiedAbsences,
             IEnumerable<Absence> deletedAbsences)
         {
+            var appName = SettingsService.GetSetting(SettingType.ApplicationName);
+
             // Run this task on a background thread
             await Task.Run(async () =>
             {
@@ -297,7 +303,7 @@ namespace PPMTool.Services
                             {
                                 body.Append($"<p>{Configuration["Email:AbsenceEmailEndBody"]}</p>");
                             }
-                            body.Append("<p><i>Sent from CapX</i></p>");
+                            body.Append($"<p><i>Sent from {appName}</i></p>");
 
                             // Send email
                             var subject = Configuration["Email:AbsenceEmailSubject"];
@@ -381,6 +387,8 @@ namespace PPMTool.Services
         /// <param name="listOfChanges"></param>
         internal async Task SendMentionAndOwnerEmailNotificationsAsync(Note note, IList<Person> mentions, IList<EntityDiff<Note>> listOfChanges = null)
         {
+            var appName = SettingsService.GetSetting(SettingType.ApplicationName);
+
             await Task.Run(async () =>
             {
                 try
@@ -459,8 +467,8 @@ namespace PPMTool.Services
                             }
 
                             // Add footer
-                            body.Append($"<p>{Configuration["Email:MentionEmailEndBody"]}</p><p><i>Sent from CapX</i></p>");
-                            body.Append($"<br /><a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails?rtp={note.Project.RTP}&filteredNote={note.NoteId}\">View this note on CapX</a>");
+                            body.Append($"<p>{Configuration["Email:MentionEmailEndBody"]}</p><p><i>Sent from {appName}</i></p>");
+                            body.Append($"<br /><a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails?rtp={note.Project.RTP}&filteredNote={note.NoteId}\">View this note on {appName}</a>");
 
                             // Send email
                             var subject = $"{Configuration["Email:MentionEmailSubject"]} - {ProjectService.GetFullName(note.Project)}";
