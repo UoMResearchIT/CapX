@@ -537,5 +537,70 @@ namespace PPMTool.Services
 
             return $"{maskedLocalPart}@{domainPart}";
         }
+
+        /// <summary>
+        /// Method to send an email to the timesheet owner with the rejection notes from the reviewer.
+        /// </summary>
+        /// <param name="timesheet"></param>
+        /// <param name="timesheetRejectionNote"></param>
+        /// <returns></returns>
+        public async Task SendTimesheetRejectionEmailNotificationAsync(Timesheet timesheet, string timesheetRejectionNote)
+        {
+            var appName = SettingsService.GetSetting(SettingType.ApplicationName);
+
+            // Run a background thread to do the sending and updating
+            await Task.Run(async () =>
+            {
+                try
+                {
+                    // Create context and get relevant details for the email
+                    using (var context = DbContextFactory.CreateDbContext())
+                    {
+                        // Add the email of the timesheet owner to the recipients list
+                        List<string> recipients = new List<string>();
+                        var ownerId = timesheet?.Owner?.PersonId;
+                        User ownerUser = UserService.GetAll(context).FirstOrDefault(x => x.Person.PersonId == ownerId);
+                        if (ownerUser != null)
+                        {
+                            var ownerEmailAddresses = ownerUser.GetNormalisedEmailAddresses();
+                            if (ownerEmailAddresses.Any())
+                            {
+                                foreach (var ownerEmailAddress in ownerEmailAddresses)
+                                {
+                                    recipients.Add(ownerEmailAddress);
+                                }
+                            }
+                        }
+
+                        // Only build the email and send it if there are any email addresses
+                        if (recipients.Any())
+                        {
+                            // Create email
+                            var subject = $"{Configuration["Email:TimesheetRejectionEmailSubject"]} [{timesheet.StartDate.ToString("dd/MM/yy")}]";
+
+                            StringBuilder body = new StringBuilder();
+                            body.Append($"<p>Dear {timesheet?.Owner?.Name},</p>");
+                            body.Append($"<p>{Configuration["Email:TimesheetRejectionEmailBody"]} for the week commencing {timesheet.StartDate.ToString("dd/MM/yy")}.</p>");
+                            body.Append($"<p>The following reason was given: {timesheetRejectionNote}</p>");
+                            body.Append($"<p>{Configuration["Email:TimesheetRejectionEmailEndBody"]}</p>");
+                            body.Append($"<p><a href=\"{Configuration["Authentication:HostUrl"]}/timesheets/addtimesheet/{timesheet.TimesheetId.ToString()}\">Review this timesheet on {appName}</a></p>");
+                            body.Append($"<p><em>Sent from {appName}</em></p>");
+
+                            // Send email
+                            Debug.WriteLine($"** Sending Timesheet Rejection email to {string.Join("|", recipients.Select(AnonymiseEmail))}");
+                            foreach (var recipient in recipients)
+                            {
+                                SendEmail(recipient, subject, body.ToString());
+                                await Task.Delay(1000);
+                            }
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError($"Timesheet rejection email failure: {e}");
+                }
+            });
+        }
     }
 }
