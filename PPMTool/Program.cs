@@ -314,7 +314,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapBlazorHub();
 
-// Map API endpoints
+// Map GET API endpoints
 var api = app.MapGroup("/api");
 api.MapGet("/skills/getAll", Skills.GetAllSkillTagsAsync);
 api.MapGet("/skills/getAllForPerson", Skills.GetAllSkillsTagsForPersonAsync);
@@ -332,7 +332,7 @@ api.MapGet("/projects/notes/getAll", Projects.GetNotes);
 api.MapGet("/tasks/getAll", Tasks.GetTasks);
 api.MapGet("/tasks/resourcing/getAll", Tasks.GetResourcing);
 
-// POST (write) endpoints (behind SettingType.ImportApiEnabled)
+// Map POST (write) API endpoints
 api.MapPost("/faculties/add", Faculties.CreateFaculty);
 api.MapPost("/timesheets/add", Timesheets.CreateTimesheetEntry);
 api.MapPost("/projects/add", Projects.CreateProject);
@@ -344,7 +344,7 @@ api.MapPost("/projects/notes/add", Projects.AddNotes);
 api.MapPost("/tasks/add", Tasks.CreateTask);
 api.MapPost("/tasks/resourcing/add", Tasks.AddResourcing);
 
-// PUT (update) endpoints (behind SettingType.ImportApiEnabled) -- workloadmodels/add
+// Map PUT (update) API endpoints -- workloadmodels/add
 // is already upsert-on-post, so no separate PUT for that.
 api.MapPut("/faculties/update", Faculties.UpdateFaculty);
 api.MapPut("/schools/update", Schools.UpdateSchool);

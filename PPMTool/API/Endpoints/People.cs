@@ -153,8 +153,7 @@ public static class People
 
     /// <summary>
     /// Create a bare Person record, with no linked User/Access-Control
-    /// account. Superuser-only write access, gated behind
-    /// SettingType.ImportApiEnabled -- see UoMResearchIT/CapX#1310.
+    /// account. Superuser-only write access.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportPersonResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -196,8 +195,7 @@ public static class People
     /// <summary>
     /// Update an existing bare Person's Name, StartDate, EndDate, FTE
     /// and/or LineManager. Identified by PersonId. Superuser-only write
-    /// access, gated behind SettingType.ImportApiEnabled -- see
-    /// UoMResearchIT/CapX#1310.
+    /// access.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ImportPersonResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]

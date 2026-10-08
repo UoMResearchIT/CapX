@@ -13,8 +13,7 @@ using PPMTool.Services;
 namespace PPMTool.API.Endpoints;
 
 /// <summary>
-/// Project endpoint methods. CreateProject is Superuser-only write access,
-/// gated behind SettingType.ImportApiEnabled -- see UoMResearchIT/CapX#1310.
+/// Project endpoint methods.
 /// </summary>
 public static class Projects
 {

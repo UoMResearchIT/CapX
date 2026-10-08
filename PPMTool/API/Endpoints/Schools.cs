@@ -13,8 +13,7 @@ using PPMTool.Services;
 namespace PPMTool.API.Endpoints;
 
 /// <summary>
-/// School endpoint methods. Superuser-only write access, gated behind
-/// SettingType.ImportApiEnabled -- see UoMResearchIT/CapX#1310.
+/// School endpoint methods.
 /// </summary>
 public static class Schools
 {

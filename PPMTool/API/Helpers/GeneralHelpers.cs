@@ -187,8 +187,7 @@ public static class GeneralHelpers
     }
 
     /// <summary>
-    /// Shared gate for the write ("/add") endpoints: SettingType.ImportApiEnabled
-    /// must be on, and the caller must be a Superuser. See UoMResearchIT/CapX#1310.
+    /// Shared gate for the write ("/add") endpoints to check if the endpoint is enabled and if the caller is a superuser.
     /// </summary>
     /// <param name="settingsService"></param>
     /// <param name="http"></param>
@@ -199,7 +198,7 @@ public static class GeneralHelpers
     {
         if (!settingsService.GetSetting(SettingType.WriteApiEndpointsEnabled, false))
         {
-            logger.LogWarning("API: {Endpoint}: rejected, ImportApiEnabled setting is off", endpointName);
+            logger.LogWarning("API: {Endpoint}: rejected, endpoints that write to the database are turned off by the system administrator.", endpointName);
             return (false, null, Results.StatusCode(StatusCodes.Status403Forbidden));
         }
 

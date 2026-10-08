@@ -12,10 +12,7 @@ using PPMTool.Services;
 namespace PPMTool.API.Endpoints;
 
 /// <summary>
-/// Transfer of weekly timesheets and nested entries. Read access:
-/// superuser, the person, or their line manager. CreateTimesheetEntry and
-/// UpdateTimesheetEntry are Superuser-only writes, gated behind
-/// SettingType.ImportApiEnabled -- see UoMResearchIT/CapX#1310.
+/// Methods for the timesheets endpoints.
 /// </summary>
 public static class Timesheets
 {

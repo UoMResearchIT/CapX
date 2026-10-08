@@ -11,8 +11,7 @@ using PPMTool.Services;
 namespace PPMTool.API.Endpoints;
 
 /// <summary>
-/// User endpoint methods. CreateUser is Superuser-only write access,
-/// gated behind SettingType.ImportApiEnabled -- see UoMResearchIT/CapX#1310.
+/// User endpoint methods.
 /// </summary>
 public static class Users
 {
