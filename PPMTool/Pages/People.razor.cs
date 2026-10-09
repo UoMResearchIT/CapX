@@ -6,9 +6,11 @@ using System.Diagnostics;
 using System.Linq.Dynamic.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
 using PPMTool.Services;
+using PPMTool.Services.StatusEvaluators;
 using Radzen;
 
 namespace PPMTool.Pages
@@ -22,11 +24,21 @@ namespace PPMTool.Pages
         [Inject]
         private SkillTagService TagService { get; set; }
 
+        [Inject]
+        private PersonStatusEvaluator PersonStatusEvaluator { get; set; }
+
         private IEnumerable<Person> people;
         private int count;
         private bool skillsEnabled;
 
         private bool includeLeavers;
+
+        // Get the status messages for the people in the grid.
+        private IReadOnlyList<StatusMessage> GetPersonStatusMessages(Person person)
+        {
+            return PersonStatusEvaluator.GetLatestStatusMessages(person, ActiveUser?.Person?.PersonId);
+        }
+
         public bool IncludeLeavers
         {
             get => includeLeavers;

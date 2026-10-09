@@ -1,8 +1,8 @@
-﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+// SPDX-FileCopyrightText: 2026 University of Manchester
 //
 // SPDX-License-Identifier: apache-2.0
 
-using PPMTool.Data.Enums;
+using Microsoft.Extensions.Logging;
 using PPMTool.Data.Interfaces;
 
 namespace PPMTool.Data.Entities
@@ -11,21 +11,15 @@ namespace PPMTool.Data.Entities
     {
         public int FinancialReferenceId { get; set; }
 
+        /// <summary>
+        /// Unique financial year that identifies this set of financial reference values.
+        /// </summary>
         public int FinancialYear { get; set; } = DateTime.Today.Year;
 
-        public float Grade41Costs { get; set; }
-
-        public float Grade51Costs { get; set; }
-
-        public float Grade55Costs { get; set; }
-
-        public float Grade65Costs { get; set; }
-
-        public float Grade71Costs { get; set; }
-
-        public float Grade75Costs { get; set; }
-
-        public float RecoveryTarget { get; set; }
+        /// <summary>
+        /// Flexible key-value financial reference values that belong to this financial year set.
+        /// </summary>
+        public virtual ICollection<FinancialReferenceValue> Values { get; set; } = new List<FinancialReferenceValue>();
 
         /// <summary>
         /// Helper to get a financial year from a DateTime
@@ -99,54 +93,91 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Gets a suitable standard or junior figure from the financial references for annual costs
+        /// Gets a value from the financial reference set by stable key name, returning 0 if not found or if the key is null/empty.
+        /// Logs warnings if the key is missing or if the values collection is null.
         /// </summary>
-        /// <param name="rate"></param>
+        /// <param name="keyName"></param>
+        /// <param name="logger"></param>
         /// <returns></returns>
-        public double GetJuniorOrStandardAnnualCosts(Rate rate)
+        public float GetValue(string? keyName, ILogger? logger = null)
         {
-            // Junior Rate
-            if (rate == Rate.Junior)
+            if (string.IsNullOrWhiteSpace(keyName))
             {
-                return Grade51Costs;
+                logger?.LogWarning("FinancialReference [{FinancialReferenceId}] - {FinancialYear}: requested value with null/empty key. Returning 0.", FinancialReferenceId, FinancialYear);
+                return 0f;
             }
 
-            // Standard Rate
-            else if (rate == Rate.Standard)
+            if (Values == null)
             {
-                return Grade71Costs;
+                logger?.LogWarning("FinancialReference [{FinancialReferenceId}] - {FinancialYear}: values collection is null when looking up '{KeyName}'. Returning 0.", FinancialReferenceId, FinancialYear, keyName);
+                return 0f;
             }
 
-            // Senior rate
-            else
+            var match = Values.FirstOrDefault(x =>
+                !string.IsNullOrWhiteSpace(x.FinancialReferenceValueSet?.Name)
+                && x.FinancialReferenceValueSet.Name.Trim().Equals(keyName.Trim(), StringComparison.OrdinalIgnoreCase));
+
+            if (match == null)
             {
-                return Grade75Costs;
+                logger?.LogWarning("FinancialReference [{FinancialReferenceId}] - {FinancialYear}: missing key '{KeyName}'. Returning 0.", FinancialReferenceId, FinancialYear, keyName);
+                return 0f;
             }
+
+            return match.Value;
         }
 
         /// <summary>
-        /// Returns the mid grade salary costs from the reference.
-        /// Grade 4 always bottom of grade.
-        /// Less than Grade4 returns G4.1.
-        /// Greater than Grade 7 returns G7.1.
+        /// Gets a value from the financial reference set by stable key identifier, returning 0 if not found.
         /// </summary>
-        /// <param name="grade"></param>
+        /// <param name="financialReferenceKeyId"></param>
+        /// <param name="logger"></param>
         /// <returns></returns>
-        public double GetMidGradeCosts(int grade)
+        public float GetValue(int? financialReferenceKeyId, ILogger? logger = null)
         {
-            if (grade <= 4)
+            if (financialReferenceKeyId == null)
             {
-                return Grade41Costs;
+                logger?.LogWarning("FinancialReference [{FinancialReferenceId}] - {FinancialYear}: requested value with null key id. Returning 0.", FinancialReferenceId, FinancialYear);
+                return 0f;
             }
-            else if (grade == 5)
+
+            if (Values == null)
             {
-                return Grade55Costs;
+                logger?.LogWarning("FinancialReference [{FinancialReferenceId}] - {FinancialYear}: values collection is null when looking up key id '{FinancialReferenceValueSetId}'. Returning 0.", FinancialReferenceId, FinancialYear, financialReferenceKeyId);
+                return 0f;
             }
-            else if (grade == 6)
+
+            var match = Values.FirstOrDefault(x => x.FinancialReferenceValueSetId == financialReferenceKeyId.Value);
+
+            if (match == null)
             {
-                return Grade65Costs;
+                logger?.LogWarning("FinancialReference [{FinancialReferenceId}] - {FinancialYear}: missing key id '{FinancialReferenceValueSetId}'. Returning 0.", FinancialReferenceId, FinancialYear, financialReferenceKeyId);
+                return 0f;
             }
-            return Grade75Costs;
+
+            return match.Value;
+        }
+
+        /// <summary>
+        /// Gets the annual cost for a given workload model using its explicitly selected cost value name.
+        /// </summary>
+        /// <param name="workloadModel"></param>
+        /// <param name="logger"></param>
+        /// <returns></returns>
+        public double GetAnnualCostForWorkloadModel(WorkloadModelChange workloadModel, ILogger? logger = null)
+        {
+            if (workloadModel == null)
+            {
+                logger?.LogWarning("FinancialReference [{FinancialReferenceId}] - {FinancialYear}: workload model was null while resolving annual cost. Returning 0.", FinancialReferenceId, FinancialYear);
+                return 0;
+            }
+
+            if (workloadModel.CostValueSetId == null)
+            {
+                logger?.LogWarning("FinancialReference [{FinancialReferenceId}] - {FinancialYear}: workload model {WorkloadModelChangeId} has no cost key selected. Returning 0.", FinancialReferenceId, FinancialYear, workloadModel.WorkloadModelChangeId);
+                return 0;
+            }
+
+            return GetValue(workloadModel.CostValueSetId, logger);
         }
     }
 }

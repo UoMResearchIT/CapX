@@ -1,0 +1,74 @@
+@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@page "/managefinref/valuesets"
+@inherits DataGridPage<FinancialReferenceValueSet>
+@using PPMTool.Data.Entities
+@using PPMTool.Data.Enums
+@using PPMTool.Pages.Components
+<PageTitle>Manage Financial Value Sets - CapX</PageTitle>
+
+<FeatureCheckComponent Feature="FeatureType.ProjectFinance">
+
+    <div class="container">
+        <div class="row">
+            <div class="col-auto mr-auto">
+                <h1>Manage Financial Value Sets</h1>
+            </div>
+            <div class="col-auto">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                    <RadzenButton class="float-right mr-2" Text="Back to References" Icon="arrow_back" Click="@BackToReferences" />
+                    <RadzenButton class="float-right" Text="Add" Icon="add" Click="@InsertRow" Disabled="@(entityToInsert != null || entityToUpdate != null || !EditAuthorised)" />
+                </RadzenStack>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col py-2">
+                <RadzenText Text="Manage reusable value-set definitions used by financial reference years and workload model cost links." />
+            </div>
+        </div>
+        @if (ErrorMessage != null)
+        {
+            <StatusMessageComponent Message="ErrorMessage" />
+        }
+        <hr />
+        <RadzenDataGrid @ref="dataGrid"
+                        AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
+                        AllowSorting="true"
+                        EditMode="DataGridEditMode.Single"
+                        FilterMode="FilterMode.Simple"
+                        Data="@dataGridEntities"
+                        TItem="FinancialReferenceValueSet"
+                        RowUpdate="@OnUpdateRow"
+                        RowCreate="@OnCreateRow"
+                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+            <Columns>
+                <RadzenDataGridColumn TItem="FinancialReferenceValueSet" Property="Name" Title="Name" Width="18rem" MinWidth="10px">
+                    <EditTemplate Context="item">
+                        <RadzenTextBox class="no-margin" @bind-Value="item.Name" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FinancialReferenceValueSet" Property="Description" Title="Description" MinWidth="10px">
+                    <EditTemplate Context="item">
+                        <RadzenTextBox class="no-margin" @bind-Value="item.Description" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FinancialReferenceValueSet" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
+                    <Template Context="item">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(item))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="@(!EditAuthorised)" />
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" class="m-1" Click="@(args => DeleteRow(item))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="@(!EditAuthorised)" />
+                    </Template>
+                    <EditTemplate Context="item">
+                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(item))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
+                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(item))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+        <br />
+    </div>
+
+</FeatureCheckComponent>

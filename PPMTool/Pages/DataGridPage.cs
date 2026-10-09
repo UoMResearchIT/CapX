@@ -18,6 +18,7 @@ namespace PPMTool.Pages
         protected T entityToInsert;
         protected T entityToUpdate;
         protected IEntityService<T> dataGridEntityService;
+        private bool rowSaveFailed;
 
         [Inject]
         protected DialogService DialogService { get; set; }
@@ -25,6 +26,15 @@ namespace PPMTool.Pages
         protected override void OnInitialized()
         {
             base.OnInitialized();
+        }
+
+        /// <summary>
+        /// Marks the current row save operation as failed.
+        /// The row will be returned to edit mode.
+        /// </summary>
+        protected void MarkRowSaveFailed()
+        {
+            rowSaveFailed = true;
         }
 
         /// <summary>
@@ -50,15 +60,44 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Update a row in the datagrid
+        /// Update a row in the datagrid.
+        /// If persistence fails, return the row to edit mode.
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
         protected virtual async Task SaveRow(T entity)
         {
             LogInformation($"Update row in view for <{entity?.GetSensibleObjectName()}>");
-            Reset();
+
+            ClearErrorMessage();
+            rowSaveFailed = false;
+
+            // Check whether insert or update
+            var isInsert = ReferenceEquals(entityToInsert, entity);
+
+            // Complete the RadzenDataGrid update
             await dataGrid.UpdateRow(entity);
+
+            // UpdateRow takes the row out of edit mode, so restore both
+            // our tracking state and the Radzen edit state.
+            if (rowSaveFailed)
+            {
+                if (isInsert)
+                {
+                    entityToInsert = entity;
+                    entityToUpdate = null;
+                }
+                else
+                {
+                    entityToInsert = null;
+                    entityToUpdate = entity;
+                }
+
+                await dataGrid.EditRow(entity);
+                return;
+            }
+
+            Reset();
         }
 
         /// <summary>
@@ -124,11 +163,17 @@ namespace PPMTool.Pages
         protected virtual void OnCreateRow(T entity)
         {
             LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
-            var duplicate = dataGridEntityService.Add(Context, entity);
-            if (duplicate < 0)
+
+            var result = dataGridEntityService.Add(Context, entity);
+
+            if (result < 0)
             {
+                MarkRowSaveFailed();
                 AddDuplicateErrorMessage(entity);
+                return;
             }
+
+            entityToInsert = null;
         }
 
         /// <summary>
@@ -138,11 +183,17 @@ namespace PPMTool.Pages
         protected virtual void OnUpdateRow(T entity)
         {
             LogInformation($"Update row in database for <{entity?.GetSensibleObjectName()}>");
-            var duplicate = dataGridEntityService.Update(Context, entity);
-            if (duplicate < 0)
+
+            var result = dataGridEntityService.Update(Context, entity);
+
+            if (result < 0)
             {
+                MarkRowSaveFailed();
                 AddDuplicateErrorMessage(entity);
+                return;
             }
+
+            entityToUpdate = null;
         }
 
         /// <summary>

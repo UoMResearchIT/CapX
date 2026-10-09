@@ -1,0 +1,95 @@
+@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@page "/managefinref/addfinancialreference/{FinancialReferenceId:int}"
+@inherits DataGridPage<FinancialReferenceValue>
+@using PPMTool.Data.Entities
+@using PPMTool.Pages.Components
+@using PPMTool.Data.Enums
+<PageTitle>Add Financial Reference Set - CapX</PageTitle>
+
+<FeatureCheckComponent Feature="FeatureType.ProjectFinance">
+
+    <div class="container">
+    @if (financialReference != null)
+    {
+        @if (FinancialReferenceId <= 0)
+        {
+            <h1>Add New Financial Reference Set</h1>
+        }
+        else
+        {
+            <h1>Edit <i>@financialReference.FinancialYear</i></h1>
+        }
+
+        <hr />
+        <RadzenCard>
+            <EditForm Model="@financialReference">
+                <DataAnnotationsValidator />
+                <div class="row">
+                    <div class="col-3">
+                        <RadzenLabel class="radzen-form-label" Text="Financial Year" /><br />
+                        <RadzenNumeric Min="0" Step="1" @bind-Value="financialReference.FinancialYear" Style="width:100%; display:block;" />
+                    </div>
+                </div>
+
+                <hr />
+                <div class="row">
+                    <div class="col">
+                        <h2>Current Values</h2>
+                    </div>
+                    <div class="col-auto" style="align-content: center">
+                        <RadzenButton Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null) />
+                    </div>
+                </div>
+                <RadzenDataGrid @ref="dataGrid"
+                                AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
+                                AllowSorting="true"
+                                EditMode="DataGridEditMode.Single"
+                                FilterMode="FilterMode.Simple"
+                                Data="@dataGridEntities"
+                                TItem="FinancialReferenceValue"
+                                RowUpdate="@OnUpdateRow"
+                                RowCreate="@OnCreateRow"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="FinancialReferenceValue" Property="FinancialReferenceValueSetId" Title="Value Set" Width="18rem" MinWidth="10px">
+                            <Template Context="item">
+                                @item.FinancialReferenceValueSet?.Name
+                            </Template>
+                            <EditTemplate Context="item">
+                                <RadzenDropDown class="radzen-dropdown m-0"
+                                                Data="@GetAvailableValueSetsForRow(item)"
+                                                TextProperty="Name"
+                                                ValueProperty="FinancialReferenceValueSetId"
+                                                TValue="int"
+                                                @bind-Value="item.FinancialReferenceValueSetId"
+                                                Placeholder="Select value set" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="FinancialReferenceValue" Property="Value" Title="Value" Width="12rem" MinWidth="10px" FormatString="{0:C0}">
+                            <EditTemplate Context="item">
+                                <RadzenNumeric Min="0" Step="0.01" @bind-Value="item.Value" Style="width:100%; display:block;" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="FinancialReferenceValue" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions">
+                            <Template Context="item">
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(item))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" class="m-1" Click="@(args => DeleteRow(item))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
+                            </Template>
+                            <EditTemplate Context="item">
+                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(item))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
+                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(item))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </EditForm>
+        </RadzenCard>
+    }
+</div>
+
+</FeatureCheckComponent>

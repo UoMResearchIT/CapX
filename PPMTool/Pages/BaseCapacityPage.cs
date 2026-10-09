@@ -338,7 +338,7 @@ namespace PPMTool.Pages
                     // Need some people for this to work
                     if (people.Count() == 0)
                     {
-                        LogError("People database is empty!");
+                        LogWarning("People database is empty!");
                         Debug.WriteLine("** No people registered in the database!");
                         return Task.CompletedTask;
                     }

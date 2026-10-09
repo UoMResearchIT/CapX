@@ -94,6 +94,14 @@ namespace PPMTool.Data.Enums
 
         [Description("The percentage of the planned cost that can be underclaimed (requested) for a given financial year.")]
         [DefaultSettingValue("10")]
-        UnderclaimedFundsThreshold = 20
+        UnderclaimedFundsThreshold = 20,
+
+        [Description("Default cost value from financial references to be used as the default cost key for resources in the cost estimator when using non-day-rate costing.")]
+        [DefaultSettingValue("")]
+        EstimateCostDefaultCostValueName = 21,
+
+        [Description("Financial reference value to be used to represent recovery target in dashboard  and recovery calculations.")]
+        [DefaultSettingValue("")]
+        RecoveryTargetCostValueName = 22
     }
 }
