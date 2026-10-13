@@ -155,9 +155,9 @@ namespace PPMTool.Data.Entities
             // If the person has left before this day then return zero
             if (EndDate != null && EndDate < date) return 0;
 
-            // If the person has no workload model changes then assume default G6 model
-            var wlm = GetWorkloadModelOnDateOrDefault(date);
-            return wlm.ProjectWorkFTE;
+            // If the person has no workload model changes then zero availability
+            var wlm = GetWorkloadModelOnDate(date);
+            return wlm?.ProjectWorkFTE ?? 0;
         }
 
         /// <summary>
@@ -213,12 +213,12 @@ namespace PPMTool.Data.Entities
             if (EndDate != null && EndDate < date) return 0;
 
             // Get WLM in play on date
-            var wlm = GetWorkloadModelOnDateOrDefault(date);
-            return wlm.ProjectManagementFTE;
+            var wlm = GetWorkloadModelOnDate(date);
+            return wlm?.ProjectManagementFTE ?? 0;
         }
 
         /// <summary>
-        /// Method to return the grade of the person on the date or the default of 6 if no WLM to consider.
+        /// Method to return the grade of the person on the date from workload models.
         /// Returns null if not started or left.
         /// </summary>
         /// <param name="date"></param>
@@ -231,7 +231,7 @@ namespace PPMTool.Data.Entities
             // If the person has left before this day then return null
             if (EndDate != null && EndDate < date) return null;
 
-            return GetWorkloadModelOnDateOrDefault(date).Grade;
+            return GetWorkloadModelOnDate(date)?.Grade;
         }
 
         /// <summary>
@@ -274,8 +274,8 @@ namespace PPMTool.Data.Entities
             if (EndDate != null && EndDate < date) return 0;
 
             // Get WLM in play on date
-            var wlm = GetWorkloadModelOnDateOrDefault(date);
-            return wlm.BusinessAsUsualFTE;
+            var wlm = GetWorkloadModelOnDate(date);
+            return wlm?.BusinessAsUsualFTE ?? 0;
         }
 
         /// <summary>
