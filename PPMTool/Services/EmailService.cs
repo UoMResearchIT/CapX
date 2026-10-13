@@ -24,7 +24,8 @@ namespace PPMTool.Services
             UserService userService,
             PersonService personService,
             IDbContextFactory<PPMToolContext> dbContextFactory,
-            ILogger logger
+            ILogger logger,
+            SettingsService settingsService
         )
         {
             Configuration = configuration;
@@ -33,6 +34,7 @@ namespace PPMTool.Services
             PersonService = personService;
             DbContextFactory = dbContextFactory;
             Logger = logger;
+            SettingsService = settingsService;
         }
 
         public IConfiguration Configuration { get; }
@@ -41,6 +43,7 @@ namespace PPMTool.Services
         public PersonService PersonService { get; }
         public IDbContextFactory<PPMToolContext> DbContextFactory { get; }
         public ILogger Logger { get; }
+        public SettingsService SettingsService { get; }
 
         /// <summary>
         /// Send an email to the recipient provided.
@@ -59,24 +62,32 @@ namespace PPMTool.Services
             };
             mailMessage.To.Add(to);
 
-            Logger.LogInformation($"Sending email to {AnonymiseEmail(to)}, subject {mailMessage.Subject}");
-
-#if RELEASE
-            // Launch a background task to do the sending
-            Task.Run(() =>
+            // If an SMTP server is configured then send the email
+            var server = Configuration["Email:SmtpServer"];
+            if (!string.IsNullOrWhiteSpace(server))
             {
-                try
+                Logger.LogInformation($"SMTP server is specified. Sending email to {AnonymiseEmail(to)}, subject {mailMessage.Subject}");
+
+                // Launch a background task to do the sending
+                Task.Run(() =>
                 {
-                    // Send
-                    using var client = new SmtpClient(Configuration["Email:SmtpServer"]);
-                    client.Send(mailMessage);
-                }
-                catch (Exception)
-                {
-                    Logger.LogInformation($"Failed to send email to {AnonymiseEmail(to)}, subject {mailMessage.Subject}");
-                }
-            });
-#endif
+                    try
+                    {
+                        // Split the server config to get any port
+                        var parts = server.Split(':', 2);
+
+                        // Send
+                        using var client = parts.Length == 2 && int.TryParse(parts[1], out var port)
+                            ? new SmtpClient(parts[0], port)
+                            : new SmtpClient(parts[0]);
+                        client.Send(mailMessage);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError($"Failed to send email to {AnonymiseEmail(to)}, subject {mailMessage.Subject} | {e.GetAllMessages()}");
+                    }
+                });
+            }
         }
 
         /// <summary>
@@ -87,6 +98,7 @@ namespace PPMTool.Services
         public async Task SendTimesheetSubmissionEmailNotificationAsync(Person staff, Timesheet timesheet)
         {
             List<string> recipients = new List<string>();
+            var appName = SettingsService.GetSetting(SettingType.ApplicationName);
 
             // Run a background thread to do the sending and updating
             await Task.Run(async () =>
@@ -100,7 +112,13 @@ namespace PPMTool.Services
 
                         if (lineManager != staff) // No point emailing someone about their own timesheet if they are their own line manager. :)
                         {
-                            User lineManagerUser = UserService.GetAll(context).First(p => p.Person.PersonId == lineManager.PersonId);
+                            User lineManagerUser = UserService.GetAll(context).FirstOrDefault(p => p.Person.PersonId == lineManager.PersonId);
+                            if (lineManagerUser == null)
+                            {
+                                Logger.LogWarning($"Line manager not found for person ID: {lineManager.PersonId}");
+                                return;
+                            }
+
                             var lineManagerEmailAddresses = lineManagerUser.GetNormalisedEmailAddresses();
                             if (lineManagerEmailAddresses.Any())
                             {
@@ -120,8 +138,8 @@ namespace PPMTool.Services
                                 body.Append($"<p>Dear {lineManager.Name},</p>");
                                 body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailBody"]} by {staff.Name} for the week commencing {timesheet.StartDate.ToString("dd/MM/yy")}.</p>");
                                 body.Append($"<p>{Configuration["Email:TimesheetSubmissionEmailEndBody"]}</p>");
-                                body.Append($"<p><a href=\"{Configuration["Authentication:HostUrl"]}/timesheets/addtimesheet/{timesheet.TimesheetId.ToString()}\">Review this timesheet on CapX</a></p>");
-                                body.Append("<p><em>Sent from CapX</em></p>");
+                                body.Append($"<p><a href=\"{Configuration["Authentication:HostUrl"]}/timesheets/addtimesheet/{timesheet.TimesheetId.ToString()}\">Review this timesheet on {appName}</a></p>");
+                                body.Append($"<p><em>Sent from {appName}</em></p>");
 
                                 // Send email
                                 Debug.WriteLine($"** Sending Timesheet Submission email to {string.Join("|", recipients.Select(AnonymiseEmail))}");
@@ -136,7 +154,7 @@ namespace PPMTool.Services
                 }
                 catch (Exception e)
                 {
-                    Logger.LogError($"Timesheet email failure: {e}");
+                    Logger.LogError($"Timesheet submission email failure: {e}");
                 }
             });
         }
@@ -154,6 +172,8 @@ namespace PPMTool.Services
             IEnumerable<IGrouping<Absence, EntityDiff<Absence>>> modifiedAbsences,
             IEnumerable<Absence> deletedAbsences)
         {
+            var appName = SettingsService.GetSetting(SettingType.ApplicationName);
+
             // Run this task on a background thread
             await Task.Run(async () =>
             {
@@ -297,7 +317,7 @@ namespace PPMTool.Services
                             {
                                 body.Append($"<p>{Configuration["Email:AbsenceEmailEndBody"]}</p>");
                             }
-                            body.Append("<p><i>Sent from CapX</i></p>");
+                            body.Append($"<p><i>Sent from {appName}</i></p>");
 
                             // Send email
                             var subject = Configuration["Email:AbsenceEmailSubject"];
@@ -381,6 +401,8 @@ namespace PPMTool.Services
         /// <param name="listOfChanges"></param>
         internal async Task SendMentionAndOwnerEmailNotificationsAsync(Note note, IList<Person> mentions, IList<EntityDiff<Note>> listOfChanges = null)
         {
+            var appName = SettingsService.GetSetting(SettingType.ApplicationName);
+
             await Task.Run(async () =>
             {
                 try
@@ -459,8 +481,8 @@ namespace PPMTool.Services
                             }
 
                             // Add footer
-                            body.Append($"<p>{Configuration["Email:MentionEmailEndBody"]}</p><p><i>Sent from CapX</i></p>");
-                            body.Append($"<br /><a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails?rtp={note.Project.RTP}&filteredNote={note.NoteId}\">View this note on CapX</a>");
+                            body.Append($"<p>{Configuration["Email:MentionEmailEndBody"]}</p><p><i>Sent from {appName}</i></p>");
+                            body.Append($"<br /><a href=\"{Configuration["Authentication:HostUrl"]}/projects/projectdetails?rtp={note.Project.RTP}&filteredNote={note.NoteId}\">View this note on {appName}</a>");
 
                             // Send email
                             var subject = $"{Configuration["Email:MentionEmailSubject"]} - {ProjectService.GetFullName(note.Project)}";
@@ -522,6 +544,71 @@ namespace PPMTool.Services
                 : localPart[..3] + new string('*', 7);
 
             return $"{maskedLocalPart}@{domainPart}";
+        }
+
+        /// <summary>
+        /// Method to send an email to the timesheet owner with the rejection notes from the reviewer.
+        /// </summary>
+        /// <param name="timesheet"></param>
+        /// <param name="timesheetRejectionNote"></param>
+        /// <returns></returns>
+        public async Task SendTimesheetRejectionEmailNotificationAsync(Timesheet timesheet, string timesheetRejectionNote)
+        {
+            var appName = SettingsService.GetSetting(SettingType.ApplicationName);
+
+            // Run a background thread to do the sending and updating
+            await Task.Run(async () =>
+            {
+                try
+                {
+                    // Create context and get relevant details for the email
+                    using (var context = DbContextFactory.CreateDbContext())
+                    {
+                        // Add the email of the timesheet owner to the recipients list
+                        List<string> recipients = new List<string>();
+                        var ownerId = timesheet?.Owner?.PersonId;
+                        User ownerUser = UserService.GetAll(context).FirstOrDefault(x => x.Person.PersonId == ownerId);
+                        if (ownerUser != null)
+                        {
+                            var ownerEmailAddresses = ownerUser.GetNormalisedEmailAddresses();
+                            if (ownerEmailAddresses.Any())
+                            {
+                                foreach (var ownerEmailAddress in ownerEmailAddresses)
+                                {
+                                    recipients.Add(ownerEmailAddress);
+                                }
+                            }
+                        }
+
+                        // Only build the email and send it if there are any email addresses
+                        if (recipients.Any())
+                        {
+                            // Create email
+                            var subject = $"{Configuration["Email:TimesheetRejectionEmailSubject"]} [{timesheet.StartDate.ToString("dd/MM/yy")}]";
+
+                            StringBuilder body = new StringBuilder();
+                            body.Append($"<p>Dear {timesheet?.Owner?.Name},</p>");
+                            body.Append($"<p>{Configuration["Email:TimesheetRejectionEmailBody"]} for the week commencing {timesheet.StartDate.ToString("dd/MM/yy")}.</p>");
+                            body.Append($"<p>The following reason was given: {timesheetRejectionNote}</p>");
+                            body.Append($"<p>{Configuration["Email:TimesheetRejectionEmailEndBody"]}</p>");
+                            body.Append($"<p><a href=\"{Configuration["Authentication:HostUrl"]}/timesheets/addtimesheet/{timesheet.TimesheetId.ToString()}\">Review this timesheet on {appName}</a></p>");
+                            body.Append($"<p><em>Sent from {appName}</em></p>");
+
+                            // Send email
+                            Debug.WriteLine($"** Sending Timesheet Rejection email to {string.Join("|", recipients.Select(AnonymiseEmail))}");
+                            foreach (var recipient in recipients)
+                            {
+                                SendEmail(recipient, subject, body.ToString());
+                                await Task.Delay(1000);
+                            }
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError($"Timesheet rejection email failure: {e}");
+                }
+            });
         }
     }
 }

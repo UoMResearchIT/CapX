@@ -25,13 +25,13 @@ namespace PPMTool.Data.Enums
         [Colour("#FEB019", "#000")]
         PersonalDevelopment,
         [Description("Staff Management")]
-        [Colour("#FF4560")]
+        [Colour("#FF4560", "#000")]
         StaffMgmt,
         [Description("Project and Service Management")]
-        [Colour("#775DD0")]
+        [Colour("#775DD0", backgroundColourCodeDark: "#A78BFA", textColourCodeDark: "#000")]
         ProjectAndServiceMgmt,
         [Description("Technical Leadership")]
-        [Colour("#2E294E")]
+        [Colour("#2E294E", backgroundColourCodeDark: "#00F5D4", textColourCodeDark: "#000")]
         RSA
     }
 }

@@ -15,6 +15,7 @@ SPDX-License-Identifier: apache-2.0
 @using PPMTool.Enums
 @using PPMTool.Helpers
 @using PPMTool.Services
+@inject ThemeService ThemeService
 @using static PPMTool.Pages.BaseCapacityPage
 
 <div class="row">
@@ -396,7 +397,7 @@ SPDX-License-Identifier: apache-2.0
         {
             foreach (var skill in matches)
             {
-                message += $"<div class=\"rz-badge m-1\" style=\"background-color: {skill.Rareness.GetTextColourCode()}; padding: 0.3rem;\" title=\"{skill.RarenessCount} RSE(s) with this tag\">{skill.Name}</div>";
+                message += $"<div class=\"rz-badge m-1\" style=\"background-color: {skill.Rareness.GetTextColourCode(ThemeService.IsDarkTheme())}; padding: 0.3rem;\" title=\"{skill.RarenessCount} RSE(s) with this tag\">{skill.Name}</div>";
             }
         }
         return message;

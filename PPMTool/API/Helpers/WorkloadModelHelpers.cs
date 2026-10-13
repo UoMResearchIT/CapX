@@ -53,14 +53,17 @@ namespace PPMTool.API.Helpers
                 {
                     var wlmDataItem = WorkloadModelChartHelper.GetWorkloadModelChartData(person, weekStart, allTimesheets);
 
-                    if (normalisedByTotalHours)
-                    {
-                        wlmDataItem.SwitchNormalisation(true);
-                    }
+                    wlmDataItem.UpdateWeeklyValues(normalisedByTotalHours);
                     wlmDataItem.UpdateWLMNetValues(normalisedByTotalHours);
 
-                    var sourceData = compareToWLM ? wlmDataItem.WLMNetByDuty : wlmDataItem.WeeklyValuesByDuty;
-                    var dutiesDict = sourceData.ToDictionary(kvp => kvp.Key.GetDescription(), kvp => kvp.Value);
+                    var sourceData = compareToWLM
+                        ? wlmDataItem.WLMNetByDuty
+                            .Where(x => x.Key != Duty.Other)
+                        : wlmDataItem.WeeklyValuesByDuty;
+
+                    var dutiesDict = sourceData.ToDictionary(
+                        kvp => kvp.Key.GetDescription(),
+                        kvp => kvp.Value);
 
                     personWeeklyData.Add(new WLMWeeklyAnalysisDTO(weekStart, units, dutiesDict));
                     weekStart = weekStart.AddDays(7);
