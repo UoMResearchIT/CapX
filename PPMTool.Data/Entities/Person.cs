@@ -161,34 +161,6 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Method to get the current workload model of a person in force at the date given or defaults to a G6 model
-        /// </summary>
-        /// <param name="date"></param>
-        /// <returns></returns>
-        public WorkloadModelChange GetWorkloadModelOnDateOrDefault(DateTime date)
-        {
-            // Try get model in play on date
-            var activeModel = GetWorkloadModelOnDate(date);
-
-            // If no workload model active then default to the standard 100% project work model
-            if (activeModel == null)
-            {
-                activeModel = new WorkloadModelChange()
-                {
-                    ChangeDate = date,
-                    Person = this,
-                    ProjectWorkFTE = 0.8,
-                    BusinessAsUsualFTE = 0.1,
-                    PersonalDevelopmentFTE = 0.1,
-                    Notes = "Default G6 Model",
-                    Grade = 6
-                };
-            }
-
-            return activeModel;
-        }
-
-        /// <summary>
         /// Return the workload model change that is active for the person on the date given, or null if no model changes in play at that time i.e. if they have left or haven't started yet
         /// </summary>
         /// <param name="date"></param>
@@ -243,24 +215,6 @@ namespace PPMTool.Data.Entities
             // Get WLM in play on date
             var wlm = GetWorkloadModelOnDateOrDefault(date);
             return wlm.ProjectManagementFTE;
-        }
-
-        /// <summary>
-        /// Method to return the total workload model FTE for a person on the provided date
-        /// </summary>
-        /// <param name="date"></param>
-        /// <returns></returns>
-        public double GetWorkloadModelTotalOnDate(DateTime date)
-        {
-            // If person hasn't started on day then return zero
-            if (StartDate > date) return 0;
-
-            // If the person has left before this day then return zero
-            if (EndDate != null && EndDate < date) return 0;
-
-            // Get WLM in play on date
-            var wlm = GetWorkloadModelOnDateOrDefault(date);
-            return wlm.Total();
         }
 
         /// <summary>
