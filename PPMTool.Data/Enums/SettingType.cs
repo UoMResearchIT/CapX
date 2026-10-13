@@ -94,6 +94,10 @@ namespace PPMTool.Data.Enums
 
         [Description("The percentage of the planned cost that can be underclaimed (requested) for a given financial year.")]
         [DefaultSettingValue("10")]
-        UnderclaimedFundsThreshold = 20
+        UnderclaimedFundsThreshold = 20,
+
+        [Description("Whether the write endpoints (POST methods) are enabled on the API. Default: false: Superuser API key required.")]
+        [DefaultSettingValue("false")]
+        WriteApiEndpointsEnabled = 21
     }
 }

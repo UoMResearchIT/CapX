@@ -85,6 +85,7 @@ builder.Services.AddScoped<FundingSourceService>();
 builder.Services.AddScoped<FacultyService>();
 builder.Services.AddScoped<SchoolService>();
 builder.Services.AddScoped<HtmlContentSanitizerService>();
+builder.Services.AddScoped<ImportService>();
 builder.Services.AddScoped<CssVariableService>();
 builder.Services.AddSingleton<APIAuthService>();
 builder.Services.AddSingleton<FeatureService>();
@@ -313,7 +314,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapBlazorHub();
 
-// Map API endpoints
+// Map GET API endpoints
 var api = app.MapGroup("/api");
 api.MapGet("/skills/getAll", Skills.GetAllSkillTagsAsync);
 api.MapGet("/skills/getAllForPerson", Skills.GetAllSkillsTagsForPersonAsync);
@@ -327,6 +328,32 @@ api.MapGet("/projects/getAll", Projects.GetAllProjectsAsync);
 api.MapGet("/projects/getById", Projects.GetProjectByIdAsync);
 api.MapGet("/people/getAll", People.GetAllPeopleAsync);
 api.MapGet("/people/getById", People.GetPersonByIdAsync);
+api.MapGet("/projects/notes/getAll", Projects.GetNotes);
+api.MapGet("/tasks/getAll", Tasks.GetTasks);
+api.MapGet("/tasks/resourcing/getAll", Tasks.GetResourcing);
+
+// Map POST (write) API endpoints
+api.MapPost("/faculties/add", Faculties.CreateFaculty);
+api.MapPost("/timesheets/add", Timesheets.CreateTimesheetEntry);
+api.MapPost("/projects/add", Projects.CreateProject);
+api.MapPost("/schools/add", Schools.CreateSchool);
+api.MapPost("/workloadmodels/add", WorkloadModels.CreateWorkloadModelChange);
+api.MapPost("/people/add", People.CreatePerson);
+api.MapPost("/users/add", Users.CreateUser);
+api.MapPost("/projects/notes/add", Projects.AddNotes);
+api.MapPost("/tasks/add", Tasks.CreateTask);
+api.MapPost("/tasks/resourcing/add", Tasks.AddResourcing);
+
+// Map PUT (update) API endpoints -- workloadmodels/add
+// is already upsert-on-post, so no separate PUT for that.
+api.MapPut("/faculties/update", Faculties.UpdateFaculty);
+api.MapPut("/schools/update", Schools.UpdateSchool);
+api.MapPut("/projects/update", Projects.UpdateProject);
+api.MapPut("/people/update", People.UpdatePerson);
+api.MapPut("/projects/notes/update", Projects.UpdateNote);
+api.MapPut("/timesheets/update", Timesheets.UpdateTimesheetEntry);
+api.MapPut("/tasks/update", Tasks.UpdateTask);
+api.MapPut("/tasks/resourcing/update", Tasks.UpdateResourcing);
 
 // API middleware -- conditional on /api routes only
 app.UseWhen(
