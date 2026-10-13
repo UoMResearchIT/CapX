@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+// SPDX-FileCopyrightText: 2026 University of Manchester
 //
 // SPDX-License-Identifier: apache-2.0
 
@@ -25,6 +25,8 @@ namespace PPMTool.Data.Context
         public DbSet<WorkloadModelChange> WorkloadModelChanges { get; set; }
         public DbSet<Note> Notes { get; set; }
         public DbSet<FinancialReference> FinancialReferences { get; set; }
+        public DbSet<FinancialReferenceValue> FinancialReferenceValues { get; set; }
+        public DbSet<FinancialReferenceValueSet> FinancialReferenceValueSets { get; set; }
         public DbSet<Competency> Competencies { get; set; }
         public DbSet<CompetencyAssessment> CompetencyAssessments { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
@@ -70,6 +72,18 @@ namespace PPMTool.Data.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<WorkloadModelChange>()
+                .HasOne(x => x.CostValueSet)
+                .WithMany()
+                .HasForeignKey(x => x.CostValueSetId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<FinancialReferenceValue>()
+                .HasOne(x => x.FinancialReferenceValueSet)
+                .WithMany()
+                .HasForeignKey(x => x.FinancialReferenceValueSetId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Npgsql v6+ maps DateTime -> timestamptz and rejects Kind=Unspecified.
             // The codebase uses DateTime.Today/DateTime.Now throughout, which produce

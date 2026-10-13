@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+// SPDX-FileCopyrightText: 2026 University of Manchester
 //
 // SPDX-License-Identifier: apache-2.0
 
@@ -1284,35 +1284,44 @@ namespace PPMTool.Helpers
                     new FinancialReference
                     {
                         FinancialYear = fy - 1,
-                        Grade41Costs = 33333.55f,
-                        Grade55Costs = 43172.16f,
-                        Grade65Costs = 50935.8f,
-                        Grade71Costs = 57458.16f,
-                        Grade75Costs = 64797.29f,
-                        RecoveryTarget = 1118849f,
-                        Grade51Costs = 38011.97f
+                        Values = new List<FinancialReferenceValue>
+                        {
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade41Costs" }, Value = 33333.55f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade51Costs" }, Value = 38011.97f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade55Costs" }, Value = 43172.16f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade65Costs" }, Value = 50935.8f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade71Costs" }, Value = 57458.16f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade75Costs" }, Value = 64797.29f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "RecoveryTarget" }, Value = 1118849f }
+                        }
                     },
                     new FinancialReference
                     {
                         FinancialYear = fy,
-                        Grade41Costs = 34510.63f,
-                        Grade55Costs = 44349.48f,
-                        Grade65Costs = 52095f,
-                        Grade71Costs = 58617.36f,
-                        Grade75Costs = 65956.38f,
-                        RecoveryTarget = 1118849f,
-                        Grade51Costs = 39799.01f
+                        Values = new List<FinancialReferenceValue>
+                        {
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade41Costs" }, Value = 34510.63f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade51Costs" }, Value = 39799.01f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade55Costs" }, Value = 44349.48f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade65Costs" }, Value = 52095f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade71Costs" }, Value = 58617.36f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade75Costs" }, Value = 65956.38f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "RecoveryTarget" }, Value = 1118849f }
+                        }
                     },
                     new FinancialReference
                     {
                         FinancialYear = fy + 1,
-                        Grade41Costs = 35740.07f,
-                        Grade55Costs = 45603.10f,
-                        Grade65Costs = 53422.28f,
-                        Grade71Costs = 60005.48f,
-                        Grade75Costs = 67585.78f,
-                        RecoveryTarget = 1518718f,
-                        Grade51Costs = 41010.82f
+                        Values = new List<FinancialReferenceValue>
+                        {
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade41Costs" }, Value = 35740.07f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade51Costs" }, Value = 41010.82f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade55Costs" }, Value = 45603.10f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade65Costs" }, Value = 53422.28f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade71Costs" }, Value = 60005.48f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade75Costs" }, Value = 67585.78f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "RecoveryTarget" }, Value = 1518718f }
+                        }
                     }
                 };
                 context.FinancialReferences.AddRange(financialReferences);

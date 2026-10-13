@@ -96,12 +96,20 @@ namespace PPMTool.Data.Enums
         [DefaultSettingValue("10")]
         UnderclaimedFundsThreshold = 20,
 
+        [Description("Default cost value from financial references to be used as the default cost key for resources in the cost estimator when using non-day-rate costing.")]
+        [DefaultSettingValue("")]
+        EstimateCostDefaultCostValueName = 21,
+
+        [Description("Financial reference value to be used to represent recovery target in dashboard  and recovery calculations.")]
+        [DefaultSettingValue("")]
+        RecoveryTargetCostValueName = 22,
+
         [Description("The endpoint for the LLM API driving the AI chat functionality.")]
         [DefaultSettingValue("")]
-        LLMEndPoint = 21,
+        LLMEndPoint = 23,
 
         [Description("The model for the LLM API driving the AI chat functionality.")]
         [DefaultSettingValue("")]
-        LLMModel = 22,
+        LLMModel = 24
     }
 }

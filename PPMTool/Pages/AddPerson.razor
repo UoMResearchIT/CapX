@@ -1,4 +1,4 @@
-﻿@*
+@*
 SPDX-FileCopyrightText: 2026 University of Manchester
 
 SPDX-License-Identifier: apache-2.0
@@ -123,10 +123,17 @@ SPDX-License-Identifier: apache-2.0
                                                 <RadzenText Text="@d.ChangeDate.ToShortDateString()" TextStyle="TextStyle.Subtitle1" />
                                                 <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
                                                              BadgeStyle="BadgeStyle.Primary"
-                                                             Text="@($"Grade {d.Grade}")" />
+                                                             Text="@($"🎓 Grade {d.Grade}")" />
                                                 <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
                                                              BadgeStyle="BadgeStyle.Primary"
-                                                             Text="@(d.Total().ToString("F1") + " FTE")" />
+                                                             Text="@($"🕒 {d.Total().ToString("F1")} FTE")" />
+                                                @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance) && d.CostValueSetId != null)
+                                                {
+                                                    <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
+                                                                 BadgeStyle="BadgeStyle.Primary"
+                                                                 Text="@($"💰 {d.CostValueSet?.Name}")" />
+                                                }
+
                                             </RadzenStack>
                                             <RadzenText Text="@d.Notes" TextStyle="TextStyle.Body2"/>
                                         </RadzenStack>

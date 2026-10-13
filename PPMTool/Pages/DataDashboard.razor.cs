@@ -305,6 +305,7 @@ namespace PPMTool.Pages
                 int numberOfWeeks = 0;
                 List<string> dutyXLabels = new List<string>();
                 FinancialReference currentFinRef = FinancialReferenceService.GetFinancialReferenceForDate(Context, startDate);
+                var recoveryTargetCostValueName = GetSetting(SettingType.RecoveryTargetCostValueName);
                 float recoveryTargetPerWeek = 0f;
                 float proportionOfFY = 0f;
 
@@ -344,7 +345,7 @@ namespace PPMTool.Pages
 
                         // Compute how many weeks of this FY run within the window of the graph
                         proportionOfFY = FinancialReference.GetProportionOfFinancialYearInRange(currentFY, startDate, endDate);
-                        recoveryTargetPerWeek = currentFinRef.RecoveryTarget * proportionOfFY / 52;
+                        recoveryTargetPerWeek = currentFinRef.GetValue(recoveryTargetCostValueName, Logger) * proportionOfFY / 52;
                     }
 
                     // Get the projects that are running at the start of the week (exclude those projects with no tasks as they will have "default" start date)
@@ -499,7 +500,7 @@ namespace PPMTool.Pages
                         wlmRSA += (float)activeModel.ArchitectureFTE;
                         try
                         {
-                            recoverableStaffCosts += (float)currentFinRef.GetMidGradeCosts(activeModel.Grade) * (float)activeModel.ProjectWorkFTE * proportionOfFY / 52;
+                            recoverableStaffCosts += (float)currentFinRef.GetAnnualCostForWorkloadModel(activeModel, Logger) * (float)activeModel.ProjectWorkFTE * proportionOfFY / 52;
                         }
                         catch (ArgumentException)
                         {
@@ -834,7 +835,8 @@ namespace PPMTool.Pages
                             ContextFactory,
                             PersonService,
                             ProjectService,
-                            FinancialReferenceService
+                            FinancialReferenceService,
+                            Logger
                         );
                         Debug.WriteLine($"** {totalData.Count()} recovery summary entries generated!");
 
@@ -986,7 +988,7 @@ namespace PPMTool.Pages
                             var totalPeople = peopleActive.Count;
                             var columnTitles = new List<string>
                             {
-                                "Estimated Costs (Mid-Grade)",
+                                "Estimated Costs (Financial Reference)",
                                 "Actual Costs (Tracker)",
                                 "Estimate Error",
                                 "Project Work FTE",
@@ -1013,7 +1015,7 @@ namespace PPMTool.Pages
 
                             var columnComments = new List<string>
                             {
-                                "These are the costs of the person over the reporting period based on mid-grade estimates.",
+                                "These are the costs of the person over the reporting period based on workload-model-linked financial reference values.",
                                 "These are the actual costs of the person over the reporting period based on finance tracker data (including PCM costs).",
                                 "This is the difference between estimated and actual costs.",
                                 "This is the average technical target recovery FTE for the person over the reporting period based on their workload model.",
@@ -1023,16 +1025,16 @@ namespace PPMTool.Pages
                                 "This is the average business-as-usual FTE for the person over the reporting period based on their workload model.",
                                 "This is the average personal development FTE for the person over the reporting period based on their workload model.",
                                 "This is the average technical leadership FTE for the person over the reporting period based on their workload model.",
-                                "These are the technical target recovery costs of the person over the reporting period based on mid-grade estimates.",
-                                "These are the staff management costs of the person over the reporting period based on mid-grade estimates.",
-                                "These are the project management costs of the person over the reporting period based on mid-grade estimates.",
-                                "These are the service management costs of the person over the reporting period based on mid-grade estimates.",
-                                "These are the business-as-usual costs of the person over the reporting period based on mid-grade estimates.",
-                                "These are the personal development costs of the person over the reporting period based on mid-grade estimates.",
-                                "These are the technical leadership costs of the person over the reporting period based on mid-grade estimates.",
+                                "These are the technical target recovery costs of the person over the reporting period based on workload-model-linked financial reference values.",
+                                "These are the staff management costs of the person over the reporting period based on workload-model-linked financial reference values.",
+                                "These are the project management costs of the person over the reporting period based on workload-model-linked financial reference values.",
+                                "These are the service management costs of the person over the reporting period based on workload-model-linked financial reference values.",
+                                "These are the business-as-usual costs of the person over the reporting period based on workload-model-linked financial reference values.",
+                                "These are the personal development costs of the person over the reporting period based on workload-model-linked financial reference values.",
+                                "These are the technical leadership costs of the person over the reporting period based on workload-model-linked financial reference values.",
                                 "This is the required baseline budget for the person over the reporting period (estimated costs - project costs).",
                                 "This is the average recovered FTE including leadership assignments (that we can recharge) for the person over the reporting period based on their assignments",
-                                "These are the recovered costs of the person including leadership assignments over the reporting period based on mid-grade estimates.",
+                                "These are the recovered costs of the person including leadership assignments over the reporting period based on workload-model-linked financial reference values.",
                                 "These are the costs that can be covered by known research funding sources for all assignments (technical and leadership).",
                                 "This the actual baseline budget required for the person based on their technical and leadership assignments and what we believe is available in research funding to cover them.",
                                 "The difference between the baseline budget required by their workload model and what is actually required based on predicted recharge."
@@ -1321,7 +1323,7 @@ namespace PPMTool.Pages
                             range.Style.Border.BottomBorderColor = XLColor.Black;
 
                             // Write the rows
-                            AddSummaryRow(ws, 4, "How much I think we cost (mid-grade estimates)", moneyFormat, $"=Costs!C{totalRow}");
+                            AddSummaryRow(ws, 4, "How much I think we cost (financial reference estimates)", moneyFormat, $"=Costs!C{totalRow}");
                             AddSummaryRow(ws, 5, "How much we aim to recover through WLM project work allocations (salary estimates)", moneyFormat, $"=Costs!M{totalRow}");
                             AddSummaryRow(ws, 6, "How much we could recover (if all work we do as assignments is paid for)", moneyFormat, $"=Costs!V{totalRow}");
                             AddSummaryRow(ws, 7, "How much we can't recover as money ran out (i.e. work we did for free)", moneyFormat, $"=Costs!W{totalRow} - Costs!V{totalRow}");

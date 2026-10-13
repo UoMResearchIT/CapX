@@ -12,6 +12,10 @@ namespace PPMTool.Services.StatusEvaluators
     /// </summary>
     public sealed class SubTaskStatusEvaluator : BaseStatusEvaluatorService<SubTask>
     {
+        public SubTaskStatusEvaluator(FeatureService featureService) : base(featureService)
+        {
+        }
+
         protected override IReadOnlyList<StatusMessage> BuildCoreStatusMessages(SubTask task, int? messageViewerPersonId = null)
         {
             return new List<StatusMessage>
