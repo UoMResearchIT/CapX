@@ -16,7 +16,14 @@ namespace PPMTool.Services.StatusEvaluators
         {
             return new List<StatusMessage>
             {
-                new StatusMessage("This person is currently absent.", StatusMessage.MessageType.Info, person.IsCurrentlyAbsent)
+                new StatusMessage("This person is currently absent.", StatusMessage.MessageType.Info, person.IsCurrentlyAbsent),
+                new StatusMessage(
+                    "Project Finance is enabled and this person has one or more workload model changes without a cost key. Missing cost keys fall back to zero cost.",
+                    StatusMessage.MessageType.Warning,
+                    () => person.HasWorkloadModelsWithoutCostKey(),
+                    FeatureType.ProjectFinance)
+                new StatusMessage("This person has no workload models!", StatusMessage.MessageType.Error, person.WorkloadModelChanges.Count == 0),
+                new StatusMessage("This person has a period of employment with no workload model!", StatusMessage.MessageType.Error, person.HasPeriodOfEmploymentWithNoWorkloadModel()),
             };
         }
     }

@@ -279,6 +279,31 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// Checks whether this person has any period of employment with no workload model active.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasPeriodOfEmploymentWithNoWorkloadModel()
+        {
+            // If no WLMs then obviously true
+            if (WorkloadModelChanges.Count == 0) return true;
+
+            // If there is a WLM before their start date then covered so false
+            if (WorkloadModelChanges.Any(x => x.ChangeDate < StartDate)) return false;
+
+            // Find the earliest WLM within their employment period.
+            var earliestWlm = WorkloadModelChanges
+                .Where(x => x.ChangeDate >= StartDate)
+                .OrderBy(x => x.ChangeDate)
+                .FirstOrDefault();
+
+            // If the earliest WLM is non-existent or is after their start date then there is a period of employment with no WLM so return true
+            if (earliestWlm == null || earliestWlm.ChangeDate > StartDate) return true;
+
+            // Shouldn't really get to this point.
+            return false;
+        }
+
+        /// <summary>
         /// Shadow property to store a comma-separated list of the person's skill tag names.
         /// Used for filtering on the Manage People page.
         /// </summary>
