@@ -70,13 +70,8 @@ namespace PPMTool.Data.Helpers
                 .Where(x => x.ChangeDate >= startDate && x.ChangeDate <= endDate)
                 .OrderByDescending(x => x.ChangeDate).ToList();
 
-<<<<<<< HEAD
-            // Get WLM in force on the first day of the window or set to default G6
-            WorkloadModelChange defaultWLM = person.GetWorkloadModelOnDateOrDefault(startDate ?? default);
-=======
             // Get WLM in force on the first day of the window or return blank WLM
             WorkloadModelChange defaultWLM = person.GetWorkloadModelOnDate(startDate ?? default) ?? new WorkloadModelChange();
->>>>>>> 83fd1a3f (Remapped all the instances to just return a blank WLM instead of a default one)
 
             // If there isn't a WLM change on the first day of the window then add the default to the list to complete it
             if (wlms.FirstOrDefault(x => x.ChangeDate == person.StartDate) == null)
@@ -218,10 +213,7 @@ namespace PPMTool.Data.Helpers
                         budgetLine?.GetBudgetDetailsForWindow(finalChunkStart, finalChunkEnd, out budgetStatus, out amountCovered);
 
                         // Add chunk
-<<<<<<< HEAD
-=======
                         var wlmOnFinalChunkStart = person.GetWorkloadModelOnDate(finalChunkStart) ?? new WorkloadModelChange();
->>>>>>> 83fd1a3f (Remapped all the instances to just return a blank WLM instead of a default one)
                         tempChunks.Add(new AssignmentChunk(initialChunk)
                         {
                             StartDate = finalChunkStart,
