@@ -255,7 +255,7 @@ namespace PPMTool.API.DTOs
     /// <summary>
     /// Request body for POST /api/tasks/add. Creates one fixed-duration,
     /// fixed-start/fixed-end SubTask on an existing Project -- the same
-    /// shape ImportService.Create already uses for the auto-created
+    /// shape ImportProjectService.Create already uses for the auto-created
     /// Leadership/Delivery tasks, generalised so real RSE work tasks can
     /// be created individually during import rather than folded into one
     /// aggregate "Delivery" task. Deliberately doesn't expose TaskType
@@ -338,12 +338,12 @@ namespace PPMTool.API.DTOs
     /// covering a different period belongs on a different task rather
     /// than being expressed as a date range here. (ImportResourcingDTO
     /// does accept StartDate/EndDate at project-create time, but nothing
-    /// reads them -- see ImportService.Create.)
+    /// reads them -- see ImportProjectService.Create.)
     /// </summary>
     /// <param name="Username">Access Control username of an existing Person -- exactly one of Username/PersonId required</param>
     /// <param name="PersonId">PersonId of an existing Person, including one with no linked User -- exactly one of Username/PersonId required</param>
     /// <param name="AssignmentFTE">FTE, greater than zero, at most 3 decimal places</param>
-    /// <param name="IsProvisional">Defaults to true when omitted -- imported resourcing is flagged for PM review rather than treated as confirmed, matching ImportService.Create</param>
+    /// <param name="IsProvisional">Defaults to true when omitted -- imported resourcing is flagged for PM review rather than treated as confirmed, matching ImportProjectService.Create</param>
     public sealed record ImportResourceAssignmentDTO(
         string? Username,
         int? PersonId,
@@ -421,7 +421,7 @@ namespace PPMTool.API.DTOs
     /// under that project's InnateActivity code (every Project imported
     /// via POST /api/projects/add auto-provisions one, matching the
     /// pattern SeedHelper.EnsureInnateCodeExists already establishes --
-    /// see ImportService.Create). CapX computes a Project's actual hours
+    /// see ImportProjectService.Create). CapX computes a Project's actual hours
     /// by querying Approved Timesheets linked through this InnateActivity
     /// code (see AddTask.razor.cs), so this is the real, native path for
     /// historical actuals -- not a bespoke side-channel field.
@@ -650,7 +650,7 @@ namespace PPMTool.API.DTOs
     /// first-login (which is how someone gets their own first CapX
     /// account) -- for direct provisioning instead. One caller: the
     /// migration tooling's own use of this to create
-    /// ImportService.FallbackAuthorUsername ("migration-import", the User
+    /// ImportProjectService.FallbackAuthorUsername ("migration-import", the User
     /// Notes attribute to when a comment's original author can't be
     /// resolved) -- not what this endpoint is *for*, just one thing it's
     /// used for.

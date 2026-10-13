@@ -29,35 +29,29 @@ public static class Schools
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult CreateSchool(
         PPMToolContext context,
-        ImportService importService,
+        ImportOrgUnitService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
         [FromBody] ImportSchoolRequestDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Schools.CreateSchool");
-            if (!allowed) return gateResult!;
-
-            var errors = importService.ValidateSchool(context, request);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(Schools)}.{nameof(CreateSchool)}",
+            request,
+            validate: () => importService.ValidateSchool(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Schools: school validation failed for '{Name}': {Errors}", request.Name, string.Join("|", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: Schools: school validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
-
-            var result = importService.CreateSchool(context, request);
-            logger.LogInformation(
-                "API: Schools: created School {SchoolId} '{Name}' under Faculty {FacultyId} by {User}",
-                result.SchoolId, request.Name, result.FacultyId, caller!.Name);
-            return Results.Created($"/api/schools/{result.SchoolId}", result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "API: Schools: error creating school '{Name}'", request.Name);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                var result = importService.CreateSchool(context, request);
+                logger.LogInformation(
+                    "API: Schools: created School {SchoolId} '{Name}' under Faculty {FacultyId} by {User}",
+                    result.SchoolId, request.Name, result.FacultyId, caller.Name);
+                return Results.Created($"/api/schools/{result.SchoolId}", result);
+            },
+            logException: ex => logger.LogError(ex, "API: Schools: error creating school '{Name}'", request.Name));
     }
 
     /// <summary>
@@ -70,34 +64,28 @@ public static class Schools
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult UpdateSchool(
         PPMToolContext context,
-        ImportService importService,
+        ImportOrgUnitService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
         [FromBody] UpdateSchoolRequestDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Schools.UpdateSchool");
-            if (!allowed) return gateResult!;
-
-            var errors = importService.ValidateSchoolUpdate(context, request);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(Schools)}.{nameof(UpdateSchool)}",
+            request,
+            validate: () => importService.ValidateSchoolUpdate(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Schools: school update validation failed for '{Code}': {Errors}", request.Code, string.Join("|", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: Schools: school update validation failed for '{Code}': {Errors}", request.Code, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
-
-            var result = importService.UpdateSchool(context, request);
-            logger.LogInformation(
-                "API: Schools: updated School {SchoolId} (was '{Code}') under Faculty {FacultyId} by {User}",
-                result.SchoolId, request.Code, result.FacultyId, caller!.Name);
-            return Results.Ok(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "API: Schools: error updating school '{Code}'", request.Code);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                var result = importService.UpdateSchool(context, request);
+                logger.LogInformation(
+                    "API: Schools: updated School {SchoolId} (was '{Code}') under Faculty {FacultyId} by {User}",
+                    result.SchoolId, request.Code, result.FacultyId, caller.Name);
+                return Results.Ok(result);
+            },
+            logException: ex => logger.LogError(ex, "API: Schools: error updating school '{Code}'", request.Code));
     }
 }

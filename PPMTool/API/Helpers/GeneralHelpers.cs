@@ -5,6 +5,7 @@
 using System.Globalization;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using PPMTool.API.DTOs;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
@@ -193,7 +194,7 @@ public static class GeneralHelpers
     /// <param name="http"></param>
     /// <param name="logger"></param>
     /// <param name="endpointName">Used only for logging, to identify which endpoint rejected the call.</param>
-    internal static (bool allowed, User caller, IResult result) CheckImportApiGate(
+    internal static (bool allowed, User caller, IResult result) AreWritableEnpointsAllowedByCaller(
         SettingsService settingsService, HttpContext http, ILogger logger, string endpointName)
     {
         if (!settingsService.GetSetting(SettingType.WriteApiEndpointsEnabled, false))
@@ -210,6 +211,48 @@ public static class GeneralHelpers
         }
 
         return (true, caller, null);
+    }
+
+    /// <summary>
+    /// Shared execution wrapper for database-writing import endpoints:
+    /// performs gate check, validation -> 400, and exception -> 500.
+    /// </summary>
+    internal static IResult ExecuteImportWrite<TRequest>(
+        SettingsService settingsService,
+        HttpContext http,
+        ILogger logger,
+        string endpointName,
+        TRequest request,
+        Func<List<string>> validate,
+        Action<List<string>> logValidationFailure,
+        Func<User, IResult> execute,
+        Action<Exception> logException)
+    {
+        try
+        {
+            // Check if the endpoint is allowed and if the caller is a superuser.
+            var (allowed, caller, gateResult) = AreWritableEnpointsAllowedByCaller(settingsService, http, logger, endpointName);
+            if (!allowed)
+            {
+                return gateResult!;
+            }
+
+            // Run validation method
+            var errors = validate();
+            if (errors.Count > 0)
+            {
+                logValidationFailure(errors);
+                return Results.BadRequest(new ImportErrorDTO(errors));
+            }
+
+            // Run execution method
+            return execute(caller!);
+        }
+        catch (Exception ex)
+        {
+            logException(ex);
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>

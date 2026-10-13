@@ -27,7 +27,7 @@ public static class Users
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult CreateUser(
         PPMToolContext context,
-        ImportService importService,
+        ImportUserService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -35,7 +35,7 @@ public static class Users
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "Users.CreateUser");
+            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Users.CreateUser");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidateUser(context, request);

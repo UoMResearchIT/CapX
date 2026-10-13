@@ -161,7 +161,7 @@ public static class People
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult CreatePerson(
         PPMToolContext context,
-        ImportService importService,
+        ImportPersonService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -169,7 +169,7 @@ public static class People
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "People.CreatePerson");
+            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "People.CreatePerson");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidatePerson(context, request);
@@ -203,7 +203,7 @@ public static class People
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult UpdatePerson(
         PPMToolContext context,
-        ImportService importService,
+        ImportPersonService importService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -211,7 +211,7 @@ public static class People
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.CheckImportApiGate(settingsService, http, logger, "People.UpdatePerson");
+            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "People.UpdatePerson");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidatePersonUpdate(context, request);
