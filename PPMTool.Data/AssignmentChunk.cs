@@ -78,12 +78,6 @@ namespace PPMTool.Data
         [Description("Based on how we understand the costing was done - DI/DA or something else because DA/DI doesn't apply")]
         public string? FundingSourceType { get; set; }
 
-        [Description("Costs of the assignment that we estimate will be covered by what we have been told is in the funding source")]
-        public double AmountCovered { get; set; }
-
-        [Description("Whether the overall assignment is considered fully covered, partially covered or not covered at all by the money in the funding source")]
-        public string BudgetStatus { get; set; } = null!;
-
         [Description("Supplementary notes on what we know about the funding source used to cover the cost of this assignment")]
         public string? FundingSourceDescription { get; set; }
 
@@ -123,8 +117,6 @@ namespace PPMTool.Data
             AccountCode = taskToCopy.AccountCode;
             FundingSourceType = taskToCopy.FundingSourceType;
             FundingSourceDescription = taskToCopy.FundingSourceDescription;
-            AmountCovered = taskToCopy.AmountCovered;
-            BudgetStatus = taskToCopy.BudgetStatus;
             SalaryCostEstimate = taskToCopy.SalaryCostEstimate;
             PlannedCost = taskToCopy.PlannedCost;
             AssignmentType = taskToCopy.AssignmentType;

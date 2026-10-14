@@ -23,7 +23,6 @@ namespace PPMTool.Data.Helpers
         /// <param name="endDate">Window end date. If not provided, uses latest project end.</param>
         /// <param name="tasksInWindow">The tasks in the window for assginments to be extract. If not provided, extracts subtasks from the projects in the window.</param>
         /// <param name="shouldCalculateCosts">If false the chunks will use the cost values already attached to the resources. If true, the mid-grade cost calculator will be used to estimate the cost of the chunk and overwrite anything stored.</param>
-        /// <param name="budgetDetails">An optional dictionary of information about the budget status of each resource assignment that can be added to the data if supplied and matched.</param>
         /// <returns></returns>
         public static IEnumerable<AssignmentChunk> GetAssignmentChunks(
             Person person,
@@ -32,8 +31,7 @@ namespace PPMTool.Data.Helpers
             DateTime? startDate = null,
             DateTime? endDate = null,
             IEnumerable<SubTask>? tasksInWindow = null,
-            bool shouldCalculateCosts = false,
-            IDictionary<string, AssignmentBudgetDetail>? budgetDetails = null)
+            bool shouldCalculateCosts = false)
         {
             // New list
             var data = new List<AssignmentChunk>();
@@ -111,19 +109,6 @@ namespace PPMTool.Data.Helpers
                 var lengthOfTask = task.EndDate.Subtract(task.StartDate).TotalDays + 1;
                 var proportionOfTask = lengthOfTask <= 0 ? 0 : daysOfTaskForChunk / lengthOfTask;
 
-                // If budget infomation provided then use to populate chunk
-                var amountCovered = 0d;
-                var budgetStatus = BudgetStatus.NotInBudget.GetDescription();
-                AssignmentBudgetDetail? budgetLine = null;
-                if (budgetDetails != null)
-                {
-                    // Find the budget line associated with this chunk
-                    budgetLine = budgetDetails.ContainsKey(resKey) ? budgetDetails[resKey] : null;
-
-                    // Update the values to be assigned to the initial chunk
-                    budgetLine?.GetBudgetDetailsForWindow(adjustedTaskStart, adjustedTaskEnd, out budgetStatus, out amountCovered);
-                }
-
                 // Create a line representing the full, un-chunked task to start off with
                 var initialChunk = new AssignmentChunk(resKey)
                 {
@@ -145,8 +130,6 @@ namespace PPMTool.Data.Helpers
                     AccountCode = string.IsNullOrWhiteSpace(fundingSource?.AccountCode) ? "Unknown" : fundingSource?.AccountCode,
                     FundingSourceType = string.IsNullOrWhiteSpace(fundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : fundingSource?.FundingSourceType.GetDescription(),
                     FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.Description) ? "None" : fundingSource?.Description,
-                    AmountCovered = amountCovered,
-                    BudgetStatus = budgetStatus,
                     AssignmentType = task.TaskDuty.GetDescription()
                 };
                 IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>()
@@ -185,17 +168,12 @@ namespace PPMTool.Data.Helpers
                                 proportionOfInitialChunk = 1;
                             }
 
-                            // Update the budget details
-                            budgetLine?.GetBudgetDetailsForWindow(startDateOfNewChunk, endDateOfNewChunk, out budgetStatus, out amountCovered);
-
                             // Add chunk
                             tempChunks.Add(new AssignmentChunk(initialChunk)
                             {
                                 StartDate = startDateOfNewChunk,
                                 EndDate = endDateOfNewChunk,
-                                PlannedCost = initialChunk.PlannedCost * proportionOfInitialChunk,
-                                AmountCovered = amountCovered,
-                                BudgetStatus = budgetStatus
+                                PlannedCost = initialChunk.PlannedCost * proportionOfInitialChunk
                             });
                         }
                     }
@@ -209,17 +187,12 @@ namespace PPMTool.Data.Helpers
                         var finalChunkEnd = new DateTime(initialChunk.EndDate.Ticks).Date;
                         var lengthOfFinalChunk = finalChunkEnd.Subtract(finalChunkStart).TotalDays + 1;
 
-                        // Update the budget details
-                        budgetLine?.GetBudgetDetailsForWindow(finalChunkStart, finalChunkEnd, out budgetStatus, out amountCovered);
-
                         // Add chunk
                         tempChunks.Add(new AssignmentChunk(initialChunk)
                         {
                             StartDate = finalChunkStart,
                             EndDate = finalChunkEnd,
-                            PlannedCost = remainingCosts > 0 ? remainingCosts : 0,
-                            AmountCovered = amountCovered,
-                            BudgetStatus = budgetStatus
+                            PlannedCost = remainingCosts > 0 ? remainingCosts : 0
                         });
                     }
 
@@ -267,17 +240,12 @@ namespace PPMTool.Data.Helpers
                                     proportionOfInitialChunk = 1;
                                 }
 
-                                // Update the budget details
-                                budgetLine?.GetBudgetDetailsForWindow(startDateOfNewChunk, endDateOfNewChunk, out budgetStatus, out amountCovered);
-
                                 tempChunks.Add(new AssignmentChunk(chunk)
                                 {
                                     StartDate = startDateOfNewChunk,
                                     EndDate = endDateOfNewChunk,
                                     FinancialYear = i,
-                                    PlannedCost = chunk.PlannedCost * proportionOfInitialChunk,
-                                    AmountCovered = amountCovered,
-                                    BudgetStatus = budgetStatus
+                                    PlannedCost = chunk.PlannedCost * proportionOfInitialChunk
                                 });
                             }
                         }
