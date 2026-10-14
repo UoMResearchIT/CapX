@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: apache-2.0
 
 using PPMTool.Data;
-using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
 using PPMTool.Models;
@@ -18,7 +17,6 @@ namespace PPMTool.Helpers
         /// <summary>
         /// Calculate the funds requested for a project
         /// </summary>
-        /// <param name="context"></param>
         /// <param name="costModel"></param>
         /// <param name="subTasks"></param>
         /// <param name="fundingSources"></param>
@@ -26,7 +24,6 @@ namespace PPMTool.Helpers
         /// <param name="receivedFromPayments"></param>
         /// <returns></returns>
         internal static TransactionBreakdown ComputeTransactionBreakdown(
-            PPMToolContext context,
             CostModel costModel,
             IEnumerable<SubTask> subTasks,
             IEnumerable<FundingSource> fundingSources,

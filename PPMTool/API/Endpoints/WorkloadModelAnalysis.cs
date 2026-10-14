@@ -70,7 +70,7 @@ namespace PPMTool.API.Endpoints
                     var person = await GeneralHelpers.FindPersonWithLineManagerByNameAsync(context, name);
                     if (person == null) return Results.NotFound($"Person '{name}' not found.");
 
-                    if (!GeneralHelpers.IsSuperUserOrLineManagerOrSelf(context, http, person)) return Results.Unauthorized();
+                    if (!GeneralHelpers.IsSuperUserOrLineManagerOrSelf(http, person)) return Results.Unauthorized();
 
                     selectedPeople.Add(person);
                 }

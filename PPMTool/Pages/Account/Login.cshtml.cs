@@ -18,15 +18,17 @@ using PPMTool.Services;
 using PPMTool.Data.Enums;
 using PPMTool.Data;
 
+#pragma warning disable IDE0052
+
 namespace PPMTool.Pages.Account
 {
     [AllowAnonymous]
     public class LoginModel : PageModel
     {
-        private UserService userService;
-        private ILogger<LoginModel> logger;
-        private IDbContextFactory<PPMToolContext> contextFactory;
-        private IConfiguration configuration;
+        private readonly UserService userService;
+        private readonly ILogger<LoginModel> logger;
+        private readonly IDbContextFactory<PPMToolContext> contextFactory;
+        private readonly IConfiguration configuration;
 
         [FromQuery(Name = "returnUrl")]
         public string ReturnUrl { get; set; }

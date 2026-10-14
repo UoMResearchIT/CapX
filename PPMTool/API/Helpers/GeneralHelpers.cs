@@ -71,11 +71,10 @@ public static class GeneralHelpers
     /// <summary>
     /// Determines if the caller is a superuser, the line manager of the specified person, or the person themselves.
     /// </summary>
-    /// <param name="context">The database context.</param>
     /// <param name="http">The current HttpContext, used to identify the caller.</param>
     /// <param name="person">The person to check authorisation against.</param>
     /// <returns>True if the caller is a superuser, the person's line manager, or the person themselves; otherwise, false.</returns>
-    internal static bool IsSuperUserOrLineManagerOrSelf(PPMToolContext context, HttpContext http, Person person)
+    internal static bool IsSuperUserOrLineManagerOrSelf(HttpContext http, Person person)
     {
         var caller = GetCurrentUser(http);
         var callerPersonId = caller.Person?.PersonId ?? 0;
@@ -95,11 +94,10 @@ public static class GeneralHelpers
     /// <summary>
     /// Whether the caller is a manager or super-user or matches the person ID given.
     /// </summary>
-    /// <param name="context"></param>
     /// <param name="http"></param>
     /// <param name="personId"></param>
     /// <returns></returns>
-    internal static bool IsSuperUserOrManagerOrSelf(PPMToolContext context, HttpContext http, int personId)
+    internal static bool IsSuperUserOrManagerOrSelf(HttpContext http, int personId)
     {
         var caller = GetCurrentUser(http);
         var callerPersonId = caller.Person?.PersonId ?? 0;

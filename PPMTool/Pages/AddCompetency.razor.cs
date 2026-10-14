@@ -105,7 +105,7 @@ namespace PPMTool.Pages
                     return;
                 }
 
-                int result = -1;
+                int result;
                 if (competency?.CompetencyId != 0)
                 {
                     // Increment the revision and set the revision date

@@ -26,8 +26,8 @@ namespace PPMTool.Pages
         private IEnumerable<Person> people;
         private IEnumerable<Project> projects;
 
-        private List<DemandChartItem> demandChartItems = new List<DemandChartItem>();
-        private List<DutyChartItem> dutyChartItems = new List<DutyChartItem>();
+        private readonly List<DemandChartItem> demandChartItems = new List<DemandChartItem>();
+        private readonly List<DutyChartItem> dutyChartItems = new List<DutyChartItem>();
         private ApexChartOptions<DemandChartItem> demandChartOptions;
         private ApexChartOptions<DemandChartItem> fteChartOptions;
         private ApexChartOptions<DemandChartItem> ytdChartOptions;

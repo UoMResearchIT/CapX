@@ -10,11 +10,13 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 #endif
 
+#pragma warning disable IDE0052
+
 namespace PPMTool.Pages.Account
 {
     public class LogoutModel : PageModel
     {
-        private IConfiguration configuration;
+        private readonly IConfiguration configuration;
 
         public LogoutModel(IConfiguration configuration)
         {

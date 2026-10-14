@@ -88,7 +88,7 @@ public static class People
                 return Results.BadRequest("Person ID must be greater than zero.");
             }
 
-            var canAccess = GeneralHelpers.IsSuperUserOrManagerOrSelf(context, http, personId.Value);
+            var canAccess = GeneralHelpers.IsSuperUserOrManagerOrSelf(http, personId.Value);
             if (!canAccess)
             {
                 logger.LogWarning("API: GetPersonById: Caller does not have permission to access this person's data.");

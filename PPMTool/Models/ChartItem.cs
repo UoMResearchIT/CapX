@@ -29,8 +29,8 @@ namespace PPMTool.Models
 
         public string TooltipMessages { get; }
 
-        private bool isHatched;
-        private bool isFake;
+        private readonly bool isHatched;
+        private readonly bool isFake;
 
         public ChartItem(
             string colour,
@@ -59,7 +59,7 @@ namespace PPMTool.Models
         /// <summary>
         /// Standard colour palette
         /// </summary>
-        private static string[] standardColours =
+        private static readonly string[] standardColours =
         [
             "#0072B2",
             "#E69F00",
@@ -109,7 +109,7 @@ namespace PPMTool.Models
         public static string GetColourStringFTE(double value, double capacity, ColourScale scale = ColourScale.Capacity)
         {
             // If someone has zero capacity
-            int percent = 0;
+            int percent;
             if (capacity == 0)
             {
                 // If value is zero then it can be coloured as fully allocated
