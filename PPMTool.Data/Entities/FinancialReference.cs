@@ -127,14 +127,13 @@ namespace PPMTool.Data.Entities
         /// <summary>
         /// Returns the mid grade salary costs from the reference.
         /// Grade 4 always bottom of grade.
-        /// Less than Grade4 returns G4.1.
-        /// Greater than Grade 7 returns G7.1.
+        /// Grade that isn't 4,5 6 or 7 returns zero costs.
         /// </summary>
         /// <param name="grade"></param>
         /// <returns></returns>
         public double GetMidGradeCosts(int grade)
         {
-            if (grade <= 4)
+            if (grade == 4)
             {
                 return Grade41Costs;
             }
@@ -146,7 +145,11 @@ namespace PPMTool.Data.Entities
             {
                 return Grade65Costs;
             }
-            return Grade75Costs;
+            else if (grade == 7)
+            {
+                return Grade71Costs;
+            }
+            return 0;
         }
     }
 }
