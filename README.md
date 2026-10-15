@@ -5,84 +5,48 @@ SPDX-License-Identifier: apache-2.0
 -->
 
 # Capacity eXtended (CapX)
-This tool initially started as a basic project and portfolio management (PPM) tool. Its first feature was capacity management, but it has since been extended to incorporate a much larger, more complex data model useful for an increased number of operational management activities. Written in .NET Blazor (Server) with a SQLite database (other providers are supported), it is used for managing many aspects of the service delivery of the digital research technical professional departments and the development of its staff.
+This tool initially started as a basic project and portfolio management (PPM) tool. Its first feature was capacity management, but it has since been extended to incorporate a much larger, more complex data model; useful for an increased number of operational management activities. 
 
-> [!IMPORTANT]
-> The [dRTP Community of Operational Management, Peer Advice and Shared Support (dRTP COMPASS)](https://drtp-compass.github.io) is responsible for its strategic direction. We’d love to hear if you are using this tool. If you would like to be part of dRTP-OMCoP then please let us know!
+Written in .NET Blazor (Server) with a SQLite database (other providers are supported), it is used for managing many aspects of the service delivery of a digital research technical professional department and the development of the staff within it.
+
+> **[IMPORTANT]**
+> The [dRTP **C**ommunity of **O**perational **M**anagement, **P**eer **A**dvice and **S**hared **S**upport (dRTP COMPASS)](https://drtp-compass.github.io) is responsible for its strategic direction. We’d love to hear if you are using this tool. If you would like to be part of dRTP-COMPASS then please let us know!
 
 ## User Accounts and Access
-The app supports integration with CAS / Shibboleth as well as Azure AD / Entra with access to restricted parts of the app managed within the app using a Role-Based Access Control (RBAC) database table. Super-users are able to manage user roles and access via the "Manage Access" page.
+The app supports integration with CAS / Shibboleth as well as Azure AD / Entra with access to restricted parts of the app managed within the app using a Role-Based Access Control (RBAC) database table. Superusers are able to manage user roles and access via the "Manage Access" page.
 
 If the app is run in the "Local" solution configuration then third-party authentication is disabled. Users can then select any name from the dropdown list in the header bar to log in as that person and role. This mode is intended for debugging or demos.
 
 ## API Access
 Any user of the web application can gain access to the API endpoints. Note that their success in using the endpoints is dictated by their role in the web app RBAC database table. To access the API, users need to generate an API key from the "Developer Settings" in the web app under the "Developer Settings". The successful generation of an API key in the web app depends on a suitable secret (minimum 32 characters) being injected into the `Jwt:SecretKey` configuration parameter for the web application. This secret parameter can be injected via an environment variable named `API_KEY_SECRET`, or during development if using Visual Studio, this can be done by simply opening "Manage User Secrets" for the project and adding `"Jwt:SecretKey" : "some-32-char-long-value"` to the .NET secrets manager.
 
-## Deployment
-Deployment scripts, as well as reverse proxy configurations and sample environment variable files, are provided in the `deployment` directory. These scripts can be used with cron to long-poll GitHub for changes to the relevant branch, kicking off a re-build of the container as appropriate. The development deploy script additionally copies the database from the production VM prior to applying migrations to ensure the development version is tested on real data. The production database is also backed-up as part of the deployment process in case of failure. Any time a DB file is to be copied, all the `PPMTool.db*` files are copied since WAL is enabled. `sqlite3 PPMTool.db VACUUM;` is used to flush the WAL journals before any manipulation of the DB takes place.
-
-> [!WARNING]
-> The app will fail to start if it detects that required variables are not set. Exception details will be written to the log files in the `Logs` folder as well as `syslog` or `docker log`.
-
-### Database Backups
-Database backups can be scheduled using the relevant script in the `deployment` directory.
-
 ## Documentation and User Guides
-Documentation of some of the features and how to use them is available in the Wiki associated with this repository. This is admittedly not kept up-to-date.
+Documentation of some of the features and how to use them is available in the [Wiki associated with this repository](https://github.com/UoMResearchIT/CapX/wiki). This is admittedly not kept very up-to-date!
 
-## Building and Running from Source
-The software can be cloned with the usual `git clone` command. However, depending on the version checked out, it may contain submodules which can be initialised as part of the initial clone or as a separate step after the fact with `git submodule update --init --recursive`.
+# Building and Running from Source
+You will need to install Git (`sudo apt install git`), [Docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository) and the web proxy client of your choice on the VM where the app will run. 
+You'll also need to set up a [Github Deploy Key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/managing-deploy-keys#deploy-keys) in the repository if you want to implement automatic updates (i.e. updating the installation based on changes to the remote Dev/Release branches).
 
-> [!TIP]
-> By default, cloning the repository will checkout the `dev` branch. If you simply want to deploy a particular release then you can checkout the relevant tagged commit using `git checkout <tagname>` e.g. `git checkout Release_v1.14.0` then follow the instructions below to spin-up the container with Docker Compose below.
+> **[TIP]** There's no fixed rule about where to deploy but the `/opt` folder of a Linux distribution is generally accepted for third party or self contained installations and has the benefit of not hiding things away in any one person's Home directory. This approach standardises things if you require multiple instances across servers which may be set up by different users.
+ 
+Create a root folder for the app (`mkdir /opt/<app name>`) move into this folder and initialise Git (`git init`) then the software can be dowloaded with the usual `git clone` approach.  
 
-### Database Connection
-The database connection string needs to be specified in a `CONNECTION_STRING` environment variable. See the `.env.sample` file for example connection strings. Note that this is also required at "design-time" when running EF Core tools to update the database. The connection string for `LEAVEBOOKINGS_CONNECTION_STRING=` is only relevant to The University of Manchester. If using CapX elsewhere, this can simply a be a dummy string as long as it is not blank. During development, User Secrets can be used to override the blank values specified in the `appsettings.json`.
+By default, cloning the repository will checkout the `dev` branch. If you want to deploy a particular release then you can checkout the relevant tagged commit using `git checkout <tagname>` e.g. `git checkout Release_v1.14.0` then follow the instructions below to spin-up the container with `Docker Compose`.
 
-### Seeding the Database
-The app will run migrations every time it starts. If the connection string permits it, it will therefore create a blank database on first run. Furthermore, a single super user will be added to allow you to login. A blank database limits the ability to test new features or to demo the software without first adding records to the blank tables through the UI which takes time. To faciltate better testing, developers can set the `SEED_DUMMY_DATA` environment variable to "TRUE" (case insensitive) to have the software populate all the empty tables with dummy data on start-up.
-
-> [!WARNING] 
-> This feature overwrites all data in the tables as soon as the app starts!
-
-### Database Migrations
-As CapX supports multiple DB providers, the migrations required to set up the database and its tables are specific to the provider. Each supported provider has its own `.Migrations` project containing the relevant migrations for ensuring the DB is aligned to the models in the code. To add a new migration for a particular provider, set the `DB_PROVIDER` variable in the environment appropriately then run the following command from the root directory to invoke the EF Core Tools. For example, to add a migration for SQLite, set `DB_PROVIDER=sqlite` (typically using User Secrets if developing with Visual Studio or VS Code):
-
-```
-dotnet ef migrations add NameOfMigrationHere --context PPMToolContext --project PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj --startup-project PPMTool/PPMTool.csproj
-dotnet ef migrations add NameOfMigrationHere --context PPMToolContext --project PPMTool.Migrations.SqlServer/PPMTool.Migrations.SqlServer.csproj --startup-project PPMTool/PPMTool.csproj
-dotnet ef migrations add NameOfMigrationHere --context PPMToolContext --project PPMTool.Migrations.PostgreSql/PPMTool.Migrations.PostgreSql.csproj --startup-project PPMTool/PPMTool.csproj
-```
-
-The database can be updated manually with the following command but the web app calls `context.Database.Migrate();` anyway so the database will be created/updated as soon as the app runs making manual update rarely necessary.
-
-```
-dotnet ef database update --context PPMToolContext --project PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj --startup-project PPMTool/PPMTool.csproj
-dotnet ef database update --context PPMToolContext --project PPMTool.Migrations.SqlServer/PPMTool.Migrations.SqlServer.csproj --startup-project PPMTool/PPMTool.csproj
-dotnet ef database update --context PPMToolContext --project PPMTool.Migrations.PostgreSql/PPMTool.Migrations.PostgreSql.csproj --startup-project PPMTool/PPMTool.csproj
-```
-
-> [!WARNING] 
-> If you are adding a migration for one provider due to a DB schema change, it is expected that you would add migrations for all the others that replicate the same change. Otherwise different DB providers will end up with DB schemas that differ from each other!
-
-### Solution/Build and Launch Configurations
-There are two _solution_ configurations: `Local` and `Release` that combine project-level _build_ configurations.
-
-- `Local` is to be used for development on your own machine as it bypasses third-party CAS authentication integrations and instead allows the developer to "sign-in" with any user in the database for testing purposes.    
-- `Release` is designed to be used on test and production servers and integrates with third party CAS authentication providers. They also include additional logging and crash reporting integration with Sentry that are not included in the `Local` configuration.
-
-> [!TIP]
-> The `ASPNETCORE_ENVIRONMENT` variable is used to specify whether the app should run in production or development mode. This is a runtime variable and has nothing to do with the compile-time _build_ configuration.
+> **[NOTE]** Depending on the version checked out, it may contain submodules which can be initialised as part of the initial clone or as a separate step after the fact with `git submodule update --init --recursive`.
 
 ### Running with Docker Compose
-Docker Compose runs a single container with a single volume containing the database.
+Docker Compose runs a single container with a single mapped volume containing the database. By default this is 
 
 #### Environment Variables
-The application and the container requires serveral environment variables to be set in order to run correctly.
-To set this up, create a `.env` file in the repository root with the following required variables:
+The application and the container require several environment variables to be set in order to run correctly.
+To set this up make a copy of the `env.sample` file or create a new `.env` file with the required variables detailed below:
 
-> [!TIP]
-> You do not have to create a `.env` file in the root. You can name it whatever you want and put it wherever you want on the system. However, you must then pass the path to this file with the `--env-file` flag whenever you call a docker compose command.
+> **[TIP]**
+> You do not have to create a `variables.env` file in the installation root -- you can name it whatever you want and put it wherever you want on the system. However, you must then pass the path to this file with the `--env-file` flag whenever you call a docker compose command. 
+>
+>An ideal solution is to make a copy of the env.sample file in the usual area earmarked for config files (`/etc`) where you can create an app folder to house it and then use `sudo cp /path-to-the-installation-folder/env.sample /etc/<app name>/<variables filename>.env` and then to adjust the contents according to your needs.
+
 
 | Variable | Description |
 |----------|-------------|
@@ -118,7 +82,6 @@ The following variables need only be set when not using the "Local" solution con
 | `AUTH_TYPE` | Whether to use "CAS" or "AzureAd" as the authentication provider |
 | `AUTH_HOST_URL` | The URL of the site (the service URL used by some auth providers) |
 
-An example `.env` file is provided in the source code as `.env.sample`.
 
 #### Building and Running
 Build and bring up the container:
@@ -145,6 +108,46 @@ docker volume rm capx_state
 ```
 
 Since the image is rebuilt each time you run `docker compose up --build`, any changes to source files will be picked up and included.
+
+### Database Connection
+The database connection string needs to be specified in a `CONNECTION_STRING` environment variable, and is only generally required for non-SQLite implementations. See the `.env.sample` file for example connection strings. Note that this is also required at "design-time" when running EF Core tools to update the database. 
+> **[NOTE]**
+The connection string for `LEAVEBOOKINGS_CONNECTION_STRING=` is only relevant to The University of Manchester. If using CapX elsewhere, this can simply a be a dummy string as long as it is not blank. During development, User Secrets can be used to override the blank values specified in the `appsettings.json`.
+
+### Seeding the Database
+The app will run migrations every time it starts. If the connection string permits it, it will therefore create a blank database on first run. Furthermore, a single super user will be added to allow you to login. A blank database limits the ability to test new features or to demo the software without first adding records to the blank tables through the UI which takes time. To faciltate better testing, developers can set the `SEED_DUMMY_DATA` environment variable to "TRUE" (case insensitive) to have the software populate all the empty tables with dummy data on start-up.
+
+> [!WARNING] 
+> This feature overwrites all data in the tables as soon as the app starts!
+
+### Database Migrations
+As CapX supports multiple DB providers, the migrations required to set up the database and its tables are specific to the provider. Each supported provider has its own `.Migrations` project containing the relevant migrations for ensuring the DB is aligned to the models in the code. To add a new migration for a particular provider, set the `DB_PROVIDER` variable in the environment appropriately then run the following command from the root directory to invoke the EF Core Tools. For example, to add a migration for SQLite, set `DB_PROVIDER=sqlite` (typically using User Secrets if developing with Visual Studio or VS Code):
+
+```
+dotnet ef migrations add NameOfMigrationHere --context PPMToolContext --project PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj --startup-project PPMTool/PPMTool.csproj
+dotnet ef migrations add NameOfMigrationHere --context PPMToolContext --project PPMTool.Migrations.SqlServer/PPMTool.Migrations.SqlServer.csproj --startup-project PPMTool/PPMTool.csproj
+dotnet ef migrations add NameOfMigrationHere --context PPMToolContext --project PPMTool.Migrations.PostgreSql/PPMTool.Migrations.PostgreSql.csproj --startup-project PPMTool/PPMTool.csproj
+```
+
+The database can be updated manually with the following command but the web app calls `context.Database.Migrate();` anyway so the database will be created/updated as soon as the app runs making manual update rarely necessary.
+
+```
+dotnet ef database update --context PPMToolContext --project PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj --startup-project PPMTool/PPMTool.csproj
+dotnet ef database update --context PPMToolContext --project PPMTool.Migrations.SqlServer/PPMTool.Migrations.SqlServer.csproj --startup-project PPMTool/PPMTool.csproj
+dotnet ef database update --context PPMToolContext --project PPMTool.Migrations.PostgreSql/PPMTool.Migrations.PostgreSql.csproj --startup-project PPMTool/PPMTool.csproj
+```
+
+> [!WARNING] 
+> If you are adding a migration for one provider due to a DB schema change, it is expected that you would add migrations for all the others that replicate the same change. Otherwise different DB providers will end up with DB schemas that differ from each other!
+
+### Solution/Build and Launch Configurations
+There are two _solution_ configurations: `Local` and `Release` that combine project-level _build_ configurations.
+
+- `Local` is to be used for development on your own machine as it bypasses third-party CAS authentication integrations and instead allows the developer to "sign-in" with any user in the database for testing purposes.    
+- `Release` is designed to be used on test and production servers and integrates with third party CAS authentication providers. They also include additional logging and crash reporting integration with Sentry that are not included in the `Local` configuration.
+
+> [!TIP]
+> The `ASPNETCORE_ENVIRONMENT` variable is used to specify whether the app should run in production or development mode. This is a runtime variable and has nothing to do with the compile-time _build_ configuration.
 
 ## Tests
 There is a test project in the solution for testing the web app and the API. To run the tests, the web application needs to be running on the expected port and the database needs to be accessible. There needs to be a valid API key in the database for the API tests to use otherwise the setup fixture will complain that it cannot run the tests.
