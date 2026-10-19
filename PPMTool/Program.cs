@@ -340,6 +340,10 @@ api.MapGet("/subtasks/getAll", SubTasks.GetAllSubTasksAsync);
 api.MapGet("/subtasks/getById", SubTasks.GetSubTaskByIdAsync);
 api.MapGet("/resources/getAll", Resources.GetAllResourcesAsync);
 api.MapGet("/resources/getById", Resources.GetResourceByIdAsync);
+api.MapGet("/schools/getAll", Schools.GetAllSchoolsAsync);
+api.MapGet("/schools/getById", Schools.GetSchoolByIdAsync);
+api.MapGet("/faculties/getAll", Faculties.GetAllFacultiesAsync);
+api.MapGet("/faculties/getById", Faculties.GetFacultyByIdAsync);
 
 // API middleware -- conditional on /api routes only
 app.UseWhen(
