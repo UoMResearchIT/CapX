@@ -344,6 +344,8 @@ api.MapGet("/schools/getAll", Schools.GetAllSchoolsAsync);
 api.MapGet("/schools/getById", Schools.GetSchoolByIdAsync);
 api.MapGet("/faculties/getAll", Faculties.GetAllFacultiesAsync);
 api.MapGet("/faculties/getById", Faculties.GetFacultyByIdAsync);
+api.MapGet("/financialreferences/getAll", FinancialReferences.GetAllFinancialReferencesAsync);
+api.MapGet("/financialreferences/getByFinancialYear", FinancialReferences.GetFinancialReferenceByFinancialYearAsync);
 
 // API middleware -- conditional on /api routes only
 app.UseWhen(
