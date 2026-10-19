@@ -33,41 +33,37 @@ namespace PPMTool.Tests.API.WorkloadModels
             }
         }
 
-        [TestFixture]
-        public class EndpointOKTests : BaseApiTest
+        [Test]
+        public async Task GetAllWorkloadModelChangesShouldReturnOK()
         {
-            [Test]
-            public async Task GetAllWorkloadModelChangesShouldReturnOK()
+            using (var client = GetClientAsManager())
             {
-                using (var client = GetClientAsManager())
-                {
-                    var response = await client.GetAsync("wlm/getAll");
-                    Assert.That(response.IsSuccessStatusCode);
-                }
+                var response = await client.GetAsync("wlm/getAll");
+                Assert.That(response.IsSuccessStatusCode);
             }
+        }
 
-            [Test]
-            public async Task GetWorkloadModelChangeByIdShouldReturnOK()
+        [Test]
+        public async Task GetWorkloadModelChangeByIdShouldReturnOK()
+        {
+            using (var client = GetClientAsManager())
             {
-                using (var client = GetClientAsManager())
-                {
-                    var response = await client.GetAsync(
-                        $"wlm/getById?workloadModelChangeId={WorkloadModelChangeId}");
+                var response = await client.GetAsync(
+                    $"wlm/getById?workloadModelChangeId={WorkloadModelChangeId}");
 
-                    Assert.That(response.IsSuccessStatusCode);
-                }
+                Assert.That(response.IsSuccessStatusCode);
             }
+        }
 
-            [Test]
-            public async Task GetAllWorkloadModelChangesWithDateRangeShouldReturnOK()
+        [Test]
+        public async Task GetAllWorkloadModelChangesWithDateRangeShouldReturnOK()
+        {
+            using (var client = GetClientAsManager())
             {
-                using (var client = GetClientAsManager())
-                {
-                    var response = await client.GetAsync(
-                        "wlm/getAll?startDate=2026-01-01&endDate=2026-12-31");
+                var response = await client.GetAsync(
+                    "wlm/getAll?startDate=2026-01-01&endDate=2026-12-31");
 
-                    Assert.That(response.IsSuccessStatusCode);
-                }
+                Assert.That(response.IsSuccessStatusCode);
             }
         }
     }
