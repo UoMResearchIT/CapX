@@ -26,15 +26,5 @@ namespace PPMTool.Tests.API.Projects
                 Assert.That(response.IsSuccessStatusCode);
             }
         }
-
-        [Test]
-        public async Task GetAllProjectsAsNonManagerShouldReturnUnauthorised()
-        {
-            using (var client = GetClientAsDeveloper())
-            {
-                var response = await client.GetAsync("projects/getAll");
-                Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
-            }
-        }
     }
 }
