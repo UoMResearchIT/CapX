@@ -334,6 +334,8 @@ api.MapGet("/people/getAll", People.GetAllPeopleAsync);
 api.MapGet("/people/getById", People.GetPersonByIdAsync);
 api.MapGet("/fundingsources/getAll", FundingSources.GetAllFundingSourcesAsync);
 api.MapGet("/fundingsources/getById", FundingSources.GetFundingSourceByIdAsync);
+api.MapGet("/subtasks/getAll", SubTasks.GetAllSubTasksAsync);
+api.MapGet("/subtasks/getById", SubTasks.GetSubTaskByIdAsync);
 
 // API middleware -- conditional on /api routes only
 app.UseWhen(
