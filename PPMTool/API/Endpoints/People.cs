@@ -46,8 +46,10 @@ public static class People
                 Name: x.Name,
                 ShortName: x.ShortName,
                 PostFTE: x.FTE,
-                StartDate: x.StartDate,
-                EndDate: x.EndDate,
+                StartDate: DateOnly.FromDateTime(x.StartDate),
+                EndDate: x.EndDate.HasValue
+                    ? DateOnly.FromDateTime(x.EndDate.Value)
+                    : null,
                 LineManagerId: x.LineManager?.PersonId,
                 LineManagerName: x.LineManager?.Name
             )).ToList();
@@ -110,8 +112,10 @@ public static class People
                 Name: person.Name,
                 ShortName: person.ShortName,
                 PostFTE: person.FTE,
-                StartDate: person.StartDate,
-                EndDate: person.EndDate,
+                StartDate: DateOnly.FromDateTime(person.StartDate),
+                EndDate: person.EndDate.HasValue
+                    ? DateOnly.FromDateTime(person.EndDate.Value)
+                    : null,
                 LineManagerId: person.LineManager?.PersonId,
                 LineManagerName: person.LineManager?.Name
             );

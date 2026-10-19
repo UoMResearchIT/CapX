@@ -20,8 +20,8 @@ namespace PPMTool.API.DTOs
         string Name,
         string ShortName,
         double PostFTE,
-        DateTime StartDate,
-        DateTime? EndDate,
+        DateOnly StartDate,
+        DateOnly? EndDate,
         int? LineManagerId,
         string LineManagerName
     );
