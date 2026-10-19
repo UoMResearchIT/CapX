@@ -18,6 +18,10 @@ namespace PPMTool.API.DTOs
     /// <param name="RequestDocLink">The request document link.</param>
     /// <param name="ScrumProjectLink">The scrum project link.</param>
     /// <param name="ProjectStatus">The current project status.</param>
+    /// <param name="SchoolId">The ID of the school associated with the project.</param>
+    /// <param name="CostModel">The cost model for the project.</param>
+    /// <param name="StartDate">The start date of the project.</param>
+    /// <param name="EndDate">The end date of the project.</param>
     public sealed record ProjectDTO(
         int ProjectId,
         int CapXProjectId,
@@ -29,6 +33,10 @@ namespace PPMTool.API.DTOs
         string TimesheetActivityName,
         string RequestDocLink,
         string ScrumProjectLink,
-        string ProjectStatus
+        string ProjectStatus,
+        int SchoolId,
+        string CostModel,
+        DateOnly StartDate,
+        DateOnly EndDate
     );
 }

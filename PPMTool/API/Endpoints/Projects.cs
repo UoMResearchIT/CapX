@@ -40,6 +40,7 @@ public static class Projects
             var projects = await context.Projects
                 .Include(x => x.ProjectManager)
                 .Include(x => x.InnateActivity)
+                .Include(x => x.School)
                 .OrderBy(x => x.RTP)
                 .ToListAsync();
 
@@ -54,7 +55,11 @@ public static class Projects
                 TimesheetActivityName: x.InnateActivity?.ActivityName,
                 RequestDocLink: x.RequestDocLink,
                 ScrumProjectLink: x.ScrumProjectLink,
-                ProjectStatus: x.ProjectStatus.GetDescription()
+                ProjectStatus: x.ProjectStatus.GetDescription(),
+                SchoolId: x.School.SchoolId,
+                CostModel: x.CostModel.GetDescription(),
+                StartDate: DateOnly.FromDateTime(x.StartDate),
+                EndDate: DateOnly.FromDateTime(x.EndDate)
             )).ToList();
 
             logger.LogInformation("API: GetAllProjects: Returned {Count} project records.", projectDtos.Count);
@@ -104,6 +109,7 @@ public static class Projects
             var project = await context.Projects
                 .Include(x => x.ProjectManager)
                 .Include(x => x.InnateActivity)
+                .Include(x => x.School)
                 .FirstOrDefaultAsync(x => x.RTP == projectId);
 
             if (project == null)
@@ -123,7 +129,11 @@ public static class Projects
                 TimesheetActivityName: project.InnateActivity?.ActivityName,
                 RequestDocLink: project.RequestDocLink,
                 ScrumProjectLink: project.ScrumProjectLink,
-                ProjectStatus: project.ProjectStatus.GetDescription()
+                ProjectStatus: project.ProjectStatus.GetDescription(),
+                SchoolId: project.School.SchoolId,
+                CostModel: project.CostModel.GetDescription(),
+                StartDate: DateOnly.FromDateTime(project.StartDate),
+                EndDate: DateOnly.FromDateTime(project.EndDate)
             );
 
             logger.LogInformation("API: GetProjectById: Returned project record for projectId {ProjectId}", projectId);
