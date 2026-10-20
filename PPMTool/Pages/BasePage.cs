@@ -54,6 +54,8 @@ namespace PPMTool.Pages
         [Inject]
         protected FeatureService FeatureService { get; set; }
 
+        public bool FilterNotesForOverdue;
+   
         /// <summary>
         /// The count of pages to display in a datagrid on the page, bound to by datagrids
         /// </summary>
@@ -101,7 +103,6 @@ namespace PPMTool.Pages
             StateHasChanged();
         }
 
-
         [CascadingParameter]
         public MainLayout Layout { get; set; }
 
@@ -138,6 +139,7 @@ namespace PPMTool.Pages
 
             // Editing only permitted by managers and superusers by default
             EditAuthorised = ActiveUserRoleType == RoleType.Manager || ActiveUserRoleType == RoleType.Superuser;
+            if (!FilterNotesForOverdue) { FilterNotesForOverdue = false; }
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -167,6 +169,31 @@ namespace PPMTool.Pages
                     Debug.WriteLine($"** Retrieved page count {PageCount} for page {GetStorageTag()}");
                 }
             }
+        }
+
+        /// <summary>
+        /// Retrieves the currently setting for Note Filtering from the session variable.
+        /// </summary>
+        /// <returns></returns>
+        protected async Task GetNoteFilterSettingAsync()
+        {
+            var noteFilter = await SessionStorage.GetItemAsync<bool?>("filter-notes");
+            if (noteFilter != null)
+            {
+                FilterNotesForOverdue = noteFilter.Value;
+                Debug.WriteLine($"** NoteFilter setting [{noteFilter}]");
+            }
+        }
+
+        /// <summary>
+        /// Sets the Note Filter value used on the Project Details page
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        protected async Task SetNoteFilterAsync(bool value)
+        {
+            FilterNotesForOverdue = value;
+            await SessionStorage.SetItemAsync("filter-notes", value);
         }
 
         /// <summary>
