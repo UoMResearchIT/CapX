@@ -106,6 +106,8 @@ namespace PPMTool.Tests.API
                     .Include(k => k.Owner)
                         .ThenInclude(o => o.Person);
 
+                Console.WriteLine($"Tests: {keys.Count()} usable API keys found.");
+
                 if (keys.Count() == 0)
                 {
                     throw new Exception("No valid API keys found in the database. Please create one for testing.");
@@ -114,6 +116,8 @@ namespace PPMTool.Tests.API
                 // Get manager keys
                 var managerKey = keys
                     .Where(k => k.Owner.RoleType == RoleType.Manager);
+
+                Console.WriteLine($"Tests: {keys.Count()} usable manager API keys found.");
 
                 if (managerKey.Count() == 0)
                 {
