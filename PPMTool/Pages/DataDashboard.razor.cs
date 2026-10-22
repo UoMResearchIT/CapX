@@ -487,8 +487,8 @@ namespace PPMTool.Pages
                     // Compute people based totals
                     foreach (var person in peopleEmployedThisWeek)
                     {
-                        // Get active WLM or default G6 model
-                        var activeModel = person.GetWorkloadModelOnDateOrDefault(currentWeekStart);
+                        // Get active WLM or just use a blank one if can't find one
+                        var activeModel = person.GetWorkloadModelOnDate(currentWeekStart) ?? new WorkloadModelChange();
 
                         // Update totals
                         wlmProject += (float)activeModel.ProjectWorkFTE;
