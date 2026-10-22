@@ -21,7 +21,7 @@ namespace PPMTool.Data.Enums.Attributes
         /// <param name="textColourCode"></param>
         /// <param name="backgroundColourCodeDark"></param>
         /// <param name="textColourCodeDark"></param>
-        public ColourAttribute(string backgroundColourCode, string textColourCode = "#FFF", string backgroundColourCodeDark = null, string textColourCodeDark = null)
+        public ColourAttribute(string backgroundColourCode, string textColourCode = "#FFF", string? backgroundColourCodeDark = null, string? textColourCodeDark = null)
         {
             BackgroundColourCode = backgroundColourCode;
             TextColourCode = textColourCode;
