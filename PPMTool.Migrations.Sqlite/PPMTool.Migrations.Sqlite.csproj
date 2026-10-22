@@ -17,6 +17,7 @@ SPDX-License-Identifier: apache-2.0
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
     <ProjectReference Include="..\PPMTool.Data\PPMTool.Data.csproj" />
   </ItemGroup>
 
