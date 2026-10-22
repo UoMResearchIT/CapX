@@ -270,13 +270,13 @@ namespace PPMTool.Data.Helpers
                 data.AddRange(taskChunks);
             }
 
-            // Add the mid-grade salary estimates and overwrite the planned costs if necessary or possible
-            if (finrefs != null)
+            // Recompute the planned cost value of the assignment using mid-grade salaries
+            if (finrefs != null && shouldCalculateCosts)
             {
                 foreach (var chunk in data)
                 {
                     // Cost estimate based on mid-grade salaries
-                    chunk.RecomputeChunkCosts(finrefs, shouldCalculateCosts);
+                    chunk.RecomputeChunkCosts(finrefs);
                 }
             }
 

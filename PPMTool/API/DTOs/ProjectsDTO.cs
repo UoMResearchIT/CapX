@@ -7,8 +7,8 @@ namespace PPMTool.API.DTOs
     /// <summary>
     /// A flat representation of a project suitable for API data exports.
     /// </summary>
-    /// <param name="ProjectId">The project RTP ID used by assignment exports.</param>
-    /// <param name="CapXProjectId">The internal CapX project entity ID.</param>
+    /// <param name="ProjectId">The project ID of the entity in the database.</param>
+    /// <param name="CapXProjectId">The UI-visible project reference number.</param>
     /// <param name="Name">The name of the project.</param>
     /// <param name="PrincipalInvestigator">The principal investigator on the project.</param>
     /// <param name="ProjectManagerId">The person ID of the project manager, if one is assigned.</param>

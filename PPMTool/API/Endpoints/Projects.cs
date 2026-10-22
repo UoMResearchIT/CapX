@@ -45,8 +45,8 @@ public static class Projects
                 .ToListAsync();
 
             var projectDtos = projects.Select(x => new ProjectDTO(
-                ProjectId: x.RTP,
-                CapXProjectId: x.ProjectId,
+                ProjectId: x.ProjectId,
+                CapXProjectId: x.RTP,
                 Name: x.Name,
                 PrincipalInvestigator: x.PI,
                 ProjectManagerId: x.ProjectManager?.PersonId,
