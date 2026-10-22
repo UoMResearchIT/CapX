@@ -23,7 +23,7 @@ namespace PPMTool.Helpers
         public static WLMWeeklyDataChartItem GetWorkloadModelChartData(Person person, DateTime startDate, IEnumerable<Timesheet> timesheets)
         {
             // Get WLM of the person on that date
-            WorkloadModelChange wlm = person.GetWorkloadModelOnDateOrDefault(startDate);
+            WorkloadModelChange wlm = person.GetWorkloadModelOnDate(startDate) ?? new WorkloadModelChange();
 
             // Initialise a chart item with the WLM values by duty
             WLMWeeklyDataChartItem item = new WLMWeeklyDataChartItem()

@@ -2610,7 +2610,22 @@ namespace PPMTool.Helpers
             var rnd = new Random();
 
             // Get WLM of the person at the start of the week
-            var wlm = person.GetWorkloadModelOnDateOrDefault(currentDate);
+            var wlm = person.GetWorkloadModelOnDate(currentDate);
+
+            // If there isn't one then create a dummy
+            if (wlm == null)
+            {
+                // Dummy workload model just for the sake of seeding data
+                wlm = new WorkloadModelChange()
+                {
+                    ChangeDate = currentDate,
+                    Person = person,
+                    ProjectWorkFTE = 0.8,
+                    BusinessAsUsualFTE = 0.1,
+                    PersonalDevelopmentFTE = 0.1,
+                    Grade = 6
+                };
+            }
 
             // Project work structure where they are resource and project is running on this week
             var projects = context.Projects

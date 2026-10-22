@@ -164,37 +164,9 @@ namespace PPMTool.Data.Entities
             // If the person has left before this day then return zero
             if (EndDate != null && EndDate < date) return 0;
 
-            // If the person has no workload model changes then assume default G6 model
-            var wlm = GetWorkloadModelOnDateOrDefault(date);
-            return wlm.ProjectWorkFTE;
-        }
-
-        /// <summary>
-        /// Method to get the current workload model of a person in force at the date given or defaults to a G6 model
-        /// </summary>
-        /// <param name="date"></param>
-        /// <returns></returns>
-        public WorkloadModelChange GetWorkloadModelOnDateOrDefault(DateTime date)
-        {
-            // Try get model in play on date
-            var activeModel = GetWorkloadModelOnDate(date);
-
-            // If no workload model active then default to the standard 100% project work model
-            if (activeModel == null)
-            {
-                activeModel = new WorkloadModelChange()
-                {
-                    ChangeDate = date,
-                    Person = this,
-                    ProjectWorkFTE = 0.8,
-                    BusinessAsUsualFTE = 0.1,
-                    PersonalDevelopmentFTE = 0.1,
-                    Notes = "Default G6 Model",
-                    Grade = 6
-                };
-            }
-
-            return activeModel;
+            // If the person has no workload model changes then zero availability
+            var wlm = GetWorkloadModelOnDate(date);
+            return wlm?.ProjectWorkFTE ?? 0;
         }
 
         /// <summary>
@@ -250,30 +222,12 @@ namespace PPMTool.Data.Entities
             if (EndDate != null && EndDate < date) return 0;
 
             // Get WLM in play on date
-            var wlm = GetWorkloadModelOnDateOrDefault(date);
-            return wlm.ProjectManagementFTE;
+            var wlm = GetWorkloadModelOnDate(date);
+            return wlm?.ProjectManagementFTE ?? 0;
         }
 
         /// <summary>
-        /// Method to return the total workload model FTE for a person on the provided date
-        /// </summary>
-        /// <param name="date"></param>
-        /// <returns></returns>
-        public double GetWorkloadModelTotalOnDate(DateTime date)
-        {
-            // If person hasn't started on day then return zero
-            if (StartDate > date) return 0;
-
-            // If the person has left before this day then return zero
-            if (EndDate != null && EndDate < date) return 0;
-
-            // Get WLM in play on date
-            var wlm = GetWorkloadModelOnDateOrDefault(date);
-            return wlm.Total();
-        }
-
-        /// <summary>
-        /// Method to return the grade of the person on the date or the default of 6 if no WLM to consider.
+        /// Method to return the grade of the person on the date from workload models.
         /// Returns null if not started or left.
         /// </summary>
         /// <param name="date"></param>
@@ -286,7 +240,7 @@ namespace PPMTool.Data.Entities
             // If the person has left before this day then return null
             if (EndDate != null && EndDate < date) return null;
 
-            return GetWorkloadModelOnDateOrDefault(date).Grade;
+            return GetWorkloadModelOnDate(date)?.Grade;
         }
 
         /// <summary>
@@ -329,8 +283,33 @@ namespace PPMTool.Data.Entities
             if (EndDate != null && EndDate < date) return 0;
 
             // Get WLM in play on date
-            var wlm = GetWorkloadModelOnDateOrDefault(date);
-            return wlm.BusinessAsUsualFTE;
+            var wlm = GetWorkloadModelOnDate(date);
+            return wlm?.BusinessAsUsualFTE ?? 0;
+        }
+
+        /// <summary>
+        /// Checks whether this person has any period of employment with no workload model active.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasPeriodOfEmploymentWithNoWorkloadModel()
+        {
+            // If no WLMs then obviously true
+            if (WorkloadModelChanges.Count == 0) return true;
+
+            // If there is a WLM before their start date then covered so false
+            if (WorkloadModelChanges.Any(x => x.ChangeDate < StartDate)) return false;
+
+            // Find the earliest WLM within their employment period.
+            var earliestWlm = WorkloadModelChanges
+                .Where(x => x.ChangeDate >= StartDate)
+                .OrderBy(x => x.ChangeDate)
+                .FirstOrDefault();
+
+            // If the earliest WLM is non-existent or is after their start date then there is a period of employment with no WLM so return true
+            if (earliestWlm == null || earliestWlm.ChangeDate > StartDate) return true;
+
+            // Shouldn't really get to this point.
+            return false;
         }
 
         /// <summary>

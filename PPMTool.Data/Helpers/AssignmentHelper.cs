@@ -70,8 +70,8 @@ namespace PPMTool.Data.Helpers
                 .Where(x => x.ChangeDate >= startDate && x.ChangeDate <= endDate)
                 .OrderByDescending(x => x.ChangeDate).ToList();
 
-            // Get WLM in force on the first day of the window
-            WorkloadModelChange defaultWLM = person.GetWorkloadModelOnDateOrDefault(startDate ?? default);
+            // Get WLM in force on the first day of the window or return blank WLM
+            WorkloadModelChange defaultWLM = person.GetWorkloadModelOnDate(startDate ?? default) ?? new WorkloadModelChange();
 
             // If there isn't a WLM change on the first day of the window then add the default to the list to complete it
             if (wlms.FirstOrDefault(x => x.ChangeDate == person.StartDate) == null)
@@ -171,7 +171,7 @@ namespace PPMTool.Data.Helpers
                     foreach (var change in changes)
                     {
                         // Get previous WLM by looking at day before change
-                        var wlmBefore = person.GetWorkloadModelOnDateOrDefault(change.ChangeDate.AddDays(-1));
+                        var wlmBefore = person.GetWorkloadModelOnDate(change.ChangeDate.AddDays(-1)) ?? new WorkloadModelChange();
 
                         // Define a new task chunk for before period if necessary
                         if (wlmBefore.Grade != change.Grade || wlmBefore.CostValueSetId != change.CostValueSetId)
@@ -220,7 +220,7 @@ namespace PPMTool.Data.Helpers
                         budgetLine?.GetBudgetDetailsForWindow(finalChunkStart, finalChunkEnd, out budgetStatus, out amountCovered);
 
                         // Add chunk
-                        var wlmOnFinalChunkStart = person.GetWorkloadModelOnDateOrDefault(finalChunkStart);
+                        var wlmOnFinalChunkStart = person.GetWorkloadModelOnDate(finalChunkStart) ?? new WorkloadModelChange();
                         tempChunks.Add(new AssignmentChunk(initialChunk)
                         {
                             Grade = wlmOnFinalChunkStart.Grade,
