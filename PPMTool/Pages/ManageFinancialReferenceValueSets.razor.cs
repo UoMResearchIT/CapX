@@ -50,6 +50,7 @@ namespace PPMTool.Pages
                 return;
             }
 
+            dataGridEntities.Add(entity);
             entityToInsert = null;
         }
 
@@ -99,33 +100,6 @@ namespace PPMTool.Pages
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// Handles the cancellation of editing a financial reference value set, restoring its original state.
-        /// </summary>
-        /// <param name="entity"></param>
-        protected override void CancelEdit(FinancialReferenceValueSet entity)
-        {
-            // Unsaved row being inserted - just remove it completely
-            if (ReferenceEquals(entityToInsert, entity))
-            {
-                dataGrid.CancelEditRow(entity);
-
-                if (dataGridEntities.Contains(entity))
-                {
-                    dataGridEntities.Remove(entity);
-                }
-
-                Reset();
-                dataGrid.Reload();
-                return;
-            }
-
-            // Existing row being edited
-            Reset();
-            FinancialReferenceService.RestoreModel(Context, ref entity);
-            dataGrid.CancelEditRow(entity);
         }
 
         /// <summary>
