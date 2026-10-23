@@ -17,8 +17,8 @@ namespace PPMTool.API.DTOs
         int FundingSourceId,
         int ProjectId,
         double AmountAvailable,
-        string? Description,
-        string? AccountCode,
+        string Description,
+        string AccountCode,
         string FundingSourceType
     );
 }

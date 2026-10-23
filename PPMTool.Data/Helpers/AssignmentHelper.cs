@@ -111,6 +111,9 @@ namespace PPMTool.Data.Helpers
                 var lengthOfTask = task.EndDate.Subtract(task.StartDate).TotalDays + 1;
                 var proportionOfTask = lengthOfTask <= 0 ? 0 : daysOfTaskForChunk / lengthOfTask;
 
+                // Get the workload model in force when this task begins within the reporting window
+                var taskStartWLM = person.GetWorkloadModelOnDate(adjustedTaskStart) ?? new WorkloadModelChange();
+
                 // Create a line representing the full, un-chunked task to start off with
                 var initialChunk = new AssignmentChunk(resKey)
                 {
