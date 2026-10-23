@@ -17,10 +17,14 @@ namespace PPMTool.Data
 
         public int Grade { get; set; }
 
-        [Description("Financial reference key relationship used to compute costs for this assignment chunk")]
+        /// <summary>
+        /// Financial reference key used to compute costs for this assignment chunk
+        /// </summary>
         public int? CostValueSetId { get; set; }
 
-        [Description("Financial reference key name used for display in this assignment chunk")]
+        /// <summary>
+        /// Financial reference key name used for display in this assignment chunk
+        /// </summary>
         public string? CostValueName { get; set; }
 
         /// <summary>
