@@ -300,6 +300,7 @@ namespace PPMTool.Pages
                 int numberOfWeeks = 0;
                 List<string> dutyXLabels = new List<string>();
                 FinancialReference currentFinRef = FinancialReferenceService.GetFinancialReferenceForDate(Context, startDate);
+                var recoveryTargetCostValueName = GetSetting(SettingType.RecoveryTargetCostValueName);
                 float recoveryTargetPerWeek = 0f;
                 float proportionOfFY = 0f;
 
@@ -339,7 +340,7 @@ namespace PPMTool.Pages
 
                         // Compute how many weeks of this FY run within the window of the graph
                         proportionOfFY = FinancialReference.GetProportionOfFinancialYearInRange(currentFY, startDate, endDate);
-                        recoveryTargetPerWeek = currentFinRef.RecoveryTarget * proportionOfFY / 52;
+                        recoveryTargetPerWeek = currentFinRef.GetValue(recoveryTargetCostValueName, Logger) * proportionOfFY / 52;
                     }
 
                     // Get the projects that are running at the start of the week (exclude those projects with no tasks as they will have "default" start date)
@@ -482,8 +483,8 @@ namespace PPMTool.Pages
                     // Compute people based totals
                     foreach (var person in peopleEmployedThisWeek)
                     {
-                        // Get active WLM or default G6 model
-                        var activeModel = person.GetWorkloadModelOnDateOrDefault(currentWeekStart);
+                        // Get active WLM or just use a blank one if can't find one
+                        var activeModel = person.GetWorkloadModelOnDate(currentWeekStart) ?? new WorkloadModelChange();
 
                         // Update totals
                         wlmProject += (float)activeModel.ProjectWorkFTE;
@@ -494,7 +495,7 @@ namespace PPMTool.Pages
                         wlmRSA += (float)activeModel.ArchitectureFTE;
                         try
                         {
-                            recoverableStaffCosts += (float)currentFinRef.GetMidGradeCosts(activeModel.Grade) * (float)activeModel.ProjectWorkFTE * proportionOfFY / 52;
+                            recoverableStaffCosts += (float)currentFinRef.GetAnnualCostForWorkloadModel(activeModel, Logger) * (float)activeModel.ProjectWorkFTE * proportionOfFY / 52;
                         }
                         catch (ArgumentException)
                         {

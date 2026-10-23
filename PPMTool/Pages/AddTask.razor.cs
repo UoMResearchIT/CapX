@@ -130,7 +130,6 @@ namespace PPMTool.Pages
         private int? selectedPredecessorId;
         private IList<Person> people = new List<Person>();
         private IList<Person> filteredPeople = new List<Person>();
-        private IEnumerable<Rate> availableRates = new List<Rate>();
         private IEnumerable<Duty> allowedTaskDuties = new List<Duty>();
         private IEnumerable<FundingSource> availableSources = new List<FundingSource>();
         private bool startDateDisabled;
@@ -237,7 +236,6 @@ namespace PPMTool.Pages
                 .ToList();
             taskTypes = Enum.GetValues<TaskType>().ToList();
             availableTags = SkillTagService.GetAll(Context);
-            availableRates = Enum.GetValues<Rate>().ToList();
             availableSources = FundingSourceService.GetFundingSources(Context, ProjectId ?? 0).ToList();
 
             // Limit the number of task duties for now as this is a new feature and integral to a lot of the in-built calculations
