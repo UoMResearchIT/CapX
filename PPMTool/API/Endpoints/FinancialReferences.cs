@@ -38,18 +38,25 @@ namespace PPMTool.API.Endpoints
                 }
 
                 var financialReferences = await context.FinancialReferences
+                    .AsNoTracking()
                     .OrderBy(x => x.FinancialYear)
+                    .Select(x => new
+                    {
+                        x.FinancialReferenceId,
+                        x.FinancialYear,
+                        Values = x.Values.Select(v => new
+                        {
+                            Name = v.FinancialReferenceValueSet.Name,
+                            v.Value
+                        }).ToList()
+                    })
                     .ToListAsync();
 
                 var financialReferenceDtos = financialReferences
                     .Select(x => new FinancialReferenceDTO(
+                        FinancialReferenceId: x.FinancialReferenceId,
                         FinancialYear: x.FinancialYear,
-                        Grade41Costs: x.Grade41Costs,
-                        Grade51Costs: x.Grade51Costs,
-                        Grade55Costs: x.Grade55Costs,
-                        Grade65Costs: x.Grade65Costs,
-                        Grade71Costs: x.Grade71Costs,
-                        Grade75Costs: x.Grade75Costs
+                        Values: x.Values.ToDictionary(v => v.Name, v => v.Value)
                     ))
                     .ToList();
 
@@ -108,9 +115,19 @@ namespace PPMTool.API.Endpoints
                 }
 
                 var financialReference = await context.FinancialReferences
-                    .FirstOrDefaultAsync(
-                        x => x.FinancialReferenceId ==
-                            financialYear.Value);
+                    .AsNoTracking()
+                    .Where(x => x.FinancialYear == financialYear.Value)
+                    .Select(x => new
+                    {
+                        x.FinancialReferenceId,
+                        x.FinancialYear,
+                        Values = x.Values.Select(v => new
+                        {
+                            Name = v.FinancialReferenceValueSet.Name,
+                            v.Value
+                        }).ToList()
+                    })
+                    .FirstOrDefaultAsync();
 
                 if (financialReference == null)
                 {
@@ -122,13 +139,11 @@ namespace PPMTool.API.Endpoints
                 }
 
                 var dto = new FinancialReferenceDTO(
+                    FinancialReferenceId: financialReference.FinancialReferenceId,
                     FinancialYear: financialReference.FinancialYear,
-                    Grade41Costs: financialReference.Grade41Costs,
-                    Grade51Costs: financialReference.Grade51Costs,
-                    Grade55Costs: financialReference.Grade55Costs,
-                    Grade65Costs: financialReference.Grade65Costs,
-                    Grade71Costs: financialReference.Grade71Costs,
-                    Grade75Costs: financialReference.Grade75Costs
+                    Values: financialReference.Values.ToDictionary(
+                        v => v.Name,
+                        v => v.Value)
                 );
 
                 logger.LogInformation(

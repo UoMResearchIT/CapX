@@ -8,20 +8,12 @@ namespace PPMTool.API.DTOs
     /// A flat representation of a financial reference suitable for
     /// API data exports.
     /// </summary>
+    /// <param name="FinancialReferenceId">ID of the entity in the DB</param>
     /// <param name="FinancialYear">The financial year represented by the reference.</param>
-    /// <param name="Grade41Costs">The costs associated with grade 4.1.</param>
-    /// <param name="Grade51Costs">The costs associated with grade 5.1.</param>
-    /// <param name="Grade55Costs">The costs associated with grade 5.5.</param>
-    /// <param name="Grade65Costs">The costs associated with grade 6.5.</param>
-    /// <param name="Grade71Costs">The costs associated with grade 7.1.</param>
-    /// <param name="Grade75Costs">The costs associated with grade 7.5.</param>
+    /// <param name="Values">KVP list of the financial reference values in the reference if any exist.</param>
     public sealed record FinancialReferenceDTO(
+        int FinancialReferenceId,
         int FinancialYear,
-        double Grade41Costs,
-        double Grade51Costs,
-        double Grade55Costs,
-        double Grade65Costs,
-        double Grade71Costs,
-        double Grade75Costs
+        IDictionary<string, float> Values
     );
 }
