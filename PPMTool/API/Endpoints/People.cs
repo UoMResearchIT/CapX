@@ -37,6 +37,7 @@ public static class People
             }
 
             var people = await context.People
+                .AsNoTracking()
                 .Include(x => x.LineManager)
                 .OrderBy(x => x.Name)
                 .ToListAsync();
@@ -98,6 +99,7 @@ public static class People
             }
 
             var person = await context.People
+                .AsNoTracking()
                 .Include(x => x.LineManager)
                 .FirstOrDefaultAsync(x => x.PersonId == personId);
 

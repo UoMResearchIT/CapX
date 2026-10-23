@@ -38,6 +38,7 @@ namespace PPMTool.API.Endpoints
                 }
 
                 var faculties = await context.Faculties
+                    .AsNoTracking()
                     .OrderBy(x => x.Name)
                     .ToListAsync();
 
@@ -98,6 +99,7 @@ namespace PPMTool.API.Endpoints
                 }
 
                 var faculty = await context.Faculties
+                    .AsNoTracking()
                     .FirstOrDefaultAsync(x => x.FacultyId == facultyId.Value);
 
                 if (faculty == null)

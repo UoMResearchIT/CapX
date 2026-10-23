@@ -51,6 +51,7 @@ namespace PPMTool.API.Endpoints
                 }
 
                 var subTasks = await context.SubTasks
+                    .AsNoTracking()
                     .Include(x => x.OwningProject)
                     .Where(x => x.OwningProject.ProjectId == projectId.Value)
                     .OrderBy(x => x.StartDate)
@@ -120,6 +121,7 @@ namespace PPMTool.API.Endpoints
                 }
 
                 var subTask = await context.SubTasks
+                    .AsNoTracking()
                     .Include(x => x.OwningProject)
                     .FirstOrDefaultAsync(x => x.SubTaskId == subTaskId.Value);
 

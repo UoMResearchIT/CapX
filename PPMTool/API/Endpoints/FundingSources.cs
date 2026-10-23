@@ -51,6 +51,7 @@ public static class FundingSources
             }
 
             var fundingSources = await context.FundingSources
+                .AsNoTracking()
                 .Include(x => x.Project)
                 .Where(x => x.Project.ProjectId == projectId.Value)
                 .OrderBy(x => x.FundingSourceId)
@@ -119,6 +120,7 @@ public static class FundingSources
             }
 
             var fundingSource = await context.FundingSources
+                .AsNoTracking()
                 .Include(x => x.Project)
                 .FirstOrDefaultAsync(x => x.FundingSourceId == fundingSourceId.Value);
 

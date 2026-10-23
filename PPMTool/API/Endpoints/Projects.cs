@@ -38,6 +38,7 @@ public static class Projects
             }
 
             var projects = await context.Projects
+                .AsNoTracking()
                 .Include(x => x.ProjectManager)
                 .Include(x => x.InnateActivity)
                 .Include(x => x.School)
@@ -107,6 +108,7 @@ public static class Projects
             }
 
             var project = await context.Projects
+                .AsNoTracking()
                 .Include(x => x.ProjectManager)
                 .Include(x => x.InnateActivity)
                 .Include(x => x.School)

@@ -63,9 +63,10 @@ public static class GeneralHelpers
     internal static async Task<Person> FindPersonWithLineManagerByNameAsync(PPMToolContext context, string name)
     {
         return await context.People
-                .Include(x => x.LineManager)
-                .Include(x => x.WorkloadModelChanges)
-                .FirstOrDefaultAsync(x => x.Name.Trim().ToLower() == name.Trim().ToLower().Replace("_", " "));
+            .AsNoTracking()
+            .Include(x => x.LineManager)
+            .Include(x => x.WorkloadModelChanges)
+            .FirstOrDefaultAsync(x => x.Name.Trim().ToLower() == name.Trim().ToLower().Replace("_", " "));
     }
 
     /// <summary>

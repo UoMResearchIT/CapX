@@ -50,6 +50,7 @@ namespace PPMTool.API.Endpoints
                 }
 
                 var resources = await context.Resources
+                    .AsNoTracking()
                     .Include(x => x.SubTask)
                     .Include(x => x.Person)
                     .Include(x => x.FundedFrom)
@@ -121,6 +122,7 @@ namespace PPMTool.API.Endpoints
                 }
 
                 var resource = await context.Resources
+                    .AsNoTracking()
                     .Include(x => x.SubTask)
                     .Include(x => x.Person)
                     .Include(x => x.FundedFrom)

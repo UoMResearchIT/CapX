@@ -38,6 +38,7 @@ namespace PPMTool.API.Endpoints
                 }
 
                 var schools = await context.Schools
+                    .AsNoTracking()
                     .Include(x => x.Faculty)
                     .OrderBy(x => x.Name)
                     .ToListAsync();
@@ -100,6 +101,7 @@ namespace PPMTool.API.Endpoints
                 }
 
                 var school = await context.Schools
+                    .AsNoTracking()
                     .Include(x => x.Faculty)
                     .FirstOrDefaultAsync(x => x.SchoolId == schoolId.Value);
 
