@@ -1324,6 +1324,28 @@ namespace PPMTool.Helpers
                         }
                     }
                 };
+
+                // Group the valuesets
+                var valueSetsByName = context.FinancialReferenceValueSets.ToList()
+                     .GroupBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+                     .ToDictionary(x => x.Key, x => x.First(), StringComparer.OrdinalIgnoreCase);
+
+                // Flatten the financial references and ensure that the value sets
+                foreach (var value in financialReferences.SelectMany(x => x.Values))
+                {
+                    // Check if the value set already exists in the database, and if not, add it to the dictionary
+                    var name = value.FinancialReferenceValueSet.Name;
+                    if (!valueSetsByName.TryGetValue(name, out var valueSet))
+                    {
+                        valueSet = value.FinancialReferenceValueSet;
+                        valueSetsByName.Add(name, valueSet);
+                    }
+
+                    // Assign the existing value set to the financial reference value
+                    value.FinancialReferenceValueSet = valueSet;
+                }
+
+                // Add the financial references to the context and save changes
                 context.FinancialReferences.AddRange(financialReferences);
                 context.SaveChanges();
             }
