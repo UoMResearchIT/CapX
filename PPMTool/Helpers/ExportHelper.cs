@@ -325,6 +325,7 @@ namespace PPMTool.Helpers
         /// <param name="personService"></param>
         /// <param name="projectService"></param>
         /// <param name="financialReferenceService"></param>
+        /// <param name="logger"></param>
         /// <returns></returns>
         internal static IEnumerable<RecoveryDataOverWindow> GetRecoveryData(
             IEnumerable<Person> peopleActive,
