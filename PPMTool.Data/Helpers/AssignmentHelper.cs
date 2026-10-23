@@ -71,13 +71,13 @@ namespace PPMTool.Data.Helpers
                 .OrderByDescending(x => x.ChangeDate).ToList();
 
             // Get WLM in force on the first day of the window or return blank WLM
-            WorkloadModelChange defaultWLM = person.GetWorkloadModelOnDate(startDate ?? default) ?? new WorkloadModelChange();
+            WorkloadModelChange windowStartWLM = person.GetWorkloadModelOnDate(startDate ?? default) ?? new WorkloadModelChange();
 
             // If there isn't a WLM change on the first day of the window then add the default to the list to complete it
-            if (wlms.FirstOrDefault(x => x.ChangeDate == person.StartDate) == null)
+            if (wlms.FirstOrDefault(x => x.ChangeDate == windowStartWLM.ChangeDate) == null)
             {
                 // Add the start WLM to the list of WLMs active in the window
-                wlms.Add(defaultWLM);
+                wlms.Add(windowStartWLM);
             }
 
             // Are there any changes in grade or selected cost key for this person?
@@ -113,6 +113,9 @@ namespace PPMTool.Data.Helpers
                 var lengthOfTask = task.EndDate.Subtract(task.StartDate).TotalDays + 1;
                 var proportionOfTask = lengthOfTask <= 0 ? 0 : daysOfTaskForChunk / lengthOfTask;
 
+                // Get the workload model in force when this task begins within the reporting window
+                var taskStartWLM = person.GetWorkloadModelOnDate(adjustedTaskStart) ?? new WorkloadModelChange();
+
                 // If budget infomation provided then use to populate chunk
                 var amountCovered = 0d;
                 var budgetStatus = BudgetStatus.NotInBudget.GetDescription();
@@ -130,9 +133,9 @@ namespace PPMTool.Data.Helpers
                 var initialChunk = new AssignmentChunk(resKey)
                 {
                     EmployeeName = person.Name,
-                    Grade = defaultWLM.Grade,
-                    CostValueSetId = defaultWLM.CostValueSetId,
-                    CostValueName = defaultWLM.CostValueSet?.Name,
+                    Grade = taskStartWLM.Grade,
+                    CostValueSetId = taskStartWLM.CostValueSetId,
+                    CostValueName = taskStartWLM.CostValueSet?.Name,
                     FTE = resource.AssignmentFTE,
                     BilledFTE = resource.BilledFTE,
                     ProjectId = project.RTP,
