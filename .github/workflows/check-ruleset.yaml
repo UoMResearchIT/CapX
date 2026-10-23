@@ -37,7 +37,7 @@ jobs:
   check:
     if: github.repository_owner == 'UoMResearchIT'
     name: Check Ruleset
-    uses: UoMResearchIT/actions/.github/workflows/check-ruleset.yaml@0fa6c81621e45dd0fed362d9c19639169cdc350a # main
+    uses: UoMResearchIT/actions/.github/workflows/check-ruleset.yaml@c658a5cc70a5b229def46294dcd2a7d5b586aad7 # main
     with:
       bot-id: ${{ vars.ORG_ACTIONS_BOT_APP_ID }}
       ignore: '["require_code_owner_review"]'
