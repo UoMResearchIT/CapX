@@ -174,12 +174,6 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 name: "FK_WorkloadModelChanges_FinancialReferenceValueSets_CostValueSetId",
                 table: "WorkloadModelChanges");
 
-            migrationBuilder.DropTable(
-                name: "FinancialReferenceValues");
-
-            migrationBuilder.DropTable(
-                name: "FinancialReferenceValueSets");
-
             migrationBuilder.DropIndex(
                 name: "IX_WorkloadModelChanges_CostValueSetId",
                 table: "WorkloadModelChanges");
@@ -236,6 +230,73 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                 type: "REAL",
                 nullable: false,
                 defaultValue: 0f);
+
+            migrationBuilder.Sql(@"
+                UPDATE FinancialReferences
+                SET
+                    Grade41Costs = COALESCE((
+                        SELECT frv.Value
+                        FROM FinancialReferenceValues frv
+                        INNER JOIN FinancialReferenceValueSets fvs
+                            ON fvs.FinancialReferenceValueSetId = frv.FinancialReferenceValueSetId
+                        WHERE frv.FinancialReferenceId = FinancialReferences.FinancialReferenceId
+                          AND fvs.Name = 'Grade41Costs'
+                    ), 0),
+                    Grade51Costs = COALESCE((
+                        SELECT frv.Value
+                        FROM FinancialReferenceValues frv
+                        INNER JOIN FinancialReferenceValueSets fvs
+                            ON fvs.FinancialReferenceValueSetId = frv.FinancialReferenceValueSetId
+                        WHERE frv.FinancialReferenceId = FinancialReferences.FinancialReferenceId
+                          AND fvs.Name = 'Grade51Costs'
+                    ), 0),
+                    Grade55Costs = COALESCE((
+                        SELECT frv.Value
+                        FROM FinancialReferenceValues frv
+                        INNER JOIN FinancialReferenceValueSets fvs
+                            ON fvs.FinancialReferenceValueSetId = frv.FinancialReferenceValueSetId
+                        WHERE frv.FinancialReferenceId = FinancialReferences.FinancialReferenceId
+                          AND fvs.Name = 'Grade55Costs'
+                    ), 0),
+                    Grade65Costs = COALESCE((
+                        SELECT frv.Value
+                        FROM FinancialReferenceValues frv
+                        INNER JOIN FinancialReferenceValueSets fvs
+                            ON fvs.FinancialReferenceValueSetId = frv.FinancialReferenceValueSetId
+                        WHERE frv.FinancialReferenceId = FinancialReferences.FinancialReferenceId
+                          AND fvs.Name = 'Grade65Costs'
+                    ), 0),
+                    Grade71Costs = COALESCE((
+                        SELECT frv.Value
+                        FROM FinancialReferenceValues frv
+                        INNER JOIN FinancialReferenceValueSets fvs
+                            ON fvs.FinancialReferenceValueSetId = frv.FinancialReferenceValueSetId
+                        WHERE frv.FinancialReferenceId = FinancialReferences.FinancialReferenceId
+                          AND fvs.Name = 'Grade71Costs'
+                    ), 0),
+                    Grade75Costs = COALESCE((
+                        SELECT frv.Value
+                        FROM FinancialReferenceValues frv
+                        INNER JOIN FinancialReferenceValueSets fvs
+                            ON fvs.FinancialReferenceValueSetId = frv.FinancialReferenceValueSetId
+                        WHERE frv.FinancialReferenceId = FinancialReferences.FinancialReferenceId
+                          AND fvs.Name = 'Grade75Costs'
+                    ), 0),
+                    RecoveryTarget = COALESCE((
+                        SELECT frv.Value
+                        FROM FinancialReferenceValues frv
+                        INNER JOIN FinancialReferenceValueSets fvs
+                            ON fvs.FinancialReferenceValueSetId = frv.FinancialReferenceValueSetId
+                        WHERE frv.FinancialReferenceId = FinancialReferences.FinancialReferenceId
+                          AND fvs.Name = 'RecoveryTarget'
+                    ), 0);
+            ");
+
+            migrationBuilder.DropTable(
+                name: "FinancialReferenceValues");
+
+            migrationBuilder.DropTable(
+                name: "FinancialReferenceValueSets");
         }
     }
 }
