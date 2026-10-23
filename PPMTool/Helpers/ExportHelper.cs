@@ -325,6 +325,7 @@ namespace PPMTool.Helpers
         /// <param name="personService"></param>
         /// <param name="projectService"></param>
         /// <param name="financialReferenceService"></param>
+        /// <param name="logger"></param>
         /// <returns></returns>
         internal static IEnumerable<RecoveryDataOverWindow> GetRecoveryData(
             IEnumerable<Person> peopleActive,
@@ -332,7 +333,8 @@ namespace PPMTool.Helpers
             IDbContextFactory<PPMToolContext> contextFactory,
             PersonService personService,
             ProjectService projectService,
-            FinancialReferenceService financialReferenceService)
+            FinancialReferenceService financialReferenceService,
+            ILogger logger)
         {
             // Set the report length
             var startDate = assignmentChunks.Min(x => x.StartDate.Date).Date;
@@ -380,16 +382,16 @@ namespace PPMTool.Helpers
                         var gradeOnDay = wlm?.Grade ?? null;
                         var wlmTotal = wlm?.Total() ?? 0;
 
-                        // Get day costs for person based on mid-grade
-                        var actualCostsOnDay = (gradeOnDay == null || gradeOnDay > 7) ? 0 : finref.GetMidGradeCosts(gradeOnDay ?? 6);
-                        actualCostsOnDay /= 365.0;
+                        // Get day costs for person based on selected cost key
+                        var annualCosts = wlm == null ? 0 : finref.GetAnnualCostForWorkloadModel(wlm, logger);
+                        var actualCostsOnDay = annualCosts / 365.0;
                         var referenceCostsForADay = actualCostsOnDay;
 
                         // Scale actual costs for any part-time arrangement or planned absence
                         actualCostsOnDay *= wlmTotal;
 
-                        // If we don't have a grade for the day then we won't have reference costs so
-                        // need to compute them from first or last grade we know about
+                        // If we don't have an WLM for the day then we won't have reference costs so
+                        // need to compute them from first or last model we know about
                         if (gradeOnDay == null)
                         {
                             WorkloadModelChange tempWlm = null;
@@ -406,8 +408,19 @@ namespace PPMTool.Helpers
                                 tempWlm = person.GetLastWorkloadModelBefore(currentDate);
                             }
 
-                            // Default to G6 if we still can't find a WLM to use
-                            referenceCostsForADay = finref.GetMidGradeCosts(tempWlm?.Grade ?? 6) / 365.0;
+                            // If no workload model can be resolved, there is no cost key from which
+                            // to calculate a reference cost, so retain the zero-cost fallback.
+                            if (tempWlm == null)
+                            {
+                                logger?.LogWarning(
+                                    "Export recovery data: no workload model found for {PersonName} on {Date}. Reference costs will be zero.",
+                                    person.Name,
+                                    currentDate.Date);
+                            }
+                            else
+                            {
+                                referenceCostsForADay = finref.GetAnnualCostForWorkloadModel(tempWlm, logger) / 365.0;
+                            }
                         }
 
                         // Build out the values to update the totals with based on the WLM

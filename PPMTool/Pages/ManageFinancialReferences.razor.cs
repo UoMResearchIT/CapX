@@ -4,11 +4,9 @@
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
 using PPMTool.Services;
-using Radzen;
 
 namespace PPMTool.Pages
 {
@@ -22,51 +20,60 @@ namespace PPMTool.Pages
         {
             base.OnInitialized();
             dataGridEntityService = FinancialReferenceService;
-            dataGridEntities = FinancialReferenceService.GetAll(Context)
-                .OrderBy(x => x.FinancialYear)
-                .ToList();
+            dataGridEntities = FinancialReferenceService.GetAll(Context).ToList();
 
             // Only superusers can edit financial references
             EditAuthorised = ActiveUserRoleType == RoleType.Superuser;
-            LogInformation($"Viewing finref grid");
+            LogInformation("Viewing financial reference set grid");
         }
 
-        protected override async Task DeleteRow(FinancialReference entity)
+        /// <summary>
+        /// Deletes a financial reference after confirming with the user.
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        private async Task DeleteReference(FinancialReference entity)
         {
             if (await DialogService.Confirm($"You are about to delete reference {entity.GetSensibleObjectName()}.", "Delete") ?? false)
             {
                 await base.DeleteRow(entity);
                 dataGridEntityService.Delete(Context, entity);
-                LogInformation($"Deleted finref {entity.GetSensibleObjectName()}");
+                LogInformation($"Deleted financial reference set {entity.GetSensibleObjectName()}");
             }
         }
 
-        protected override void OnCreateRow(FinancialReference entity)
+        /// <summary>
+        /// Navigates to the page for managing value sets.
+        /// </summary>
+        private void ManageValueSets()
         {
-            var result = FinancialReferenceService.Add(Context, entity);
-            if (result == -1)
-            {
-                dataGridEntities.Remove(entity);
-                dataGrid.Reload();
-                Reset();
-                SetErrorMessage(new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error));
-                return;
-            }
-            LogInformation($"Added finref {entity.GetSensibleObjectName()}");
-            Reset();
+            Navigation.NavigateTo("managefinref/valuesets");
         }
 
-        protected override void OnUpdateRow(FinancialReference entity)
+        /// <summary>
+        /// Navigates to the edit page for a financial reference.
+        /// </summary>
+        /// <param name="entity"></param>
+        private void EditReference(FinancialReference entity)
         {
-            var result = FinancialReferenceService.Update(Context, entity);
-            if (result == -1)
-            {
-                CancelEdit(entity);
-                SetErrorMessage(new StatusMessage("An entry for the same financial year already exists.", StatusMessage.MessageType.Error));
-                return;
-            }
-            LogInformation($"Updated finref {entity.GetSensibleObjectName()}");
-            Reset();
+            Navigation.NavigateTo($"managefinref/addfinancialreference/{entity.FinancialReferenceId}");
+        }
+
+        /// <summary>
+        /// Navigates to the add page for a new financial reference.
+        /// </summary>
+        private void AddReference()
+        {
+            Navigation.NavigateTo("managefinref/addfinancialreference/-1");
+        }
+
+        /// <summary>
+        /// Navigates to the add page and pre-populates it by copying an existing reference set.
+        /// </summary>
+        /// <param name="entity"></param>
+        private void CopyReference(FinancialReference entity)
+        {
+            Navigation.NavigateTo($"managefinref/addfinancialreference/-1?copyFromFinancialReferenceId={entity.FinancialReferenceId}");
         }
     }
 }

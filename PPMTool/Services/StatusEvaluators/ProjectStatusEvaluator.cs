@@ -21,8 +21,9 @@ namespace PPMTool.Services.StatusEvaluators
             SettingsService settingsService,
             IDbContextFactory<PPMToolContext> contextFactory,
             InvoiceService invoiceService,
-            ProjectService projectService
-        )
+            ProjectService projectService,
+            FeatureService featureService
+        ) : base(featureService)
         {
             this.settingsService = settingsService;
             this.contextFactory = contextFactory;

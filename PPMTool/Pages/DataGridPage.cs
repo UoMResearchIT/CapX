@@ -11,13 +11,15 @@ using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
-    public abstract class DataGridPage<T> : BasePage where T : class, ILoggableObject
+    public abstract class DataGridPage<T> : BasePage where T : class, ILoggableObject, new()
     {
         protected RadzenDataGrid<T> dataGrid;
         protected IList<T> dataGridEntities;
         protected T entityToInsert;
         protected T entityToUpdate;
+        private T entityBeforeEdit = new T();
         protected IEntityService<T> dataGridEntityService;
+        private bool rowSaveFailed;
 
         [Inject]
         protected DialogService DialogService { get; set; }
@@ -28,12 +30,22 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Marks the current row save operation as failed.
+        /// The row will be returned to edit mode.
+        /// </summary>
+        protected void MarkRowSaveFailed()
+        {
+            rowSaveFailed = true;
+        }
+
+        /// <summary>
         /// Reset error messages and the tracking of the entity being inserted or updated
         /// </summary>
         protected virtual void Reset()
         {
             entityToInsert = null;
             entityToUpdate = null;
+            entityBeforeEdit = null;
             ClearErrorMessage();
         }
 
@@ -45,20 +57,61 @@ namespace PPMTool.Pages
         protected virtual async Task EditRow(T entity)
         {
             entityToUpdate = entity;
+
+            // Create a copy of the entity before editing, so we can restore it if the edit is cancelled
+            entityBeforeEdit = Activator.CreateInstance<T>();
+            var entry = Context.Entry(entity);
+            foreach (var property in entry.Properties)
+            {
+                property.Metadata.PropertyInfo?.SetValue(
+                    entityBeforeEdit,
+                    property.CurrentValue);
+            }
+
             LogInformation($"Edit row in view for <{entityToUpdate?.GetSensibleObjectName()}>");
             await dataGrid.EditRow(entity);
         }
 
+
         /// <summary>
-        /// Update a row in the datagrid
+        /// Update a row in the datagrid.
+        /// If persistence fails, return the row to edit mode.
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
         protected virtual async Task SaveRow(T entity)
         {
             LogInformation($"Update row in view for <{entity?.GetSensibleObjectName()}>");
-            Reset();
+
+            ClearErrorMessage();
+            rowSaveFailed = false;
+
+            // Check whether insert or update
+            var isInsert = ReferenceEquals(entityToInsert, entity);
+
+            // Complete the RadzenDataGrid update
             await dataGrid.UpdateRow(entity);
+
+            // UpdateRow takes the row out of edit mode, so restore both
+            // our tracking state and the Radzen edit state.
+            if (rowSaveFailed)
+            {
+                if (isInsert)
+                {
+                    entityToInsert = entity;
+                    entityToUpdate = null;
+                }
+                else
+                {
+                    entityToInsert = null;
+                    entityToUpdate = entity;
+                }
+
+                await dataGrid.EditRow(entity);
+                return;
+            }
+
+            Reset();
         }
 
         /// <summary>
@@ -68,8 +121,27 @@ namespace PPMTool.Pages
         protected virtual void CancelEdit(T entity)
         {
             LogInformation($"Restore model and cancel edit row in view for <{entity?.GetSensibleObjectName()}>");
+
+            // Restore the entity to its original state if it was being updated
+            if (entityBeforeEdit != null)
+            {
+                var entry = Context.Entry(entity);
+
+                foreach (var property in entry.Properties)
+                {
+                    property.Metadata.PropertyInfo?.SetValue(
+                        entity,
+                        property.Metadata.PropertyInfo.GetValue(entityBeforeEdit));
+                }
+            }
+
+            // Fall back to restoring the entity from EF tracking where no edit snapshot is available
+            else
+            {
+                dataGridEntityService?.RestoreModel(Context, ref entity);
+            }
+
             Reset();
-            dataGridEntityService.RestoreModel(Context, ref entity);
             dataGrid.CancelEditRow(entity);
         }
 
@@ -124,11 +196,17 @@ namespace PPMTool.Pages
         protected virtual void OnCreateRow(T entity)
         {
             LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
-            var duplicate = dataGridEntityService.Add(Context, entity);
-            if (duplicate < 0)
+
+            var result = dataGridEntityService.Add(Context, entity);
+
+            if (result < 0)
             {
+                MarkRowSaveFailed();
                 AddDuplicateErrorMessage(entity);
+                return;
             }
+
+            entityToInsert = null;
         }
 
         /// <summary>
@@ -138,11 +216,17 @@ namespace PPMTool.Pages
         protected virtual void OnUpdateRow(T entity)
         {
             LogInformation($"Update row in database for <{entity?.GetSensibleObjectName()}>");
-            var duplicate = dataGridEntityService.Update(Context, entity);
-            if (duplicate < 0)
+
+            var result = dataGridEntityService.Update(Context, entity);
+
+            if (result < 0)
             {
+                MarkRowSaveFailed();
                 AddDuplicateErrorMessage(entity);
+                return;
             }
+
+            entityToUpdate = null;
         }
 
         /// <summary>

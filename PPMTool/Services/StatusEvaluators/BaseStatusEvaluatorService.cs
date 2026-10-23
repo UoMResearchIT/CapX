@@ -3,11 +3,19 @@
 // SPDX-License-Identifier: apache-2.0
 
 using PPMTool.Data;
+using PPMTool.Data.Enums;
 
 namespace PPMTool.Services.StatusEvaluators
 {
     public abstract class BaseStatusEvaluatorService<T> : IStatusMessageEvaluator<T>
     {
+        protected BaseStatusEvaluatorService(FeatureService featureService)
+        {
+            this.featureService = featureService;
+        }
+
+        protected readonly FeatureService featureService;
+
         /// <summary>
         /// Builds the core status messages and their conditions for the entity.
         /// </summary>
@@ -28,18 +36,22 @@ namespace PPMTool.Services.StatusEvaluators
                 message.Update();
             }
 
-            // If there are no active messages that are not of type Success, return a default success message
-            if (!messages.Any(x =>
-                x.Status &&
-                x.Type != StatusMessage.MessageType.Success))
+            // Only messages relevant to currently enabled features should
+            // suppress the default success message.
+            var hasActiveRelevantMessage = messages.Any(message =>
+                message.Status &&
+                message.Type != StatusMessage.MessageType.Success &&
+                IsRelevant(message));
+
+            if (!hasActiveRelevantMessage)
             {
-                // Add message then call update to set status to true
-                var message = new StatusMessage("Everything looks OK!", StatusMessage.MessageType.Success);
-                message.Update();
-                return
-                [
-                    message
-                ];
+                var successMessage = new StatusMessage(
+                    "Everything looks OK!",
+                    StatusMessage.MessageType.Success);
+
+                successMessage.Update();
+
+                return [successMessage];
             }
 
             // Otherwise return the messages
@@ -70,6 +82,17 @@ namespace PPMTool.Services.StatusEvaluators
             return GetLatestStatusMessages(entity, messageViewerPersonId)
                 .Any(x => x.Status &&
                           x.Type == StatusMessage.MessageType.Error);
+        }
+
+        /// <summary>
+        /// Method to determine whether a status message is relevant based on activated features
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        private bool IsRelevant(StatusMessage message)
+        {
+            return message.RelevantFeature == FeatureType.None ||
+                   featureService.IsFeatureEnabled(message.RelevantFeature);
         }
     }
 }

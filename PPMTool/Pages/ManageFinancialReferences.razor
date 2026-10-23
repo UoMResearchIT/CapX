@@ -1,4 +1,4 @@
-﻿@*
+@*
 SPDX-FileCopyrightText: 2026 University of Manchester
 
 SPDX-License-Identifier: apache-2.0
@@ -19,12 +19,15 @@ SPDX-License-Identifier: apache-2.0
                 <h1>Manage Financial References</h1>
             </div>
             <div class="col-auto">
-                <RadzenButton class="float-right" Text="Add" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || !EditAuthorised) />
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+                    <RadzenButton class="float-right mr-2" Text="Manage Value Sets" Icon="list" Click="@ManageValueSets" Disabled="@(!EditAuthorised)" />
+                    <RadzenButton class="float-right" Text="Add" Icon="add" Click="@AddReference" Disabled="@(!EditAuthorised)" />
+                </RadzenStack>
             </div>
         </div>
         <div class="row">
             <div class="col py-2">
-                <RadzenText Text="Manage key financial numbers for each financial year. These are used to compute costs within the system." />
+                <RadzenText Text="Manage financial reference sets by year and maintain their named values." />
             </div>
         </div>
         @if (ErrorMessage != null)
@@ -36,87 +39,27 @@ SPDX-License-Identifier: apache-2.0
                         AllowFiltering="@(dataGridEntities != null && dataGridEntities.Count > 0)"
                         AllowPaging="true"
                         PageSize="15"
-                        AllowSorting="true"
                         ShowPagingSummary="true"
-                        EditMode="DataGridEditMode.Single"
+                        PagerHorizontalAlign="HorizontalAlign.Left"
+                        PagerPosition="PagerPosition.TopAndBottom"
+                        AllowSorting="true"
                         FilterMode="FilterMode.Simple"
                         Data="@dataGridEntities"
                         TItem="FinancialReference"
-                        RowUpdate="@OnUpdateRow"
-                        RowCreate="@OnCreateRow"
-                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                        ColumnWidth="120px">
+                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
             <Columns>
-                <RadzenDataGridColumn TItem="FinancialReference" Property="FinancialYear" Title="Financial Year" MinWidth="10px">
-                    <EditTemplate Context="fin">
-                        <RadzenNumeric Min="2013" Step="1" @bind-Value="fin.FinancialYear" Style="width:100%; display: block;" />
-                    </EditTemplate>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="FinancialReference" Property="Grade41Costs" Title="Intern Bottom" MinWidth="10px">
+                <RadzenDataGridColumn TItem="FinancialReference" Property="FinancialYear" Title="Financial Year" Width="12rem" MinWidth="10px" />
+                <RadzenDataGridColumn TItem="FinancialReference" Property="Values" Title="Values" MinWidth="10px" Filterable="false" Sortable="false">
                     <Template Context="fin">
-                        @fin.Grade41Costs.ToString("C")
+                        @(fin.Values != null && fin.Values.Count() > 0 ? string.Join(", ", fin.Values.Select(x => $"{x.FinancialReferenceValueSet?.Name}: {x.Value:C}")) : "")
                     </Template>
-                    <EditTemplate Context="fin">
-                        <RadzenNumeric Min="0" Step="0.01" @bind-Value="fin.Grade41Costs" Style="width:100%; display: block;"/>
-                    </EditTemplate>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="FinancialReference" Property="Grade51Costs" Title="Junior Bottom" MinWidth="10px">
+                <RadzenDataGridColumn Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TItem="FinancialReference" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="12rem" MinWidth="10px" Title="Actions">
                     <Template Context="fin">
-                        @fin.Grade51Costs.ToString("C")
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditReference(fin))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="@(!EditAuthorised)" />
+                        <RadzenButton Icon="content_copy" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(args => CopyReference(fin))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Duplicate"))" Disabled="@(!EditAuthorised)" />
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteReference(fin))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="@(!EditAuthorised)" />
                     </Template>
-                    <EditTemplate Context="fin">
-                        <RadzenNumeric Min="0" Step="0.01" @bind-Value="fin.Grade51Costs" Style="width:100%; display: block;" />
-                    </EditTemplate>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="FinancialReference" Property="Grade55Costs" Title="Junior Mid" MinWidth="10px">
-                    <Template Context="fin">
-                        @fin.Grade55Costs.ToString("C")
-                    </Template>
-                    <EditTemplate Context="fin">
-                        <RadzenNumeric Min="0" Step="0.01" @bind-Value="fin.Grade55Costs" Style="width:100%; display: block;" />
-                    </EditTemplate>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="FinancialReference" Property="Grade65Costs" Title="Standard Mid" MinWidth="10px">
-                    <Template Context="fin">
-                        @fin.Grade65Costs.ToString("C")
-                    </Template>
-                    <EditTemplate Context="fin">
-                        <RadzenNumeric Min="0" Step="0.01" @bind-Value="fin.Grade65Costs" Style="width:100%; display: block;" />
-                    </EditTemplate>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="FinancialReference" Property="Grade71Costs" Title="Senior Bottom" MinWidth="10px">
-                    <Template Context="fin">
-                        @fin.Grade71Costs.ToString("C")
-                    </Template>
-                    <EditTemplate Context="fin">
-                        <RadzenNumeric Min="0" Step="0.01" @bind-Value="fin.Grade71Costs" Style="width:100%; display: block;"/>
-                    </EditTemplate>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="FinancialReference" Property="Grade75Costs" Title="Senior Mid" MinWidth="10px">
-                    <Template Context="fin">
-                        @fin.Grade75Costs.ToString("C")
-                    </Template>
-                    <EditTemplate Context="fin">
-                        <RadzenNumeric Min="0" Step="0.01" @bind-Value="fin.Grade75Costs" Style="width:100%; display: block;" />
-                    </EditTemplate>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="FinancialReference" Property="RecoveryTarget" Title="Recovery Target" MinWidth="10px">
-                    <Template Context="fin">
-                        @fin.RecoveryTarget.ToString("C")
-                    </Template>
-                    <EditTemplate Context="fin">
-                        <RadzenNumeric Min="0" Step="1" @bind-Value="fin.RecoveryTarget" Style="width:100%; display: block;" />
-                    </EditTemplate>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="FinancialReference" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" MinWidth="10px" Title="Actions" Width="8rem">
-                    <Template Context="fin">
-                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(fin))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="@(!EditAuthorised)" />
-                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(fin))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="@(!EditAuthorised)" />
-                    </Template>
-                    <EditTemplate Context="fin">
-                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(fin))" MouseEnter="@(args => ShowTooltip(args, "Save"))" />
-                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(fin))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" />
-                    </EditTemplate>
                 </RadzenDataGridColumn>
             </Columns>
         </RadzenDataGrid>
