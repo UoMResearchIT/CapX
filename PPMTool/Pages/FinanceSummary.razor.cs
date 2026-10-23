@@ -78,7 +78,6 @@ namespace PPMTool.Pages
 
                         // Compute transaction breakdown for the project
                         var transactions = FinanceHelper.ComputeTransactionBreakdown(
-                            Context,
                             project.CostModel,
                             subTasks,
                             sources.Where(x => x.Project.ProjectId == project.ProjectId),

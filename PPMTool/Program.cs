@@ -325,13 +325,27 @@ api.MapGet("/skills/getAllForPerson", Skills.GetAllSkillsTagsForPersonAsync);
 api.MapGet("/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
 api.MapGet("/timesheets/getEntries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
 api.MapGet("/timesheets/getByCodeTask", Timesheets.GetTimesheetBookingsByCodeAndTask);
-api.MapGet("/wlm/getAnalysis", WorkloadModelAnalysis.GetWorkloadAnalysisData);
+api.MapGet("/wlm/getAnalysis", WorkloadModels.GetWorkloadAnalysisData);
+api.MapGet("/wlm/getAll", WorkloadModels.GetAllWorkloadModelChangesAsync);
+api.MapGet("/wlm/getById", WorkloadModels.GetWorkloadModelChangeByIdAsync);
 api.MapGet("/leavebookings/getForSelfAndStaff", LeaveBookings.GetStaffBookingsForYearAsync);
 api.MapGet("/assignments/getAssignments", Assignments.GetAssignmentDataAsync);
 api.MapGet("/projects/getAll", Projects.GetAllProjectsAsync);
 api.MapGet("/projects/getById", Projects.GetProjectByIdAsync);
 api.MapGet("/people/getAll", People.GetAllPeopleAsync);
 api.MapGet("/people/getById", People.GetPersonByIdAsync);
+api.MapGet("/fundingsources/getAll", FundingSources.GetAllFundingSourcesAsync);
+api.MapGet("/fundingsources/getById", FundingSources.GetFundingSourceByIdAsync);
+api.MapGet("/subtasks/getAll", SubTasks.GetAllSubTasksAsync);
+api.MapGet("/subtasks/getById", SubTasks.GetSubTaskByIdAsync);
+api.MapGet("/resources/getAll", Resources.GetAllResourcesAsync);
+api.MapGet("/resources/getById", Resources.GetResourceByIdAsync);
+api.MapGet("/schools/getAll", Schools.GetAllSchoolsAsync);
+api.MapGet("/schools/getById", Schools.GetSchoolByIdAsync);
+api.MapGet("/faculties/getAll", Faculties.GetAllFacultiesAsync);
+api.MapGet("/faculties/getById", Faculties.GetFacultyByIdAsync);
+api.MapGet("/financialreferences/getAll", FinancialReferences.GetAllFinancialReferencesAsync);
+api.MapGet("/financialreferences/getByFinancialYear", FinancialReferences.GetFinancialReferenceByFinancialYearAsync);
 
 // API middleware -- conditional on /api routes only
 app.UseWhen(

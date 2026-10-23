@@ -71,7 +71,7 @@ public static class Timesheets
             }
 
             // Authorisation check
-            var canAccess = GeneralHelpers.IsSuperUserOrLineManagerOrSelf(context, http, person);
+            var canAccess = GeneralHelpers.IsSuperUserOrLineManagerOrSelf(http, person);
             if (!canAccess)
             {
                 logger.LogWarning($"API: GetTimesheetEntriesForPersonForDateRange: Caller does not have permission to access the data!");

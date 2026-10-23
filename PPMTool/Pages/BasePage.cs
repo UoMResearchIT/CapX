@@ -251,24 +251,6 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Logs the error to the Sentry platform
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="sentryLevel"></param>
-        /// <param name="exception"></param>
-        private void LogToSentry(string message, SentryLevel sentryLevel = SentryLevel.Info, Exception exception = null)
-        {
-            if (exception != null)
-            {
-                SentrySdk.CaptureException(exception);
-            }
-            else
-            {
-                SentrySdk.CaptureMessage(message, sentryLevel);
-            }
-        }
-
-        /// <summary>
         /// Log information to the logging sinks
         /// </summary>
         /// <param name="message"></param>

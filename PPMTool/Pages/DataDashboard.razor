@@ -65,22 +65,7 @@ SPDX-License-Identifier: apache-2.0
                         </div>
                     </div>
                 </RadzenCard>
-                <RadzenCard>
-                    <h2>Export</h2>
-                    <hr />
-                    <div class="row align-items-center">
-                        <div class="col-3" style="align-content: center">
-                            <RadzenStack Orientation="Radzen.Orientation.Vertical" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Start">
-                                <RadzenLabel class="radzen-form-label" Text="Finance Report for Period" />
-                                <RadzenButton ButtonType="ButtonType.Button"
-                                              Click="ExportFinancialReport"
-                                              Text="@(exportRunning ? "Please Wait..." : "Export Finance Report")"
-                                              Icon="@(exportRunning ? "hourglass_empty" : "download")"
-                                              Disabled="@((!EditAuthorised && ActiveUserRoleType != RoleType.Finance) || Loading || exportRunning)" />
-                            </RadzenStack>
-                        </div>
-                    </div>
-                </RadzenCard>
+                @* More cards here as required*@
             </RadzenStack>
             <hr />
             <div class="row">
