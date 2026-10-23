@@ -129,7 +129,7 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                     SELECT FinancialReferenceValueSetId FROM FinancialReferenceValueSets WHERE Name =
                         CASE
                             WHEN Grade = 4 THEN 'Grade41Costs'
-                            WHEN Grade = 5 THEN 'Grade51Costs'
+                            WHEN Grade = 5 THEN 'Grade55Costs'
                             WHEN Grade = 6 THEN 'Grade65Costs'
                             WHEN Grade = 7 THEN 'Grade75Costs'
                             ELSE NULL
