@@ -101,7 +101,7 @@ namespace PPMTool.Data.Enums
         EstimateCostDefaultCostValueName = 21,
 
         [Description("Financial reference value to be used to represent recovery target in dashboard  and recovery calculations.")]
-        [DefaultSettingValue("")]
+        [DefaultSettingValue("RecoveryTarget")]
         RecoveryTargetCostValueName = 22,
 
         [Description("The endpoint for the LLM API driving the AI chat functionality.")]
