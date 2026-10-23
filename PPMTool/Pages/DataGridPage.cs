@@ -11,12 +11,13 @@ using Radzen.Blazor;
 
 namespace PPMTool.Pages
 {
-    public abstract class DataGridPage<T> : BasePage where T : class, ILoggableObject
+    public abstract class DataGridPage<T> : BasePage where T : class, ILoggableObject, new()
     {
         protected RadzenDataGrid<T> dataGrid;
         protected IList<T> dataGridEntities;
         protected T entityToInsert;
         protected T entityToUpdate;
+        private T entityBeforeEdit = new T();
         protected IEntityService<T> dataGridEntityService;
         private bool rowSaveFailed;
 
@@ -44,6 +45,7 @@ namespace PPMTool.Pages
         {
             entityToInsert = null;
             entityToUpdate = null;
+            entityBeforeEdit = null;
             ClearErrorMessage();
         }
 
@@ -55,9 +57,21 @@ namespace PPMTool.Pages
         protected virtual async Task EditRow(T entity)
         {
             entityToUpdate = entity;
+
+            // Create a copy of the entity before editing, so we can restore it if the edit is cancelled
+            entityBeforeEdit = Activator.CreateInstance<T>();
+            var entry = Context.Entry(entity);
+            foreach (var property in entry.Properties)
+            {
+                property.Metadata.PropertyInfo?.SetValue(
+                    entityBeforeEdit,
+                    property.CurrentValue);
+            }
+
             LogInformation($"Edit row in view for <{entityToUpdate?.GetSensibleObjectName()}>");
             await dataGrid.EditRow(entity);
         }
+
 
         /// <summary>
         /// Update a row in the datagrid.
@@ -107,8 +121,27 @@ namespace PPMTool.Pages
         protected virtual void CancelEdit(T entity)
         {
             LogInformation($"Restore model and cancel edit row in view for <{entity?.GetSensibleObjectName()}>");
+
+            // Restore the entity to its original state if it was being updated
+            if (entityBeforeEdit != null)
+            {
+                var entry = Context.Entry(entity);
+
+                foreach (var property in entry.Properties)
+                {
+                    property.Metadata.PropertyInfo?.SetValue(
+                        entity,
+                        property.Metadata.PropertyInfo.GetValue(entityBeforeEdit));
+                }
+            }
+
+            // Fall back to restoring the entity from EF tracking where no edit snapshot is available
+            else
+            {
+                dataGridEntityService?.RestoreModel(Context, ref entity);
+            }
+
             Reset();
-            dataGridEntityService.RestoreModel(Context, ref entity);
             dataGrid.CancelEditRow(entity);
         }
 

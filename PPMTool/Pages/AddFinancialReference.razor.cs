@@ -184,10 +184,7 @@ namespace PPMTool.Pages
         /// <param name="entity"></param>
         protected override void CancelEdit(FinancialReferenceValue entity)
         {
-            LogInformation($"Cancel edit row for {entity.GetSensibleObjectName()}");
-            Reset();
-            FinancialReferenceService.RestoreModel(Context, ref entity);
-            dataGrid.CancelEditRow(entity);
+            base.CancelEdit(entity);
             RefreshValueSetLinks();
         }
 
