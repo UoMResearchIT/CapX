@@ -407,13 +407,19 @@ namespace PPMTool.Helpers
                                 tempWlm = person.GetLastWorkloadModelBefore(currentDate);
                             }
 
-                            // Default to G6 key if we still can't find a WLM to use
+                            // If no workload model can be resolved, there is no cost key from which
+                            // to calculate a reference cost, so retain the zero-cost fallback.
                             if (tempWlm == null)
                             {
-                                logger?.LogWarning("Export recovery data: no workload model found for {PersonName} on {Date}. Falling back to default Grade 6 model for reference costs.", person.Name, currentDate.Date);
-                                tempWlm = new WorkloadModelChange { Grade = 6 };
+                                logger?.LogWarning(
+                                    "Export recovery data: no workload model found for {PersonName} on {Date}. Reference costs will be zero.",
+                                    person.Name,
+                                    currentDate.Date);
                             }
-                            referenceCostsForADay = finref.GetAnnualCostForWorkloadModel(tempWlm, logger) / 365.0;
+                            else
+                            {
+                                referenceCostsForADay = finref.GetAnnualCostForWorkloadModel(tempWlm, logger) / 365.0;
+                            }
                         }
 
                         // Build out the values to update the totals with based on the WLM
