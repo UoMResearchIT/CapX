@@ -33,6 +33,7 @@ namespace PPMTool.API.DTOs
     /// <param name="PersonId">The ID of the person to whom the workload model applies.</param>
     /// <param name="ChangeDate">The date on which the workload model came into effect.</param>
     /// <param name="Grade">The person's grade.</param>
+    /// <param name="CostValueKey">Key value the financial reference value set to use for the costs.</param>
     /// <param name="ProjectWorkFTE">The FTE allocated to project work.</param>
     /// <param name="StaffManagementFTE">The FTE allocated to staff management.</param>
     /// <param name="ProjectManagementFTE">The FTE allocated to project management.</param>
@@ -44,6 +45,7 @@ namespace PPMTool.API.DTOs
         int PersonId,
         DateOnly ChangeDate,
         int Grade,
+        string CostValueKey,
         double ProjectWorkFTE,
         double StaffManagementFTE,
         double ProjectManagementFTE,

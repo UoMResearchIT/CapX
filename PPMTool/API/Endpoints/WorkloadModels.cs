@@ -141,7 +141,7 @@ namespace PPMTool.API.Endpoints
                 }
 
                 var query = context.WorkloadModelChanges
-                    .Include(x => x.Person)
+                    .AsNoTracking()
                     .AsQueryable();
 
                 if (startDate.HasValue)
@@ -158,25 +158,23 @@ namespace PPMTool.API.Endpoints
                     query = query.Where(x => x.ChangeDate <= end);
                 }
 
-                var workloadModelChanges = await query
+                var workloadModelChangeDtos = await query
                     .OrderBy(x => x.Person.PersonId)
                     .ThenBy(x => x.ChangeDate)
-                    .ToListAsync();
-
-                var workloadModelChangeDtos = workloadModelChanges
                     .Select(x => new WorkloadModelChangeDTO(
-                        PersonId: x.Person.PersonId,
-                        ChangeDate: DateOnly.FromDateTime(x.ChangeDate),
-                        Grade: x.Grade,
-                        ProjectWorkFTE: x.ProjectWorkFTE,
-                        StaffManagementFTE: x.StaffManagementFTE,
-                        ProjectManagementFTE: x.ProjectManagementFTE,
-                        ServiceManagementFTE: x.ServiceManagementFTE,
-                        BusinessAsUsualFTE: x.BusinessAsUsualFTE,
-                        PersonalDevelopmentFTE: x.PersonalDevelopmentFTE,
-                        ArchitectureFTE: x.ArchitectureFTE
+                        x.Person.PersonId,
+                        DateOnly.FromDateTime(x.ChangeDate),
+                        x.Grade,
+                        x.CostValueSet != null ? x.CostValueSet.Name : null,
+                        x.ProjectWorkFTE,
+                        x.StaffManagementFTE,
+                        x.ProjectManagementFTE,
+                        x.ServiceManagementFTE,
+                        x.BusinessAsUsualFTE,
+                        x.PersonalDevelopmentFTE,
+                        x.ArchitectureFTE
                     ))
-                    .ToList();
+                    .ToListAsync();
 
                 logger.LogInformation(
                     "API: GetAllWorkloadModelChanges: Returned {Count} workload model change records.",
@@ -198,9 +196,7 @@ namespace PPMTool.API.Endpoints
         /// <param name="context"></param>
         /// <param name="logger"></param>
         /// <param name="http"></param>
-        /// <param name="workloadModelChangeId">
-        /// The workload model change ID.
-        /// </param>
+        /// <param name="workloadModelChangeId">The workload model change ID.</param>
         [ProducesResponseType(
             StatusCodes.Status200OK,
             Type = typeof(WorkloadModelChangeDTO))]
@@ -234,35 +230,38 @@ namespace PPMTool.API.Endpoints
                     return Results.Unauthorized();
                 }
 
-                var workloadModelChange = await context.WorkloadModelChanges
-                    .Include(x => x.Person)
-                    .FirstOrDefaultAsync(x => x.WorkloadModelChangeId == workloadModelChangeId.Value);
+                var workloadModelChangeDto = await context.WorkloadModelChanges
+                    .AsNoTracking()
+                    .Where(x => x.WorkloadModelChangeId == workloadModelChangeId.Value)
+                    .Select(x => new WorkloadModelChangeDTO(
+                        x.Person.PersonId,
+                        DateOnly.FromDateTime(x.ChangeDate),
+                        x.Grade,
+                        x.CostValueSet != null ? x.CostValueSet.Name : null,
+                        x.ProjectWorkFTE,
+                        x.StaffManagementFTE,
+                        x.ProjectManagementFTE,
+                        x.ServiceManagementFTE,
+                        x.BusinessAsUsualFTE,
+                        x.PersonalDevelopmentFTE,
+                        x.ArchitectureFTE
+                    ))
+                    .FirstOrDefaultAsync();
 
-                if (workloadModelChange == null)
+                if (workloadModelChangeDto == null)
                 {
-                    logger.LogWarning("API: GetWorkloadModelChangeById: No workload model change found for workloadModelChangeId {WorkloadModelChangeId}.",
+                    logger.LogWarning(
+                        "API: GetWorkloadModelChangeById: No workload model change found for workloadModelChangeId {WorkloadModelChangeId}.",
                         workloadModelChangeId);
 
                     return Results.NotFound();
                 }
 
-                var dto = new WorkloadModelChangeDTO(
-                    PersonId: workloadModelChange.Person.PersonId,
-                    ChangeDate: DateOnly.FromDateTime(workloadModelChange.ChangeDate),
-                    Grade: workloadModelChange.Grade,
-                    ProjectWorkFTE: workloadModelChange.ProjectWorkFTE,
-                    StaffManagementFTE: workloadModelChange.StaffManagementFTE,
-                    ProjectManagementFTE: workloadModelChange.ProjectManagementFTE,
-                    ServiceManagementFTE: workloadModelChange.ServiceManagementFTE,
-                    BusinessAsUsualFTE: workloadModelChange.BusinessAsUsualFTE,
-                    PersonalDevelopmentFTE: workloadModelChange.PersonalDevelopmentFTE,
-                    ArchitectureFTE: workloadModelChange.ArchitectureFTE
-                );
-
-                logger.LogInformation("API: GetWorkloadModelChangeById: Returned workload model change record for workloadModelChangeId {WorkloadModelChangeId}.",
+                logger.LogInformation(
+                    "API: GetWorkloadModelChangeById: Returned workload model change record for workloadModelChangeId {WorkloadModelChangeId}.",
                     workloadModelChangeId);
 
-                return Results.Json(dto);
+                return Results.Json(workloadModelChangeDto);
             }
             catch (Exception ex)
             {
