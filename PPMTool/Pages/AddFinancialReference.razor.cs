@@ -33,19 +33,11 @@ namespace PPMTool.Pages
 
             if (FinancialReferenceId > 0)
             {
+                // Try get a set based on the ID provided in the query string. If the ID is invalid, it will return null and produce a blank entry.
                 financialReference = FinancialReferenceService.GetById(Context, FinancialReferenceId);
 
-                // If the financial reference set is not found, we will create a new one with the provided FinancialReferenceId.
-                // This is to handle cases where the user navigates directly to the edit page with an invalid ID.
-                dataGridEntities = financialReference?.Values?.Select(x => new FinancialReferenceValue
-                {
-                    FinancialReferenceValueId = x.FinancialReferenceValueId,
-                    FinancialReferenceValueSetId = x.FinancialReferenceValueSetId,
-                    FinancialReferenceValueSet = financialReferenceValueSets.FirstOrDefault(y => y.FinancialReferenceValueSetId == x.FinancialReferenceValueSetId) ?? x.FinancialReferenceValueSet,
-                    Value = x.Value,
-                    FinancialReferenceId = x.FinancialReferenceId,
-                    FinancialReference = x.FinancialReference
-                }).ToList() ?? new List<FinancialReferenceValue>();
+                // Use the tracked values directly so edits are applied to the entities loaded by the DbContext.
+                dataGridEntities = financialReference?.Values?.ToList() ?? new List<FinancialReferenceValue>();
             }
 
             // If the FinancialReferenceId is not provided, but a CopyFromFinancialReferenceId is provided, we will copy the values from the source financial reference set to create a new one.
