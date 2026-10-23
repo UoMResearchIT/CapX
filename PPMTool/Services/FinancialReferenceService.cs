@@ -210,6 +210,21 @@ namespace PPMTool.Services
         }
 
         /// <summary>
+        /// Retrieves a financial reference value set by its primary key.
+        /// Returns null if no matching value set exists.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="financialReferenceValueSetId"></param>
+        /// <returns></returns>
+        public FinancialReferenceValueSet GetValueSetById(
+            PPMToolContext context,
+            int financialReferenceValueSetId)
+        {
+            return context.FinancialReferenceValueSets
+                .FirstOrDefault(x => x.FinancialReferenceValueSetId == financialReferenceValueSetId);
+        }
+
+        /// <summary>
         /// Adds a new financial reference value set to the database context after validating its name for uniqueness and non-emptiness.
         /// Returns the ID of the newly added value set, or an error code if validation fails.
         /// </summary>

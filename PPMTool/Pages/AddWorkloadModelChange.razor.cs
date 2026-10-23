@@ -84,22 +84,19 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Resolves the cost value set for a given workload model change entity, returning null if finance is not enabled or if the cost value set ID is not specified.
+        /// Resolves the cost value set for a given workload model change entity.
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
         private FinancialReferenceValueSet ResolveCostValueSet(WorkloadModelChange entity)
         {
-            if (!financeEnabled || entity.CostValueSetId == null)
+            if (entity.CostValueSetId == null)
             {
                 return null;
             }
 
-            return GetCostValueOptions(entity.ChangeDate)
-                .Select(x => x.FinancialReferenceValueSet)
-                .Where(x => x != null)
-                .DistinctBy(x => x.FinancialReferenceValueSetId)
-                .FirstOrDefault(x => x.FinancialReferenceValueSetId == entity.CostValueSetId);
+            // Even if finance is disabled, we still want to resolve the cost value set from the entity's CostValueSetId if it exists so that the relationship is maintained.
+            return FinancialReferenceService.GetValueSetById(Context, entity.CostValueSetId.Value);
         }
 
         /// <summary>
