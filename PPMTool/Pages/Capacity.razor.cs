@@ -48,6 +48,9 @@ namespace PPMTool.Pages
                 var managerName = await SessionStorage.GetItemAsync<string>($"{GetStorageTag()}-chosen-manager");
                 ChosenManager = managers.FirstOrDefault(x => x.Name == managerName);
 
+                // The manager selection may have changed the chart mode
+                await LoadIncludeFinishedPreferenceAsync();
+
                 // Reload the dropdown sources if a manager has been chosen
                 if (ChosenManager != null)
                 {
@@ -149,6 +152,14 @@ namespace PPMTool.Pages
         private void SaveManagerState() => SessionStorage.SetItemAsync($"{GetStorageTag()}-chosen-manager", chosenManager == null ? null : chosenManager.Name);
 
         /// <summary>
+        /// The chart is in project mode when a person or project manager is selected.
+        /// </summary>
+        protected override bool IsProjectMode()
+        {
+            return PeopleChosen() || ManagerChosen();
+        }
+
+        /// <summary>
         /// Use the master list of managers to filter the data source for the dropdown based on user typing
         /// </summary>
         /// <param name="args"></param>
@@ -172,6 +183,8 @@ namespace PPMTool.Pages
             var item = selectedOptions as Person;
             Debug.WriteLine($"** Selected Manager: {item?.Name}");
 
+            // Reload the swtich preferences now the mode has changed
+            await LoadIncludeFinishedPreferenceAsync();
             chartNeedsRegeneration = true;
 
             // Save the new state
