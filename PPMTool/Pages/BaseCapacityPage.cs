@@ -68,6 +68,34 @@ namespace PPMTool.Pages
         protected bool chartNeedsRegeneration = false;
 
         /// <summary>
+        /// Determines whether the page is currently operating in project mode.
+        /// Derived pages can extend the condition.
+        /// </summary>
+        protected virtual bool IsProjectMode() => PeopleChosen();
+
+        /// <summary>
+        /// Gets the mode-specific session storage key for the Include Finished setting.
+        /// </summary>
+        private string GetIncludeFinishedStorageKey()
+        {
+            var mode = IsProjectMode() ? "project" : "person";
+            return $"{GetStorageTag()}-include-finished-{mode}";
+        }
+
+        /// <summary>
+        /// Loads the Include Finished preference for the current chart mode.
+        /// Defaults to true in person mode and false in project mode.
+        /// </summary>
+        protected async Task LoadIncludeFinishedPreferenceAsync()
+        {
+            var storedValue = await SessionStorage.GetItemAsync<bool?>(
+                GetIncludeFinishedStorageKey()
+            );
+
+            includeFinished = storedValue ?? !IsProjectMode();
+        }
+
+        /// <summary>
         /// Change callback for unfunded switch
         /// </summary>
         protected async Task UnFundedSwitchChangedAsync(bool value)
@@ -95,7 +123,7 @@ namespace PPMTool.Pages
         {
             includeFinished = value;
             chartNeedsRegeneration = true;
-            await SessionStorage.SetItemAsync<bool?>($"{GetStorageTag()}-include-finished", value);
+            await SessionStorage.SetItemAsync<bool?>(GetIncludeFinishedStorageKey(), value);
         }
 
         /// <summary>
@@ -111,6 +139,9 @@ namespace PPMTool.Pages
         {
             var items = selectedOptions as IEnumerable<string>;
             Debug.WriteLine($"** Selected People: {(items != null ? string.Join('|', items) : "")}");
+
+            // Load the preferences for the current mode
+            await LoadIncludeFinishedPreferenceAsync();
             chartNeedsRegeneration = true;
 
             // Save the new state
@@ -643,11 +674,7 @@ namespace PPMTool.Pages
             {
                 includeUnFunded = temp ?? false;
             }
-            temp = await SessionStorage.GetItemAsync<bool?>($"{GetStorageTag()}-include-finished");
-            if (temp != null)
-            {
-                includeFinished = temp ?? false;
-            }
+            await LoadIncludeFinishedPreferenceAsync();
 
             // Reload dropdowns sources
             await ReloadDropDownSourcesAsync();
