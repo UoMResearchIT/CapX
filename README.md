@@ -78,7 +78,7 @@ There are two _solution_ configurations: `Local` and `Release` that combine proj
 Superusers have access to an AI assistant to help pull out information and trends from the data model in the database. Settings are used to specify an endpoint and model as required by the chat component Radzen supply.
 
 > [!TIP]
-> The recommended configuration is to run a local model in [ollama](https://ollama.com/download) running in a docker container with the agent given a readonly connection to the CapX database. 
+> The recommended configuration is to run a local model in [ollama](https://ollama.com/download) running in a docker container with the chat endpoint and model type provided in the settings to enable the chat window. 
 
 ### Running with Docker Compose
 Docker Compose runs a single container with a single volume containing the database.
