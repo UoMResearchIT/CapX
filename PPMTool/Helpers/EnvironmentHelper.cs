@@ -78,9 +78,6 @@ namespace PPMTool.Helpers
             ReadValue("SUPERUSER_USERNAME", "DeveloperSettings:DefaultSuperUserUserName", ref overridingValues);
             ReadValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref overridingValues);
 
-            // Connection string for EF Core tools at design time and runtime
-            ReadValue("LEAVEBOOKINGS_CONNECTION_STRING", "ConnectionStrings:LeaveBookingsDatabase", ref overridingValues);
-
             // Get email settings
             ReadValue("MAIL_SMTP_SERVER", "Email:SmtpServer", ref overridingValues);
             ReadValue("MAIL_FROM_ADDRESS", "Email:From", ref overridingValues);
@@ -128,7 +125,6 @@ namespace PPMTool.Helpers
         {
             // Validation of values that are used at runtime only
             ValidateValue("API_KEY_SECRET", "Jwt:SecretKey", ref builder);
-            ValidateValue("LEAVEBOOKINGS_CONNECTION_STRING", "ConnectionStrings:LeaveBookingsDatabase", ref builder);
             ValidateValue("SUPERUSER_NAME", "DeveloperSettings:DefaultSuperUserName", ref builder);
             ValidateValue("SUPERUSER_USERNAME", "DeveloperSettings:DefaultSuperUserUserName", ref builder);
             ValidateValue("SUPERUSER_EMAIL", "DeveloperSettings:DefaultSuperUserEmail", ref builder);

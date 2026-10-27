@@ -78,7 +78,7 @@ There are two _solution_ configurations: `Local` and `Release` that combine proj
 Superusers have access to an AI assistant to help pull out information and trends from the data model in the database. Settings are used to specify an endpoint and model as required by the chat component Radzen supply.
 
 > [!TIP]
-> The recommended configuration is to run a local model in [ollama](https://ollama.com/download) running in a docker container with the agent given a readonly connection to the CapX database. 
+> The recommended configuration is to run a local model in [ollama](https://ollama.com/download) running in a docker container with the chat endpoint and model type provided in the settings to enable the chat window. 
 
 ### Running with Docker Compose
 Docker Compose runs a single container with a single volume containing the database.
@@ -95,7 +95,6 @@ To set this up, create a `.env` file in the repository root with the following r
 | `ASPNETCORE_ENVIRONMENT` | ASP.NET Core runtime environment. Valid values: `Development` or `Production`. This determines which `appsettings.*.json` file is loaded at runtime. |
 | `BUILD_CONFIGURATION` | .NET build configuration (`-c` flag). Valid values: `Local`, `Debug`, or `Release`. See [Solution/Build and Launch Configurations](#solutionbuild-and-launch-configurations) for details. |
 | `CONNECTION_STRING` | SQLite connection string, e.g. `Data Source=state/PPMTool.db` |
-| `LEAVEBOOKINGS_CONNECTION_STRING` | Connection string for the leave bookings database (The University of Manchester only) |
 | `API_KEY_SECRET` | Secret for API key generation (minimum 16 characters). Use `openssl rand -hex 16` to generate a strong key. |
 | `CAPX_HTTP_PORT` | Port for the web application (e.g. `5001`) |
 | `CAPX_STATE_DIR` | Where the SQLite DB lives outside the container (if using this DB provider) |
@@ -187,8 +186,3 @@ CapX makes use of automated deployment. As the VMs are on the University private
 
 ### Database Backups
 The databases are backed up (including flushing of the WAL journals) as part of the deployment automation pipeline. However, there is also an hourly cronjob that flushes and backs up the DB to a different directory. This mechanism stores 72 backups, deleting the oldest when this file count is exceeded.
-
-### Leave Booking database
-The University of Manchester instance of the CapX API also connects the [institutional leave booking system](https://holiday.its.manchester.ac.uk/) database. This connection string needs to be specified properly for this connection to work.
-
-
