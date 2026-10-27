@@ -121,8 +121,8 @@ public static class Projects
             }
 
             var dto = new ProjectDTO(
-                ProjectId: project.RTP,
-                CapXProjectId: project.ProjectId,
+                ProjectId: project.ProjectId,
+                CapXProjectId: project.RTP,
                 Name: project.Name,
                 PrincipalInvestigator: project.PI,
                 ProjectManagerId: project.ProjectManager?.PersonId,
