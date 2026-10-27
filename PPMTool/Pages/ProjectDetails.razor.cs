@@ -132,7 +132,7 @@ namespace PPMTool.Pages
         private bool showOnlyFinanceNotes;
         private bool showOnlyDueItems;
         private bool sortByDueDate;
-        private MentionState mention = new();
+        private readonly MentionState mention = new();
         private IList<Person> mentionables;
         private IList<Person> cachedMentionables;
         private RadzenHtmlEditor htmlEditor;
@@ -299,7 +299,6 @@ namespace PPMTool.Pages
 
                     // Generate the funds requested and received
                     var transactions = FinanceHelper.ComputeTransactionBreakdown(
-                        Context,
                         project.CostModel,
                         project.SubTasks,
                         sources,

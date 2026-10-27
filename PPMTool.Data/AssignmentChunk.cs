@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
-using System.ComponentModel;
 using System.Diagnostics;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
@@ -16,25 +15,26 @@ namespace PPMTool.Data
     {
         public string EmployeeName { get; set; } = null!;
 
-        [Description("The grade of the person for the duration of this assignment")]
         public int Grade { get; set; }
 
-        [Description("Financial reference key relationship used to compute costs for this assignment chunk")]
+        /// <summary>
+        /// Financial reference key used to compute costs for this assignment chunk
+        /// </summary>
         public int? CostValueSetId { get; set; }
 
-        [Description("Financial reference key name used for display in this assignment chunk")]
+        /// <summary>
+        /// Financial reference key name used for display in this assignment chunk
+        /// </summary>
         public string? CostValueName { get; set; }
 
         /// <summary>
         /// This is the FTE of the resource for this assignment chunk based on the project work duty allocation
         /// </summary>
-        [Description("The assignment FTE in terms of the person's project allowance in our planning system")]
         public double FTE { get; set; }
 
         /// <summary>
         /// This is the FTE of the resource that is being billed to the project for this assignment chunk (essentially the equivalent FTE including indirects if the project charges them)
         /// </summary>
-        [Description("The FTE we are recharging to the project for this assignment")]
         public double BilledFTE { get; set; }
 
         public int ProjectId { get; set; }
@@ -52,15 +52,8 @@ namespace PPMTool.Data
         public string LowerOrgUnit { get; set; } = null!;
 
         /// <summary>
-        /// This is the estimated salary cost of the individual resource based on their workload model and associated financial reference value -- essentially the cost to the department
-        /// </summary>
-        [Description("Estimated salary cost based on workload-model-linked financial reference value -- i.e. cost to the department for employing the person for this assignment period")]
-        public double SalaryCostEstimate { get; set; }
-
-        /// <summary>
         /// This is the planned cost of the resource for the assignment chunk as lifted from the task itself. If not using the day-rate model for costing, this will be the same as the salary cost estimate.
         /// </summary>
-        [Description("Estimated cost of assignment based on what model was used to cost the project and nature of funding source")]
         public double PlannedCost { get; set; }
 
         private DateTime startDate;
@@ -81,19 +74,10 @@ namespace PPMTool.Data
 
         public string? AccountCode { get; set; }
 
-        [Description("Based on how we understand the costing was done - DI/DA or something else because DA/DI doesn't apply")]
         public string? FundingSourceType { get; set; }
 
-        [Description("Costs of the assignment that we estimate will be covered by what we have been told is in the funding source")]
-        public double AmountCovered { get; set; }
-
-        [Description("Whether the overall assignment is considered fully covered, partially covered or not covered at all by the money in the funding source")]
-        public string BudgetStatus { get; set; } = null!;
-
-        [Description("Supplementary notes on what we know about the funding source used to cover the cost of this assignment")]
         public string? FundingSourceDescription { get; set; }
 
-        [Description("What type of duty this assignment represents - some types of work are not necessarily rechargeable")]
         public string AssignmentType { get; set; } = Duty.ProjectWork.GetDescription();
 
         /// <summary>
@@ -131,9 +115,6 @@ namespace PPMTool.Data
             AccountCode = taskToCopy.AccountCode;
             FundingSourceType = taskToCopy.FundingSourceType;
             FundingSourceDescription = taskToCopy.FundingSourceDescription;
-            AmountCovered = taskToCopy.AmountCovered;
-            BudgetStatus = taskToCopy.BudgetStatus;
-            SalaryCostEstimate = taskToCopy.SalaryCostEstimate;
             PlannedCost = taskToCopy.PlannedCost;
             AssignmentType = taskToCopy.AssignmentType;
             UniqueResourceKey = taskToCopy.UniqueResourceKey;
@@ -143,8 +124,7 @@ namespace PPMTool.Data
         /// Based on available financial references, recompute the estimated salary cost of the assignment using the explicitly selected cost key.
         /// </summary>
         /// <param name="finrefs"></param>
-        /// <param name="shouldUpdatePlanned"></param>
-        internal void RecomputeChunkCosts(IEnumerable<FinancialReference> finrefs, bool shouldUpdatePlanned)
+        internal void RecomputeChunkCosts(IEnumerable<FinancialReference> finrefs)
         {
             try
             {
@@ -165,11 +145,9 @@ namespace PPMTool.Data
 
                 var fractionOfYear = (EndDate.Date.Subtract(StartDate.Date).TotalDays + 1) / 365d;
 
-                // The cost of a resource uses the BilledFTE which means it includes indirects if the model permits it
-                SalaryCostEstimate = annualCosts * BilledFTE * fractionOfYear;
-
                 // If the planned cost figures should be updated then they will match the salary cost estimate
-                if (shouldUpdatePlanned) PlannedCost = SalaryCostEstimate;
+                // The cost of a resource uses the BilledFTE which means it includes indirects if the model permits it
+                PlannedCost = annualCosts * BilledFTE * fractionOfYear;
             }
             catch (Exception ex)
             {

@@ -273,3 +273,18 @@ dotnet_naming_style.no_underscore_prefix.required_suffix =
 dotnet_naming_rule.private_fields_no_underscore.symbols = private_fields
 dotnet_naming_rule.private_fields_no_underscore.style = no_underscore_prefix
 dotnet_naming_rule.private_fields_no_underscore.severity = error
+
+# Make field readonly
+dotnet_diagnostic.IDE0044.severity = warning
+
+# Unused private members
+dotnet_diagnostic.IDE0051.severity = warning
+
+# Unread private members
+dotnet_diagnostic.IDE0052.severity = warning
+
+# Unused assignments
+dotnet_diagnostic.IDE0059.severity = warning
+
+# Unused parameters
+dotnet_diagnostic.IDE0060.severity = warning

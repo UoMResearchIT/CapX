@@ -21,6 +21,14 @@ namespace PPMTool.Tests.API
         protected static int PersonId { get; private set; }
         protected static int ProjectId { get; private set; }
         protected static string? TimesheetCode { get; private set; }
+        protected static int FinancialYear { get; private set; }
+        protected static int FundingSourceId { get; private set; }
+        protected static int SchoolId { get; private set; }
+        protected static int FacultyId { get; private set; }
+        protected static int SubTaskId { get; private set; }
+        protected static int ResourceId { get; private set; }
+        protected static int WorkloadModelChangeId { get; private set; }
+
 
         /// <summary>
         /// Provides a configured HttpClient for making requests to the API with an API key for a manager.
@@ -98,6 +106,8 @@ namespace PPMTool.Tests.API
                     .Include(k => k.Owner)
                         .ThenInclude(o => o.Person);
 
+                Console.WriteLine($"Tests: {keys.Count()} usable API keys found.");
+
                 if (keys.Count() == 0)
                 {
                     throw new Exception("No valid API keys found in the database. Please create one for testing.");
@@ -106,6 +116,8 @@ namespace PPMTool.Tests.API
                 // Get manager keys
                 var managerKey = keys
                     .Where(k => k.Owner.RoleType == RoleType.Manager);
+
+                Console.WriteLine($"Tests: {keys.Count()} usable manager API keys found.");
 
                 if (managerKey.Count() == 0)
                 {
@@ -132,6 +144,27 @@ namespace PPMTool.Tests.API
 
                 // Set a timesheet code to be used for the timesheet tests
                 TimesheetCode = context.InnateCodes.FirstOrDefault()?.ActivityCode;
+
+                // Get a financial year from the database for API tests
+                FinancialYear = context.FinancialReferences.OrderByDescending(x => x.FinancialYear).Select(x => x.FinancialYear).FirstOrDefault();
+
+                // Get a funding source ID from the database for API tests
+                FundingSourceId = context.FundingSources.OrderBy(x => x.FundingSourceId).FirstOrDefault()?.FundingSourceId ?? 0;
+
+                // Get a school ID from the database for API tests
+                SchoolId = context.Schools.OrderBy(x => x.SchoolId).FirstOrDefault()?.SchoolId ?? 0;
+
+                // Get a faculty ID from the database for API tests
+                FacultyId = context.Faculties.OrderBy(x => x.FacultyId).FirstOrDefault()?.FacultyId ?? 0;
+
+                // Get a subtask ID from the database for API tests
+                SubTaskId = context.SubTasks.OrderBy(x => x.SubTaskId).FirstOrDefault()?.SubTaskId ?? 0;
+
+                // Get a resource ID from the database for API tests
+                ResourceId = context.Resources.OrderBy(x => x.ResourceId).FirstOrDefault()?.ResourceId ?? 0;
+
+                // Get a workload model change ID from the database for API tests
+                WorkloadModelChangeId = context.WorkloadModelChanges.OrderBy(x => x.WorkloadModelChangeId).FirstOrDefault()?.WorkloadModelChangeId ?? 0;
 
                 // Get the first report of a manager
                 foreach (var key in managerKey)

@@ -1,0 +1,274 @@
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using PPMTool.API.DTOs;
+using PPMTool.API.Helpers;
+using PPMTool.Data.Context;
+
+namespace PPMTool.API.Endpoints
+{
+    /// <summary>
+    /// Provides endpoints for Workload Model Change data.
+    /// </summary>
+    public static class WorkloadModels
+    {
+        /// <summary>
+        /// Provides Workload Model Analysis data for a set of people across a date range.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="logger"></param>
+        /// <param name="http"></param>
+        /// <param name="personNames">Comma separated list of names, with spaces replaced with underscores</param>
+        /// <param name="startDate">In format yyyy-MM-dd</param>
+        /// <param name="endDate">In format yyyy-MM-dd</param>
+        /// <param name="compareToWLM">Whether data should be net with respect to workload model</param>
+        /// <param name="normalisedByTotalHours">Whether data should be a fraction of FTE worked rather than absolute FTE</param>
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<WLMAnalysisPersonDataDTO>))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public static async Task<IResult> GetWorkloadAnalysisData(
+            PPMToolContext context,
+            ILogger logger,
+            HttpContext http,
+            [FromQuery] string personNames,
+            [FromQuery] string startDate,
+            [FromQuery] string endDate,
+            [FromQuery] bool compareToWLM = false,
+            [FromQuery] bool normalisedByTotalHours = false)
+        {
+            try
+            {
+                // Try parse the datetimes
+                var success = GeneralHelpers.ParseDateTime(startDate, out DateTime start);
+                if (!success)
+                {
+                    logger.LogWarning($"API: GetWorkloadAnalysisDataDateRange: Invalid start date {startDate}");
+                    return Results.BadRequest($"Invalid start date {startDate}. Must be in the format yyyy-MM-dd.");
+                }
+                success = GeneralHelpers.ParseDateTime(endDate, out DateTime end);
+                if (!success)
+                {
+                    logger.LogWarning($"API: GetWorkloadAnalysisDataDateRange: Invalid end date {endDate}");
+                    return Results.BadRequest($"Invalid end date {endDate}. Must be in the format yyyy-MM-dd.");
+                }
+
+                // Split the comma-separated names
+                var names = personNames.Split(',').Select(n => n.Trim()).Where(n => !string.IsNullOrEmpty(n)).ToList();
+                if (!names.Any()) return Results.BadRequest("No person names provided.");
+
+                // Same calculations as the WLM
+                start = start.StartOfWeek();
+                end = end.StartOfWeek().AddDays(6);
+
+                // Validate each person and check authorisation
+                var selectedPeople = new List<Data.Entities.Person>();
+                foreach (var name in names)
+                {
+                    var person = await GeneralHelpers.FindPersonWithLineManagerByNameAsync(context, name);
+                    if (person == null) return Results.NotFound($"Person '{name}' not found.");
+
+                    if (!GeneralHelpers.IsSuperUserOrLineManagerOrSelf(http, person)) return Results.Unauthorized();
+
+                    selectedPeople.Add(person);
+                }
+
+                var results = await WorkloadModelHelpers.GenerateWlmAnalysisDataAsync(
+                    context,
+                    selectedPeople,
+                    start,
+                    end,
+                    compareToWLM,
+                    normalisedByTotalHours
+                );
+
+                logger.LogInformation($"API: Returned WLM Analysis data as JSON for {personNames}.");
+                return Results.Json(results);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "WorkloadModelAnalysis Endpoint Error");
+                return Results.StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        /// <summary>
+        /// Get all workload model changes, optionally filtered by change date.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="logger"></param>
+        /// <param name="http"></param>
+        /// <param name="startDate">The earliest change date to include.</param>
+        /// <param name="endDate">The latest change date to include.</param>
+        [ProducesResponseType(
+            StatusCodes.Status200OK,
+            Type = typeof(IEnumerable<WorkloadModelChangeDTO>))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public static async Task<IResult> GetAllWorkloadModelChangesAsync(
+            PPMToolContext context,
+            ILogger logger,
+            HttpContext http,
+            [FromQuery] DateOnly? startDate,
+            [FromQuery] DateOnly? endDate)
+        {
+            try
+            {
+                if (startDate.HasValue &&
+                    endDate.HasValue &&
+                    startDate.Value > endDate.Value)
+                {
+                    logger.LogWarning(
+                        "API: GetAllWorkloadModelChanges: Start date {StartDate} is later than end date {EndDate}.",
+                        startDate,
+                        endDate);
+
+                    return Results.BadRequest("Start date must not be later than end date.");
+                }
+
+                var caller = GeneralHelpers.GetCurrentUser(http);
+                var canAccess = GeneralHelpers.IsSuperUserOrManager(caller);
+
+                if (!canAccess)
+                {
+                    logger.LogWarning("API: GetAllWorkloadModelChanges: Caller does not have permission to access workload model change data.");
+
+                    return Results.Unauthorized();
+                }
+
+                var query = context.WorkloadModelChanges
+                    .AsNoTracking()
+                    .AsQueryable();
+
+                if (startDate.HasValue)
+                {
+                    var start = startDate.Value.ToDateTime(TimeOnly.MinValue);
+
+                    query = query.Where(x => x.ChangeDate >= start);
+                }
+
+                if (endDate.HasValue)
+                {
+                    var end = endDate.Value.ToDateTime(TimeOnly.MaxValue);
+
+                    query = query.Where(x => x.ChangeDate <= end);
+                }
+
+                var workloadModelChangeDtos = await query
+                    .OrderBy(x => x.Person.PersonId)
+                    .ThenBy(x => x.ChangeDate)
+                    .Select(x => new WorkloadModelChangeDTO(
+                        x.Person.PersonId,
+                        DateOnly.FromDateTime(x.ChangeDate),
+                        x.Grade,
+                        x.CostValueSet != null ? x.CostValueSet.Name : null,
+                        x.ProjectWorkFTE,
+                        x.StaffManagementFTE,
+                        x.ProjectManagementFTE,
+                        x.ServiceManagementFTE,
+                        x.BusinessAsUsualFTE,
+                        x.PersonalDevelopmentFTE,
+                        x.ArchitectureFTE
+                    ))
+                    .ToListAsync();
+
+                logger.LogInformation(
+                    "API: GetAllWorkloadModelChanges: Returned {Count} workload model change records.",
+                    workloadModelChangeDtos.Count);
+
+                return Results.Json(workloadModelChangeDtos);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "API: GetAllWorkloadModelChanges: error");
+
+                return Results.StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        /// <summary>
+        /// Get one workload model change by workload model change ID.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="logger"></param>
+        /// <param name="http"></param>
+        /// <param name="workloadModelChangeId">The workload model change ID.</param>
+        [ProducesResponseType(
+            StatusCodes.Status200OK,
+            Type = typeof(WorkloadModelChangeDTO))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public static async Task<IResult> GetWorkloadModelChangeByIdAsync(
+            PPMToolContext context,
+            ILogger logger,
+            HttpContext http,
+            [FromQuery] int? workloadModelChangeId)
+        {
+            try
+            {
+                if (!workloadModelChangeId.HasValue || workloadModelChangeId.Value <= 0)
+                {
+                    logger.LogWarning("API: GetWorkloadModelChangeById: Invalid workloadModelChangeId {WorkloadModelChangeId}.",
+                        workloadModelChangeId);
+
+                    return Results.BadRequest("Workload model change ID must be greater than zero.");
+                }
+
+                var caller = GeneralHelpers.GetCurrentUser(http);
+                var canAccess = GeneralHelpers.IsSuperUserOrManager(caller);
+
+                if (!canAccess)
+                {
+                    logger.LogWarning("API: GetWorkloadModelChangeById: Caller does not have permission to access workload model change data.");
+
+                    return Results.Unauthorized();
+                }
+
+                var workloadModelChangeDto = await context.WorkloadModelChanges
+                    .AsNoTracking()
+                    .Where(x => x.WorkloadModelChangeId == workloadModelChangeId.Value)
+                    .Select(x => new WorkloadModelChangeDTO(
+                        x.Person.PersonId,
+                        DateOnly.FromDateTime(x.ChangeDate),
+                        x.Grade,
+                        x.CostValueSet != null ? x.CostValueSet.Name : null,
+                        x.ProjectWorkFTE,
+                        x.StaffManagementFTE,
+                        x.ProjectManagementFTE,
+                        x.ServiceManagementFTE,
+                        x.BusinessAsUsualFTE,
+                        x.PersonalDevelopmentFTE,
+                        x.ArchitectureFTE
+                    ))
+                    .FirstOrDefaultAsync();
+
+                if (workloadModelChangeDto == null)
+                {
+                    logger.LogWarning(
+                        "API: GetWorkloadModelChangeById: No workload model change found for workloadModelChangeId {WorkloadModelChangeId}.",
+                        workloadModelChangeId);
+
+                    return Results.NotFound();
+                }
+
+                logger.LogInformation(
+                    "API: GetWorkloadModelChangeById: Returned workload model change record for workloadModelChangeId {WorkloadModelChangeId}.",
+                    workloadModelChangeId);
+
+                return Results.Json(workloadModelChangeDto);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "API: GetWorkloadModelChangeById: error");
+
+                return Results.StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+    }
+}

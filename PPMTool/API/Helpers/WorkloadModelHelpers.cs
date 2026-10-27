@@ -44,6 +44,7 @@ namespace PPMTool.API.Helpers
                 var personWeeklyData = new List<WLMWeeklyAnalysisDTO>();
 
                 var allTimesheets = await context.Timesheets
+                    .AsNoTracking()
                     .Include(t => t.TimesheetEntries).ThenInclude(e => e.InnateCodeTask).ThenInclude(tk => tk.InnateCode)
                     .Where(t => t.Owner.PersonId == person.PersonId && t.StartDate >= startDate && t.StartDate <= endDate)
                     .ToListAsync();

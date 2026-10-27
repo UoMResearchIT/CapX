@@ -26,6 +26,12 @@ SPDX-License-Identifier: apache-2.0
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Blazor-ApexCharts" Version="7.0.0" />
     <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />

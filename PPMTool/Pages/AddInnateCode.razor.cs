@@ -33,7 +33,7 @@ namespace PPMTool.Pages
         /// <param name="Value"></param>
         /// <param name="Text"></param>
         public record DutyOption(Duty Value, string Text);
-        private IEnumerable<DutyOption> duties =
+        private readonly IEnumerable<DutyOption> duties =
             Enum.GetValues<Duty>().Select(d => new DutyOption(d, d.GetDescription()));
 
         protected override async Task OnInitializedAsync()

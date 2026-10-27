@@ -35,7 +35,7 @@ namespace PPMTool.Models
         /// Whether this task is a fake task which exists in either the provisional or confirmed series so they both match in length.
         /// This is to workaround a bug in Apex Charts where the sorting doesn't work if the series aren't all the same length.
         /// </summary>
-        private bool isFake;
+        private readonly bool isFake;
 
         /// <summary>
         /// What duty this task this block aligns to based on the subtask that it relates to.

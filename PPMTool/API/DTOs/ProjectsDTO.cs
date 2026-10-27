@@ -7,8 +7,8 @@ namespace PPMTool.API.DTOs
     /// <summary>
     /// A flat representation of a project suitable for API data exports.
     /// </summary>
-    /// <param name="ProjectId">The project RTP ID used by assignment exports.</param>
-    /// <param name="CapXProjectId">The internal CapX project entity ID.</param>
+    /// <param name="ProjectId">The project ID of the entity in the database.</param>
+    /// <param name="CapXProjectId">The UI-visible project reference number.</param>
     /// <param name="Name">The name of the project.</param>
     /// <param name="PrincipalInvestigator">The principal investigator on the project.</param>
     /// <param name="ProjectManagerId">The person ID of the project manager, if one is assigned.</param>
@@ -18,6 +18,10 @@ namespace PPMTool.API.DTOs
     /// <param name="RequestDocLink">The request document link.</param>
     /// <param name="ScrumProjectLink">The scrum project link.</param>
     /// <param name="ProjectStatus">The current project status.</param>
+    /// <param name="SchoolId">The ID of the school associated with the project.</param>
+    /// <param name="CostModel">The cost model for the project.</param>
+    /// <param name="StartDate">The start date of the project.</param>
+    /// <param name="EndDate">The end date of the project.</param>
     public sealed record ProjectDTO(
         int ProjectId,
         int CapXProjectId,
@@ -29,6 +33,10 @@ namespace PPMTool.API.DTOs
         string TimesheetActivityName,
         string RequestDocLink,
         string ScrumProjectLink,
-        string ProjectStatus
+        string ProjectStatus,
+        int SchoolId,
+        string CostModel,
+        DateOnly StartDate,
+        DateOnly EndDate
     );
 }

@@ -23,7 +23,6 @@ namespace PPMTool.Data.Helpers
         /// <param name="endDate">Window end date. If not provided, uses latest project end.</param>
         /// <param name="tasksInWindow">The tasks in the window for assginments to be extract. If not provided, extracts subtasks from the projects in the window.</param>
         /// <param name="shouldCalculateCosts">If false the chunks will use the cost values already attached to the resources. If true, costs are recomputed from financial reference values using the associated cost key and overwrite anything stored.</param>
-        /// <param name="budgetDetails">An optional dictionary of information about the budget status of each resource assignment that can be added to the data if supplied and matched.</param>
         /// <returns></returns>
         public static IEnumerable<AssignmentChunk> GetAssignmentChunks(
             Person person,
@@ -32,8 +31,7 @@ namespace PPMTool.Data.Helpers
             DateTime? startDate = null,
             DateTime? endDate = null,
             IEnumerable<SubTask>? tasksInWindow = null,
-            bool shouldCalculateCosts = false,
-            IDictionary<string, AssignmentBudgetDetail>? budgetDetails = null)
+            bool shouldCalculateCosts = false)
         {
             // New list
             var data = new List<AssignmentChunk>();
@@ -43,16 +41,16 @@ namespace PPMTool.Data.Helpers
             {
                 startDate = projectsInWindow.Min(x => x.StartDate);
             }
+
             if (endDate == null)
             {
                 endDate = projectsInWindow.Max(x => x.EndDate);
             }
 
             // Check tasks and infer from projects if not specified
-            List<SubTask>? tempTasksInWindow = null;
+            List<SubTask> tempTasksInWindow;
             if (tasksInWindow == null)
             {
-                // If there are no subtasks or resources then just replace with empty enumerables
                 tempTasksInWindow = projectsInWindow
                     .SelectMany(x => x.SubTasks ?? Enumerable.Empty<SubTask>())
                     .Where(x => (x.AssignedResources ?? Enumerable.Empty<Resource>())
@@ -68,22 +66,8 @@ namespace PPMTool.Data.Helpers
             // Get WLM changes for this person that take place during the window
             var wlms = person.WorkloadModelChanges
                 .Where(x => x.ChangeDate >= startDate && x.ChangeDate <= endDate)
-                .OrderByDescending(x => x.ChangeDate).ToList();
-
-            // Get WLM in force on the first day of the window or return blank WLM
-            WorkloadModelChange windowStartWLM = person.GetWorkloadModelOnDate(startDate ?? default) ?? new WorkloadModelChange();
-
-            // If there isn't a WLM change on the first day of the window then add the default to the list to complete it
-            if (wlms.FirstOrDefault(x => x.ChangeDate == windowStartWLM.ChangeDate) == null)
-            {
-                // Add the start WLM to the list of WLMs active in the window
-                wlms.Add(windowStartWLM);
-            }
-
-            // Are there any changes in grade or selected cost key for this person?
-            var changesInGradeOrCostKey = wlms
-                .DistinctBy(x => $"{x.Grade}|{x.CostValueSetId}")
-                .Count() > 1;
+                .OrderBy(x => x.ChangeDate)
+                .ToList();
 
             // Are there any changes in financial year in the window?
             var startFY = FinancialReference.GetFinancialYear(startDate ?? default);
@@ -107,29 +91,24 @@ namespace PPMTool.Data.Helpers
                 var fundingSource = resource.FundedFrom;
 
                 // Proportion the data for the task based on the window
-                var adjustedTaskStart = task.StartDate.Date < startDate ? startDate ?? default : task.StartDate;
-                var adjustedTaskEnd = task.EndDate.Date > endDate ? endDate ?? default : task.EndDate;
+                var adjustedTaskStart = task.StartDate.Date < startDate
+                        ? startDate ?? default
+                        : task.StartDate;
+
+                var adjustedTaskEnd = task.EndDate.Date > endDate
+                        ? endDate ?? default
+                        : task.EndDate;
+
                 var daysOfTaskForChunk = adjustedTaskEnd.Subtract(adjustedTaskStart).TotalDays + 1;
                 var lengthOfTask = task.EndDate.Subtract(task.StartDate).TotalDays + 1;
-                var proportionOfTask = lengthOfTask <= 0 ? 0 : daysOfTaskForChunk / lengthOfTask;
+                var proportionOfTask = lengthOfTask <= 0
+                        ? 0
+                        : daysOfTaskForChunk / lengthOfTask;
 
-                // Get the workload model in force when this task begins within the reporting window
+                // Get the workload model in force when this task begins
                 var taskStartWLM = person.GetWorkloadModelOnDate(adjustedTaskStart) ?? new WorkloadModelChange();
 
-                // If budget infomation provided then use to populate chunk
-                var amountCovered = 0d;
-                var budgetStatus = BudgetStatus.NotInBudget.GetDescription();
-                AssignmentBudgetDetail? budgetLine = null;
-                if (budgetDetails != null)
-                {
-                    // Find the budget line associated with this chunk
-                    budgetLine = budgetDetails.ContainsKey(resKey) ? budgetDetails[resKey] : null;
-
-                    // Update the values to be assigned to the initial chunk
-                    budgetLine?.GetBudgetDetailsForWindow(adjustedTaskStart, adjustedTaskEnd, out budgetStatus, out amountCovered);
-                }
-
-                // Create a line representing the full, un-chunked task to start off with
+                // Create a line representing the full, un-chunked task
                 var initialChunk = new AssignmentChunk(resKey)
                 {
                     EmployeeName = person.Name,
@@ -149,130 +128,113 @@ namespace PPMTool.Data.Helpers
                     EndDate = adjustedTaskEnd,
                     FinancialYear = FinancialReference.GetFinancialYear(adjustedTaskStart),
                     PlannedCost = resource.PlannedCost * proportionOfTask,
-                    AccountCode = string.IsNullOrWhiteSpace(fundingSource?.AccountCode) ? "Unknown" : fundingSource?.AccountCode,
-                    FundingSourceType = string.IsNullOrWhiteSpace(fundingSource?.FundingSourceType.GetDescription()) ? "Unknown" : fundingSource?.FundingSourceType.GetDescription(),
-                    FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.Description) ? "None" : fundingSource?.Description,
-                    AmountCovered = amountCovered,
-                    BudgetStatus = budgetStatus,
+                    AccountCode = string.IsNullOrWhiteSpace(fundingSource?.AccountCode)
+                        ? "Unknown"
+                        : fundingSource.AccountCode,
+                    FundingSourceType = string.IsNullOrWhiteSpace(fundingSource?.FundingSourceType.GetDescription())
+                            ? "Unknown"
+                            : fundingSource.FundingSourceType.GetDescription(),
+                    FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.Description)
+                            ? "None"
+                            : fundingSource.Description,
                     AssignmentType = task.TaskDuty.GetDescription()
                 };
-                IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>()
+
+                IList<AssignmentChunk> taskChunks = new List<AssignmentChunk>
                 {
                     initialChunk
                 };
 
-                // Are there any changes to grade for this person
-                // Ignore grade changes for leadership task resources
-                if (changesInGradeOrCostKey && task.SubTaskId > 0)
+                // Split at every WLM change within the assignment
+                var changes = wlms
+                    .Where(x =>
+                        x.ChangeDate > initialChunk.StartDate &&
+                        x.ChangeDate <= initialChunk.EndDate)
+                    .OrderBy(x => x.ChangeDate)
+                    .ToList();
+
+                if (changes.Count > 0)
                 {
                     var tempChunks = new List<AssignmentChunk>();
 
-                    // Find changes that are within the chunk
-                    var changes = wlms.Where(x => x.ChangeDate > initialChunk.StartDate && x.ChangeDate <= initialChunk.EndDate).OrderBy(x => x.ChangeDate);
                     var lengthOfInitialChunk = initialChunk.EndDate.Subtract(initialChunk.StartDate).TotalDays + 1;
+                    var chunkStart = initialChunk.StartDate.Date;
 
                     foreach (var change in changes)
                     {
-                        // Get previous WLM by looking at day before change
-                        var wlmBefore = person.GetWorkloadModelOnDate(change.ChangeDate.AddDays(-1)) ?? new WorkloadModelChange();
+                        var chunkEnd = change.ChangeDate.Date.AddDays(-1);
 
-                        // Define a new task chunk for before period if necessary
-                        if (wlmBefore.Grade != change.Grade || wlmBefore.CostValueSetId != change.CostValueSetId)
+                        if (chunkEnd >= chunkStart)
                         {
-                            var startDateOfNewChunk = tempChunks.Count > 0 ?
-                                new DateTime(tempChunks.Last().EndDate.AddDays(1).Ticks) :
-                                new DateTime(initialChunk.StartDate.Ticks);
-
-                            var endDateOfNewChunk = change.ChangeDate.AddDays(-1);
-
-                            var lengthOfNewChunk = endDateOfNewChunk.Subtract(startDateOfNewChunk).TotalDays + 1;
+                            var chunkWlm = person.GetWorkloadModelOnDate(chunkStart) ?? new WorkloadModelChange();
+                            var lengthOfNewChunk = chunkEnd.Subtract(chunkStart).TotalDays + 1;
                             var proportionOfInitialChunk = lengthOfNewChunk / lengthOfInitialChunk;
+
                             if (proportionOfInitialChunk > 1)
                             {
                                 proportionOfInitialChunk = 1;
                             }
 
-                            // Update the budget details
-                            budgetLine?.GetBudgetDetailsForWindow(startDateOfNewChunk, endDateOfNewChunk, out budgetStatus, out amountCovered);
-
-                            // Add chunk
                             tempChunks.Add(new AssignmentChunk(initialChunk)
                             {
-                                Grade = wlmBefore.Grade,
-                                CostValueSetId = wlmBefore.CostValueSetId,
-                                CostValueName = wlmBefore.CostValueSet?.Name,
-                                StartDate = startDateOfNewChunk,
-                                EndDate = endDateOfNewChunk,
-                                PlannedCost = initialChunk.PlannedCost * proportionOfInitialChunk,
-                                AmountCovered = amountCovered,
-                                BudgetStatus = budgetStatus
+                                Grade = chunkWlm.Grade,
+                                CostValueSetId = chunkWlm.CostValueSetId,
+                                CostValueName = chunkWlm.CostValueSet?.Name,
+                                StartDate = chunkStart,
+                                EndDate = chunkEnd,
+                                PlannedCost = initialChunk.PlannedCost * proportionOfInitialChunk
                             });
                         }
+
+                        // The changed WLM comes into force on this date
+                        chunkStart = change.ChangeDate.Date;
                     }
 
-                    // If we did a split then need to add the final task chunk
-                    var remainingCosts = initialChunk.PlannedCost - tempChunks.Sum(x => x.PlannedCost);
-                    if (tempChunks.Count > 0)
+                    // Add the final chunk from the last WLM change to the end
+                    if (chunkStart <= initialChunk.EndDate.Date)
                     {
-                        // Dates
-                        var finalChunkStart = new DateTime(tempChunks.Last().EndDate.AddDays(1).Ticks).Date;
-                        var finalChunkEnd = new DateTime(initialChunk.EndDate.Ticks).Date;
-                        var lengthOfFinalChunk = finalChunkEnd.Subtract(finalChunkStart).TotalDays + 1;
+                        var chunkWlm = person.GetWorkloadModelOnDate(chunkStart) ?? new WorkloadModelChange();
+                        var remainingCosts = initialChunk.PlannedCost - tempChunks.Sum(x => x.PlannedCost);
 
-                        // Update the budget details
-                        budgetLine?.GetBudgetDetailsForWindow(finalChunkStart, finalChunkEnd, out budgetStatus, out amountCovered);
-
-                        // Add chunk
-                        var wlmOnFinalChunkStart = person.GetWorkloadModelOnDate(finalChunkStart) ?? new WorkloadModelChange();
                         tempChunks.Add(new AssignmentChunk(initialChunk)
                         {
-                            Grade = wlmOnFinalChunkStart.Grade,
-                            CostValueSetId = wlmOnFinalChunkStart.CostValueSetId,
-                            CostValueName = wlmOnFinalChunkStart.CostValueSet?.Name,
-                            StartDate = finalChunkStart,
-                            EndDate = finalChunkEnd,
-                            PlannedCost = remainingCosts > 0 ? remainingCosts : 0,
-                            AmountCovered = amountCovered,
-                            BudgetStatus = budgetStatus
+                            Grade = chunkWlm.Grade,
+                            CostValueSetId = chunkWlm.CostValueSetId,
+                            CostValueName = chunkWlm.CostValueSet?.Name,
+                            StartDate = chunkStart,
+                            EndDate = initialChunk.EndDate.Date,
+                            PlannedCost = remainingCosts > 0 ? remainingCosts : 0
                         });
                     }
 
-                    // Replace the list with the new list of chunks
-                    if (tempChunks.Count > 0) taskChunks = tempChunks;
+                    taskChunks = tempChunks;
                 }
 
-                Debug.WriteLine($"** Project {project.RTP} => {task.Name} | {taskChunks.Count} chunks after Grade splitting");
+                Debug.WriteLine($"** Project {project.RTP} => {task.Name} | {taskChunks.Count} chunks after WLM splitting");
 
-                // Are there any financial year changes within the window
+                // Split chunks at financial year boundaries
                 if (changesInFinancialYear)
                 {
                     var tempChunks = new List<AssignmentChunk>();
 
-                    // Loop over chunks and see if a financial year change lands in the middle
                     foreach (var chunk in taskChunks)
                     {
-                        // Get financial year the chunk starts and finishes in
                         var fyStart = FinancialReference.GetFinancialYear(chunk.StartDate);
                         var fyEnd = FinancialReference.GetFinancialYear(chunk.EndDate);
 
-                        // If the task crosses financial years then we need to split it
                         if (fyStart != fyEnd)
                         {
                             var lengthOfInitialChunk = chunk.EndDate.Subtract(chunk.StartDate).TotalDays + 1;
 
-                            // For each financial year falling within the task, add chunks
                             for (var i = fyStart; i <= fyEnd; i++)
                             {
-                                // Get start and end dates of the chunk
-                                var startDateOfNewChunk =
-                                    fyStart == i ?
-                                    new DateTime(chunk.StartDate.Ticks) :
-                                    new DateTime(i, 8, 1);
+                                var startDateOfNewChunk = fyStart == i
+                                        ? new DateTime(chunk.StartDate.Ticks)
+                                        : new DateTime(i, 8, 1);
 
-                                var endDateOfNewChunk =
-                                    fyEnd == i ?
-                                    new DateTime(chunk.EndDate.Ticks) :
-                                    new DateTime(i + 1, 7, 31);
+                                var endDateOfNewChunk = fyEnd == i
+                                        ? new DateTime(chunk.EndDate.Ticks)
+                                        : new DateTime(i + 1, 7, 31);
 
                                 var lengthOfNewChunk = endDateOfNewChunk.Subtract(startDateOfNewChunk).TotalDays + 1;
                                 var proportionOfInitialChunk = lengthOfNewChunk / lengthOfInitialChunk;
@@ -281,17 +243,12 @@ namespace PPMTool.Data.Helpers
                                     proportionOfInitialChunk = 1;
                                 }
 
-                                // Update the budget details
-                                budgetLine?.GetBudgetDetailsForWindow(startDateOfNewChunk, endDateOfNewChunk, out budgetStatus, out amountCovered);
-
                                 tempChunks.Add(new AssignmentChunk(chunk)
                                 {
                                     StartDate = startDateOfNewChunk,
                                     EndDate = endDateOfNewChunk,
                                     FinancialYear = i,
-                                    PlannedCost = chunk.PlannedCost * proportionOfInitialChunk,
-                                    AmountCovered = amountCovered,
-                                    BudgetStatus = budgetStatus
+                                    PlannedCost = chunk.PlannedCost * proportionOfInitialChunk
                                 });
                             }
                         }
@@ -301,28 +258,30 @@ namespace PPMTool.Data.Helpers
                         }
                     }
 
-                    // Replace the list with the new list of chunks
-                    if (tempChunks.Count > 0) taskChunks = tempChunks;
+                    if (tempChunks.Count > 0)
+                    {
+                        taskChunks = tempChunks;
+                    }
                 }
 
                 Debug.WriteLine($"** Project {project.RTP} => {task.Name} | {taskChunks.Count} chunks after FY splitting");
 
                 // Filter task chunk list to just those that intersect the window
-                taskChunks = taskChunks.Where(x => x.StartDate <= endDate && x.EndDate >= startDate).ToList();
+                taskChunks = taskChunks
+                    .Where(x => x.StartDate <= endDate && x.EndDate >= startDate)
+                    .ToList();
 
                 Debug.WriteLine($"** Project {project.RTP} => {task.Name} | {taskChunks.Count} chunks run during the window");
 
-                // Add task to master list
                 data.AddRange(taskChunks);
             }
 
-            // Add financial-reference-based salary estimates and overwrite the planned costs if necessary or possible
-            if (finrefs != null)
+            // Recompute the planned cost using the selected financial reference value
+            if (finrefs != null && shouldCalculateCosts)
             {
                 foreach (var chunk in data)
                 {
-                    // Cost estimate based on the selected financial reference value key
-                    chunk.RecomputeChunkCosts(finrefs, shouldCalculateCosts);
+                    chunk.RecomputeChunkCosts(finrefs);
                 }
             }
 

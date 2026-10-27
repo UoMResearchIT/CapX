@@ -76,7 +76,7 @@ namespace PPMTool.Shared
         private string versionString;
         private string commitString;
         private string searchTerm;
-        private List<MagicBarItem> sourceData = new();
+        private readonly List<MagicBarItem> sourceData = new();
         private DotNetObjectReference<MainLayout> razorComponentReference;
         private LoginView loginView;
         private int totalTimesheetIssues;
