@@ -950,7 +950,23 @@ namespace PPMTool.Pages
             allNotes = NoteService.GetAll(Context).Where(x => x.Project.ProjectId == ProjectId).ToList();
             if (showOnlyFinanceNotes) allNotes = allNotes.Where(x => x.IsFinanceInfo).ToList();
             if (showOnlyDueItems) allNotes = allNotes.Where(x => x.IsDue() || x.IsOverDue()).ToList();
-            if (sortByDueDate) allNotes = allNotes.Where(x => x.DueDate != null).OrderBy(x => x.DueDate).Concat(allNotes.Where(x => x.DueDate == null)).ToList();
+
+            if (sortByDueDate)
+            {
+                allNotes = allNotes
+                    .OrderBy(x => x.DueDate ?? DateTime.MaxValue)
+                    .ThenByDescending(x => x.CreatedDate)
+                    .ThenByDescending(x => x.NoteId)
+                    .ToList();
+            }
+            else
+            {
+                allNotes = allNotes
+                    .OrderByDescending(x => x.CreatedDate)
+                    .ThenByDescending(x => x.NoteId)
+                    .ToList();
+            }
+
             filteredNotes = allNotes;
         }
 
