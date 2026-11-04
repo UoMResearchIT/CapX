@@ -415,6 +415,14 @@ namespace PPMTool.Pages
             // No search terms so show all
             if (string.IsNullOrWhiteSpace(noteSearchTerms))
             {
+                // Reset the filtered note if it was set
+                if (FilteredNote != null)
+                {
+                    FilteredNote = null;
+                    lastNote = null;
+                    await JS.InvokeVoidAsync("removeQueryParameter", "filteredNote");
+                }
+
                 filteredNotes = allNotes;
                 Debug.WriteLine($"** Notes reset");
                 StateHasChanged();
@@ -935,10 +943,18 @@ namespace PPMTool.Pages
         /// <summary>
         /// Invoked when the notes filter switch is toggled
         /// </summary>
-        private void FilterSwitchToggled()
+        private async Task FilterSwitchToggled()
         {
             LoadNotesFromDB();
-            InvokeAsync(async () => await FilterHighlightScrollNotesAsync());
+
+            if (!showOnlyDueItems && !sortByDueDate && FilterDueNotes)
+            {
+                FilterDueNotes = false;
+                lastDue = false;
+                await JS.InvokeVoidAsync("removeQueryParameter", "filterDueNotes");
+            }
+
+            await FilterHighlightScrollNotesAsync();
         }
 
         /// <summary>
@@ -973,10 +989,19 @@ namespace PPMTool.Pages
         /// <summary>
         /// Clears the search terms and resets the filter
         /// </summary>
-        private void ClearSearch()
+        private async Task ClearSearch()
         {
             noteSearchTerms = string.Empty;
-            InvokeAsync(async () => await FilterHighlightScrollNotesAsync());
+
+            // Reset the filtered note if it was set
+            if (FilteredNote != null)
+            {
+                FilteredNote = null;
+                lastNote = null;
+                await JS.InvokeVoidAsync("removeQueryParameter", "filteredNote");
+            }
+
+            await FilterHighlightScrollNotesAsync();
         }
 
         /// <summary>
