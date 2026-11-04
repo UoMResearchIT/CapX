@@ -86,6 +86,30 @@ namespace PPMTool.Data.Enums
 
         [Description("The name of the application as it appears in the application header.")]
         [DefaultSettingValue("CapX - RSE Operational Management Tool")]
-        ApplicationName = 18
+        ApplicationName = 18,
+
+        [Description("The length of time in calendar days that a request is expected to be open at the start of the demand process. Affects the timers on the MyProjects page.")]
+        [DefaultSettingValue("14")]
+        RequestDurationLimit = 19,
+
+        [Description("The percentage of the planned cost that can be underclaimed (requested) for a given financial year.")]
+        [DefaultSettingValue("10")]
+        UnderclaimedFundsThreshold = 20,
+
+        [Description("Default cost value from financial references to be used as the default cost key for resources in the cost estimator when using non-day-rate costing.")]
+        [DefaultSettingValue("")]
+        EstimateCostDefaultCostValueName = 21,
+
+        [Description("Financial reference value to be used to represent recovery target in dashboard  and recovery calculations.")]
+        [DefaultSettingValue("RecoveryTarget")]
+        RecoveryTargetCostValueName = 22,
+
+        [Description("The endpoint for the LLM API driving the AI chat functionality.")]
+        [DefaultSettingValue("")]
+        LLMEndPoint = 23,
+
+        [Description("The model for the LLM API driving the AI chat functionality.")]
+        [DefaultSettingValue("")]
+        LLMModel = 24
     }
 }

@@ -1,0 +1,42 @@
+@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@using PPMTool.Data.Entities
+@using PPMTool.Models
+@using PPMTool.Services
+
+<RadzenStack class="@($"my-1 p-1 rounded-frame {request?.BorderClass}")"
+             Orientation="Radzen.Orientation.Horizontal"
+             Wrap="FlexWrap.NoWrap"
+             Gap="0.5rem"
+             AlignItems="AlignItems.Center">
+    <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
+    <RadzenIcon Icon="schedule"
+                Style="@($"color:{request?.ClockColour};")" />
+    <RadzenProgressBar Value="@(request?.ClockPercentage ?? 0)"
+                       ShowValue="false"
+                       ProgressBarStyle="@(request?.ProgressBarStyle ?? ProgressBarStyle.Light)"
+                       Style="width: 8rem;" />
+    <RadzenText TextStyle="TextStyle.Subtitle2" Text="@($"({request?.DaysRemaining} day(s) remaining)")" />
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public Project Project { get; set; }
+
+    [Inject]
+    private ProjectService ProjectService { get; set; }
+
+    private RequestClockDetails request;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        // Get the request model details back from the service
+        request = ProjectService.GetRequestClockDetails(Project.CreatedDate);
+    }
+}

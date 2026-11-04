@@ -122,6 +122,29 @@ namespace PPMTool.Data.Entities
         public string? ActualsLastUpdated { get; set; } = DateTime.Now.ToString("R");
 
         /// <summary>
+        /// The date when the project was created
+        /// </summary>
+        [Required]
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+        /// <summary>
+        /// The latest date the project was moved out of the New Request status.
+        /// </summary>
+        public DateTime? RequestCompletedDate { get; set; }
+
+        /// <summary>
+        /// The person who created the project request -- automatically set to the logged in user when the project is created but can be changed later if necessary
+        /// </summary>
+        [Required]
+        public int RequestOwnerId { get; set; }
+
+        /// <summary>
+        /// Navigation property for the person who created the project request
+        /// </summary>
+        [InverseProperty("RequestedOwnerProjects")]
+        public Person RequestOwner { get; set; } = null!;
+
+        /// <summary>
         /// List of Invoices associated with this project
         /// </summary>
         public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
@@ -143,6 +166,52 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         [NotMapped]
         public double FundsReceived { get; set; }
+
+        /// <summary>
+        /// Method to determine whether the active user can edit this project based on its configuration or the configuration of dependent parameters.
+        /// Allowed to edit if they are the PM, a superuser, or the request owner and the project is in the new request state.
+        /// This assesses the state of the project model unless arguments specifically passed to speculatively assess access.
+        /// </summary>
+        /// <param name="activeUser"></param>
+        /// <param name="projectManagerId"></param>
+        /// <param name="requestOwnerId"></param>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public bool ActiveUserHasEditAccessToProject(User? activeUser, int? projectManagerId = null, int? requestOwnerId = null, ProjectStatus? status = null)
+        {
+            // If no user then false
+            if (activeUser == null)
+            {
+                return false;
+            }
+
+            // If no PM provided then read from the model
+            if (projectManagerId == null)
+            {
+                projectManagerId = ProjectManager?.PersonId;
+            }
+
+            // If no request owner provided then read from model and retrieve from DB
+            if (requestOwnerId == null)
+            {
+                requestOwnerId = RequestOwnerId;
+            }
+
+            // If no status provided then read from model
+            if (status == null)
+            {
+                status = ProjectStatus;
+            }
+
+            // Active user id for comparison
+            var activeUserId = activeUser?.Person?.PersonId;
+
+            // Run the conditions
+            return
+                activeUser!.RoleType == RoleType.Superuser ||
+                projectManagerId != null && projectManagerId == activeUserId ||
+                requestOwnerId != null && status == ProjectStatus.NewRequest && requestOwnerId == activeUserId;
+        }
 
         /// <summary>
         /// Checks whether any funding sources are not linked to any resources in the subtasks
@@ -242,6 +311,68 @@ namespace PPMTool.Data.Entities
         public bool HasNoFundingSourcesButRan()
         {
             return ProjectStatus.DidRun() && !(FundingSources?.Any() ?? false);
+        }
+
+        /// <summary>
+        /// When there are Other funding sources but the total funds requested for the current FY is below the planned cost for the FY by a given threshold percentage.
+        /// Requested funds value is provided by caller so this entity does not have to deep load the invoices.
+        /// </summary>
+        /// <param name="requestedThisFY"></param>
+        /// <param name="thresholdPercentage"></param>
+        /// <param name="today"></param>
+        /// <returns></returns>
+        public bool FundsRequestedBelowPlannedCostForFY(double requestedThisFY, double thresholdPercentage, DateTime? today = null)
+        {
+            var currentDate = (today ?? DateTime.Today).Date;
+
+            // Get planned costs in current financial year
+            var currentFY = FinancialReference.GetFinancialYear(currentDate);
+            var financialYearStart = new DateTime(currentFY, 8, 1);
+            var financialYearEnd = new DateTime(currentFY + 1, 7, 31);
+            var plannedThisFY = GetPlannedCostInDateRange(financialYearStart, financialYearEnd);
+            if (plannedThisFY <= 0)
+            {
+                return false;
+            }
+
+            var threshold = Math.Clamp(thresholdPercentage, 0d, 100d);
+            var minimumExpectedRequestedFunds = plannedThisFY * (1d - (threshold / 100d));
+            return requestedThisFY < minimumExpectedRequestedFunds;
+        }
+
+        /// <summary>
+        /// Calculates the planned cost of the project within a given date range by summing the proportion of planned costs of each subtask that overlaps with the date range.
+        /// </summary>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        private double GetPlannedCostInDateRange(DateTime startDate, DateTime endDate)
+        {
+            if (startDate.Date > endDate.Date || SubTasks == null)
+            {
+                return 0;
+            }
+
+            double planned = 0;
+            foreach (var subTask in SubTasks.Where(x => x.IsWithin(startDate, endDate)))
+            {
+                var taskStart = subTask.StartDate.Date;
+                var taskEnd = subTask.EndDate.Date;
+                var overlapStart = taskStart > startDate.Date ? taskStart : startDate.Date;
+                var overlapEnd = taskEnd < endDate.Date ? taskEnd : endDate.Date;
+
+                if (overlapEnd < overlapStart)
+                {
+                    continue;
+                }
+
+                // Get proportion of planned costs of the task in the window
+                var taskDays = Math.Max(1d, taskEnd.Subtract(taskStart).TotalDays + 1d);
+                var overlapDays = overlapEnd.Subtract(overlapStart).TotalDays + 1d;
+                planned += subTask.PlannedCost * (overlapDays / taskDays);
+            }
+
+            return planned;
         }
 
         /// <summary>
@@ -461,6 +592,17 @@ namespace PPMTool.Data.Entities
         public string GetSensibleObjectName()
         {
             return $"Project {RTP} | {Name}";
+        }
+
+        /// <summary>
+        /// Whether the request owner message should be shown on the my project card.
+        /// Depends on the status of the project and who is viewing the message.
+        /// </summary>
+        /// <param name="messageViewerPersonId">The person Id of the viewer of the message</param>
+        /// <returns></returns>
+        public bool ShowRequestOwnerMessage(int messageViewerPersonId)
+        {
+            return RequestOwnerId != ProjectManager?.PersonId && messageViewerPersonId != RequestOwnerId && ProjectStatus == ProjectStatus.NewRequest;
         }
     }
 }

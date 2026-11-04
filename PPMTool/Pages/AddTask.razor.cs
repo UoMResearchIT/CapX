@@ -130,7 +130,6 @@ namespace PPMTool.Pages
         private int? selectedPredecessorId;
         private IList<Person> people = new List<Person>();
         private IList<Person> filteredPeople = new List<Person>();
-        private IEnumerable<Rate> availableRates = new List<Rate>();
         private IEnumerable<Duty> allowedTaskDuties = new List<Duty>();
         private IEnumerable<FundingSource> availableSources = new List<FundingSource>();
         private bool startDateDisabled;
@@ -237,7 +236,6 @@ namespace PPMTool.Pages
                 .ToList();
             taskTypes = Enum.GetValues<TaskType>().ToList();
             availableTags = SkillTagService.GetAll(Context);
-            availableRates = Enum.GetValues<Rate>().ToList();
             availableSources = FundingSourceService.GetFundingSources(Context, ProjectId ?? 0).ToList();
 
             // Limit the number of task duties for now as this is a new feature and integral to a lot of the in-built calculations
@@ -307,8 +305,8 @@ namespace PPMTool.Pages
             // Assign edit context
             editContext = new EditContext(TaskModel);
 
-            // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser
-            EditAuthorised = ActiveUserRoleType == RoleType.Superuser || (ActiveUserRoleType == RoleType.Manager && ProjectModel.ProjectManager.PersonId == ActiveUser?.Person.PersonId);
+            // If editing or adding a task, only allow the project manager of the owning project to do it or a superuser or the request owner if in a request state
+            EditAuthorised = projectModel.ActiveUserHasEditAccessToProject(ActiveUser);
 
             LogInformation(TaskModel.SubTaskId > 0 ? $"Editing task {TaskModel?.Name} on {ProjectModel?.GetSensibleObjectName()} | Copy = {IsCopy} | Split = {IsSplit}" : $"Adding new task to {ProjectModel?.GetSensibleObjectName()}");
 

@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+// SPDX-FileCopyrightText: 2026 University of Manchester
 //
 // SPDX-License-Identifier: apache-2.0
 
@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using LoremNET;
 using Microsoft.EntityFrameworkCore;
+using PPMTool.API;
 using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -464,6 +465,97 @@ namespace PPMTool.Helpers
                     Person = context.People.FirstOrDefault(x => x.ShortName == "JN")
                 };
                 context.Users.Add(none);
+                context.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Seed API keys for dummy-data testing.
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        internal static void SeedApiKeys(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+            logger.LogInformation("Seeding API keys...");
+            using (var context = dbContextFactory.CreateDbContext())
+            {
+                // Check if there is already an API key for a manager with a report and a developer key
+                var managerWithReportExists = context.ApiKeys
+                    .Include(x => x.Owner)
+                    .ThenInclude(x => x.Person)
+                    .Any(x => x.ExpiresAt > DateTime.Now
+                        && x.Owner.RoleType == RoleType.Manager
+                        && x.Owner.Person != null
+                        && context.People.Any(p => p.LineManager != null && p.LineManager.PersonId == x.Owner.Person.PersonId));
+
+                // Check if there is already a developer key
+                var developerKeyExists = context.ApiKeys
+                    .Include(x => x.Owner)
+                    .ThenInclude(x => x.Person)
+                    .Any(x => x.ExpiresAt > DateTime.Now
+                        && x.Owner.RoleType == RoleType.Developer
+                        && x.Owner.Person != null);
+
+                // If there are the keys we need then no need to seed anything
+                if (managerWithReportExists && developerKeyExists)
+                {
+                    return;
+                }
+
+                // Otherwise, get a manager and a developer that we can generate dummy keys for
+                var manager = context.Users
+                    .Include(x => x.Person)
+                    .AsEnumerable()
+                    .FirstOrDefault(x => x.RoleType == RoleType.Manager
+                        && x.Person != null
+                        && context.People.Any(p => p.LineManager != null && p.LineManager.PersonId == x.Person.PersonId))
+                    ?? throw new InvalidOperationException("Cannot find a manager with a report to seed an API key for testing.");
+
+                var developer = context.Users
+                    .Include(x => x.Person)
+                    .FirstOrDefault(x => x.RoleType == RoleType.Developer && x.Person != null)
+                    ?? throw new InvalidOperationException("Cannot find a developer to seed an API key for testing.");
+
+                // Create a one day long token so it will be useful for tests but not a lingering security issue
+                var tokenProvider = new ApiTokenProvider(configuration);
+                const int expirationInDays = 1;
+                var keysToAdd = new List<ApiKey>();
+
+                // Add key
+                if (!managerWithReportExists)
+                {
+                    keysToAdd.Add(new ApiKey
+                    {
+                        Active = true,
+                        Description = "Dummy data manager API key",
+                        ExpiresAt = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(expirationInDays), DateTimeKind.Unspecified),
+                        Key = tokenProvider.CreateToken(manager, expirationInDays),
+                        Owner = manager
+                    });
+                }
+
+                if (!developerKeyExists)
+                {
+                    keysToAdd.Add(new ApiKey
+                    {
+                        Active = true,
+                        Description = "Dummy data developer API key",
+                        ExpiresAt = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(expirationInDays), DateTimeKind.Unspecified),
+                        Key = tokenProvider.CreateToken(developer, expirationInDays),
+                        Owner = developer
+                    });
+                }
+
+                // Check the keys are valid and we didn't mess up the generation
+                if (keysToAdd.Any(x => string.IsNullOrWhiteSpace(x.Key)))
+                {
+                    throw new InvalidOperationException("Failed to generate API keys during dummy-data seeding. Check JWT secret configuration.");
+                }
+
+                // Save changes
+                context.ApiKeys.AddRange(keysToAdd);
                 context.SaveChanges();
             }
         }
@@ -1192,37 +1284,68 @@ namespace PPMTool.Helpers
                     new FinancialReference
                     {
                         FinancialYear = fy - 1,
-                        Grade41Costs = 33333.55f,
-                        Grade55Costs = 43172.16f,
-                        Grade65Costs = 50935.8f,
-                        Grade71Costs = 57458.16f,
-                        Grade75Costs = 64797.29f,
-                        RecoveryTarget = 1118849f,
-                        Grade51Costs = 38011.97f
+                        Values = new List<FinancialReferenceValue>
+                        {
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade41Costs" }, Value = 33333.55f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade51Costs" }, Value = 38011.97f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade55Costs" }, Value = 43172.16f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade65Costs" }, Value = 50935.8f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade71Costs" }, Value = 57458.16f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade75Costs" }, Value = 64797.29f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "RecoveryTarget" }, Value = 1118849f }
+                        }
                     },
                     new FinancialReference
                     {
                         FinancialYear = fy,
-                        Grade41Costs = 34510.63f,
-                        Grade55Costs = 44349.48f,
-                        Grade65Costs = 52095f,
-                        Grade71Costs = 58617.36f,
-                        Grade75Costs = 65956.38f,
-                        RecoveryTarget = 1118849f,
-                        Grade51Costs = 39799.01f
+                        Values = new List<FinancialReferenceValue>
+                        {
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade41Costs" }, Value = 34510.63f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade51Costs" }, Value = 39799.01f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade55Costs" }, Value = 44349.48f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade65Costs" }, Value = 52095f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade71Costs" }, Value = 58617.36f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade75Costs" }, Value = 65956.38f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "RecoveryTarget" }, Value = 1118849f }
+                        }
                     },
                     new FinancialReference
                     {
                         FinancialYear = fy + 1,
-                        Grade41Costs = 35740.07f,
-                        Grade55Costs = 45603.10f,
-                        Grade65Costs = 53422.28f,
-                        Grade71Costs = 60005.48f,
-                        Grade75Costs = 67585.78f,
-                        RecoveryTarget = 1518718f,
-                        Grade51Costs = 41010.82f
+                        Values = new List<FinancialReferenceValue>
+                        {
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade41Costs" }, Value = 35740.07f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade51Costs" }, Value = 41010.82f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade55Costs" }, Value = 45603.10f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade65Costs" }, Value = 53422.28f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade71Costs" }, Value = 60005.48f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "Grade75Costs" }, Value = 67585.78f },
+                            new() { FinancialReferenceValueSet = new FinancialReferenceValueSet { Name = "RecoveryTarget" }, Value = 1518718f }
+                        }
                     }
                 };
+
+                // Group the valuesets
+                var valueSetsByName = context.FinancialReferenceValueSets.ToList()
+                     .GroupBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+                     .ToDictionary(x => x.Key, x => x.First(), StringComparer.OrdinalIgnoreCase);
+
+                // Flatten the financial references and ensure that the value sets
+                foreach (var value in financialReferences.SelectMany(x => x.Values))
+                {
+                    // Check if the value set already exists in the database, and if not, add it to the dictionary
+                    var name = value.FinancialReferenceValueSet.Name;
+                    if (!valueSetsByName.TryGetValue(name, out var valueSet))
+                    {
+                        valueSet = value.FinancialReferenceValueSet;
+                        valueSetsByName.Add(name, valueSet);
+                    }
+
+                    // Assign the existing value set to the financial reference value
+                    value.FinancialReferenceValueSet = valueSet;
+                }
+
+                // Add the financial references to the context and save changes
                 context.FinancialReferences.AddRange(financialReferences);
                 context.SaveChanges();
             }
@@ -1529,6 +1652,16 @@ namespace PPMTool.Helpers
                         StartDate = ApplyDateOffset(2025, 03, 05),
                     }
                 };
+
+                // Make sure we seed request owners that will just be the PM if there is one
+                var defaultRequestOwner = context.People.OrderBy(x => x.PersonId).FirstOrDefault()
+                    ?? throw new InvalidOperationException("Cannot find a person to use as project request owner during seeding.");
+
+                foreach (var project in projects)
+                {
+                    project.RequestOwner = project.ProjectManager ?? defaultRequestOwner;
+                }
+
                 context.Projects.AddRange(projects);
                 context.SaveChanges();
             }
@@ -2499,7 +2632,22 @@ namespace PPMTool.Helpers
             var rnd = new Random();
 
             // Get WLM of the person at the start of the week
-            var wlm = person.GetWorkloadModelOnDateOrDefault(currentDate);
+            var wlm = person.GetWorkloadModelOnDate(currentDate);
+
+            // If there isn't one then create a dummy
+            if (wlm == null)
+            {
+                // Dummy workload model just for the sake of seeding data
+                wlm = new WorkloadModelChange()
+                {
+                    ChangeDate = currentDate,
+                    Person = person,
+                    ProjectWorkFTE = 0.8,
+                    BusinessAsUsualFTE = 0.1,
+                    PersonalDevelopmentFTE = 0.1,
+                    Grade = 6
+                };
+            }
 
             // Project work structure where they are resource and project is running on this week
             var projects = context.Projects
@@ -2926,7 +3074,8 @@ namespace PPMTool.Helpers
                 {
                     FeatureType = FeatureType.ProjectsAndCapacity,
                     Name = "Projects & Capacity",
-                    Description = "Allows mangers to add projects to the database and assign people to them. It also allows them to visualise the capacity of their team based on the project assignments and workload models of the people."
+                    Description = "Allows mangers to add projects to the database and assign people to them. It also allows them to visualise the capacity of their team based on the project assignments and workload models of the people.",
+                    Enabled = true
                 },
                 new Feature
                 {

@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
-using System;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
@@ -12,7 +10,7 @@ using PPMTool.Services;
 namespace PPMTool.Pages
 {
     [Authorize(Roles = "Manager,Superuser")]
-    public abstract class AddPersonProperty<T> : DataGridPage<T> where T : PersonProperty
+    public abstract class AddPersonProperty<T> : DataGridPage<T> where T : PersonProperty, new()
     {
         [Inject]
         public PersonService PersonService { get; set; }

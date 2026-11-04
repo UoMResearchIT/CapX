@@ -1,0 +1,38 @@
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@using Radzen
+@inject DialogService DialogService
+
+<RadzenStack Orientation="Radzen.Orientation.Vertical">
+    <RadzenTextArea @bind-Value="NoteText"
+                    Placeholder="Enter rejection note..." />
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal">
+        <RadzenButton Text="Reject"
+                      ButtonStyle="ButtonStyle.Danger"
+                      Click="@(() => { OnNoteSubmitted?.Invoke(true, NoteText); DialogService.Close(); })" />
+        <RadzenButton Text="Cancel"
+                      ButtonStyle="ButtonStyle.Light"
+                      Click="@(() => { OnNoteSubmitted?.Invoke(false, null); DialogService.Close(); })" />
+    </RadzenStack>
+</RadzenStack>
+
+
+
+@code {
+
+    /// <summary>
+    /// Callback action to be invoked when the note is submitted.
+    /// It takes a boolean parameter indicating whether the note was submitted or cancelled, and a string parameter representing the note text.
+    /// </summary>
+    [Parameter]
+    public Action<bool, string> OnNoteSubmitted { get; set; }
+
+    /// <summary>
+    /// The text of the rejection note.
+    /// </summary>
+    public string NoteText { get; set; }
+}

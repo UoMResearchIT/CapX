@@ -62,7 +62,7 @@ SPDX-License-Identifier: apache-2.0
                         <RadzenButton Text="Generate"
                                       Click="@(async () => await ConfigureChartSourceAsync())"
                                       Icon="refresh"
-                                      class="capacity-gen-button" />
+                                      class="@GetGenerateButtonCssClass()" />
                     }
                 </RadzenStack>
             </RadzenCard>
@@ -88,7 +88,8 @@ SPDX-License-Identifier: apache-2.0
                             <div class="rz-card rz-variant-fill my-1">
                                 <CapacityChartComponent ChartModel=@chartModels[i]
                                                         OnDataPointSelection="@(async item => await DataPointsSelectedAsync(item))"
-                                                        OnChartZoomed="@OnChartZoomed" />
+                                                        OnChartZoomed="@OnChartZoomed"
+                                                        IsProjectMode="@PeopleChosen()" />
                             </div>
                         </div>
                     }

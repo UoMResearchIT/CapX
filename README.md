@@ -8,7 +8,7 @@ SPDX-License-Identifier: apache-2.0
 This tool initially started as a basic project and portfolio management (PPM) tool. Its first feature was capacity management, but it has since been extended to incorporate a much larger, more complex data model useful for an increased number of operational management activities. Written in .NET Blazor (Server) with a SQLite database (other providers are supported), it is used for managing many aspects of the service delivery of the digital research technical professional departments and the development of its staff.
 
 > [!IMPORTANT]
-> The [dRTP Community of Operational Management, Peer Advice and Shared Support (dRTP COMPASS)](https://uomresearchit.github.io/DRTP-Op-Man-CoP-Website/) is responsible for its strategic direction. We’d love to hear if you are using this tool. If you would like to be part of dRTP-OMCoP then please let us know!
+> The [dRTP Community of Operational Management, Peer Advice and Shared Support (dRTP COMPASS)](https://drtp-compass.github.io/) is responsible for its strategic direction. We’d love to hear if you are using this tool. If you would like to be part of dRTP COMPASS then please let us know!
 
 ## User Accounts and Access
 The app supports integration with CAS / Shibboleth as well as Azure AD / Entra with access to restricted parts of the app managed within the app using a Role-Based Access Control (RBAC) database table. Super-users are able to manage user roles and access via the "Manage Access" page.
@@ -50,12 +50,16 @@ As CapX supports multiple DB providers, the migrations required to set up the da
 
 ```
 dotnet ef migrations add NameOfMigrationHere --context PPMToolContext --project PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj --startup-project PPMTool/PPMTool.csproj
+dotnet ef migrations add NameOfMigrationHere --context PPMToolContext --project PPMTool.Migrations.SqlServer/PPMTool.Migrations.SqlServer.csproj --startup-project PPMTool/PPMTool.csproj
+dotnet ef migrations add NameOfMigrationHere --context PPMToolContext --project PPMTool.Migrations.PostgreSql/PPMTool.Migrations.PostgreSql.csproj --startup-project PPMTool/PPMTool.csproj
 ```
 
 The database can be updated manually with the following command but the web app calls `context.Database.Migrate();` anyway so the database will be created/updated as soon as the app runs making manual update rarely necessary.
 
 ```
 dotnet ef database update --context PPMToolContext --project PPMTool.Migrations.Sqlite/PPMTool.Migrations.Sqlite.csproj --startup-project PPMTool/PPMTool.csproj
+dotnet ef database update --context PPMToolContext --project PPMTool.Migrations.SqlServer/PPMTool.Migrations.SqlServer.csproj --startup-project PPMTool/PPMTool.csproj
+dotnet ef database update --context PPMToolContext --project PPMTool.Migrations.PostgreSql/PPMTool.Migrations.PostgreSql.csproj --startup-project PPMTool/PPMTool.csproj
 ```
 
 > [!WARNING] 
@@ -69,6 +73,12 @@ There are two _solution_ configurations: `Local` and `Release` that combine proj
 
 > [!TIP]
 > The `ASPNETCORE_ENVIRONMENT` variable is used to specify whether the app should run in production or development mode. This is a runtime variable and has nothing to do with the compile-time _build_ configuration.
+
+### Local AI Support
+Superusers have access to an AI assistant to help pull out information and trends from the data model in the database. Settings are used to specify an endpoint and model as required by the chat component Radzen supply.
+
+> [!TIP]
+> The recommended configuration is to run a local model in [ollama](https://ollama.com/download) running in a docker container with the chat endpoint and model type provided in the settings to enable the chat window. 
 
 ### Running with Docker Compose
 Docker Compose runs a single container with a single volume containing the database.
@@ -85,10 +95,8 @@ To set this up, create a `.env` file in the repository root with the following r
 | `ASPNETCORE_ENVIRONMENT` | ASP.NET Core runtime environment. Valid values: `Development` or `Production`. This determines which `appsettings.*.json` file is loaded at runtime. |
 | `BUILD_CONFIGURATION` | .NET build configuration (`-c` flag). Valid values: `Local`, `Debug`, or `Release`. See [Solution/Build and Launch Configurations](#solutionbuild-and-launch-configurations) for details. |
 | `CONNECTION_STRING` | SQLite connection string, e.g. `Data Source=state/PPMTool.db` |
-| `LEAVEBOOKINGS_CONNECTION_STRING` | Connection string for the leave bookings database (The University of Manchester only) |
 | `API_KEY_SECRET` | Secret for API key generation (minimum 16 characters). Use `openssl rand -hex 16` to generate a strong key. |
-| `CAPX_HTTP_PORT` | Port for the web application (e.g. `3000`) |
-| `CAPX_API_PORT` | Port for the API (e.g. `3001`) |
+| `CAPX_HTTP_PORT` | Port for the web application (e.g. `5001`) |
 | `CAPX_STATE_DIR` | Where the SQLite DB lives outside the container (if using this DB provider) |
 | `SEED_DUMMY_DATA` | Set to `TRUE` to seed dummy data on startup |
 | `SUPERUSER_NAME` | Name of the superuser (required if seeding) |
@@ -130,9 +138,9 @@ docker compose --env-file /path/to/env/file up --build
 ```
 
 You can then access:
-- The web application at `http://localhost:3000` (or your configured `CAPX_HTTP_PORT`)
-- The API at `http://localhost:3000/api` (or your configured `CAPX_HTTP_PORT`)
-- The swagger interface at `http://localhost:3000/swagger` (or your configured `CAPX_HTTP_PORT`)
+- The web application at `http://localhost:5001` (or your configured `CAPX_HTTP_PORT`)
+- The API at `http://localhost:5001/api` (or your configured `CAPX_HTTP_PORT`)
+- The swagger interface at `http://localhost:5001/swagger` (or your configured `CAPX_HTTP_PORT`)
 
 Use Ctrl-C to bring the container down. The database state is maintained in a Docker volume. To wipe the volume and start from the initial state, use:
 
@@ -178,8 +186,3 @@ CapX makes use of automated deployment. As the VMs are on the University private
 
 ### Database Backups
 The databases are backed up (including flushing of the WAL journals) as part of the deployment automation pipeline. However, there is also an hourly cronjob that flushes and backs up the DB to a different directory. This mechanism stores 72 backups, deleting the oldest when this file count is exceeded.
-
-### Leave Booking database
-The University of Manchester instance of the CapX API also connects the [institutional leave booking system](https://holiday.its.manchester.ac.uk/) database. This connection string needs to be specified properly for this connection to work.
-
-

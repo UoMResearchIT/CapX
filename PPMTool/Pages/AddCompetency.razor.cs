@@ -20,7 +20,36 @@ namespace PPMTool.Pages
         [Inject]
         private CompetencyService CompetencyService { get; set; }
 
+        [Inject]
+        private HtmlContentSanitizerService HtmlContentSanitizer { get; set; }
+
         private Competency competency;
+
+        /// <summary>
+        /// Intermediate property to bind the editor to so we can sanitise before updating the actual model
+        /// </summary>
+        private string CompetencyDescriptionValue
+        {
+            get => competency?.Description ?? string.Empty;
+            set
+            {
+                if (competency == null) return;
+                competency.Description = HtmlContentSanitizer.Sanitize(value);
+            }
+        }
+
+        /// <summary>
+        /// Intermediate property to bind the editor to so we can sanitise before updating the actual model
+        /// </summary>
+        private string CompetencyObjectiveValue
+        {
+            get => competency?.Objective ?? string.Empty;
+            set
+            {
+                if (competency == null) return;
+                competency.Objective = HtmlContentSanitizer.Sanitize(value);
+            }
+        }
         private CompetencyCategory? originalCategory = null;
         private int? originalNumber = null;
         private int? originalGrade = null;

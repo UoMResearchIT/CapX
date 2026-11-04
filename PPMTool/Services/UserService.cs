@@ -11,11 +11,8 @@ namespace PPMTool.Services
 {
     public class UserService : BaseEntityService<User>
     {
-        private IDbContextFactory<PPMToolContext> contextFactory;
-
-        public UserService(ILogger<UserService> logger, IDbContextFactory<PPMToolContext> contextFactory) : base(logger)
+        public UserService(ILogger<UserService> logger) : base(logger)
         {
-            this.contextFactory = contextFactory;
         }
 
         /// <inheritdoc />
@@ -160,6 +157,18 @@ namespace PPMTool.Services
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Get a user entity by its primary key.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public User GetById(PPMToolContext context, int userId)
+        {
+            return GetAll(context)
+                .FirstOrDefault(x => x.UserId == userId);
         }
     }
 }

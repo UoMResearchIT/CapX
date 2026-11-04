@@ -7,6 +7,7 @@ SPDX-License-Identifier: apache-2.0
 @using PPMTool.Data.Entities
 @using PPMTool.Data.Enums
 @using PPMTool.Data.Enums.Attributes
+@inject ThemeService ThemeService
 
 <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="5px;">
     <div title="@description" style="background-color: @backgroundColour; height: 1rem; width: 100%; margin-bottom: -0.1rem; border-radius: var(--rz-badge-border-radius)" />
@@ -25,7 +26,7 @@ SPDX-License-Identifier: apache-2.0
     {
         base.OnInitialized();
 
-        backgroundColour = (Entry?.InnateCodeTask?.Duty.GetAttribute<ColourAttribute>().BackgroundColourCode ?? "#609");
+        backgroundColour = Entry?.InnateCodeTask?.Duty.GetBackgroundColourCode(ThemeService.IsDarkTheme());
         description = Entry?.InnateCodeTask?.Duty.ToNiceString();
     }
 

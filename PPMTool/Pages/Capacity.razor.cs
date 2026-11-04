@@ -172,6 +172,8 @@ namespace PPMTool.Pages
             var item = selectedOptions as Person;
             Debug.WriteLine($"** Selected Manager: {item?.Name}");
 
+            chartNeedsRegeneration = true;
+
             // Save the new state
             SaveManagerState();
 
@@ -257,14 +259,14 @@ namespace PPMTool.Pages
                 endDate,
                 person,
                 // Hatched function -- If any resources are marked as provisional or the project owning the task is not funded, active or in maintenance i.e. unconfirmed.
-                assignments => assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed() || assignment.SubTask.IsProvisionalResource(person)),
+                hatchedFunction: assignments => assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed() || assignment.SubTask.IsProvisionalResource(person)),
                 // Value 2 function
-                (assignments, value1, currentDay) =>
+                value2Function: (assignments, value1, currentDay) =>
                 {
                     return person.GetProjectWorkAvailabilityOnDate(currentDay);
                 },
                 // Gap filler function
-                (assignments, gapStart, gapEnd) =>
+                gapFillingFunction: (assignments, gapStart, gapEnd) =>
                 {
                     return ChartHelper.FillGapsBetweenChartItemsFromWorkloadModels(
                         person,
@@ -276,7 +278,7 @@ namespace PPMTool.Pages
                         (double value1, double value2, bool isHatched) => ChartItem.GetColourStringFTE(value1, value2)
                     );
                 },
-                assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
+                tooltipMessageFormatter: assignmentsInBlock => GenerateTooltipMessages(assignmentsInBlock, person, string.Empty)
             );
         }
 
@@ -288,6 +290,7 @@ namespace PPMTool.Pages
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <param name="person"></param>
+        /// <param name="totalAssignmentsByDay"></param>
         /// <param name="isTotalRow"></param>
         /// <returns></returns>
         protected override IEnumerable<ChartItem> GetProjectModeChartItemsFromAssignments(
@@ -296,18 +299,20 @@ namespace PPMTool.Pages
             DateTime startDate,
             DateTime endDate,
             Person person,
+            IReadOnlyDictionary<DateTime, double> totalAssignmentsByDay,
             bool isTotalRow = false
         )
         {
             return ChartHelper.ConvertAssignmentsToChartItems(
                 groupedAssignments.Value,
-                // Value 1 for each block
+                // Value 1 for each block is sum of assignments across all sub tasks
                 (assignments, currentDay) => assignments.RoundedSum(assignment => assignment.SubTask.GetAssignmentValueForPerson(person)),
                 // Colour function
                 (value1, value2, isHatched) =>
                 {
-                    // Shading function based on value 1 and value 2
-                    return ChartItem.GetColourStringFTE(value1, isTotalRow ? value2 : 1, isTotalRow ? ColourScale.Capacity : ColourScale.Load);
+                    // In project mode, value2 is availability derived from total assignment load.
+                    // For total row, reconstruct capacity from assigned + available for colour scaling.
+                    return ChartItem.GetColourStringFTE(value1, isTotalRow ? value1 + value2 : 1, isTotalRow ? ColourScale.Capacity : ColourScale.Load);
                 },
                 seriesName,
                 startDate,
@@ -316,14 +321,17 @@ namespace PPMTool.Pages
                 person: isTotalRow ? person : null,
                 // Hatched function
                 hatchedFunction: assignments => assignments.Any(assignment => assignment.ProjectStatus.IsUnconfirmed() || assignment.SubTask.IsProvisionalResource(person)),
-                // Value 2 for each block
+                // Value 2 for each block is availability derived from total assignment load
                 value2Function: (assignments, value1, currentDay) =>
                 {
-                    var peo = people.Where(y => y == person);
+                    var totalAssignedForDay = totalAssignmentsByDay.TryGetValue(currentDay.Date, out var total) ? total : 0;
+                    var capacityForDay = person.GetProjectWorkAvailabilityOnDate(currentDay);
 
-                    // The total availability of the person becomes value 2
-                    return peo.RoundedSum(y => y.GetProjectWorkAvailabilityOnDate(currentDay));
+                    // Value 2 is the availability relative to total assignments for the chosen person/day
+                    return Math.Round(capacityForDay - totalAssignedForDay, 3);
                 },
+                // Value 3 is the project work availabilty
+                value3Function: (assignments, value1, currentDay) => person.GetProjectWorkAvailabilityOnDate(currentDay),
                 // Accepts list of assignments for the block to determine tooltip messages for the block
                 tooltipMessageFormatter: assignmentsWithinBlock =>
                 {
@@ -341,7 +349,7 @@ namespace PPMTool.Pages
                         if (assignedWithinBlockWithChosenPerson.Any(x => x?.SubTask.HasUnmetDemand() ?? false))
                         {
                             var unmetDemand = assignedWithinBlockWithChosenPerson.RoundedSum(x => x?.SubTask.UnmetDemand ?? 0);
-                            messages += $"<h3 class=\"me-1 text-danger\"> &#x26A0; [UNMET DEMAND ({unmetDemand} FTE)]</h3>";
+                            messages += $"<h3 class=\"mt-1 text-danger\"> &#x26A0; [UNMET DEMAND ({unmetDemand} FTE)]</h3>";
                         }
                     }
 

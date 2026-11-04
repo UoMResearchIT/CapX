@@ -1,4 +1,4 @@
-﻿@*
+@*
 SPDX-FileCopyrightText: 2026 University of Manchester
 
 SPDX-License-Identifier: apache-2.0
@@ -72,14 +72,16 @@ SPDX-License-Identifier: apache-2.0
             else
             {
                 <RadzenLabel class="radzen-form-label"
-                             Text="Resource Rate"
-                             Component="Rate" />
+                             Text="Cost Key"
+                             Component="CostValueName" />
                 <RadzenDropDown class="radzen-dropdown"
-                                @bind-Value="Model.ResourceRate"
-                                Data="@(Enum.GetValues(typeof(Rate)))"
-                                Name="Rate"
+                                @bind-Value="Model.CostValueName"
+                                Data="@GetCostValueOptions(Model.StartDate)"
+                                TextProperty="FinancialReferenceValueSet.Name"
+                                ValueProperty="FinancialReferenceValueSet.Name"
+                                Name="CostValueName"
                                 Disabled="@ReadOnly"
-                                Change="@(() => ValueChanged(nameof(Model.ResourceRate)))" />
+                                Change="@(() => ValueChanged(nameof(Model.CostValueName)))" />
             }
         </div>
     }
@@ -180,7 +182,29 @@ SPDX-License-Identifier: apache-2.0
                 SettingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0.0)
             );
         }
+
+        // Set suitable default cost value name from settings, then fallback to first available option
+        if (string.IsNullOrWhiteSpace(Model.CostValueName))
+        {
+            Model.CostValueName = SettingsService.GetSetting(SettingType.EstimateCostDefaultCostValueName);
+        }
+
+        if (string.IsNullOrWhiteSpace(Model.CostValueName))
+        {
+            Model.CostValueName = GetCostValueOptions(Model.StartDate).FirstOrDefault()?.FinancialReferenceValueSet?.Name ?? string.Empty;
+        }
+
         ValueChanged(nameof(Model.StartDate));
+    }
+
+    /// <summary>
+    /// Gets the available cost value options for a given date from the suitable financial reference set.
+    /// </summary>
+    /// <param name="date"></param>
+    /// <returns></returns>
+    private IEnumerable<FinancialReferenceValue> GetCostValueOptions(DateTime date)
+    {
+        return FinancialReferenceService.GetCostValueOptionsForDate(Context, date);
     }
 
     /// <summary>
@@ -207,12 +231,12 @@ SPDX-License-Identifier: apache-2.0
     public class TaskConfigModel : BaseScheduledTask
     {
         public double DayRate { get; set; }
-        public Rate ResourceRate { get; set; } = Rate.Standard;
+        public string CostValueName { get; set; } = string.Empty;
         public CostModel CostModel { get; private set; }
+        public bool IsLeadership { get; }
 
         private FinancialReferenceService finRefService;
         private PPMToolContext context;
-        private bool isLeadership;
         private double indirectsPercentage = 0d;
 
         public TaskConfigModel(FinancialReferenceService financialReferenceService, PPMToolContext context, bool isLeadership, double defaultDayRate, double indirectsPercentage)
@@ -220,7 +244,7 @@ SPDX-License-Identifier: apache-2.0
             this.indirectsPercentage = indirectsPercentage;
             finRefService = financialReferenceService;
             this.context = context;
-            this.isLeadership = isLeadership;
+            this.IsLeadership = isLeadership;
             StartDate = DateTime.Today;
             EndDate = StartDate.AddDays(7);
             DayRate = defaultDayRate;
@@ -237,7 +261,7 @@ SPDX-License-Identifier: apache-2.0
         /// 6. Work (Hours)
         /// 7. DayRate
         /// 8. Cost Model
-        /// 9. Resource Rate
+        /// 9. Cost Value Name
         /// </summary>
         /// <param name="nameOfPropertyTrigger"></param>
         public void Update(string nameOfPropertyTrigger)
@@ -289,7 +313,7 @@ SPDX-License-Identifier: apache-2.0
 
                 case nameof(DayRate):
                 case nameof(CostModel):
-                case nameof(ResourceRate):
+                case nameof(CostValueName):
 
                     // Update the cost only
                     UpdateCost();
@@ -348,18 +372,11 @@ SPDX-License-Identifier: apache-2.0
                     double techCost = 0d;
                     double indirectCost = 0d;
 
-                    // Use switch to select rate only
-                    double resourceRate = ResourceRate switch
-                    {
-                        Rate.Junior => finRef.Grade51Costs,
-                        Rate.Standard => finRef.Grade71Costs,
-                        Rate.Senior => finRef.Grade75Costs,
-                        _ => throw new ArgumentOutOfRangeException(nameof(ResourceRate), ResourceRate, "Unsupported Rate!")
-                    };
+                    double resourceRate = finRef.GetValue(CostValueName);
 
                     // Calculate the costs
                     techCost = resourceRate * dayScaled;
-                    indirectCost = (CostModel.HasIndirects() && !isLeadership) ? techCost * indirectsPercentage : 0;
+                    indirectCost = (CostModel.HasIndirects() && !IsLeadership) ? techCost * indirectsPercentage : 0;
                     PlannedIndirectCost += indirectCost;
                     PlannedCost += techCost + indirectCost;
                 }

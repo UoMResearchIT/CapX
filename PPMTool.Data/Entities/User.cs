@@ -120,5 +120,20 @@ namespace PPMTool.Data.Entities
                 .Where(e => !string.IsNullOrWhiteSpace(e))
                 .ToList() ?? new List<string>();
         }
+
+        /// <summary>
+        /// Get the initials from the person's name
+        /// </summary>
+        /// <returns></returns>
+        public string GetInitials()
+        {
+            if (string.IsNullOrWhiteSpace(Name))
+                return string.Empty;
+
+            return string.Concat(
+                Name.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(part => char.ToUpperInvariant(part[0]))
+            );
+        }
     }
 }

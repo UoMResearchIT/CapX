@@ -32,7 +32,7 @@ namespace PPMTool.Pages
             }
         }
 
-        private Dictionary<string, TaskConfigModel> models;
+        private OrderedDictionary<string, TaskConfigModel> models;
         private TaskConfigModel summaryModel;
         private bool isUsable = true;
         private double defaultDayRate;
@@ -48,10 +48,10 @@ namespace PPMTool.Pages
             {
                 FinancialReferenceService.GetFinancialReferenceForDate(Context, DateTime.Today);
                 summaryModel = new TaskConfigModel(FinancialReferenceService, Context, false, defaultDayRate, indirectsPercentage);
-                models = new Dictionary<string, TaskConfigModel>
+                models = new OrderedDictionary<string, TaskConfigModel>
                 {
                     { "Leadership", new TaskConfigModel(FinancialReferenceService, Context, true, defaultDayRate, indirectsPercentage) },
-                    { "RSE 1", new TaskConfigModel(FinancialReferenceService, Context, false, defaultDayRate, indirectsPercentage) }
+                    { "Tech 1", new TaskConfigModel(FinancialReferenceService, Context, false, defaultDayRate, indirectsPercentage) }
                 };
                 CostModel = CostModel.TechAndLeadershipWithIndirects;
             }
@@ -72,6 +72,7 @@ namespace PPMTool.Pages
 
             // Only include the leadership one if using the leadership model
             var resourcesToInclude = new List<TaskConfigModel>();
+
             foreach (var model in models)
             {
                 if (ShouldIncludeResource(model))
@@ -120,9 +121,17 @@ namespace PPMTool.Pages
         /// </summary>
         private void AddResource()
         {
-            var numRes = models.Where(x => x.Key != "Leadership").Count() + 1;
+            // Need to increment the number based on numbers already in use rather than the count!
+            int nextNumber = models
+                .Select(i => i.Key)
+                .Where(x => x.StartsWith("Tech "))
+                .Select(name => int.TryParse(name.Substring(5), out var n) ? n : 0)
+                .DefaultIfEmpty(0)
+                .Max() + 1;
+
             var res = new TaskConfigModel(FinancialReferenceService, Context, false, defaultDayRate, indirectsPercentage);
-            models.Add($"RSE {numRes}", res);
+            models.Add($"Tech {nextNumber}", res);
+
             res.SetCostModel(CostModel);
             UpdateSummaryComponent("Self: Add Resource");
         }

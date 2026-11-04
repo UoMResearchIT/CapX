@@ -21,6 +21,8 @@ namespace PPMTool.Models
 
         public double Value2 { get; }
 
+        public double? Value3 { get; }
+
         public string Label { get; }
 
         public string Colour { get; }
@@ -39,12 +41,14 @@ namespace PPMTool.Models
             double value2,
             bool isHatched,
             string tooltipMessages = null,
+            double? value3 = null,
             bool isFake = false)
         {
             StartDate = start;
             EndDate = end;
             Value1 = value1;
             Value2 = value2;
+            Value3 = value3;
             Label = label;
             Colour = colour;
             this.isHatched = isHatched;

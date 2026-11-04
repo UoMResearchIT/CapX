@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+// SPDX-FileCopyrightText: 2026 University of Manchester
 //
 // SPDX-License-Identifier: apache-2.0
 
@@ -16,6 +16,16 @@ namespace PPMTool.Data.Entities
 
         [Required]
         public int Grade { get; set; }
+
+        /// <summary>
+        /// Foreign key to the selected stable financial reference value set used for salary cost calculations.
+        /// </summary>
+        public int? CostValueSetId { get; set; }
+
+        /// <summary>
+        /// Selected stable financial reference value set used for salary cost calculations.
+        /// </summary>
+        public virtual FinancialReferenceValueSet? CostValueSet { get; set; }
 
         [Required]
         public DateTime ChangeDate { get; set; }

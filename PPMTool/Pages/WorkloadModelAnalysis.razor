@@ -21,13 +21,13 @@ SPDX-License-Identifier: apache-2.0
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
                         <RadzenText Text="Compare to Workload Model" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
                         <RadzenSwitch @bind-Value="@compareToWLM" Change="@DisplayStyleChanged" />
-                        <RadzenText Text="Scale by Total Hours" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
+                        <RadzenText Text="Show as Proportion of Time" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
                         <RadzenSwitch @bind-Value="@normalisedByTotalHours" Change="@DisplayStyleChanged" />
                         <RadzenText Text="Use Stacked Bars" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: -0.2rem" />
                         <RadzenSwitch @bind-Value="@useStackedBars" Change="@DisplayStyleChanged" />
                     </RadzenStack>
                 </RadzenStack>
-                <HintComponent Message="To view the difference between timesheets and the WLM, enable 'Compare to Workload Model' option. To scale the number of hours booked to 1.0 FTE (i.e. you are then viewing the proportion of time spent rather than the absolute amount), enable the 'Scale by Total Hours' option. Click on a block to navigate to the timesheet for that week." />
+                <HintComponent Message="To view the difference between timesheets and the WLM, enable 'Compare to Workload Model' option. Enable 'Show as Proportion of Time' to view each duty as a fraction of the relevant total booked time. Raw views include all booked time, including absence and closures. Workload Model comparisons exclude absence and closures. Click on a block to navigate to the timesheet for that week." />
             </RadzenStack>
         </RadzenColumn>
     </RadzenRow>
@@ -41,6 +41,9 @@ SPDX-License-Identifier: apache-2.0
                                     TextProperty="Name"
                                     Multiple=true
                                     AllowClear=true
+                                    AllowFiltering=true
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    FilterOperator="StringFilterOperator.Contains"
                                     Placeholder="Choose RSEs"
                                     Chips=true
                                     MaxSelectedLabels="20"

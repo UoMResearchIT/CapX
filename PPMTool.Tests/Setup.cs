@@ -21,7 +21,7 @@ namespace PPMTool.Tests
                         .Build();
 
             // Set the local values from the config, or use defaults if not set
-            BaseUrl = config["BaseUrl"] ?? "https://localhost:5001";
+            BaseUrl = config["TEST_BASE_URL"] ?? "https://localhost:5001";
 
             // Wait for the server to be ready before running tests
             await WaitForServerAsync();

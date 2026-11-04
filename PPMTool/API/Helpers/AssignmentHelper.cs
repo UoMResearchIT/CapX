@@ -24,7 +24,8 @@ namespace PPMTool.API.Helpers
         {
             ProjectStatus.CancelledByCustomer,
             ProjectStatus.CancelledBidFailed,
-            ProjectStatus.CancelledNoResource
+            ProjectStatus.CancelledNoResource,
+            ProjectStatus.CancelledOutOfScope
         };
 
         /// <summary>

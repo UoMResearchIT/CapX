@@ -60,8 +60,9 @@ namespace PPMTool.Services
         {
             return context.People
                 .Include(p => p.OwnedSkills)
-                .ThenInclude(x => x.SkillTag)
+                    .ThenInclude(x => x.SkillTag)
                 .Include(p => p.WorkloadModelChanges)
+                    .ThenInclude(x => x.CostValueSet)
                 .Include(p => p.Absences)
                 .ToList();
         }
@@ -257,6 +258,17 @@ namespace PPMTool.Services
                     return relevantChanges.Any(w => w.ProjectManagementFTE > 0);
                 })
                 .ToList();
+        }
+
+        /// <summary>
+        /// Get a shallow load of a person based on their short name.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="shortName"></param>
+        /// <returns></returns>
+        public Person GetByShortName(PPMToolContext context, string shortName)
+        {
+            return context.People.FirstOrDefault(x => x.ShortName.ToLower() == shortName.ToLower());
         }
     }
 }

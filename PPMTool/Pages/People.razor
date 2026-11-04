@@ -53,11 +53,8 @@ SPDX-License-Identifier: apache-2.0
                     <RadzenDataGridColumn TItem="Person" Property="Name" Title="Name" Frozen="true" FilterOperator="FilterOperator.Contains" MinWidth="10px">
                         <Template Context="p">
                             <span style="display: flex; align-items: center">
-                                @if (p.IsCurrentlyAbsent())
-                                {
-                                    <RadzenIcon Style="margin-right: 5px" Icon="info" IconStyle="IconStyle.Info" title=@($"Person is currently absent!") />
-                                }
-                                @p.Name
+                                <StatusMessageSummaryComponent Messages="@GetPersonStatusMessages(p)" ShowMessages="false" />
+                                <span style="margin-left: 5px">@p.Name</span>
                             </span>
                         </Template>
                     </RadzenDataGridColumn>
