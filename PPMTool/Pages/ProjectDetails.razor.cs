@@ -1343,7 +1343,8 @@ namespace PPMTool.Pages
                 var filterValue = filter?.FilterValue as string;
                 if (filter != null && filterValue != null)
                 {
-                    query = query.Where(x => x.AssignedResources.Any(x => x.Person.ShortName.Contains(filterValue)));
+                    var cleaned = filterValue.Clean();
+                    query = query.Where(x => x.AssignedResources.Any(x => x.Person.ShortName.ToLowerInvariant().Contains(cleaned)));
                 }
             }
 
