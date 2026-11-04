@@ -466,8 +466,8 @@ namespace PPMTool.Pages
                 }
             }
 
-            // Check whether the parameter is present to scroll to the due notes
-            if (FilterDueNotes)
+            // Check whether due notes are currently being shown before auto-scrolling
+            if (showOnlyDueItems && filteredNotes?.Count > 0)
             {
                 // Refresh then scroll last due note into view
                 await Task.Delay(300);
