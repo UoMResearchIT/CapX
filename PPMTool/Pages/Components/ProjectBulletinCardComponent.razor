@@ -69,10 +69,18 @@ SPDX-License-Identifier: apache-2.0
                 <!-- Project Manager -->
                 <div style="padding: 0px;">
                     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
-                        <RadzenIcon Icon="article_person" title="Project Manager" />
-                        <RadzenText TextStyle="TextStyle.Body1">
-                            @(Project.ProjectManager?.Name ?? "Not Set")
-                        </RadzenText>
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
+                            <RadzenIcon Icon="article_person" title="Project Manager" />
+                            <RadzenText TextStyle="TextStyle.Body1">
+                                @(Project.ProjectManager?.Name ?? "Not Set")
+                            </RadzenText>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
+                            <RadzenIcon Icon="engineering" title="Developers" />
+                            <RadzenText TextStyle="TextStyle.Body1">
+                                @(ResourceNames.Any() ? string.Join(", ", ResourceNames) : "Unassigned")
+                            </RadzenText>
+                        </RadzenStack>
                     </RadzenStack>
                 </div>
 
@@ -134,6 +142,9 @@ SPDX-License-Identifier: apache-2.0
     [Parameter]
     public IEnumerable<SkillTag> SkillsList { get; set; }
 
+    [Parameter]
+    public IEnumerable<string> ResourceNames { get; set; }
+
     private double maxDemand;
     private double minDemand;
     private DateTime startDate;
@@ -148,6 +159,9 @@ SPDX-License-Identifier: apache-2.0
         UpdateCardData();
     }
 
+    /// <summary>
+    /// Update the data displayed on the card.
+    /// </summary>
     public void UpdateCardData()
     {
         // Show/hide some stuff based on whether the skills feature is enabled
@@ -178,6 +192,10 @@ SPDX-License-Identifier: apache-2.0
         await JSRuntime.InvokeVoidAsync("open", $"{project.RequestDocLink}", "_blank");
     }
 
+    /// <summary>
+    /// Navigate to the project details page in a new window
+    /// </summary>
+    /// <param name="id"></param>
     private async void ViewDetails(int id)
     {
         string url = $"projects/projectdetails/{id}";

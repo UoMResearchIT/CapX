@@ -21,11 +21,11 @@ SPDX-License-Identifier: apache-2.0
         </RadzenStack>
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
             <RadzenLabel Text="Date Range" Component="StartDate" class="rz-ms-2" />
-            <RadzenDatePicker @bind-Value="startDate" ShowTime="false" DateFormat="dd/MM/yyyy" Name="StartDate" AllowClear="true" Change="ReloadWithFilters" Disabled="@Loading" />
+            <RadzenDatePicker @bind-Value="startDate" ShowTime="false" DateFormat="dd/MM/yyyy" Name="StartDate" AllowClear="true" Change="FilterProjects" Disabled="@Loading" />
             <RadzenLabel Text="to" Component="EndDate" class="rz-ms-2" />
-            <RadzenDatePicker @bind-Value="endDate" ShowTime="false" DateFormat="dd/MM/yyyy" Name="EndDate" AllowClear="true" Change="ReloadWithFilters" Disabled="@Loading" />
+            <RadzenDatePicker @bind-Value="endDate" ShowTime="false" DateFormat="dd/MM/yyyy" Name="EndDate" AllowClear="true" Change="FilterProjects" Disabled="@Loading" />
             <RadzenLabel Text="Group By Status" Component="CheckBox1" class="rz-ms-2" />
-            <RadzenCheckBox TValue="bool" Value=@groupByStatus Change=@(args => { groupByStatus = args; ReloadWithFilters(); }) Name="CheckBox1" Disabled="@Loading" />
+            <RadzenCheckBox TValue="bool" Value=@groupByStatus Change=@(args => { groupByStatus = args; FilterProjects(); }) Name="CheckBox1" Disabled="@Loading" />
         </RadzenStack>
     </RadzenStack>
     <hr />

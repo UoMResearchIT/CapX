@@ -105,7 +105,7 @@ namespace PPMTool.Pages
             var proj = ProjectService.GetAll(Context).OrderBy(x => x.RTP).ToList();
 
             // Filter to just projects that are not cancelled or new requests
-            var projects = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled() && !x.ProjectStatus == ProjectStatus.NewRequest);
+            var projects = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled() && x.ProjectStatus != ProjectStatus.NewRequest);
 
             // Convert to new object type and load the skills and people on the fly
             foreach (var project in projects)
@@ -114,7 +114,7 @@ namespace PPMTool.Pages
                 {
                     Project = project,
                     Skills = SkillTagService.GetSkillsForProject(Context, project.ProjectId),
-                    AssignedResourceNames = await SubTaskService.GetUniqueResourcesAsync(Context, project.ProjectId)
+                    AssignedResourceNames = (await SubTaskService.GetUniqueResourcesAsync(Context, project.ProjectId)).Where(x => x != project.ProjectManager?.Name)
                 });
             }
 
