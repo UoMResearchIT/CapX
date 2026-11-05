@@ -6,6 +6,8 @@ SPDX-License-Identifier: apache-2.0
 
 @page "/projectbulletinboard"
 @inherits PPMTool.Pages.BasePage
+@using PPMTool.Data.Entities
+@using PPMTool.Data.Enums
 @using PPMTool.Pages.Components
 @using static PPMTool.Data.Enums.Extensions
 <PageTitle>Our Projects - CapX</PageTitle>
@@ -40,6 +42,24 @@ SPDX-License-Identifier: apache-2.0
                     <RadzenSelectBarItem Text="Unmet" Value="ViewMode.Unmet" />
                 </Items>
             </RadzenSelectBar>
+            @if (FeatureService.IsFeatureEnabled(FeatureType.Skills))
+            {
+                <RadzenLabel Text="Filter By Skill Tag:" Component="SelectBar" class="rz-ms-2" />
+                <RadzenDropDown FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                FilterOperator="StringFilterOperator.Contains"
+                                AllowFiltering="true"
+                                Chips="true"
+                                Multiple="true"
+                                Data=@availableSkillsTags
+                                TextProperty="@nameof(SkillTag.Name)"
+                                ValueProperty="@nameof(SkillTag.SkillTagId)"
+                                AllowClear="true"
+                                Name="SkillTagFiltering"
+                                Value="@selectedSkillTags"
+                                ValueChanged="@OnSkillTagsChanged"
+                                Disabled="@Loading"
+                                TValue="IEnumerable<int>" />
+            }
         </RadzenStack>
     </RadzenStack>
     <hr />
@@ -62,7 +82,7 @@ SPDX-License-Identifier: apache-2.0
                     @foreach (var project in group)
                     {
                         <ProjectBulletinCardComponent Project="@project.Project"
-                                                      ShowDetailsButton="EditAuthorised"
+                                                      ShowDetails="EditAuthorised"
                                                       FilterStartDate="@startDate"
                                                       FilterEndDate="@endDate"
                                                       SkillsList="@project.Skills"
@@ -79,7 +99,7 @@ SPDX-License-Identifier: apache-2.0
                 @foreach (var project in projectsToShow)
                 {
                     <ProjectBulletinCardComponent Project="@project.Project"
-                                                  ShowDetailsButton="EditAuthorised"
+                                                  ShowDetails="EditAuthorised"
                                                   FilterStartDate="@startDate"
                                                   FilterEndDate="@endDate"
                                                   SkillsList="@project.Skills"

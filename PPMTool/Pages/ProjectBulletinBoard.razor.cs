@@ -6,6 +6,7 @@ using System.Data;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
 using PPMTool.Models;
 using PPMTool.Services;
@@ -53,6 +54,8 @@ namespace PPMTool.Pages
         private DateTime? endDate;
         private bool groupByStatus = true;
         private ViewMode viewMode = ViewMode.Funded;
+        private IEnumerable<SkillTag> availableSkillsTags;
+        private IEnumerable<int> selectedSkillTags = Enumerable.Empty<int>();
 
         protected override async Task OnInitializedAsync()
         {
@@ -92,12 +95,9 @@ namespace PPMTool.Pages
             // If no projects have been loaded then set empty list
             if (allProjectsNotCancelled == null)
             {
-                projectsToShow = new List<ProjectWithAdditionalData>();
+                allProjectsNotCancelled = new List<ProjectWithAdditionalData>();
             }
-            else
-            {
-                projectsToShow = allProjectsNotCancelled;
-            }
+            projectsToShow = allProjectsNotCancelled;
 
             // If we have both dates then ensure that the end date is not before the start date
             if (startDate != null && endDate != null)
@@ -145,6 +145,14 @@ namespace PPMTool.Pages
                     .ThenByDescending(x => x.Project.SubTasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate)));
             }
 
+            // Filter based on skills if the combination selected match the project
+            if (selectedSkillTags?.Any() ?? false)
+            {
+                projectsToShow = projectsToShow
+                    .Where(x => selectedSkillTags.All(tagId =>
+                        x.Skills?.Any(s => s.SkillTagId == tagId) ?? false));
+            }
+
             // Group the projects by status if the switch is set
             if (groupByStatus)
             {
@@ -186,7 +194,16 @@ namespace PPMTool.Pages
                 });
             }
 
+            // Populate the available skills tags for filtering
+            availableSkillsTags = SkillTagService.GetAll(Context).OrderBy(x => x.Name);
+
             Debug.WriteLine($"** {allProjectsNotCancelled?.Count()} projects loaded.");
+        }
+
+        private void OnSkillTagsChanged(IEnumerable<int> values)
+        {
+            selectedSkillTags = values ?? Enumerable.Empty<int>();
+            FilterProjects();
         }
     }
 }

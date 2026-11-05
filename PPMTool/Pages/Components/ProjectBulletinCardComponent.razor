@@ -39,22 +39,21 @@ SPDX-License-Identifier: apache-2.0
             }
         </RadzenStack>
 
-        <!-- Request doc & Project detail buttons -->
-        <div>
-            <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.2rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
-                <RadzenButton Text=@(Project.HasNoRequestDocLink() ? "No Request Doc Link" : "Request Doc")
-                              Icon="description" Click="@(args => ViewRequestDocClickedAsync(Project))"
-                              ButtonStyle=@(Project.HasNoRequestDocLink() ? ButtonStyle.Light : ButtonStyle.Primary)
-                              Disabled=@Project.HasNoRequestDocLink() />
-                @if (ShowDetailsButton)
-                {
+        @if (ShowDetails)
+        {
+            <!-- Request doc & Project detail buttons -->
+            <div>
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.2rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenButton Text=@(Project.HasNoRequestDocLink() ? "No Request Doc Link" : "Request Doc")
+                    Icon="description" Click="@(args => ViewRequestDocClickedAsync(Project))"
+                    ButtonStyle=@(Project.HasNoRequestDocLink() ? ButtonStyle.Light : ButtonStyle.Primary)
+                    Disabled=@Project.HasNoRequestDocLink() />
                     <RadzenButton Text="View Project Details"
-                                  Icon="info" Click="@(args => ViewDetails(Project.ProjectId))"
-                                  ButtonStyle=ButtonStyle.Primary />
-                }
-            </RadzenStack>
-        </div>
-
+                    Icon="info" Click="@(args => ViewDetails(Project.ProjectId))"
+                    ButtonStyle=ButtonStyle.Primary />
+                </RadzenStack>
+            </div>
+        }
     </RadzenStack>
     
     <!-- MIDDLE SECTION -->
@@ -133,7 +132,7 @@ SPDX-License-Identifier: apache-2.0
     public Project Project { get; set; }
 
     [Parameter]
-    public bool ShowDetailsButton { get; set; }
+    public bool ShowDetails { get; set; }
 
     [Parameter]
     public DateTime? FilterStartDate { get; set; }
