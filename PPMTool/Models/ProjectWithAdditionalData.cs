@@ -7,9 +7,9 @@ using PPMTool.Data.Entities;
 namespace PPMTool.Models
 {
     /// <summary>
-    /// Represents a Project with Associated Skills
+    /// Represents a Project with Skills and Assigned RSEs resolved
     /// </summary>
-    public class ProjectWithSkills
+    public class ProjectWithAdditionalData
     {
         /// <summary>
         ///  The project entity
@@ -20,5 +20,10 @@ namespace PPMTool.Models
         /// List of skills entities
         /// </summary>
         public IEnumerable<SkillTag> Skills { get; set; }
+
+        /// <summary>
+        /// List of names of people who are assigned to the project
+        /// </summary>
+        public IEnumerable<string> AssignedResourceNames { get; set; }
     }
 }

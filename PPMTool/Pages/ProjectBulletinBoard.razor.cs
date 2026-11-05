@@ -6,7 +6,6 @@ using System.Data;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
 using PPMTool.Models;
 using PPMTool.Services;
@@ -23,70 +22,49 @@ namespace PPMTool.Pages
         [Inject]
         private SkillTagService SkillTagService { get; set; }
 
-        private IEnumerable<ProjectWithSkills> availableProjects;
-        private IEnumerable<IGrouping<ProjectStatus, ProjectWithSkills>> availableProjectsGrouped;
-        private IList<ProjectWithSkills> allProjectsWithSkills;
+        [Inject]
+        private SubTaskService SubTaskService { get; set; }
+
+        private IEnumerable<ProjectWithAdditionalData> projectsToShow;
+        private IEnumerable<IGrouping<ProjectStatus, ProjectWithAdditionalData>> projectsToShowGrouped;
+        private IList<ProjectWithAdditionalData> allProjectsNotCancelled;
         private DateTime? startDate;
         private DateTime? endDate;
         private bool groupByStatus = true;
-        private bool skillsInitialised;
 
-
-        protected override void OnInitialized()
+        protected override async Task OnInitializedAsync()
         {
             base.OnInitialized();
-            Loading = true;
             LogInformation("Viewing project bulletin board");
+
+            // Load the projects and filter based on options
+            await LoadProjectDataAsync();
+            await UpdateProjectsToShow();
         }
 
-        protected override void OnAfterRender(bool firstRender)
+        private async Task UpdateProjectsToShow()
         {
-            // Load settings the first time
-            if (!firstRender) return;
-
-            // Load data from DB
-            LoadProjectData();
-
-            // Filter the data
-            EnqueueLoadData(GetFilterTask);
-        }
-
-        /// <summary>
-        /// Returns a task that filters the loaded project data
-        /// </summary>
-        /// <returns></returns>
-        private Task GetFilterTask()
-        {
-            return Task.Run(() =>
-            {
-                FilterProjects();
-            }).ContinueWith(t =>
-            {
-                InvokeAsync(() =>
-                {
-                    Loading = false;
-                    StateHasChanged();
-                });
-            });
-        }
-
-        /// <summary>
-        /// Method which sets the loading state and invokes the background task to filter
-        /// </summary>
-        private void ReloadWithFilters()
-        {
+            // Set the loading flag and re-render to show spinner
             Loading = true;
             StateHasChanged();
-            EnqueueLoadData(GetFilterTask);
+            await Task.Yield();
+
+            // Filter the projects from the complete list
+            FilterProjects();
+
+            // Update the loading flag to re-render
+            Loading = false;
+            StateHasChanged();
         }
 
         /// <summary>
-        /// Filter the available projects based on the settings
+        /// Filter the projects based on the settings of the switches
         /// </summary>
         private void FilterProjects()
         {
-            if (allProjectsWithSkills == null) return;
+            if (allProjectsNotCancelled == null) return;
 
+            // Check we have valid dates and adjust if not
             if (startDate != null && endDate != null)
             {
                 if (endDate < startDate)
@@ -95,18 +73,9 @@ namespace PPMTool.Pages
                 }
             }
 
-            // First time through, initialise the skills
-            if (!skillsInitialised)
-            {
-                foreach (var projWithSkills in allProjectsWithSkills)
-                {
-                    projWithSkills.Skills = SkillTagService.GetSkillsForProject(Context, projWithSkills.Project.ProjectId);
-                }
-                skillsInitialised = true;
-            }
-
+            // TODO
             // Get projects with unmet demand in the window and order by the start of the window then by the maximum unmet demand
-            availableProjects = allProjectsWithSkills
+            projectsToShow = allProjectsNotCancelled
                 .Where(x => x.Project.HasUnmetDemandInWindow(startDate, endDate))
                 .OrderBy(x =>
                 {
@@ -115,37 +84,41 @@ namespace PPMTool.Pages
                 })
                 .ThenByDescending(x => x.Project.SubTasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate)));
 
+            // Group the projects by status if the switch is set
             if (groupByStatus)
             {
-                availableProjectsGrouped = availableProjects.GroupBy(x => x.Project.ProjectStatus).OrderByDescending(x => x.Key);
+                projectsToShowGrouped = projectsToShow.GroupBy(x => x.Project.ProjectStatus).OrderByDescending(x => x.Key);
             }
 
-            Debug.WriteLine($"** {availableProjects?.Count()} projects loaded.");
+            Debug.WriteLine($"** {projectsToShow?.Count()} projects filtered.");
         }
 
         /// <summary>
         /// Load all valid projects from the DB
         /// </summary>
-        private void LoadProjectData()
+        private async Task LoadProjectDataAsync()
         {
             // Initialise the list
-            allProjectsWithSkills = new List<ProjectWithSkills>();
+            allProjectsNotCancelled = new List<ProjectWithAdditionalData>();
 
-            // Get projects from the database
+            // Get projects from the database into memory
             var proj = ProjectService.GetAll(Context).OrderBy(x => x.RTP).ToList();
 
-            // Filter to just projects that are active with current or future unmet demand
-            var projects = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled() && x.HasUnmetDemandInWindow() && x.ProjectStatus != ProjectStatus.Paused);
+            // Filter to just projects that are not cancelled or new requests
+            var projects = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled() && !x.ProjectStatus == ProjectStatus.NewRequest);
 
-            // Convert to new object type
+            // Convert to new object type and load the skills and people on the fly
             foreach (var project in projects)
             {
-                allProjectsWithSkills.Add(new ProjectWithSkills
+                allProjectsNotCancelled.Add(new ProjectWithAdditionalData
                 {
                     Project = project,
-                    Skills = new List<SkillTag>()
+                    Skills = SkillTagService.GetSkillsForProject(Context, project.ProjectId),
+                    AssignedResourceNames = await SubTaskService.GetUniqueResourcesAsync(Context, project.ProjectId)
                 });
             }
+
+            Debug.WriteLine($"** {allProjectsNotCancelled?.Count()} projects loaded.");
         }
     }
 }
