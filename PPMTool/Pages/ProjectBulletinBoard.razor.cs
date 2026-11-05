@@ -16,6 +16,27 @@ namespace PPMTool.Pages
     [Authorize(Roles = "Developer,Manager,Superuser,Reader")]
     public partial class ProjectBulletinBoard : BasePage
     {
+        /// <summary>
+        /// View mode for list of projects
+        /// </summary>
+        private enum ViewMode
+        {
+            All,
+            Funded,
+            Finished,
+            Unmet
+        }
+
+        // Gives us the display order
+        private readonly List<ProjectStatus> groupDisplayOrder = new List<ProjectStatus>
+        {
+            ProjectStatus.Active,
+            ProjectStatus.Funded,
+            ProjectStatus.Maintenance,
+            ProjectStatus.Paused
+            // Everything else I don't care about
+        };
+
         [Inject]
         private ProjectService ProjectService { get; set; }
 
@@ -31,6 +52,7 @@ namespace PPMTool.Pages
         private DateTime? startDate;
         private DateTime? endDate;
         private bool groupByStatus = true;
+        private ViewMode viewMode = ViewMode.Funded;
 
         protected override async Task OnInitializedAsync()
         {
@@ -72,6 +94,10 @@ namespace PPMTool.Pages
             {
                 projectsToShow = new List<ProjectWithAdditionalData>();
             }
+            else
+            {
+                projectsToShow = allProjectsNotCancelled;
+            }
 
             // If we have both dates then ensure that the end date is not before the start date
             if (startDate != null && endDate != null)
@@ -82,21 +108,54 @@ namespace PPMTool.Pages
                 }
             }
 
-            // TODO
-            // Get projects with unmet demand in the window and order by the start of the window then by the maximum unmet demand
-            projectsToShow = allProjectsNotCancelled
-                .Where(x => x.Project.HasUnmetDemandInWindow(startDate, endDate))
-                .OrderBy(x =>
+            // Filter based on view mode
+            if (viewMode != ViewMode.Unmet)
+            {
+                if (viewMode == ViewMode.Finished)
                 {
-                    x.Project.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
-                    return windowStart;
-                })
-                .ThenByDescending(x => x.Project.SubTasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate)));
+                    // Just include finished
+                    projectsToShow = allProjectsNotCancelled
+                        .Where(x => x.Project.ProjectStatus == ProjectStatus.Finished);
+                }
+                else if (viewMode == ViewMode.Funded)
+                {
+                    // Just include funded and active
+                    projectsToShow = allProjectsNotCancelled
+                        .Where(x => x.Project.ProjectStatus.IsActive() || x.Project.ProjectStatus == ProjectStatus.Funded);
+                }
+
+                // Filter on date and order for all
+                projectsToShow = projectsToShow
+                    .Where(x => startDate != null ? x.Project.EndDate >= startDate : true)
+                    .Where(x => endDate != null ? x.Project.StartDate <= endDate : true)
+                    .OrderBy(x => x.Project.StartDate);
+            }
+
+            // Handle unmet differently so it maintains old behaviour
+            else
+            {
+                // Get projects with unmet demand in the window and order by the start of the window then by the maximum unmet demand
+                projectsToShow = allProjectsNotCancelled
+                    .Where(x => x.Project.HasUnmetDemandInWindow(startDate, endDate))
+                    .OrderBy(x =>
+                    {
+                        x.Project.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
+                        return windowStart;
+                    })
+                    .ThenByDescending(x => x.Project.SubTasks.Max(x => x.GetUnmetDemandInWindow(startDate, endDate)));
+            }
 
             // Group the projects by status if the switch is set
             if (groupByStatus)
             {
-                projectsToShowGrouped = projectsToShow.GroupBy(x => x.Project.ProjectStatus).OrderByDescending(x => x.Key);
+                projectsToShowGrouped = projectsToShow
+                    .GroupBy(x => x.Project.ProjectStatus)
+                    .OrderBy(x =>
+                    {
+                        // Order by the display order if present in the display order list otherwise fallback to enum value
+                        var index = groupDisplayOrder.IndexOf(x.Key);
+                        return index >= 0 ? index : groupDisplayOrder.Count + (int)x.Key;
+                    });
             }
 
             Debug.WriteLine($"** {projectsToShow?.Count()} projects filtered.");
@@ -114,7 +173,7 @@ namespace PPMTool.Pages
             var proj = ProjectService.GetAll(Context).OrderBy(x => x.RTP).ToList();
 
             // Filter to just projects that are not cancelled or new requests
-            var projects = proj.Where(x => !x.ProjectStatus.IsFinishedOrCancelled() && x.ProjectStatus != ProjectStatus.NewRequest);
+            var projects = proj.Where(x => !x.ProjectStatus.IsCancelled() && x.ProjectStatus != ProjectStatus.NewRequest);
 
             // Convert to new object type and load the skills and people on the fly
             foreach (var project in projects)

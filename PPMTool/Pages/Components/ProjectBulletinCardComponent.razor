@@ -17,24 +17,26 @@ SPDX-License-Identifier: apache-2.0
         <!-- Status & Unmet demand -->
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem" AlignItems="AlignItems.Center">
             <ProjectBadgeComponent ProjectStatus="@Project.ProjectStatus" />
+            @if (DisplayUnmetDemand)
+            {
+                <div style="margin-left: 0.5rem;">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.2rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" >
 
-            <div style="margin-left: 0.5rem;">
-                <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.2rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" >
-
-                    <RadzenText TextStyle="TextStyle.Subtitle1" Text="Unmet Demand (FTE) :" Style="margin-right: 0.1rem;"/>
-                    <RadzenBadge Style="font-size: medium;"
-                                    BadgeStyle="BadgeStyle.Danger"
-                                    Text="@(minDemand.ToString())" />
-                    @if (minDemand != maxDemand)
-                    {
-                        <RadzenText Text="-" />
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Text="Unmet Demand (FTE) :" Style="margin-right: 0.1rem;"/>
                         <RadzenBadge Style="font-size: medium;"
-                                        BadgeStyle="BadgeStyle.Danger"
-                                        Text="@(maxDemand.ToString())" />
-                    }
+                                     BadgeStyle="BadgeStyle.Danger"
+                                     Text="@(minDemand.ToString())" />
+                        @if (minDemand != maxDemand)
+                        {
+                            <RadzenText Text="-" />
+                            <RadzenBadge Style="font-size: medium;"
+                                         BadgeStyle="BadgeStyle.Danger"
+                                         Text="@(maxDemand.ToString())" />
+                        }
 
-                </RadzenStack>
-            </div>
+                    </RadzenStack>
+                </div>
+            }
         </RadzenStack>
 
         <!-- Request doc & Project detail buttons -->
@@ -145,6 +147,9 @@ SPDX-License-Identifier: apache-2.0
     [Parameter]
     public IEnumerable<string> ResourceNames { get; set; }
 
+    [Parameter]
+    public bool DisplayUnmetDemand { get; set; }
+
     private double maxDemand;
     private double minDemand;
     private DateTime startDate;
@@ -167,17 +172,26 @@ SPDX-License-Identifier: apache-2.0
         // Show/hide some stuff based on whether the skills feature is enabled
         skillsEnabled = FeatureService.IsFeatureEnabled(FeatureType.Skills);
 
-        // Set the dates to show on the card
-        Project.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
-        this.startDate = FilterStartDate == null ? windowStart : (FilterStartDate.Value < windowStart ? windowStart : FilterStartDate.Value);
-        this.endDate = FilterEndDate == null ? windowEnd : (FilterEndDate.Value < windowEnd ? FilterEndDate.Value : windowEnd);
+        // Set the dates based on the project
+        startDate = Project.StartDate;
+        endDate = Project.EndDate;
         FormatWindowDates();
 
-        // Get max and min demand (rounded to 3 dp) -- ignoring tasks with no unmet demand
-        var subtasks = Project.SubTasks.Where(x => x.GetUnmetDemandInWindow(FilterStartDate, FilterEndDate) != 0);
-        if (subtasks.Count() == 0) return;
-        maxDemand = Math.Round(1000 * subtasks.Max(x => x.GetUnmetDemandInWindow(FilterStartDate, FilterEndDate))) / 1000;
-        minDemand = Math.Round(1000 * subtasks.Min(x => x.GetUnmetDemandInWindow(FilterStartDate, FilterEndDate))) / 1000;
+        // Special adjustments for unmet demand view
+        if (DisplayUnmetDemand)
+        {
+            // Set the dates to show on the card
+            Project.GetUnmetDemandWindowDates(out var windowStart, out var windowEnd);
+            this.startDate = FilterStartDate == null ? windowStart : (FilterStartDate.Value < windowStart ? windowStart : FilterStartDate.Value);
+            this.endDate = FilterEndDate == null ? windowEnd : (FilterEndDate.Value < windowEnd ? FilterEndDate.Value : windowEnd);
+            FormatWindowDates();
+
+            // Get max and min demand (rounded to 3 dp) -- ignoring tasks with no unmet demand
+            var subtasks = Project.SubTasks.Where(x => x.GetUnmetDemandInWindow(FilterStartDate, FilterEndDate) != 0);
+            if (subtasks.Count() == 0) return;
+            maxDemand = Math.Round(1000 * subtasks.Max(x => x.GetUnmetDemandInWindow(FilterStartDate, FilterEndDate))) / 1000;
+            minDemand = Math.Round(1000 * subtasks.Min(x => x.GetUnmetDemandInWindow(FilterStartDate, FilterEndDate))) / 1000;
+        }
 
         Debug.WriteLine($"** {Project.GetSensibleObjectName()}: {windowDatesFormatted}: {minDemand} - {maxDemand}");
     }
@@ -208,6 +222,13 @@ SPDX-License-Identifier: apache-2.0
     /// <returns></returns>
     private void FormatWindowDates()
     {
-        windowDatesFormatted = $"{(startDate <= DateTime.Today ? "Now" : startDate.ToShortDateString())} - {(endDate == DateTime.Today ? "Today" : endDate.ToShortDateString())}";
+        if (DisplayUnmetDemand)
+        {
+            windowDatesFormatted = $"{(startDate <= DateTime.Today ? "Now" : startDate.ToShortDateString())} - {(endDate == DateTime.Today ? "Today" : endDate.ToShortDateString())}";
+        }
+        else
+        {
+            windowDatesFormatted = $"{startDate.ToShortDateString()} - {endDate.ToShortDateString()}";
+        }
     }
 }

@@ -16,16 +16,30 @@ SPDX-License-Identifier: apache-2.0
             <h1>Our Projects</h1>
             @if (projectsToShow != null)
             {
-                <RadzenText TextStyle="TextStyle.Subtitle1" Text="@($"({projectsToShow.Count()} project(s) listed)")" Style="margin-bottom: -0.2rem" />
+                <RadzenText TextStyle="TextStyle.Subtitle1" Text="@($"{projectsToShow.Count()} project(s) listed")" Style="margin-bottom: -0.2rem" />
             }
         </RadzenStack>
+        <div class="row">
+            <div class="col">
+                <RadzenText Text="View our project portfolio. You can use the controls in the header to filter the list to those of interest." TextStyle="TextStyle.Body2" />
+            </div>
+        </div>
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
-            <RadzenLabel Text="Date Range" Component="StartDate" class="rz-ms-2" />
+            <RadzenLabel Text="Date Range:" Component="StartDate" class="rz-ms-2" />
             <RadzenDatePicker @bind-Value="startDate" ShowTime="false" DateFormat="dd/MM/yyyy" Name="StartDate" AllowClear="true" Change="FilterProjects" Disabled="@Loading" />
             <RadzenLabel Text="to" Component="EndDate" class="rz-ms-2" />
             <RadzenDatePicker @bind-Value="endDate" ShowTime="false" DateFormat="dd/MM/yyyy" Name="EndDate" AllowClear="true" Change="FilterProjects" Disabled="@Loading" />
-            <RadzenLabel Text="Group By Status" Component="CheckBox1" class="rz-ms-2" />
+            <RadzenLabel Text="Group By Status:" Component="CheckBox1" class="rz-ms-2" />
             <RadzenCheckBox TValue="bool" Value=@groupByStatus Change=@(args => { groupByStatus = args; FilterProjects(); }) Name="CheckBox1" Disabled="@Loading" />
+            <RadzenLabel Text="Filter By Status:" Component="SelectBar" class="rz-ms-2" />
+            <RadzenSelectBar Name="SelectBar" @bind-Value=@viewMode TValue="ViewMode" Change="@(args => FilterProjects())" Disabled="@Loading">
+                <Items>
+                    <RadzenSelectBarItem Text="All" Value="ViewMode.All" />
+                    <RadzenSelectBarItem Text="Funded" Value="ViewMode.Funded" />
+                    <RadzenSelectBarItem Text="Finished" Value="ViewMode.Finished" />
+                    <RadzenSelectBarItem Text="Unmet" Value="ViewMode.Unmet" />
+                </Items>
+            </RadzenSelectBar>
         </RadzenStack>
     </RadzenStack>
     <hr />
@@ -35,7 +49,7 @@ SPDX-License-Identifier: apache-2.0
     }
     else if (projectsToShow.Count() == 0)
     {
-        <RadzenText Text="There are no projects requiring RSE resource matching the chosen date range." />
+        <RadzenText Text="There are no projects matching the chosen filters." />
     }
     else
     {
@@ -52,7 +66,8 @@ SPDX-License-Identifier: apache-2.0
                                                       FilterStartDate="@startDate"
                                                       FilterEndDate="@endDate"
                                                       SkillsList="@project.Skills"
-                                                      ResourceNames="@project.AssignedResourceNames" />
+                                                      ResourceNames="@project.AssignedResourceNames"
+                                                      DisplayUnmetDemand="@(viewMode == ViewMode.Unmet)" />
                     }
                 </RadzenStack>
                 <hr />
@@ -68,7 +83,8 @@ SPDX-License-Identifier: apache-2.0
                                                   FilterStartDate="@startDate"
                                                   FilterEndDate="@endDate"
                                                   SkillsList="@project.Skills"
-                                                  ResourceNames="@project.AssignedResourceNames" />
+                                                  ResourceNames="@project.AssignedResourceNames"
+                                                  DisplayUnmetDemand="@(viewMode == ViewMode.Unmet)" />
                 }
             </RadzenStack>
             <hr />
