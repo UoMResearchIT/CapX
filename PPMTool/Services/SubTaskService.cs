@@ -240,6 +240,7 @@ namespace PPMTool.Services
         {
             return await context.SubTasks
                 .Include(x => x.AssignedResources)
+                .ThenInclude(x => x.Person)
                 .Where(x => x.OwningProject.ProjectId == projectId)
                 .SelectMany(x => x.AssignedResources)
                 .Select(x => x.Person.Name)

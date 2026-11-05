@@ -37,6 +37,11 @@ namespace PPMTool.Pages
             base.OnInitialized();
             LogInformation("Viewing project bulletin board");
 
+            // Set the loading flag and re-render to show spinner
+            Loading = true;
+            StateHasChanged();
+            await Task.Yield();
+
             // Load the projects and filter based on options
             await LoadProjectDataAsync();
             await UpdateProjectsToShow();
@@ -62,9 +67,13 @@ namespace PPMTool.Pages
         /// </summary>
         private void FilterProjects()
         {
-            if (allProjectsNotCancelled == null) return;
+            // If no projects have been loaded then set empty list
+            if (allProjectsNotCancelled == null)
+            {
+                projectsToShow = new List<ProjectWithAdditionalData>();
+            }
 
-            // Check we have valid dates and adjust if not
+            // If we have both dates then ensure that the end date is not before the start date
             if (startDate != null && endDate != null)
             {
                 if (endDate < startDate)

@@ -68,7 +68,7 @@ SPDX-License-Identifier: apache-2.0
 
                 <!-- Project Manager -->
                 <div style="padding: 0px;">
-                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
+                    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1.5rem">
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
                             <RadzenIcon Icon="article_person" title="Project Manager" />
                             <RadzenText TextStyle="TextStyle.Body1">
@@ -78,7 +78,7 @@ SPDX-License-Identifier: apache-2.0
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
                             <RadzenIcon Icon="engineering" title="Developers" />
                             <RadzenText TextStyle="TextStyle.Body1">
-                                @(ResourceNames.Any() ? string.Join(", ", ResourceNames) : "Unassigned")
+                                @(ResourceNames?.Any() ?? false ? string.Join(", ", ResourceNames) : "Unassigned")
                             </RadzenText>
                         </RadzenStack>
                     </RadzenStack>
