@@ -161,11 +161,12 @@ namespace PPMTool.Services
                     context.Projects.Any(p =>
                         p.InnateActivity.InnateCodeId == ic.InnateCodeId) &&
 
-                    // Code is not associated with any project cancelled or finished but in cutoff period
+                    // Exclude those where code matches an active project or is inside cutoff period
                     !context.Projects.Any(p =>
                         p.InnateActivity.InnateCodeId == ic.InnateCodeId &&
-                        ((int)p.ProjectStatus > (int)ProjectStatus.Finished ||
-                        (p.ProjectStatus == ProjectStatus.Finished && p.EndDate <= cutoffDate))
+                        ((int)p.ProjectStatus < (int)ProjectStatus.Finished ||
+                         (p.ProjectStatus == ProjectStatus.Finished &&
+                          p.EndDate > cutoffDate))
                     )
                 )
                 .ToListAsync();
