@@ -136,27 +136,36 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Gets details of the timesheet codes which could be marked
-        /// as inactive as they are not associated with projects that are still active
+        /// Gets details of active timesheet codes which could be marked as inactive
+        /// because they are associated with one or more projects, none of which
+        /// still require the code for timesheet bookings.
         /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
+        /// <param name="context">The database context.</param>
+        /// <returns>Details of the timesheet codes which could be marked as inactive.</returns>
         public async Task<IEnumerable<CodeToDeactivate>> GetCodesToDeactivateAsync(PPMToolContext context)
         {
-            // Get codes which are active, contain "S-RES-" (i.e. project codes) and 
-            // which are not associated with any currently active projects. If finished, then 
-            // only include if the end date of the associated project is more than 4 weeks ago.
-            // This is to allow people to submit final timesheets against recently finished projects.
+            // Set the cutoff date for finished projects.
+            // Codes associated with finished projects are retained for 28 days to allow for final timesheet submissions.
+            var cutoffDate = DateTime.Today.AddDays(-28);
+
+            // Get active codes which are associated with at least one project and
+            // which are not associated with any projects that still require the code.
+            // Finished projects retain their codes for 28 days to allow people to
+            // submit final timesheets against recently finished projects.
+            // Codes which are not associated with a project are deliberately ignored,
+            // as there is no reliable way to determine whether they are project codes.
             var codes = await context.InnateCodes
-                .Where(ic => ic.IsActive && ic.ActivityCode.ToLower().Contains("s-res-") &&
+                .Where(ic => ic.IsActive &&
+
+                    // Code is associated with at least one project
                     context.Projects.Any(p =>
+                        p.InnateActivity.InnateCodeId == ic.InnateCodeId) &&
 
-                        // Project timesheet code matches
+                    // Code is not associated with any project cancelled or finished but in cutoff period
+                    !context.Projects.Any(p =>
                         p.InnateActivity.InnateCodeId == ic.InnateCodeId &&
-
-                        // Project is cancelled or finished more than 28 days ago
                         ((int)p.ProjectStatus > (int)ProjectStatus.Finished ||
-                        (p.ProjectStatus == ProjectStatus.Finished && p.EndDate <= DateTime.Today.AddDays(-28)))
+                        (p.ProjectStatus == ProjectStatus.Finished && p.EndDate <= cutoffDate))
                     )
                 )
                 .ToListAsync();
@@ -174,6 +183,7 @@ namespace PPMTool.Services
                 var obj = new CodeToDeactivate(code, pmNames, projects.Select(x => x.RTP));
                 codesToDeactivate.Add(obj);
             }
+
             return codesToDeactivate;
         }
 
