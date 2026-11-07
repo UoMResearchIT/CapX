@@ -21,7 +21,7 @@ namespace PPMTool.Migrations.SqlServer.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.10")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -555,6 +555,9 @@ namespace PPMTool.Migrations.SqlServer.Migrations
 
                     b.Property<string>("ShortName")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StaffId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("StartDate")
