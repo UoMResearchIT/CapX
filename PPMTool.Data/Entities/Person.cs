@@ -15,6 +15,11 @@ namespace PPMTool.Data.Entities
     {
         public int PersonId { get; set; }
 
+        /// <summary>
+        /// Optional identifier such as an employee ID
+        /// </summary>
+        public string? StaffId { get; set; }
+
         private string name = null!;
         /// <summary>
         /// Name of the person
