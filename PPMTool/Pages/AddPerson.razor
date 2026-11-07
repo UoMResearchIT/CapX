@@ -70,15 +70,19 @@ SPDX-License-Identifier: apache-2.0
         <RadzenCard>
             <EditForm EditContext="editContext">
                 <div class="row">
-                    <div class="col">
+                    <div class="col-4">
                         <RadzenLabel class="radzen-form-label" Text="Name" Component="Name" /><br>
                         <RadzenTextBox class="radzen-text-box" Name="Name" @bind-Value="personModel.Name" Disabled="!EditAuthorised" />
                     </div>
-                    <div class="col">
+                    <div class="col-2">
                         <RadzenLabel class="radzen-form-label" Text="Initials" Component="Initials" /><br>
                         <RadzenTextBox class="radzen-text-box" Name="Initials" @bind-Value="personModel.ShortName" Disabled=!EditAuthorised />
                     </div>
-                    <div class="col">
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Staff ID" Component="StaffId" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Optional. Institutional employee ID number associated with the person." /><br />
+                        <RadzenTextBox class="radzen-text-box" Name="StaffId" @bind-Value="personModel.StaffId" Disabled=!EditAuthorised />
+                    </div>
+                    <div class="col-4">
                         <RadzenLabel class="radzen-form-label" Text="Line Manager" Component="LM" /><br>
                         <RadzenDropDown class="radzen-dropdown" Name="LM" TValue="Person" TextProperty="Name" @bind-Value="personModel.LineManager" Data="@managers" Disabled=!EditAuthorised />
                     </div>
