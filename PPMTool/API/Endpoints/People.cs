@@ -44,6 +44,7 @@ public static class People
 
             var personDtos = people.Select(x => new PersonDTO(
                 PersonId: x.PersonId,
+                EmployeeId: x.StaffId,
                 Name: x.Name,
                 ShortName: x.ShortName,
                 PostFTE: x.FTE,
@@ -111,6 +112,7 @@ public static class People
 
             var dto = new PersonDTO(
                 PersonId: person.PersonId,
+                EmployeeId: person.StaffId,
                 Name: person.Name,
                 ShortName: person.ShortName,
                 PostFTE: person.FTE,
