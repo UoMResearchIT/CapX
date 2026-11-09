@@ -18,7 +18,7 @@ namespace PPMTool.API.DTOs
     /// <param name="LineManagerName">The name of their line manager, if present.</param>
     public sealed record PersonDTO(
         int PersonId,
-        string? EmployeeId,
+        string EmployeeId,
         string Name,
         string ShortName,
         double PostFTE,
