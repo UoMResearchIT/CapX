@@ -232,39 +232,116 @@ namespace PPMTool.Services
 
         /// <summary>
         /// Finds the first resource assigned to the specified subtask whose overlapping
-        /// billable assignments exceed their applicable contractual FTE.
+        /// BilledFTE assignments exceed their applicable contractual FTE.
         /// </summary>
-        /// <param name="context">Context to use for the operation.</param>
+        /// <remarks>
+        /// All positive BilledFTE assignments are considered, irrespective of funding source
+        /// or recharge eligibility. "Billable" refers to the BilledFTE property.
+        /// </remarks>
+        /// <param name="context">Database context used to retrieve assignment and workload data.</param>
         /// <param name="subTaskId">Subtask whose assigned resources should be checked.</param>
         /// <returns>The first overallocation found, or <see langword="null"/> when all resources fit within capacity.</returns>
-        public ResourceOverallocation GetFirstResourceBillableOverallocation(PPMToolContext context, int subTaskId)
+        public ResourceOverallocation GetFirstResourceBillableOverallocation(
+            PPMToolContext context,
+            int subTaskId)
         {
-            // Get the task that matches the passed ID and its resources
-            var task = context.SubTasks
+            // Get the subtask so we know the date window over which to evaluate its resources.
+            var subTask = context.SubTasks
                 .AsNoTracking()
-                .Include(x => x.AssignedResources)
-                    .ThenInclude(x => x.Person)
                 .SingleOrDefault(x => x.SubTaskId == subTaskId);
 
-            // No task to query
-            if (task == null)
+            if (subTask == null)
             {
                 return null;
             }
 
-            // Loop over the resources and construct
-            foreach (var resource in task.AssignedResources.OrderBy(x => x.Person.Name))
+            // Get the distinct list of people assigned to the subtask.
+            var personIds = context.Resources
+                .AsNoTracking()
+                .Where(resource => resource.SubTask!.SubTaskId == subTaskId)
+                .Select(resource => resource.Person.PersonId)
+                .Distinct()
+                .ToList();
+
+            // Evaluate those people across the lifetime of this subtask.
+            return GetFirstResourceBillableOverallocation(
+                context,
+                personIds,
+                subTask.StartDate,
+                subTask.EndDate
+            );
+        }
+
+        /// <summary>
+        /// Finds the first resource assigned to any subtask in the specified project whose
+        /// overlapping BilledFTE assignments exceed their applicable contractual FTE.
+        /// </summary>
+        /// <remarks>
+        /// All positive BilledFTE assignments are considered, irrespective of funding source
+        /// or recharge eligibility. "Billable" refers to the BilledFTE property.
+        /// </remarks>
+        /// <param name="context">Database context used to retrieve assignment and workload data.</param>
+        /// <param name="projectId">Project whose assigned resources should be checked.</param>
+        /// <returns>The first overallocation found, or <see langword="null"/> when all resources fit within capacity.</returns>
+        public ResourceOverallocation GetFirstProjectResourceBillableOverallocation(
+            PPMToolContext context,
+            int projectId)
+        {
+            // Get the project so we know the date window over which to evaluate its resources.
+            var project = context.Projects
+                .AsNoTracking()
+                .SingleOrDefault(x => x.ProjectId == projectId);
+
+            if (project == null)
             {
-                // See if this resource has any billable overallocation vs contractual FTE within the task's start and end dates
+                return null;
+            }
+
+            // Get the distinct list of people assigned to any task in this project.
+            var personIds = context.Resources
+                .AsNoTracking()
+                .Where(resource => resource.SubTask!.OwningProject.ProjectId == projectId)
+                .Select(resource => resource.Person.PersonId)
+                .Distinct()
+                .ToList();
+
+            // Evaluate those people across the lifetime of this project.
+            return GetFirstResourceBillableOverallocation(
+                context,
+                personIds,
+                project.StartDate,
+                project.EndDate);
+        }
+
+        /// <summary>
+        /// Finds the first BilledFTE overallocation among the specified people within the supplied date range.
+        /// </summary>
+        /// <remarks>
+        /// Each person is evaluated in turn and processing stops when the first overallocation is found.
+        /// All positive BilledFTE assignments are considered irrespective of recharge eligibility.
+        /// </remarks>
+        /// <param name="context">Database context used to retrieve assignment and workload data.</param>
+        /// <param name="personIds">Identifiers of the people to evaluate.</param>
+        /// <param name="startDate">Start of the evaluation period, inclusive.</param>
+        /// <param name="endDate">End of the evaluation period, inclusive.</param>
+        /// <returns>The first overallocation found, or <see langword="null"/> when none is found.</returns>
+        private static ResourceOverallocation GetFirstResourceBillableOverallocation(
+            PPMToolContext context,
+            IEnumerable<int> personIds,
+            DateTime startDate,
+            DateTime endDate)
+        {
+            // Loop over the people and return the first overallocation found, if any.
+            foreach (var personId in personIds)
+            {
                 var overallocation = GetResourceBillableOverallocation(
                     context,
-                    resource.Person.PersonId,
-                    task.StartDate,
-                    task.EndDate);
+                    personId,
+                    startDate,
+                    endDate);
 
                 if (overallocation != null)
                 {
-                    // Just return the first one found
                     return overallocation;
                 }
             }
@@ -272,17 +349,22 @@ namespace PPMTool.Services
             return null;
         }
 
+
         /// <summary>
-        /// Finds the first day in the specified date range where a person's billable assigned FTE exceeds their
-        /// contractual FTE.
+        /// Finds the first day in the specified date range where the sum of a person's
+        /// overlapping BilledFTE assignments exceeds their applicable contractual FTE.
         /// </summary>
-        /// <remarks>Only assignments with a positive billed FTE are considered. Comparison uses a small
-        /// tolerance to avoid false positives from floating-point precision.</remarks>
-        /// <param name="context">Database context used to load the person, workload model changes, and billable resource assignments.</param>
+        /// <remarks>
+        /// All positive BilledFTE assignments are considered irrespective of funding source
+        /// or recharge eligibility. The contractual FTE is taken from the Workload Model
+        /// applicable on each date. A small tolerance is used to avoid false positives
+        /// caused by floating-point precision.
+        /// </remarks>
+        /// <param name="context">Database context used to load the person, workload model changes, and resource assignments.</param>
         /// <param name="personId">Identifier of the person to evaluate.</param>
         /// <param name="startDate">Start of the evaluation period, inclusive.</param>
         /// <param name="endDate">End of the evaluation period, inclusive.</param>
-        /// <returns>A <c>ResourceOverallocation</c> describing the first detected billable overallocation; otherwise, <see langword="null"/>.</returns>
+        /// <returns>A <see cref="ResourceOverallocation"/> describing the first detected overallocation, or <see langword="null"/> when none is found.</returns>
         private static ResourceOverallocation GetResourceBillableOverallocation(
             PPMToolContext context,
             int personId,

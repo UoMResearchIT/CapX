@@ -55,7 +55,7 @@ namespace PPMTool.Services.StatusEvaluators
                 new StatusMessage("Task has zero demand but assigned resources!", StatusMessage.MessageType.Error, task.HasZeroDemandButResourced),
                 new StatusMessage("Resource on this task has no associated funding source and task is in progress or ran in the past!", StatusMessage.MessageType.Error, task.HasResourceWithNoFundingSourceAndRunning, Data.Enums.FeatureType.ProjectFinance),
                 new StatusMessage(
-                    $"{overallocation?.PersonName} has assignments totalling {overallocation?.AssignedFTE:0.###} FTE on {overallocation?.Date:dd/MM/yyyy}, exceeding their contractual FTE of {overallocation?.ContractualFTE:0.###}.",
+                    $"{overallocation?.PersonName} has assignments totalling {overallocation?.AssignedFTE:0.0##} FTE on {overallocation?.Date:dd/MM/yyyy}, exceeding their contractual FTE of {overallocation?.ContractualFTE:0.0##}.",
                     StatusMessage.MessageType.Error,
                     () => overallocation != null,
                     Data.Enums.FeatureType.ProjectsAndCapacity
