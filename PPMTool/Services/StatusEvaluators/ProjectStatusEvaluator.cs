@@ -114,7 +114,7 @@ namespace PPMTool.Services.StatusEvaluators
                     new StatusMessage("This project does not have a project management task!", StatusMessage.MessageType.Error, () => !project.SubTasks?.Any(x => x.TaskDuty == Duty.ProjectAndServiceMgmt) ?? true),
                     new StatusMessage("This project has funding sources contributing to the budget that are not associated with task resources!", StatusMessage.MessageType.Error, () => project.HasFundingSourcesNotLinkedToResources(), FeatureType.ProjectFinance),
                     new StatusMessage(
-                        $"{overallocation.PersonName} has billable assignments totalling greater than their contracted FTE during this project!",
+                        $"{overallocation?.PersonName} has billable assignments totalling greater than their contracted FTE during this project!",
                         StatusMessage.MessageType.Error,
                         () => overallocation != null,
                         FeatureType.ProjectsAndCapacity

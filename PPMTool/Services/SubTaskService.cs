@@ -274,43 +274,54 @@ namespace PPMTool.Services
 
         /// <summary>
         /// Finds the first resource assigned to any subtask in the specified project whose
-        /// overlapping BilledFTE assignments exceed their applicable contractual FTE.
+        /// overlapping BilledFTE assignments exceed their applicable contractual FTE while
+        /// they are assigned to this project.
         /// </summary>
         /// <remarks>
-        /// All positive BilledFTE assignments are considered, irrespective of funding source
-        /// or recharge eligibility. "Billable" refers to the BilledFTE property.
+        /// An overallocation is relevant to this project only when it occurs during the
+        /// lifetime of a subtask on this project to which the person is assigned.
+        /// The overallocation itself includes all of the person's overlapping positive
+        /// BilledFTE assignments across all projects.
         /// </remarks>
         /// <param name="context">Database context used to retrieve assignment and workload data.</param>
         /// <param name="projectId">Project whose assigned resources should be checked.</param>
-        /// <returns>The first overallocation found, or <see langword="null"/> when all resources fit within capacity.</returns>
-        public ResourceOverallocation GetFirstProjectResourceBillableOverallocation(
+        /// <returns>The first relevant overallocation found, or <see langword="null"/> when none is found.</returns>
+        public ResourceOverallocation? GetFirstProjectResourceBillableOverallocation(
             PPMToolContext context,
             int projectId)
         {
-            // Get the project so we know the date window over which to evaluate its resources.
-            var project = context.Projects
-                .AsNoTracking()
-                .SingleOrDefault(x => x.ProjectId == projectId);
-
-            if (project == null)
-            {
-                return null;
-            }
-
-            // Get the distinct list of people assigned to any task in this project.
-            var personIds = context.Resources
+            // Get the distinct periods during which each person is actually assigned
+            // to a subtask on this project.
+            var assignmentWindows = context.Resources
                 .AsNoTracking()
                 .Where(resource => resource.SubTask!.OwningProject.ProjectId == projectId)
-                .Select(resource => resource.Person.PersonId)
+                .Select(resource => new
+                {
+                    PersonId = resource.Person.PersonId,
+                    resource.SubTask.StartDate,
+                    resource.SubTask.EndDate
+                })
                 .Distinct()
+                .OrderBy(window => window.StartDate)
                 .ToList();
 
-            // Evaluate those people across the lifetime of this project.
-            return GetFirstResourceBillableOverallocation(
-                context,
-                personIds,
-                project.StartDate,
-                project.EndDate);
+            // Only consider an overallocation relevant to this project when it occurs
+            // during one of the person's actual assignment windows on this project.
+            foreach (var window in assignmentWindows)
+            {
+                var overallocation = GetResourceBillableOverallocation(
+                    context,
+                    window.PersonId,
+                    window.StartDate,
+                    window.EndDate);
+
+                if (overallocation != null)
+                {
+                    return overallocation;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
