@@ -22,9 +22,6 @@ namespace PPMTool.Pages
         private PersonService PersonService { get; set; }
 
         [Inject]
-        private SkillTagService TagService { get; set; }
-
-        [Inject]
         private PersonStatusEvaluator PersonStatusEvaluator { get; set; }
 
         private IEnumerable<Person> people;

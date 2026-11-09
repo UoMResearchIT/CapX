@@ -16,18 +16,15 @@ namespace PPMTool.Services.StatusEvaluators
     {
         private readonly SubTaskService subTaskService;
         private readonly IDbContextFactory<PPMToolContext> contextFactory;
-        private readonly ILogger<SubTaskStatusEvaluator> logger;
 
         public SubTaskStatusEvaluator(
             FeatureService featureService,
             SubTaskService subTaskService,
-            IDbContextFactory<PPMToolContext> contextFactory,
-            ILogger<SubTaskStatusEvaluator> logger
+            IDbContextFactory<PPMToolContext> contextFactory
         ) : base(featureService)
         {
             this.subTaskService = subTaskService;
             this.contextFactory = contextFactory;
-            this.logger = logger;
         }
 
         protected override IReadOnlyList<StatusMessage> BuildCoreStatusMessages(SubTask task, int? messageViewerPersonId = null)

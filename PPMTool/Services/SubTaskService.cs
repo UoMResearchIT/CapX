@@ -416,7 +416,7 @@ namespace PPMTool.Services
                 // Get the contractual FTE from the WLM
                 var contractualFte = workloadModel.Total();
 
-                // If a genuine overallocation (i.e. inability to recharge this much work) then return model
+                // If the summed BilledFTE exceeds contractual capacity then return the first overallocation -- i.e. person can't be recharged for all their assignments on that day.
                 if (assignedFte > contractualFte + tolerance)
                 {
                     return new ResourceOverallocation(
