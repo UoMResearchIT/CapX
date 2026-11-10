@@ -328,7 +328,6 @@ api.MapGet("/timesheets/getByCodeTask", Timesheets.GetTimesheetBookingsByCodeAnd
 api.MapGet("/wlm/getAnalysis", WorkloadModels.GetWorkloadAnalysisData);
 api.MapGet("/wlm/getAll", WorkloadModels.GetAllWorkloadModelChangesAsync);
 api.MapGet("/wlm/getById", WorkloadModels.GetWorkloadModelChangeByIdAsync);
-api.MapGet("/leavebookings/getForSelfAndStaff", LeaveBookings.GetStaffBookingsForYearAsync);
 api.MapGet("/assignments/getAssignments", Assignments.GetAssignmentDataAsync);
 api.MapGet("/projects/getAll", Projects.GetAllProjectsAsync);
 api.MapGet("/projects/getById", Projects.GetProjectByIdAsync);

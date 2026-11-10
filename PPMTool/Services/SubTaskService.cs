@@ -286,7 +286,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context used to retrieve assignment and workload data.</param>
         /// <param name="projectId">Project whose assigned resources should be checked.</param>
         /// <returns>The first relevant overallocation found, or <see langword="null"/> when none is found.</returns>
-        public ResourceOverallocation? GetFirstProjectResourceBillableOverallocation(
+        public ResourceOverallocation GetFirstProjectResourceBillableOverallocation(
             PPMToolContext context,
             int projectId)
         {
