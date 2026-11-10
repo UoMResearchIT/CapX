@@ -1,4 +1,8 @@
-﻿namespace PPMTool.Tests.API.FinancialReferences
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+namespace PPMTool.Tests.API.FinancialReferences
 {
     public class AuthorizationTests : BaseApiTest
     {

@@ -1,4 +1,8 @@
-﻿namespace PPMTool.API.DTOs
+﻿// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+namespace PPMTool.API.DTOs
 {
     /// <summary>
     /// A flat representation of a resource suitable for API data exports.
