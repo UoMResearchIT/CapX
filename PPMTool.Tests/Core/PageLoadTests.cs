@@ -9,9 +9,6 @@ namespace PPMTool.Tests.Core
     public class PageLoadTests : PageTest
     {
         // Timeouts (in milliseconds)
-        private const int pageLoadTimeoutMs = 5000;
-        private const int pageTitleTimeoutMs = 2000;
-        private const int loginButtonTimeoutMs = 2000;
         private const int tearDownDelayMs = 1000;
         private const int pageStabilizationDelayMs = 1000;
         private const int loginAuthenticationDelayMs = 1000;
