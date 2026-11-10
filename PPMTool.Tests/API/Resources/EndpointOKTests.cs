@@ -22,7 +22,7 @@ namespace PPMTool.Tests.API.Resources
         {
             using (var client = GetClientAsManager())
             {
-                var response = await client.GetAsync($"resources?resourceId={ResourceId}");
+                var response = await client.GetAsync($"resources/getById?resourceId={ResourceId}");
                 Assert.That(response.IsSuccessStatusCode);
             }
         }

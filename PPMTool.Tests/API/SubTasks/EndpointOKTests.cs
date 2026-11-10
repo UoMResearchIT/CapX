@@ -22,7 +22,7 @@ namespace PPMTool.Tests.API.SubTasks
         {
             using (var client = GetClientAsManager())
             {
-                var response = await client.GetAsync($"subTasks?subTaskId={SubTaskId}");
+                var response = await client.GetAsync($"subTasks/getById?subTaskId={SubTaskId}");
                 Assert.That(response.IsSuccessStatusCode);
             }
         }

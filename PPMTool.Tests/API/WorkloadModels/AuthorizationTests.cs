@@ -7,11 +7,11 @@ namespace PPMTool.Tests.API.WorkloadModels
     public class AuthorizationTests : BaseApiTest
     {
         [Test]
-        public async Task GetAllSubTasksAsNonManagerShouldReturnUnauthorised()
+        public async Task GetAllWorkloadModelChangesAsNonManagerShouldReturnUnauthorised()
         {
             using (var client = GetClientAsDeveloper())
             {
-                var response = await client.GetAsync($"subTasks/getAll?projectId={ProjectId}");
+                var response = await client.GetAsync("wlm/getAll");
                 Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
             }
         }
