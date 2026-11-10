@@ -22,7 +22,7 @@ namespace PPMTool.Tests.API.FundingSources
         {
             using (var client = GetClientAsManager())
             {
-                var response = await client.GetAsync($"fundingSources?fundingSourceId={FundingSourceId}");
+                var response = await client.GetAsync($"fundingSources/getById?fundingSourceId={FundingSourceId}");
                 Assert.That(response.IsSuccessStatusCode);
             }
         }
