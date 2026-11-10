@@ -70,15 +70,19 @@ SPDX-License-Identifier: apache-2.0
         <RadzenCard>
             <EditForm EditContext="editContext">
                 <div class="row">
-                    <div class="col">
+                    <div class="col-4">
                         <RadzenLabel class="radzen-form-label" Text="Name" Component="Name" /><br>
                         <RadzenTextBox class="radzen-text-box" Name="Name" @bind-Value="personModel.Name" Disabled="!EditAuthorised" />
                     </div>
-                    <div class="col">
+                    <div class="col-2">
                         <RadzenLabel class="radzen-form-label" Text="Initials" Component="Initials" /><br>
                         <RadzenTextBox class="radzen-text-box" Name="Initials" @bind-Value="personModel.ShortName" Disabled=!EditAuthorised />
                     </div>
-                    <div class="col">
+                    <div class="col-2">
+                        <RadzenLabel class="radzen-form-label" Text="Staff ID" Component="StaffId" /><RadzenIcon class="centre-align" IconStyle=IconStyle.Info Icon="info" title="Optional. Institutional employee ID number associated with the person." /><br />
+                        <RadzenTextBox class="radzen-text-box" Name="StaffId" @bind-Value="personModel.StaffId" Disabled=!EditAuthorised />
+                    </div>
+                    <div class="col-4">
                         <RadzenLabel class="radzen-form-label" Text="Line Manager" Component="LM" /><br>
                         <RadzenDropDown class="radzen-dropdown" Name="LM" TValue="Person" TextProperty="Name" @bind-Value="personModel.LineManager" Data="@managers" Disabled=!EditAuthorised />
                     </div>
@@ -117,23 +121,26 @@ SPDX-License-Identifier: apache-2.0
                                         TItem="WorkloadModelChange">
                             <Template Context="d">
                                 <div style="width:100%">
-                                    <RadzenStack Orientation="Radzen.Orientation.Vertical">
-                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                                            <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    <RadzenStack Orientation="Radzen.Orientation.Vertical" Gap="0.1rem">
+                                        <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="0.5rem">
+                                            <RadzenStack Orientation="Radzen.Orientation.Vertical">
                                                 <RadzenText Text="@d.ChangeDate.ToShortDateString()" TextStyle="TextStyle.Subtitle1" />
-                                                <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
-                                                             BadgeStyle="BadgeStyle.Primary"
-                                                             Text="@($"🎓 Grade {d.Grade}")" />
-                                                <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
-                                                             BadgeStyle="BadgeStyle.Primary"
-                                                             Text="@($"🕒 {d.Total().ToString("F1")} FTE")" />
-                                                @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance) && d.CostValueSetId != null)
-                                                {
+                                                <RadzenStack Orientation="Radzen.Orientation.Horizontal"
+                                                             AlignItems="AlignItems.Center"
+                                                             Gap="0.5rem">
                                                     <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
                                                                  BadgeStyle="BadgeStyle.Primary"
-                                                                 Text="@($"💰 {d.CostValueSet?.Name}")" />
-                                                }
-
+                                                                 Text="@($"🎓 Grade {d.Grade}")" />
+                                                    <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
+                                                                 BadgeStyle="BadgeStyle.Primary"
+                                                                 Text="@($"🕒 {d.Total().ToString("F1")} FTE")" />
+                                                    @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectFinance) && d.CostValueSetId != null)
+                                                    {
+                                                        <RadzenBadge Style="margin-bottom: 0.5rem; font-size: medium"
+                                                                     BadgeStyle="BadgeStyle.Primary"
+                                                                     Text="@($"💰 {d.CostValueSet?.Name}")" />
+                                                    }
+                                                </RadzenStack>
                                             </RadzenStack>
                                             <RadzenText Text="@d.Notes" TextStyle="TextStyle.Body2"/>
                                         </RadzenStack>
@@ -184,14 +191,11 @@ SPDX-License-Identifier: apache-2.0
                                             TItem="Absence">
                                 <Template Context="a">
                                     <div class="row flexbox p-0">
-                                        <div class="col-3">
-                                            @a.StartDate.ToShortDateString()
+                                        <div class="col-1">
+                                            <RadzenIcon Icon="beach_access" IconStyle="IconStyle.Primary" />
                                         </div>
-                                        <div class="col-3">
-                                            to
-                                        </div>
-                                        <div class="col-3">
-                                            @(a.EndDate?.ToShortDateString() ?? "Not Set")
+                                        <div class="col-auto">
+                                            @($"{a.StartDate.ToShortDateString()} to {(a.EndDate?.ToShortDateString() ?? "Not Set")}")
                                         </div>
                                     </div>
                                 </Template>

@@ -31,9 +31,12 @@ namespace PPMTool.Shared
         private string displayName;
         private IEnumerable<User> users;
         private IEnumerable<string> filteredUsers;
-        private bool showDropDown = false;
+#if LOCAL
+        private const bool showDropDown = true;
+#else
+        private const bool showDropDown = false;
+#endif
         private string selectedUser;
-        private User loginAs;
         private string loginLink = string.Empty;
         private bool notLoggedIn = false;
         private PPMToolContext context;
@@ -45,10 +48,6 @@ namespace PPMTool.Shared
             // Subscribe to the navigation manager's location changed event to force a rerender of the login view
             Navigation.LocationChanged += HandleLocationChanged;
 
-            // Show dropdown
-#if LOCAL
-            showDropDown = true;
-#endif
             if (AuthenticationStateTask is not null)
             {
                 var authState = AuthenticationStateTask.GetAwaiter().GetResult();
@@ -115,7 +114,6 @@ namespace PPMTool.Shared
         /// </summary>
         private void OnChange()
         {
-            loginAs = users.FirstOrDefault(x => UserToString(x) == selectedUser);
             SetLoginLink();
         }
 
@@ -127,7 +125,11 @@ namespace PPMTool.Shared
 
             loginLink = $"/Account/Login?returnUrl={Navigation?.Uri}";
 #if LOCAL
-            loginLink += $"&username={loginAs.CASUserName}";
+            var loginAs = users?.FirstOrDefault(x => UserToString(x) == selectedUser);
+            if (loginAs != null)
+            {
+                loginLink += $"&username={loginAs.CASUserName}";
+            }
 #endif
             Debug.WriteLine($"** Setting login link as {loginLink}");
         }

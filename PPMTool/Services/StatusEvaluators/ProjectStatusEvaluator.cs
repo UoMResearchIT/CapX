@@ -7,6 +7,7 @@ using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
+using PPMTool.Models;
 
 namespace PPMTool.Services.StatusEvaluators
 {
@@ -16,19 +17,22 @@ namespace PPMTool.Services.StatusEvaluators
         private readonly IDbContextFactory<PPMToolContext> contextFactory;
         private readonly InvoiceService invoiceService;
         private readonly ProjectService projectService;
+        private readonly SubTaskService subTaskService;
 
         public ProjectStatusEvaluator(
             SettingsService settingsService,
             IDbContextFactory<PPMToolContext> contextFactory,
             InvoiceService invoiceService,
             ProjectService projectService,
-            FeatureService featureService
+            FeatureService featureService,
+            SubTaskService subTaskService
         ) : base(featureService)
         {
             this.settingsService = settingsService;
             this.contextFactory = contextFactory;
             this.invoiceService = invoiceService;
             this.projectService = projectService;
+            this.subTaskService = subTaskService;
         }
 
         protected override IReadOnlyList<StatusMessage> BuildCoreStatusMessages(Project project, int? messageViewerPersonId = null)
@@ -53,6 +57,15 @@ namespace PPMTool.Services.StatusEvaluators
                 using var context = contextFactory.CreateDbContext();
                 hasCurrentFYInvoice = invoiceService.HasInvoiceInFinancialYear(context, project.ProjectId, currentFY);
                 requestedThisFY = invoiceService.GetFundsRequestedForFinancialYear(context, project.ProjectId, currentFY);
+            }
+
+            // Precompute whether there is overallocation of resources beyond contractual FTE
+            ResourceOverallocation overallocation;
+            using (var context = contextFactory.CreateDbContext())
+            {
+                overallocation = subTaskService.GetFirstProjectResourceBillableOverallocation(
+                    context,
+                    project.ProjectId);
             }
 
             // Build messages that apply to all projects
@@ -99,7 +112,13 @@ namespace PPMTool.Services.StatusEvaluators
                     new StatusMessage("This project has no funding sources but is either finished or is active!", StatusMessage.MessageType.Error, project.HasNoFundingSourcesButRan, FeatureType.ProjectFinance),
                     new StatusMessage("This project has a task with a resource without a funding source and is currently running or has run in the past!", StatusMessage.MessageType.Error, project.HasResourcesWithNoFundingSourceOnRunningTask, FeatureType.ProjectFinance),
                     new StatusMessage("This project does not have a project management task!", StatusMessage.MessageType.Error, () => !project.SubTasks?.Any(x => x.TaskDuty == Duty.ProjectAndServiceMgmt) ?? true),
-                    new StatusMessage("This project has funding sources contributing to the budget that are not associated with task resources!", StatusMessage.MessageType.Error, () => project.HasFundingSourcesNotLinkedToResources(), FeatureType.ProjectFinance)
+                    new StatusMessage("This project has funding sources contributing to the budget that are not associated with task resources!", StatusMessage.MessageType.Error, () => project.HasFundingSourcesNotLinkedToResources(), FeatureType.ProjectFinance),
+                    new StatusMessage(
+                        $"{overallocation?.PersonName} has billable assignments totalling greater than their contracted FTE during this project!",
+                        StatusMessage.MessageType.Error,
+                        () => overallocation != null,
+                        FeatureType.ProjectsAndCapacity
+                    )
                 ]);
             }
 

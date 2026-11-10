@@ -53,11 +53,11 @@ namespace PPMTool.Pages
         {
             switch (unit)
             {
-                case Faculty faculty:
+                case Faculty:
                     isAddingFaculty = false;
                     break;
 
-                case School school:
+                case School:
                     isAddingSchool = false;
                     break;
             }
@@ -72,11 +72,11 @@ namespace PPMTool.Pages
             // Update the state of the page
             switch (unit)
             {
-                case Faculty faculty:
+                case Faculty:
                     isAddingFaculty = false;
                     break;
 
-                case School school:
+                case School:
                     isAddingSchool = false;
                     break;
             }
@@ -168,7 +168,7 @@ namespace PPMTool.Pages
             if (!value)
             {
                 // Set default value
-                var confirmed = false;
+                bool confirmed;
 
                 // Show dialogue box if sub-units within this organisational unit
                 if (faculty.Schools.Count > 0)

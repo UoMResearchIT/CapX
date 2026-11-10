@@ -46,9 +46,9 @@ namespace PPMTool.Pages
         private double saturdayHours;
         private double sundayHours;
         private double totalHours;
-        private int entryMinimum = 0;
-        private double entryStep = 0.25;
-        private Dictionary<string, string> dayColours = new Dictionary<string, string>
+        private readonly int entryMinimum = 0;
+        private readonly double entryStep = 0.25;
+        private readonly Dictionary<string, string> dayColours = new Dictionary<string, string>
         {
             { "mon", "var(--rz-grid-foot-background-color)" },
             { "wed", "var(--rz-grid-foot-background-color)" },

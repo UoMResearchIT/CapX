@@ -10,33 +10,33 @@ namespace PPMTool.Data.Context
 {
     public class PPMToolContext : DbContext
     {
-        public DbSet<Absence> Absence { get; set; }
-        public DbSet<InnateCode> InnateCodes { get; set; }
-        public DbSet<InnateCodeTask> InnateCodeTasks { get; set; }
-        public DbSet<User> Users { get; set; }
-        public DbSet<Person> People { get; set; }
-        public DbSet<Project> Projects { get; set; }
-        public DbSet<SubTask> SubTasks { get; set; }
-        public DbSet<Timesheet> Timesheets { get; set; }
-        public DbSet<TimesheetEntry> TimesheetEntries { get; set; }
-        public DbSet<Resource> Resources { get; set; }
-        public DbSet<SkillTag> SkillTags { get; set; }
-        public DbSet<OwnedSkill> OwnedSkills { get; set; }
-        public DbSet<WorkloadModelChange> WorkloadModelChanges { get; set; }
-        public DbSet<Note> Notes { get; set; }
-        public DbSet<FinancialReference> FinancialReferences { get; set; }
-        public DbSet<FinancialReferenceValue> FinancialReferenceValues { get; set; }
-        public DbSet<FinancialReferenceValueSet> FinancialReferenceValueSets { get; set; }
-        public DbSet<Competency> Competencies { get; set; }
-        public DbSet<CompetencyAssessment> CompetencyAssessments { get; set; }
-        public DbSet<Invoice> Invoices { get; set; }
-        public DbSet<Payment> Payments { get; set; }
-        public DbSet<ApiKey> ApiKeys { get; set; }
-        public DbSet<FundingSource> FundingSources { get; set; }
-        public DbSet<School> Schools { get; set; }
-        public DbSet<Faculty> Faculties { get; set; }
-        public DbSet<Feature> Features { get; set; }
-        public DbSet<Setting> Settings { get; set; }
+        public DbSet<Absence> Absence { get; set; } = null!;
+        public DbSet<InnateCode> InnateCodes { get; set; } = null!;
+        public DbSet<InnateCodeTask> InnateCodeTasks { get; set; } = null!;
+        public DbSet<User> Users { get; set; } = null!;
+        public DbSet<Person> People { get; set; } = null!;
+        public DbSet<Project> Projects { get; set; } = null!;
+        public DbSet<SubTask> SubTasks { get; set; } = null!;
+        public DbSet<Timesheet> Timesheets { get; set; } = null!;
+        public DbSet<TimesheetEntry> TimesheetEntries { get; set; } = null!;
+        public DbSet<Resource> Resources { get; set; } = null!;
+        public DbSet<SkillTag> SkillTags { get; set; } = null!;
+        public DbSet<OwnedSkill> OwnedSkills { get; set; } = null!;
+        public DbSet<WorkloadModelChange> WorkloadModelChanges { get; set; } = null!;
+        public DbSet<Note> Notes { get; set; } = null!;
+        public DbSet<FinancialReference> FinancialReferences { get; set; } = null!;
+        public DbSet<FinancialReferenceValue> FinancialReferenceValues { get; set; } = null!;
+        public DbSet<FinancialReferenceValueSet> FinancialReferenceValueSets { get; set; } = null!;
+        public DbSet<Competency> Competencies { get; set; } = null!;
+        public DbSet<CompetencyAssessment> CompetencyAssessments { get; set; } = null!;
+        public DbSet<Invoice> Invoices { get; set; } = null!;
+        public DbSet<Payment> Payments { get; set; } = null!;
+        public DbSet<ApiKey> ApiKeys { get; set; } = null!;
+        public DbSet<FundingSource> FundingSources { get; set; } = null!;
+        public DbSet<School> Schools { get; set; } = null!;
+        public DbSet<Faculty> Faculties { get; set; } = null!;
+        public DbSet<Feature> Features { get; set; } = null!;
+        public DbSet<Setting> Settings { get; set; } = null!;
 
         /// <summary>
         /// Inject options.

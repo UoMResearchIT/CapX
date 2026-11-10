@@ -37,17 +37,21 @@ public static class People
             }
 
             var people = await context.People
+                .AsNoTracking()
                 .Include(x => x.LineManager)
                 .OrderBy(x => x.Name)
                 .ToListAsync();
 
             var personDtos = people.Select(x => new PersonDTO(
                 PersonId: x.PersonId,
+                EmployeeId: x.StaffId,
                 Name: x.Name,
                 ShortName: x.ShortName,
                 PostFTE: x.FTE,
-                StartDate: x.StartDate,
-                EndDate: x.EndDate,
+                StartDate: DateOnly.FromDateTime(x.StartDate),
+                EndDate: x.EndDate.HasValue
+                    ? DateOnly.FromDateTime(x.EndDate.Value)
+                    : null,
                 LineManagerId: x.LineManager?.PersonId,
                 LineManagerName: x.LineManager?.Name
             )).ToList();
@@ -88,7 +92,7 @@ public static class People
                 return Results.BadRequest("Person ID must be greater than zero.");
             }
 
-            var canAccess = GeneralHelpers.IsSuperUserOrManagerOrSelf(context, http, personId.Value);
+            var canAccess = GeneralHelpers.IsSuperUserOrManagerOrSelf(http, personId.Value);
             if (!canAccess)
             {
                 logger.LogWarning("API: GetPersonById: Caller does not have permission to access this person's data.");
@@ -96,6 +100,7 @@ public static class People
             }
 
             var person = await context.People
+                .AsNoTracking()
                 .Include(x => x.LineManager)
                 .FirstOrDefaultAsync(x => x.PersonId == personId);
 
@@ -107,11 +112,14 @@ public static class People
 
             var dto = new PersonDTO(
                 PersonId: person.PersonId,
+                EmployeeId: person.StaffId,
                 Name: person.Name,
                 ShortName: person.ShortName,
                 PostFTE: person.FTE,
-                StartDate: person.StartDate,
-                EndDate: person.EndDate,
+                StartDate: DateOnly.FromDateTime(person.StartDate),
+                EndDate: person.EndDate.HasValue
+                    ? DateOnly.FromDateTime(person.EndDate.Value)
+                    : null,
                 LineManagerId: person.LineManager?.PersonId,
                 LineManagerName: person.LineManager?.Name
             );

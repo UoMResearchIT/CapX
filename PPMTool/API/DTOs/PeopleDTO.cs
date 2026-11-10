@@ -8,6 +8,7 @@ namespace PPMTool.API.DTOs
     /// A flat representation of a person suitable for API data exports.
     /// </summary>
     /// <param name="PersonId">The unique person ID.</param>
+    /// <param name="EmployeeId">Employee ID</param>
     /// <param name="Name">The full name of the person.</param>
     /// <param name="ShortName">The initials/short name of the person.</param>
     /// <param name="PostFTE">The contract FTE of the person.</param>
@@ -17,11 +18,12 @@ namespace PPMTool.API.DTOs
     /// <param name="LineManagerName">The name of their line manager, if present.</param>
     public sealed record PersonDTO(
         int PersonId,
+        string EmployeeId,
         string Name,
         string ShortName,
         double PostFTE,
-        DateTime StartDate,
-        DateTime? EndDate,
+        DateOnly StartDate,
+        DateOnly? EndDate,
         int? LineManagerId,
         string LineManagerName
     );

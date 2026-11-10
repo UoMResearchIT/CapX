@@ -26,6 +26,12 @@ SPDX-License-Identifier: apache-2.0
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Blazor-ApexCharts" Version="7.0.0" />
     <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
@@ -42,6 +48,10 @@ SPDX-License-Identifier: apache-2.0
     <PackageReference Include="HtmlSanitizer" Version="9.2.1039" />
     <PackageReference Include="Lorem.Universal.NET" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.Identity.Web" Version="4.16.1" />
 	<PackageReference Include="MySql.Data" Version="26.10.0" />
     <PackageReference Include="Sentry.AspNetCore" Version="6.12.1" />

@@ -114,6 +114,8 @@ namespace PPMTool
                 username,
                 logger,
                 out _);
+
+            logger.LogInformation($"AzureAD: {username} logged In with success status {success}");
         }
 
         /// <summary>
@@ -151,7 +153,7 @@ namespace PPMTool
             // Explicitly sign in the user with the created principal to ensure the cookie is issued
             await context.HttpContext.SignInAsync(context.Principal);
 
-            logger.LogInformation($"{identity.Name}: Logged In");
+            logger.LogInformation($"{identity.Name} (previous log in: {user?.LastLoggedIn}): Logged In with success status {success}");
         }
 
         /// <summary>

@@ -27,7 +27,6 @@ namespace PPMTool.Pages
         private InnateCodeService InnateCodeService { get; set; }
 
         private ObservableCollection<TimesheetTemplateItem> templateData;
-        private IList<TimesheetTemplateItem> selectedTemplateItem;
         private TimesheetTemplateItem draggedItem;
         private string finalOrder;
 
@@ -82,8 +81,6 @@ namespace PPMTool.Pages
                     }
                 }
             }
-
-            selectedTemplateItem = new List<TimesheetTemplateItem>() { templateData.FirstOrDefault() };
         }
 
         /// <summary>
@@ -148,8 +145,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// Navigate to timesheet
         /// </summary>
-        /// <param name="timesheet"></param>
-        public void GoToTimesheet(Timesheet timesheet)
+        public void GoToTimesheet()
         {
             Navigation.NavigateTo($"timesheets/addtimesheet/{TimesheetId}");
         }

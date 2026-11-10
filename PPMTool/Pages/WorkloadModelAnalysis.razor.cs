@@ -28,8 +28,8 @@ namespace PPMTool.Pages
         [Inject]
         private IJSRuntime JSRuntime { get; set; }
 
-        private Dictionary<string, List<WLMWeeklyDataChartItem>> wlmChartItems = new Dictionary<string, List<WLMWeeklyDataChartItem>>();
-        private List<ApexChartOptions<WLMWeeklyDataChartItem>> wlmChartOptions = new List<ApexChartOptions<WLMWeeklyDataChartItem>>();
+        private readonly Dictionary<string, List<WLMWeeklyDataChartItem>> wlmChartItems = new Dictionary<string, List<WLMWeeklyDataChartItem>>();
+        private readonly List<ApexChartOptions<WLMWeeklyDataChartItem>> wlmChartOptions = new List<ApexChartOptions<WLMWeeklyDataChartItem>>();
         private bool compareToWLM = true;
         private bool normalisedByTotalHours = false;
         private bool useStackedBars = true;

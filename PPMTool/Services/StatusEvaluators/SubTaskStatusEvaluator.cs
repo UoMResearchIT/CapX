@@ -2,7 +2,9 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+using Microsoft.EntityFrameworkCore;
 using PPMTool.Data;
+using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 
 namespace PPMTool.Services.StatusEvaluators
@@ -12,12 +14,26 @@ namespace PPMTool.Services.StatusEvaluators
     /// </summary>
     public sealed class SubTaskStatusEvaluator : BaseStatusEvaluatorService<SubTask>
     {
-        public SubTaskStatusEvaluator(FeatureService featureService) : base(featureService)
+        private readonly SubTaskService subTaskService;
+        private readonly IDbContextFactory<PPMToolContext> contextFactory;
+
+        public SubTaskStatusEvaluator(
+            FeatureService featureService,
+            SubTaskService subTaskService,
+            IDbContextFactory<PPMToolContext> contextFactory
+        ) : base(featureService)
         {
+            this.subTaskService = subTaskService;
+            this.contextFactory = contextFactory;
         }
 
         protected override IReadOnlyList<StatusMessage> BuildCoreStatusMessages(SubTask task, int? messageViewerPersonId = null)
         {
+            // Precalculate the overallocation status for this task if a viewer person ID is provided
+            using var context = contextFactory.CreateDbContext();
+            var overallocation = subTaskService.GetFirstResourceBillableOverallocation(context, task);
+
+            // Build status messages
             return new List<StatusMessage>
             {
                 // Info
@@ -34,7 +50,13 @@ namespace PPMTool.Services.StatusEvaluators
 
                 // Errors
                 new StatusMessage("Task has zero demand but assigned resources!", StatusMessage.MessageType.Error, task.HasZeroDemandButResourced),
-                new StatusMessage("Resource on this task has no associated funding source and task is in progress or ran in the past!", StatusMessage.MessageType.Error, task.HasResourceWithNoFundingSourceAndRunning, Data.Enums.FeatureType.ProjectFinance)
+                new StatusMessage("Resource on this task has no associated funding source and task is in progress or ran in the past!", StatusMessage.MessageType.Error, task.HasResourceWithNoFundingSourceAndRunning, Data.Enums.FeatureType.ProjectFinance),
+                new StatusMessage(
+                    $"{overallocation?.PersonName} has assignments totalling {overallocation?.AssignedFTE:0.0##} FTE on {overallocation?.Date:dd/MM/yyyy}, exceeding their contractual FTE of {overallocation?.ContractualFTE:0.0##}.",
+                    StatusMessage.MessageType.Error,
+                    () => overallocation != null,
+                    Data.Enums.FeatureType.ProjectsAndCapacity
+                )
             };
         }
     }

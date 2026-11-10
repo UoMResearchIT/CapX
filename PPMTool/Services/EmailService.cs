@@ -283,7 +283,7 @@ namespace PPMTool.Services
                                         }
 
                                         // Decide on the state of the absence
-                                        var state = GetAbsenceState(ab, newAbsences, modifiedAbsences, deletedAbsences);
+                                        var state = GetAbsenceState(ab, modifiedAbsences, deletedAbsences);
 
                                         // Write absence info
                                         body.Append(GetFormattedAbsenceLine(ab, state, name));
@@ -305,7 +305,7 @@ namespace PPMTool.Services
                                 foreach (var ab in notProjectRelatedAbsences)
                                 {
                                     // Decide on the state of the absence
-                                    var state = GetAbsenceState(ab, newAbsences, modifiedAbsences, deletedAbsences);
+                                    var state = GetAbsenceState(ab, modifiedAbsences, deletedAbsences);
 
                                     // Write absence info
                                     body.Append(GetFormattedAbsenceLine(ab, state, name));
@@ -353,11 +353,10 @@ namespace PPMTool.Services
         /// Decide on the state of the absence
         /// </summary>
         /// <param name="absence"></param>
-        /// <param name="newAbsences"></param>
         /// <param name="modifiedAbsences"></param>
         /// <param name="deletedAbsences"></param>
         /// <returns></returns>
-        private string GetAbsenceState(Absence absence, IEnumerable<Absence> newAbsences, IEnumerable<IGrouping<Absence, EntityDiff<Absence>>> modifiedAbsences, IEnumerable<Absence> deletedAbsences)
+        private string GetAbsenceState(Absence absence, IEnumerable<IGrouping<Absence, EntityDiff<Absence>>> modifiedAbsences, IEnumerable<Absence> deletedAbsences)
         {
             if (deletedAbsences.Contains(absence))
             {
