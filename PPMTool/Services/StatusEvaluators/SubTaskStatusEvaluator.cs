@@ -31,7 +31,7 @@ namespace PPMTool.Services.StatusEvaluators
         {
             // Precalculate the overallocation status for this task if a viewer person ID is provided
             using var context = contextFactory.CreateDbContext();
-            var overallocation = subTaskService.GetFirstResourceBillableOverallocation(context, task.SubTaskId);
+            var overallocation = subTaskService.GetFirstResourceBillableOverallocation(context, task);
 
             // Build status messages
             return new List<StatusMessage>
