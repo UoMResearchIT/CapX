@@ -162,6 +162,7 @@ namespace PPMTool.API.Endpoints
                     .OrderBy(x => x.Person.PersonId)
                     .ThenBy(x => x.ChangeDate)
                     .Select(x => new WorkloadModelChangeDTO(
+                        x.WorkloadModelChangeId,
                         x.Person.PersonId,
                         DateOnly.FromDateTime(x.ChangeDate),
                         x.Grade,
@@ -234,6 +235,7 @@ namespace PPMTool.API.Endpoints
                     .AsNoTracking()
                     .Where(x => x.WorkloadModelChangeId == workloadModelChangeId.Value)
                     .Select(x => new WorkloadModelChangeDTO(
+                        x.WorkloadModelChangeId,
                         x.Person.PersonId,
                         DateOnly.FromDateTime(x.ChangeDate),
                         x.Grade,

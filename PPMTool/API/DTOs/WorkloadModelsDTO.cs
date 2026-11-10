@@ -30,6 +30,7 @@ namespace PPMTool.API.DTOs
     /// A flat representation of a workload model change suitable for
     /// API data exports.
     /// </summary>
+    /// <param name="WorkloadModelChangeId">Primary key of the WLM change.</param>
     /// <param name="PersonId">The ID of the person to whom the workload model applies.</param>
     /// <param name="ChangeDate">The date on which the workload model came into effect.</param>
     /// <param name="Grade">The person's grade.</param>
@@ -42,6 +43,7 @@ namespace PPMTool.API.DTOs
     /// <param name="PersonalDevelopmentFTE">The FTE allocated to personal development.</param>
     /// <param name="ArchitectureFTE">The FTE allocated to architecture work.</param>
     public sealed record WorkloadModelChangeDTO(
+        int WorkloadModelChangeId,
         int PersonId,
         DateOnly ChangeDate,
         int Grade,
