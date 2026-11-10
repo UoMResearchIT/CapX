@@ -30,6 +30,13 @@ function clearHighlightInNotes() {
     instance.unmark();
 }
 
+// Remove a query parameter from the current URL without navigation
+function removeQueryParameter(name) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete(name);
+    window.history.replaceState({}, '', url.toString());
+}
+
 // Copy text to clipboard
 function copyText(text) {
     navigator.clipboard.writeText(text).then(function () {
