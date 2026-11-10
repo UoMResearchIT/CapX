@@ -293,7 +293,7 @@ namespace PPMTool.Data.Helpers
         /// </summary>
         /// <param name="windows">Assignment windows to merge.</param>
         /// <returns>The merged assignment windows in date order.</returns>
-        private static List<(DateTime StartDate, DateTime EndDate)> MergeAssignmentWindows(
+        public static List<(DateTime StartDate, DateTime EndDate)> MergeAssignmentWindows(
             IEnumerable<(DateTime StartDate, DateTime EndDate)> windows)
         {
             var orderedWindows = windows
