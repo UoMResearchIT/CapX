@@ -287,5 +287,47 @@ namespace PPMTool.Data.Helpers
 
             return data;
         }
+
+        /// <summary>
+        /// Merges overlapping or adjacent assignment windows.
+        /// </summary>
+        /// <param name="windows">Assignment windows to merge.</param>
+        /// <returns>The merged assignment windows in date order.</returns>
+        private static List<(DateTime StartDate, DateTime EndDate)> MergeAssignmentWindows(
+            IEnumerable<(DateTime StartDate, DateTime EndDate)> windows)
+        {
+            var orderedWindows = windows
+                .OrderBy(window => window.StartDate)
+                .ThenBy(window => window.EndDate)
+                .ToList();
+
+            var mergedWindows = new List<(DateTime StartDate, DateTime EndDate)>();
+
+            foreach (var window in orderedWindows)
+            {
+                if (mergedWindows.Count == 0)
+                {
+                    mergedWindows.Add(window);
+                    continue;
+                }
+
+                var previous = mergedWindows[^1];
+
+                if (window.StartDate.Date <= previous.EndDate.Date.AddDays(1))
+                {
+                    // Merge the current window with the previous one
+                    mergedWindows[^1] = (
+                        previous.StartDate,
+                        window.EndDate > previous.EndDate ? window.EndDate : previous.EndDate
+                    );
+                }
+                else
+                {
+                    mergedWindows.Add(window);
+                }
+            }
+
+            return mergedWindows;
+        }
     }
 }

@@ -8,6 +8,7 @@ using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
+using PPMTool.Data.Helpers;
 using PPMTool.Models;
 
 namespace PPMTool.Services
@@ -289,8 +290,8 @@ namespace PPMTool.Services
         /// <remarks>
         /// An overallocation is relevant to this project only when it occurs during the
         /// lifetime of a subtask on this project to which the person is assigned.
-        /// The overallocation itself includes all of the person's overlapping positive
-        /// BilledFTE assignments across all projects.
+        /// The relevant people and assignments are loaded in batches and reused across
+        /// merged assignment windows.
         /// </remarks>
         /// <param name="context">Database context used to retrieve assignment and workload data.</param>
         /// <param name="projectId">Project whose assigned resources should be checked.</param>
@@ -303,7 +304,9 @@ namespace PPMTool.Services
             // to a subtask on this project.
             var assignmentWindows = context.Resources
                 .AsNoTracking()
-                .Where(resource => resource.SubTask!.OwningProject.ProjectId == projectId)
+                .Where(resource =>
+                    resource.BilledFTE > 0 &&
+                    resource.SubTask!.OwningProject.ProjectId == projectId)
                 .Select(resource => new
                 {
                     PersonId = resource.Person.PersonId,
@@ -311,80 +314,106 @@ namespace PPMTool.Services
                     resource.SubTask.EndDate
                 })
                 .Distinct()
-                .OrderBy(window => window.StartDate)
                 .ToList();
 
-            // Only consider an overallocation relevant to this project when it occurs
-            // during one of the person's actual assignment windows on this project.
-            foreach (var window in assignmentWindows)
+            if (assignmentWindows.Count == 0)
             {
-                var overallocation = GetResourceBillableOverallocation(
-                    context,
-                    window.PersonId,
-                    window.StartDate,
-                    window.EndDate);
+                return null;
+            }
 
-                if (overallocation != null)
+            // Get the list of the distinct person IDs
+            var personIds = assignmentWindows
+                .Select(window => window.PersonId)
+                .Distinct()
+                .ToList();
+
+            // Get the first and last dates across all assignment windows to limit the query range
+            var firstDate = assignmentWindows.Min(window => window.StartDate);
+            var lastDate = assignmentWindows.Max(window => window.EndDate);
+
+            // Load each person and their workload model changes once.
+            var people = context.People
+                .AsNoTracking()
+                .Include(person => person.WorkloadModelChanges)
+                .Where(person => personIds.Contains(person.PersonId))
+                .ToDictionary(person => person.PersonId);
+
+            // Load all relevant overlapping assignments once.
+            var assignments = context.Resources
+                .AsNoTracking()
+                .Include(resource => resource.Person)
+                .Include(resource => resource.SubTask)
+                .Where(resource =>
+                    personIds.Contains(resource.Person.PersonId) &&
+                    resource.BilledFTE > 0 &&
+                    resource.SubTask!.StartDate <= lastDate &&
+                    resource.SubTask.EndDate >= firstDate)
+                .ToList();
+
+            var overallocationResults = new List<ResourceOverallocation>();
+
+            // Group the assignment windows by person and merge overlapping windows for each person.
+            foreach (var personWindows in assignmentWindows.GroupBy(window => window.PersonId))
+            {
+                if (!people.TryGetValue(personWindows.Key, out var person))
                 {
-                    return overallocation;
+                    continue;
+                }
+
+                // Merge the assignment windows for this person to avoid redundant checks on overlapping periods.
+                var mergedWindows = AssignmentHelper.MergeAssignmentWindows(
+                    personWindows.Select(window => (
+                        window.StartDate,
+                        window.EndDate)));
+
+                // Get the previously loaded assignments for this person.
+                var personAssignments = assignments
+                    .Where(resource => resource.Person.PersonId == person.PersonId)
+                    .ToList();
+
+                // Check each merged window for overallocation
+                foreach (var window in mergedWindows)
+                {
+                    var overallocation = GetResourceBillableOverallocation(
+                        person,
+                        personAssignments,
+                        window.StartDate,
+                        window.EndDate);
+
+                    if (overallocation != null)
+                    {
+                        overallocationResults.Add(overallocation);
+                        break;
+                    }
                 }
             }
 
-            return null;
+            return overallocationResults
+                .OrderBy(overallocation => overallocation.Date)
+                .FirstOrDefault();
         }
 
         /// <summary>
-        /// Finds the first day in the specified date range where the sum of a person's
-        /// overlapping BilledFTE assignments exceeds their applicable contractual FTE.
+        /// Finds the first day in the specified date range where the supplied assignments
+        /// exceed the person's applicable contractual FTE.
         /// </summary>
-        /// <remarks>
-        /// All positive BilledFTE assignments are considered irrespective of funding source
-        /// or recharge eligibility. The contractual FTE is taken from the Workload Model
-        /// applicable on each date. A supplied editable assignment can replace the persisted
-        /// assignments belonging to one subtask. A small tolerance is used to avoid false
-        /// positives caused by floating-point precision.
-        /// </remarks>
-        /// <param name="context">Database context used to load the person, workload model changes, and resource assignments.</param>
-        /// <param name="personId">Identifier of the person to evaluate.</param>
+        /// <param name="person">Person being evaluated, including workload model changes.</param>
+        /// <param name="assignments">The person's relevant assignments.</param>
         /// <param name="startDate">Start of the evaluation period, inclusive.</param>
         /// <param name="endDate">End of the evaluation period, inclusive.</param>
-        /// <param name="excludedSubTaskId">Persisted subtask whose assignments should be excluded, or zero when evaluating a new task.</param>
-        /// <param name="additionalBilledFTE">Editable BilledFTE to include throughout the supplied date range.</param>
-        /// <returns>A <see cref="ResourceOverallocation"/> describing the first detected overallocation, or <see langword="null"/> when none is found.</returns>
+        /// <param name="additionalBilledFTE">Additional editable BilledFTE to include throughout the period.</param>
+        /// <returns>A description of the first overallocation found, or <see langword="null"/>.</returns>
         private static ResourceOverallocation GetResourceBillableOverallocation(
-            PPMToolContext context,
-            int personId,
+            Person person,
+            IReadOnlyCollection<Resource> assignments,
             DateTime startDate,
             DateTime endDate,
-            int excludedSubTaskId = 0,
             double additionalBilledFTE = 0)
         {
             // Some tolerance to allow for FP inaccuracy
             const double tolerance = 0.00001;
 
-            // Get the person corresponding to the ID passed and their WLM changes
-            var person = context.People
-                .AsNoTracking()
-                .Include(x => x.WorkloadModelChanges)
-                .Single(x => x.PersonId == personId);
-
-            var assignments = context.Resources
-                .AsNoTracking()
-                .Include(x => x.SubTask)
-                    .ThenInclude(x => x.OwningProject)
-                .Where(x =>
-                    x.Person.PersonId == personId &&
-                    x.BilledFTE > 0 &&
-                    x.SubTask.SubTaskId != excludedSubTaskId &&
-                    x.SubTask.StartDate <= endDate &&
-                    x.SubTask.EndDate >= startDate)
-                .ToList();
-
-            var firstDate = startDate.Date;
-            var lastDate = endDate.Date;
-
-            // March through the date range
-            for (var date = firstDate; date <= lastDate; date = date.AddDays(1))
+            for (var date = startDate.Date; date <= endDate.Date; date = date.AddDays(1))
             {
                 // Get the WLM active on the day
                 var workloadModel = person.GetWorkloadModelOnDate(date);
@@ -395,17 +424,16 @@ namespace PPMTool.Services
                     continue;
                 }
 
-                // Sum persisted assignments and the supplied editable assignment
+                // Sum persisted assignments and any supplied editable assignment
                 var assignedFte = assignments
-                    .Where(x =>
-                        x.SubTask.StartDate.Date <= date &&
-                        x.SubTask.EndDate.Date >= date)
-                    .Sum(x => x.BilledFTE) + additionalBilledFTE;
+                    .Where(resource =>
+                        resource.SubTask!.StartDate.Date <= date &&
+                        resource.SubTask.EndDate.Date >= date)
+                    .Sum(resource => resource.BilledFTE) + additionalBilledFTE;
 
                 // Get the contractual FTE from the WLM
                 var contractualFte = workloadModel.Total();
 
-                // If the summed BilledFTE exceeds contractual capacity then return the first overallocation
                 if (assignedFte > contractualFte + tolerance)
                 {
                     return new ResourceOverallocation(
@@ -418,6 +446,52 @@ namespace PPMTool.Services
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Calculates billable overallocation for a person over a specified period from persisted resource assignments
+        /// and optional additional billed FTE.
+        /// </summary>
+        /// <remarks>Includes only assignments with billed FTE greater than zero that overlap the
+        /// specified date range.</remarks>
+        /// <param name="context">Database context used to load the person and matching resource assignments.</param>
+        /// <param name="personId">Identifier of the person whose billable overallocation is evaluated.</param>
+        /// <param name="startDate">Inclusive start date of the evaluation period.</param>
+        /// <param name="endDate">Inclusive end date of the evaluation period.</param>
+        /// <param name="excludedSubTaskId">Subtask identifier to exclude from the assignment set, or 0 to include all subtasks.</param>
+        /// <param name="additionalBilledFTE">Additional billed FTE applied to the result alongside stored assignments.</param>
+        /// <returns>A <see cref="ResourceOverallocation"/> describing the first detected overallocation, or <see langword="null"/> when none is found.</returns>
+        private static ResourceOverallocation GetResourceBillableOverallocation(
+            PPMToolContext context,
+            int personId,
+            DateTime startDate,
+            DateTime endDate,
+            int excludedSubTaskId = 0,
+            double additionalBilledFTE = 0)
+        {
+            // Get the person corresponding to the ID passed and their WLM changes
+            var person = context.People
+                .AsNoTracking()
+                .Include(x => x.WorkloadModelChanges)
+                .Single(x => x.PersonId == personId);
+
+            var assignments = context.Resources
+                .AsNoTracking()
+                .Include(x => x.SubTask)
+                .Where(x =>
+                    x.Person.PersonId == personId &&
+                    x.BilledFTE > 0 &&
+                    (excludedSubTaskId <= 0 || x.SubTask!.SubTaskId != excludedSubTaskId) &&
+                    x.SubTask!.StartDate <= endDate &&
+                    x.SubTask.EndDate >= startDate)
+                .ToList();
+
+            return GetResourceBillableOverallocation(
+                person,
+                assignments,
+                startDate,
+                endDate,
+                additionalBilledFTE);
         }
     }
 }
