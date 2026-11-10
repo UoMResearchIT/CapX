@@ -431,6 +431,14 @@ namespace PPMTool.Pages
             // No search terms so show all
             if (string.IsNullOrWhiteSpace(noteSearchTerms))
             {
+                // Reset the filtered note if it was set
+                if (FilteredNote != null)
+                {
+                    FilteredNote = null;
+                    lastNote = null;
+                    await JS.InvokeVoidAsync("removeQueryParameter", "filteredNote");
+                }
+
                 filteredNotes = allNotes;
                 Debug.WriteLine($"** Notes reset");
                 StateHasChanged();
@@ -474,8 +482,8 @@ namespace PPMTool.Pages
                 }
             }
 
-            // Check whether the parameter is present to scroll to the due notes
-            if (FilterDueNotes)
+            // Check whether due notes are currently being shown before auto-scrolling
+            if (showOnlyDueItems && filteredNotes?.Count > 0)
             {
                 // Refresh then scroll last due note into view
                 await Task.Delay(300);
@@ -952,10 +960,18 @@ namespace PPMTool.Pages
         /// <summary>
         /// Invoked when the notes filter switch is toggled
         /// </summary>
-        private void FilterSwitchToggled()
+        private async Task FilterSwitchToggled()
         {
             LoadNotesFromDB();
-            InvokeAsync(async () => await FilterHighlightScrollNotesAsync());
+
+            if (!showOnlyDueItems && !sortByDueDate && FilterDueNotes)
+            {
+                FilterDueNotes = false;
+                lastDue = false;
+                await JS.InvokeVoidAsync("removeQueryParameter", "filterDueNotes");
+            }
+
+            await FilterHighlightScrollNotesAsync();
         }
 
         /// <summary>
@@ -967,17 +983,42 @@ namespace PPMTool.Pages
             allNotes = NoteService.GetAll(Context).Where(x => x.Project.ProjectId == ProjectId).ToList();
             if (showOnlyFinanceNotes) allNotes = allNotes.Where(x => x.IsFinanceInfo).ToList();
             if (showOnlyDueItems) allNotes = allNotes.Where(x => x.IsDue() || x.IsOverDue()).ToList();
-            if (sortByDueDate) allNotes = allNotes.Where(x => x.DueDate != null).OrderBy(x => x.DueDate).Concat(allNotes.Where(x => x.DueDate == null)).ToList();
+
+            if (sortByDueDate)
+            {
+                allNotes = allNotes
+                    .OrderBy(x => x.DueDate ?? DateTime.MaxValue)
+                    .ThenByDescending(x => x.CreatedDate)
+                    .ThenByDescending(x => x.NoteId)
+                    .ToList();
+            }
+            else
+            {
+                allNotes = allNotes
+                    .OrderByDescending(x => x.CreatedDate)
+                    .ThenByDescending(x => x.NoteId)
+                    .ToList();
+            }
+
             filteredNotes = allNotes;
         }
 
         /// <summary>
         /// Clears the search terms and resets the filter
         /// </summary>
-        private void ClearSearch()
+        private async Task ClearSearch()
         {
             noteSearchTerms = string.Empty;
-            InvokeAsync(async () => await FilterHighlightScrollNotesAsync());
+
+            // Reset the filtered note if it was set
+            if (FilteredNote != null)
+            {
+                FilteredNote = null;
+                lastNote = null;
+                await JS.InvokeVoidAsync("removeQueryParameter", "filteredNote");
+            }
+
+            await FilterHighlightScrollNotesAsync();
         }
 
         /// <summary>
@@ -1343,7 +1384,8 @@ namespace PPMTool.Pages
                 var filterValue = filter?.FilterValue as string;
                 if (filter != null && filterValue != null)
                 {
-                    query = query.Where(x => x.AssignedResources.Any(x => x.Person.ShortName.Contains(filterValue)));
+                    var cleaned = filterValue.Clean();
+                    query = query.Where(x => x.AssignedResources.Any(x => x.Person.ShortName.ToLowerInvariant().Contains(cleaned)));
                 }
             }
 
