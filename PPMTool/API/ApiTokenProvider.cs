@@ -13,7 +13,7 @@ namespace PPMTool.API
 {
     public sealed class ApiTokenProvider
     {
-        private IConfiguration configuration;
+        private readonly IConfiguration configuration;
 
         public ApiTokenProvider(IConfiguration configuration)
         {

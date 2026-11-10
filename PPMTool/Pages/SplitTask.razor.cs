@@ -39,7 +39,7 @@ namespace PPMTool.Pages
         private ActualsLogic selectedActualsLogic;
         private DateTime? splitDate;
         private double? splitValue;
-        private List<StatusMessage> statusMessages = new List<StatusMessage>();
+        private readonly List<StatusMessage> statusMessages = new List<StatusMessage>();
         private double origProportion = 0;
         private DateTime originalStartDate;
         private DateTime originalEndDate;

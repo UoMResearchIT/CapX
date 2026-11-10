@@ -56,7 +56,6 @@ namespace PPMTool.Pages
         private IEnumerable<FundingSource> sources;
         private IEnumerable<Project> projects;
         private IEnumerable<Project> cachedProjects;
-        private IEnumerable<Resource> resources;
         private int selectedTab;
         private RadzenDataGrid<Payment> dataGridPayments;
         private RadzenDataGrid<Invoice> dataGridInvoices;
@@ -152,7 +151,6 @@ namespace PPMTool.Pages
                 invoices = invoices.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
                 payments = payments.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
                 sources = sources.Where(x => x.Project.ProjectId == selectedProject.ProjectId);
-                resources = SubTaskService.GetResourcesForProject(Context, selectedProject.ProjectId);
             }
 
             UpdateSummaryComponent();
@@ -171,7 +169,6 @@ namespace PPMTool.Pages
             if (selectedProject != null)
             {
                 var transactions = FinanceHelper.ComputeTransactionBreakdown(
-                    Context,
                     selectedProject.CostModel,
                     selectedProject.SubTasks,
                     FundingSourceService.GetFundingSources(Context, selectedProject.ProjectId),

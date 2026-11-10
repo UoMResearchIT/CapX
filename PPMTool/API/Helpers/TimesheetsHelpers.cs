@@ -57,6 +57,7 @@ namespace PPMTool.API.Helpers
             PPMToolContext context, bool approvedOnly = false)
         {
             IQueryable<Timesheet> query = context.Timesheets
+                .AsNoTracking()
                 .Include(t => t.Owner)
                     .ThenInclude(o => o.LineManager)
                 .Include(t => t.TimesheetEntries)
@@ -210,6 +211,7 @@ namespace PPMTool.API.Helpers
         {
             var normalisedCode = activityCode.Trim().ToLowerInvariant();
             return context.InnateCodes
+                .AsNoTracking()
                 .AsEnumerable() // Map everything into memory as we need to convert to lower
                 .FirstOrDefault(ic => ic.ActivityCode.Trim().ToLowerInvariant() == normalisedCode);
         }

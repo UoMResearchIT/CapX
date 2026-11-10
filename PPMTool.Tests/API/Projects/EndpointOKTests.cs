@@ -28,12 +28,12 @@ namespace PPMTool.Tests.API.Projects
         }
 
         [Test]
-        public async Task GetAllProjectsAsNonManagerShouldReturnUnauthorised()
+        public async Task GetProjectByCapXProjectIdShouldReturnOK()
         {
-            using (var client = GetClientAsDeveloper())
+            using (var client = GetClientAsManager())
             {
-                var response = await client.GetAsync("projects/getAll");
-                Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
+                var response = await client.GetAsync($"projects/getByCapXProjectId?capxProjectId={RtpId}");
+                Assert.That(response.IsSuccessStatusCode);
             }
         }
     }

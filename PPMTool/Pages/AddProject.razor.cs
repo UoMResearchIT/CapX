@@ -302,10 +302,9 @@ namespace PPMTool.Pages
 
                     // If the status is changing and old or new status is NewRequest then there are timestampas involved so we need
                     // be sure that the user is aware of this and wants to continue
-                    var confirmed = true;
                     if (oldStatus != newStatus && oldStatus == ProjectStatus.NewRequest)
                     {
-                        confirmed = await DialogService.Confirm(
+                        var confirmed = await DialogService.Confirm(
                             $"You are about to change the status of {ProjectService.GetFullName(projectModel)} such that it will end the request phase. " +
                             $"This will stop the request duration clock. Are you sure you want to continue?",
                             "Continue?",
