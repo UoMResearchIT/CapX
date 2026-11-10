@@ -20,6 +20,7 @@ namespace PPMTool.Tests.API
         protected static string? PersonName { get; private set; }
         protected static int PersonId { get; private set; }
         protected static int ProjectId { get; private set; }
+        protected static int RtpId { get; private set; }
         protected static string? TimesheetCode { get; private set; }
         protected static int FinancialYear { get; private set; }
         protected static int FundingSourceId { get; private set; }
@@ -139,8 +140,11 @@ namespace PPMTool.Tests.API
                 PersonName = firstPerson?.Name?.Replace(" ", "_");
                 PersonId = firstPerson?.PersonId ?? 0;
 
+                // Get a project Project ID from the database for API tests
+                ProjectId = context.Projects.OrderBy(x => x.ProjectId).Select(x => x.ProjectId).FirstOrDefault();
+
                 // Get a project RTP ID from the database for API tests
-                ProjectId = context.Projects.OrderBy(x => x.RTP).Select(x => x.RTP).FirstOrDefault();
+                RtpId = context.Projects.OrderBy(x => x.RTP).Select(x => x.RTP).FirstOrDefault();
 
                 // Set a timesheet code to be used for the timesheet tests
                 TimesheetCode = context.InnateCodes.FirstOrDefault()?.ActivityCode;

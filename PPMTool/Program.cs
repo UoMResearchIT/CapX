@@ -331,6 +331,7 @@ api.MapGet("/wlm/getById", WorkloadModels.GetWorkloadModelChangeByIdAsync);
 api.MapGet("/assignments/getAssignments", Assignments.GetAssignmentDataAsync);
 api.MapGet("/projects/getAll", Projects.GetAllProjectsAsync);
 api.MapGet("/projects/getById", Projects.GetProjectByIdAsync);
+api.MapGet("/projects/getByCapXProjectId", Projects.GetProjectByCapXProjectIdAsync);
 api.MapGet("/people/getAll", People.GetAllPeopleAsync);
 api.MapGet("/people/getById", People.GetPersonByIdAsync);
 api.MapGet("/fundingsources/getAll", FundingSources.GetAllFundingSourcesAsync);

@@ -15,5 +15,25 @@ namespace PPMTool.Tests.API.Projects
                 Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
             }
         }
+
+        [Test]
+        public async Task GetByProjectIdAsNonManagerShouldReturnUnauthorised()
+        {
+            using (var client = GetClientAsDeveloper())
+            {
+                var response = await client.GetAsync($"projects/getById?projectId={ProjectId}");
+                Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
+            }
+        }
+
+        [Test]
+        public async Task GetByCapXProjectIdAsNonManagerShouldReturnUnauthorised()
+        {
+            using (var client = GetClientAsDeveloper())
+            {
+                var response = await client.GetAsync($"projects/getByCapXProjectId?capxProjectId={RtpId}");
+                Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
+            }
+        }
     }
 }

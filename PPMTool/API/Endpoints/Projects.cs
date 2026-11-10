@@ -74,12 +74,12 @@ public static class Projects
     }
 
     /// <summary>
-    /// Get one project by RTP project ID.
+    /// Get one project its database primary key.
     /// </summary>
     /// <param name="context"></param>
     /// <param name="logger"></param>
     /// <param name="http"></param>
-    /// <param name="projectId">The RTP project ID.</param>
+    /// <param name="projectId">The database primary key of the project.</param>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ProjectDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -112,7 +112,7 @@ public static class Projects
                 .Include(x => x.ProjectManager)
                 .Include(x => x.InnateActivity)
                 .Include(x => x.School)
-                .FirstOrDefaultAsync(x => x.RTP == projectId);
+                .FirstOrDefaultAsync(x => x.ProjectId == projectId);
 
             if (project == null)
             {
@@ -144,6 +144,81 @@ public static class Projects
         catch (Exception ex)
         {
             logger.LogError(ex, "API: GetProjectById: error");
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Get one project its CapX project ID.
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="logger"></param>
+    /// <param name="http"></param>
+    /// <param name="capxProjectId">The CapX project ID of the project.</param>
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ProjectDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static async Task<IResult> GetProjectByCapXProjectIdAsync(
+        PPMToolContext context,
+        ILogger logger,
+        HttpContext http,
+        [FromQuery] int? capxProjectId)
+    {
+        try
+        {
+            if (!capxProjectId.HasValue || capxProjectId.Value <= 0)
+            {
+                logger.LogWarning("API: GetProjectByCapXProjectId: Invalid ID {ProjectId}", capxProjectId);
+                return Results.BadRequest("ID must be greater than zero.");
+            }
+
+            var caller = GeneralHelpers.GetCurrentUser(http);
+            var canAccess = GeneralHelpers.IsSuperUserOrManager(caller);
+            if (!canAccess)
+            {
+                logger.LogWarning("API: GetProjectByCapXProjectId: Caller does not have permission to access project data.");
+                return Results.Unauthorized();
+            }
+
+            var project = await context.Projects
+                .AsNoTracking()
+                .Include(x => x.ProjectManager)
+                .Include(x => x.InnateActivity)
+                .Include(x => x.School)
+                .FirstOrDefaultAsync(x => x.RTP == capxProjectId);
+
+            if (project == null)
+            {
+                logger.LogWarning("API: GetProjectByCapXProjectId: No project found for ID {ProjectId}", capxProjectId);
+                return Results.NotFound();
+            }
+
+            var dto = new ProjectDTO(
+                ProjectId: project.ProjectId,
+                CapXProjectId: project.RTP,
+                Name: project.Name,
+                PrincipalInvestigator: project.PI,
+                ProjectManagerId: project.ProjectManager?.PersonId,
+                ProjectManagerName: project.ProjectManager?.Name,
+                TimesheetActivityCode: project.InnateActivity?.ActivityCode,
+                TimesheetActivityName: project.InnateActivity?.ActivityName,
+                RequestDocLink: project.RequestDocLink,
+                ScrumProjectLink: project.ScrumProjectLink,
+                ProjectStatus: project.ProjectStatus.GetDescription(),
+                SchoolId: project.School.SchoolId,
+                CostModel: project.CostModel.GetDescription(),
+                StartDate: DateOnly.FromDateTime(project.StartDate),
+                EndDate: DateOnly.FromDateTime(project.EndDate)
+            );
+
+            logger.LogInformation("API: GetProjectByCapXProjectId: Returned project record for ID {ProjectId}", capxProjectId);
+            return Results.Json(dto);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: GetProjectByCapXProjectId: error");
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

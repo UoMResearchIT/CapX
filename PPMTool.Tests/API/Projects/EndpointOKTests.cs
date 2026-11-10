@@ -26,5 +26,15 @@ namespace PPMTool.Tests.API.Projects
                 Assert.That(response.IsSuccessStatusCode);
             }
         }
+
+        [Test]
+        public async Task GetProjectByCapXProjectIdShouldReturnOK()
+        {
+            using (var client = GetClientAsManager())
+            {
+                var response = await client.GetAsync($"projects/getByCapXProjectId?capxProjectId={RtpId}");
+                Assert.That(response.IsSuccessStatusCode);
+            }
+        }
     }
 }
