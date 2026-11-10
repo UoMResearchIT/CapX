@@ -22,7 +22,7 @@ namespace PPMTool.Tests.API.OrgUnits
         {
             using (var client = GetClientAsManager())
             {
-                var response = await client.GetAsync($"schools?schoolId={SchoolId}");
+                var response = await client.GetAsync($"schools/getById?schoolId={SchoolId}");
                 Assert.That(response.IsSuccessStatusCode);
             }
         }
