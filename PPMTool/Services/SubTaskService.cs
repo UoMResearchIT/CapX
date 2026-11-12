@@ -493,5 +493,24 @@ namespace PPMTool.Services
                 endDate,
                 additionalBilledFTE);
         }
+
+        /// <summary>
+        /// Asynchronously retrieves distinct names of resources assigned to subtasks in the specified project.
+        /// </summary>
+        /// <param name="context">The data context used to query subtasks and assigned resources.</param>
+        /// <param name="projectId">The identifier of the project whose assigned resource names to retrieve.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a collection of unique resource
+        /// names for the project.</returns>
+        internal async Task<IEnumerable<string>> GetUniqueResourcesAsync(PPMToolContext context, int projectId)
+        {
+            return await context.SubTasks
+                .Include(x => x.AssignedResources)
+                    .ThenInclude(x => x.Person)
+                .Where(x => x.OwningProject.ProjectId == projectId)
+                .SelectMany(x => x.AssignedResources)
+                .Select(x => x.Person.Name)
+                .Distinct()
+                .ToListAsync();
+        }
     }
 }

@@ -305,7 +305,7 @@ namespace PPMTool.Tests.Core
         [Test]
         public async Task ProjectBulletinBoardPageShouldLoadWithCorrectTitleAndNoCrashBanner()
         {
-            await VerifyPageLoaded("/projectbulletinboard", "Available Projects - CapX");
+            await VerifyPageLoaded("/projectbulletinboard", "Our Projects - CapX");
         }
 
         [Test]

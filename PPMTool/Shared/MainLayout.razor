@@ -104,9 +104,9 @@ else
                             @if (FeatureService.IsFeatureEnabled(FeatureType.ProjectsAndCapacity))
                             {
                                 <RadzenPanelMenuItem Path="projects" Text="Manage Projects" Icon="folder_managed" />
-                                <AuthorizeView Roles="Superuser,Manager,Developer">
+                                <AuthorizeView Roles="Superuser,Manager,Developer,Reader">
                                     <Authorized Context="sub_context_1">
-                                        <RadzenPanelMenuItem Path="projectbulletinboard" Text="Available Projects" Icon="developer_board" />
+                                        <RadzenPanelMenuItem Path="projectbulletinboard" Text="Our Projects" Icon="developer_board" />
                                     </Authorized>
                                 </AuthorizeView>
                             }
