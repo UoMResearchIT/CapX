@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
-using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
@@ -31,6 +30,7 @@ namespace PPMTool.Pages
         private List<Timesheet> myStaffTimesheets;
         private Dictionary<Person, List<Timesheet>> myStaffTimesheetsInPeriod;
         private bool initialLoadComplete;
+        private int? timesheetIdToFix;
 
         public bool ShowAllMyTimesheets
         {
@@ -198,6 +198,14 @@ namespace PPMTool.Pages
 
                 // Order the list, whatever it holds (but remove any New items as these haven't been submitted by the staff member yet!)
                 myStaffTimesheets = myStaffTimesheets.Where(t => t.Status != TimesheetStatus.New).OrderByDescending(t => t.StartDate).ToList();
+            }
+
+
+            // Check to see if there are any rejected timesheets that need fixing and get the ID of the first one
+            timesheetIdToFix = await TimesheetService.GetFirstRejectedTimesheetIdAsync(Context, ActiveUser?.Person);
+            if (timesheetIdToFix != null)
+            {
+                Logger.LogInformation($"TimesheetIdToFix: {timesheetIdToFix} for user {ActiveUser?.Person?.Name}");
             }
 
             // Finish off

@@ -30,6 +30,10 @@ SPDX-License-Identifier: apache-2.0
                     <RadzenButton class="float-right" Text="Add" Icon="add" Click="@AddTimesheet" Disabled="@Loading" />
                 </div>
             </div>
+            @if (timesheetIdToFix != null)
+            {
+              <FixMeComponent OnClick="@(() => Navigation.NavigateTo($"timesheets/addtimesheet/{timesheetIdToFix}"))" />
+            }
             <hr />
             <div class="row align-items-center justify-content-end">
                 <div class="col-auto" style="margin-bottom: 1rem;">

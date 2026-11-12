@@ -1,0 +1,21 @@
+﻿@using PPMTool.Data
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard class="rz-border rz-border-color-danger" Style="--rz-border-width: 10px;">
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+        <StatusMessageComponent Message="@(new StatusMessage(Message, StatusMessage.MessageType.Error))" />
+        <RadzenButton Text="@ButtonText"
+                      Icon="build"
+                      ButtonStyle="ButtonStyle.Danger"
+                      Click="@OnClick" />
+    </RadzenStack>
+</RadzenCard>
+@code {
+    [Parameter]
+    public string Message { get; set; } = "You have a problem to fix.";
+    [Parameter]
+    public string ButtonText { get; set; } = "Fix It";
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+}
