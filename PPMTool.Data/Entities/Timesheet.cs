@@ -127,7 +127,10 @@ namespace PPMTool.Data.Entities
         /// <returns></returns>
         public bool IsPermittedToApproveOrReject(User user)
         {
-            return (IsLineManager(user) && (Status == TimesheetStatus.Submitted || Status == TimesheetStatus.Approved)) || (IsSelfApprover(user) && (Status == TimesheetStatus.New || Status == TimesheetStatus.Rejected || Status == TimesheetStatus.Approved)) || (user.RoleType == RoleType.Superuser && (Status == TimesheetStatus.Submitted || Status == TimesheetStatus.Approved));
+            return
+                (IsLineManager(user) && (Status == TimesheetStatus.Submitted || Status == TimesheetStatus.Approved)) ||
+                (IsSelfApprover(user) && (Status == TimesheetStatus.New || Status == TimesheetStatus.Rejected || Status == TimesheetStatus.Approved)) ||
+                (user.RoleType == RoleType.Superuser && (Status == TimesheetStatus.Submitted || Status == TimesheetStatus.Approved));
         }
 
         /// <summary>
