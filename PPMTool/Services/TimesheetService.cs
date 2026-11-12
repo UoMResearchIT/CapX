@@ -415,8 +415,8 @@ namespace PPMTool.Services
         /// rejected entry.</remarks>
         /// <param name="context">Database context used to query timesheets.</param>
         /// <param name="person">Person whose timesheets are evaluated.</param>
-        /// <returns>The ID of the first rejected timesheet ordered by start date, or null if no rejected timesheet exists.</returns>
-        internal async Task<int?> GetFirstRejectedTimesheetIdAsync(PPMToolContext context, Person person)
+        /// <returns>The ID of the first rejected timesheet ordered by start date, or 0 if no rejected timesheet exists.</returns>
+        internal async Task<int> GetFirstRejectedTimesheetIdAsync(PPMToolContext context, Person person)
         {
             // Get first timesheet that is rejected
             return await context.Timesheets

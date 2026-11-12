@@ -30,9 +30,9 @@ SPDX-License-Identifier: apache-2.0
                     <RadzenButton class="float-right" Text="Add" Icon="add" Click="@AddTimesheet" Disabled="@Loading" />
                 </div>
             </div>
-            @if (timesheetIdToFix != null)
+            @if (timesheetIdToFix > 0)
             {
-              <FixMeComponent OnClick="@(() => Navigation.NavigateTo($"timesheets/addtimesheet/{timesheetIdToFix}"))" />
+              <FixMeComponent Message="You have a rejected timesheet that needs fixing!" OnClick="@(() => Navigation.NavigateTo($"timesheets/addtimesheet/{timesheetIdToFix}"))" />
             }
             <hr />
             <div class="row align-items-center justify-content-end">

@@ -30,7 +30,7 @@ namespace PPMTool.Pages
         private List<Timesheet> myStaffTimesheets;
         private Dictionary<Person, List<Timesheet>> myStaffTimesheetsInPeriod;
         private bool initialLoadComplete;
-        private int? timesheetIdToFix;
+        private int timesheetIdToFix;
 
         public bool ShowAllMyTimesheets
         {
@@ -203,7 +203,7 @@ namespace PPMTool.Pages
 
             // Check to see if there are any rejected timesheets that need fixing and get the ID of the first one
             timesheetIdToFix = await TimesheetService.GetFirstRejectedTimesheetIdAsync(Context, ActiveUser?.Person);
-            if (timesheetIdToFix != null)
+            if (timesheetIdToFix > 0)
             {
                 Logger.LogInformation($"TimesheetIdToFix: {timesheetIdToFix} for user {ActiveUser?.Person?.Name}");
             }
