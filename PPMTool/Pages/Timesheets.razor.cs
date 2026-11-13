@@ -137,7 +137,7 @@ namespace PPMTool.Pages
             myTimesheets = new List<Timesheet>();
             if (ActiveUser?.Person != null)
             {
-                myTimesheets = TimesheetService.GetMyTimesheets(Context, ActiveUser?.Person).OrderByDescending(t => t.StartDate).ToList();
+                myTimesheets = TimesheetService.GetTimesheetsForPerson(Context, ActiveUser?.Person).OrderByDescending(t => t.StartDate).ToList();
 
                 // Set the start date for the next one
                 dateNextTimesheet = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser?.Person);
@@ -171,10 +171,10 @@ namespace PPMTool.Pages
 
                 foreach (Person p in managedPeople
                     .Where(p => p.PersonId != ActiveUser?.Person?.PersonId)
-                    .OrderBy(p => p.ShortName)) // For AH who is self-managed
+                    .OrderBy(p => p.ShortName))
                 {
                     // Get timesheets of the person
-                    myStaffTimesheets.AddRange(TimesheetService.GetMyTimesheets(Context, p).ToList());
+                    myStaffTimesheets.AddRange(TimesheetService.GetTimesheetsForPerson(Context, p).ToList());
 
                     // Only add the person to the synopsis if they are currently here in the window
                     if (p.EndDate == null || p.EndDate >= synopsisStartDate)

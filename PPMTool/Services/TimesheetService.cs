@@ -86,12 +86,12 @@ namespace PPMTool.Services
         /// Gets all the timesheets with related data
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="user"></param>
+        /// <param name="person"></param>
         /// <returns></returns>
-        public IEnumerable<Timesheet> GetMyTimesheets(PPMToolContext context, Person user)
+        public IEnumerable<Timesheet> GetTimesheetsForPerson(PPMToolContext context, Person person)
         {
             return context.Timesheets
-                .Where(t => t.Owner.PersonId == user.PersonId);
+                .Where(t => t.Owner.PersonId == person.PersonId);
         }
 
         /// <summary>
