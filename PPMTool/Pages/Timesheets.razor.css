@@ -1,0 +1,41 @@
+/* CSS for Timesheets component */
+.timesheet-status-cell {
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.35rem !important;
+    cursor: pointer;
+    display: table-cell;
+}
+
+    .timesheet-status-cell .rz-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.35rem 0.45rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        margin-left: auto;
+        margin-right: auto;
+        cursor: pointer;
+    }
+
+    .timesheet-status-cell:hover {
+        background-color: var(--rz-base-200) !important;
+    }
+
+    .timesheet-status-cell:active {
+        transform: scale(0.97);
+    }
+
+.timesheet-empty-cell {
+    text-align: center;
+    vertical-align: middle;
+    color: var(--rz-text-disabled-color);
+    opacity: 0.65;
+}
+
+.timesheet-synopsis-table,
+.timesheet-status-cell,
+.timesheet-empty-cell {
+    border: 1px solid var(--rz-base-400) !important;
+}

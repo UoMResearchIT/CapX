@@ -121,60 +121,102 @@ SPDX-License-Identifier: apache-2.0
                     }
                     else
                     {
-                        <table class="table table-striped table-bordered" style="border: 1px solid #ccc; margin-bottom: 0;">
+                        <table class="table table-striped table-bordered"
+                               style="border: 1px solid #ccc; margin-bottom: 0;">
                             <tr style="background-color: var(--rz-info-lighter);">
                                 <th class="timesheet-synopsis-table">
                                     Week Commencing
                                 </th>
+
                                 @foreach (DateTime d in synopsisDates ?? new List<DateTime>())
                                 {
-                                    double width = 85 / @synopsisDates.Count;
+                                    double width = 85 / synopsisDates.Count;
                                     int adjustedWidth = (int)Math.Floor(width);
 
                                     string extraStyleDetails = "";
-                                    if (d == dateMondayThisWeek)
+                                    if (d.Date == dateMondayThisWeek.Date)
                                     {
-                                        extraStyleDetails = "background-color : var(--rz-warning-lighter);";
+                                        extraStyleDetails = "background-color: var(--rz-warning-lighter);";
                                     }
 
-                                    <th class="timesheet-synopsis-table" style="width: @adjustedWidth%; text-align: center; @extraStyleDetails">@d.ToString("dd/MM")</th>
+                                    <th class="timesheet-synopsis-table"
+                                        title="@d.ToString("dddd, dd MMMM yyyy")"
+                                        style="width: @adjustedWidth%; text-align: center; @extraStyleDetails">
+                                        <div style="display: flex; flex-direction: column; line-height: 1.1;">
+                                            <strong>@d.ToString("dd/MM")</strong>
+                                            <small style="opacity: 0.7; margin-top: 2px;">
+                                                @d.ToString("ddd")
+                                            </small>
+                                        </div>
+                                    </th>
                                 }
                             </tr>
-                            @foreach (KeyValuePair<Person, List<Timesheet>> kvp in @myStaffTimesheetsInPeriod ?? new Dictionary<Person, List<Timesheet>>())
+
+                            @foreach (KeyValuePair<Person, List<Timesheet>> kvp in
+                                myStaffTimesheetsInPeriod ?? new Dictionary<Person, List<Timesheet>>())
                             {
                                 Debug.WriteLine($"** SYNOPSIS : {kvp.Key.Name} [{kvp.Value.Count}] entries");
+
                                 <tr>
                                     <td class="timesheet-synopsis-table">
                                         @kvp.Key.Name
+
                                         @if (SuperuserShowSynopsisForAllStaff)
                                         {
-                                            <span class="badge badge-pill badge-info" style="padding: 0.3rem; margin-left: 0.25rem;" title="Line Manager : @kvp.Key.LineManager?.Name">@kvp.Key.LineManager?.ShortName</span>
+                                            <RadzenBadge Text="@kvp.Key.LineManager?.ShortName"
+                                                         BadgeStyle="BadgeStyle.Info"
+                                                         Style="margin-left: 0.25rem;"
+                                                         title="@($"Line Manager: {kvp.Key.LineManager?.Name}")" />
                                         }
-                                        <span class="badge badge-warning" style="padding: 0.3rem; float: right;">@kvp.Key.ShortName</span>
+
+                                        <RadzenBadge Text="@kvp.Key.ShortName"
+                                                     BadgeStyle="BadgeStyle.Warning"
+                                                     Style="float: right;" />
                                     </td>
-                            
+
                                     @for (int i = 0; i < kvp.Value.Count; i++)
                                     {
-                                        if (@kvp.Value[i] != null)
+                                        if (kvp.Value[i] != null)
                                         {
                                             Timesheet t = kvp.Value[i];
-                                            string badgeStyle = @t.Status.GetBadgeStyle().ToString();
-                                            string rzClass = "rz-background-color-" + badgeStyle.Substring(badgeStyle.IndexOf('.') + 1).ToLower();
 
-                                            <td class="@rzClass" style="text-align: center;">
-                                                <div title="@t.Status.ToNiceString()" style="font-size: 0.8rem;" onclick="@(() => EditTimesheet(t))">&nbsp;</div>
+                                            string badgeStyle = t.Status.GetBadgeStyle().ToString();
+                                            string statusName = badgeStyle.Substring(badgeStyle.IndexOf('.') + 1).ToLower();
+
+                                            bool isCurrentWeek = synopsisDates[i].Date == dateMondayThisWeek.Date;
+
+                                            string cellBackground = isCurrentWeek
+                                                ? "background-color: var(--rz-warning-lighter);"
+                                                : $"background-color: var(--rz-{statusName}-lighter);";
+
+                                            <td class="timesheet-status-cell"
+                                                style="@cellBackground"
+                                                @onclick="@(() => EditTimesheet(t))"
+                                                title="@($"Click to view/edit this {t.Status.ToNiceString()} timesheet")">
+
+                                                <RadzenBadge Text="@t.Status.ToNiceString()"
+                                                             BadgeStyle="@t.Status.GetBadgeStyle()"
+                                                             Style="pointer-events: none;" />
                                             </td>
                                         }
                                         else
                                         {
                                             Debug.WriteLine("** SYNOPSIS : No timesheet");
-                                            if (dateMondayThisWeek <= synopsisDates[i] && synopsisDates[i] < dateMondayThisWeek.AddDays(7))
+
+                                            if (synopsisDates[i].Date == dateMondayThisWeek.Date)
                                             {
-                                                <td style="background-color : var(--rz-warning-lighter);">&nbsp;</td>
+                                                <td class="timesheet-empty-cell"
+                                                    style="background-color: var(--rz-warning-lighter);"
+                                                    title="No timesheet">
+                                                    &mdash;
+                                                </td>
                                             }
                                             else
                                             {
-                                                <td>&nbsp;</td>
+                                                <td class="timesheet-empty-cell"
+                                                    title="No timesheet">
+                                                    &mdash;
+                                                </td>
                                             }
                                         }
                                     }
