@@ -171,7 +171,7 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Gets all the timesheets with entries and tasks owned by person and in range [startRange, endRange)
+        /// Gets all the timesheets with entries and tasks owned by person and in range [startRange, endRange]
         /// </summary>
         /// <param name="context"></param>
         /// <param name="person"></param>
@@ -183,7 +183,7 @@ namespace PPMTool.Services
             return context.Timesheets
                 .Include(t => t.TimesheetEntries)
                 .ThenInclude(x => x.InnateCodeTask)
-                .Where(x => x.Owner.PersonId == person.PersonId && x.StartDate >= startRange && x.StartDate <= endRange);
+                .Where(x => x.Owner.PersonId == person.PersonId && x.StartDate.Date >= startRange.Date && x.StartDate.Date <= endRange.Date);
         }
 
         /// <summary>
