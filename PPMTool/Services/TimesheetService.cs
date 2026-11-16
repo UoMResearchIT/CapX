@@ -250,7 +250,7 @@ namespace PPMTool.Services
         /// <param name="timesheet"></param>
         /// <param name="person"></param>
         /// <param name="tasks"></param>
-        public void SetupTimesheetFromTemplate(PPMToolContext context, Timesheet timesheet, Person person, IEnumerable<InnateCodeTask> tasks)
+        public void SetupTimesheetFromTemplate(PPMToolContext context, Timesheet timesheet, Person person, IEnumerable<InnateCodeTask> tasks, bool refresh = false)
         {
             var templateTimesheetTasks = GetTemplate(person);
 
@@ -268,12 +268,23 @@ namespace PPMTool.Services
                 }
                 else
                 {
-                    // Add entry to timesheet
-                    TimesheetEntry entry = new TimesheetEntry();
-                    entry.InnateCodeTask = task;
-                    timesheet.TimesheetEntries.Add(entry);
+                    // When refreshing an existing timesheet, only add the task
+                    // if it isn't already represented by an entry.
+                    if (refresh &&
+                        timesheet.TimesheetEntries.Any(
+                            x => x.InnateCodeTaskId == taskId))
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        // Add entry to timesheet
+                        TimesheetEntry entry = new TimesheetEntry();
+                        entry.InnateCodeTask = task;
+                        timesheet.TimesheetEntries.Add(entry);
 
-                    logger.LogInformation($"Adding new task to the timesheet : {task.InnateCode.GetSensibleObjectName()} : {task.GetSensibleObjectName()}");
+                        logger.LogInformation($"Adding new task to the timesheet : {task.InnateCode.GetSensibleObjectName()} : {task.GetSensibleObjectName()}");
+                    }
                 }
             }
             CommitChanges(context);
