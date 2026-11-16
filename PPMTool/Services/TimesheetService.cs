@@ -250,6 +250,7 @@ namespace PPMTool.Services
         /// <param name="timesheet"></param>
         /// <param name="person"></param>
         /// <param name="tasks"></param>
+        /// <param name="refresh"></param>
         public void SetupTimesheetFromTemplate(PPMToolContext context, Timesheet timesheet, Person person, IEnumerable<InnateCodeTask> tasks, bool refresh = false)
         {
             var templateTimesheetTasks = GetTemplate(person);
