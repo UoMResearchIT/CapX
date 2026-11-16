@@ -53,7 +53,17 @@ SPDX-License-Identifier: apache-2.0
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteTimesheet" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
                     </div>
                 }
+
+                @if (timesheet.Status == TimesheetStatus.Rejected)
+                {
+                    <div class="col-auto" style="align-content: center;">
+                        <RadzenStack Orientation="Radzen.Orientation.Vertical" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center">
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary" Text="Refresh task list from template" Click="@(() => { RefreshFromTimesheetTemplate(); })" Icon="autorenew" title="Refresh tasks from template" Disabled=@(!allowTimesheetRefresh) />
+                        </RadzenStack>
+                    </div>
+                }
             </div>
+
             <hr />
 
             <EditForm Model="@timesheet" OnValidSubmit="@HandleValidSubmit">
@@ -71,7 +81,7 @@ SPDX-License-Identifier: apache-2.0
                                     <RadzenButton class="mx-1" Icon="help" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" MouseEnter="@((args) => ShowTooltip(args, "Open the timesheet help document"))" />
                                 </a>
                             }
-                            <RadzenButton Variant="Variant.Outlined" Text="Reorder your template" Click="@(() => { ReorderTimesheetTemplate(@timesheet); })" Icon="autorenew" title="Reorder your timesheet template" Disabled=@(entityToInsert != null || entityToUpdate != null || !timesheet.IsOwner(ActiveUser)) Style="margin-right: 0.75rem;" />
+                            <RadzenButton Variant="Variant.Outlined" Text="Reorder your template" Click="@(() => { ReorderTimesheetTemplate(@timesheet); })" Icon="cached" title="Reorder your timesheet template" Disabled=@(entityToInsert != null || entityToUpdate != null || !timesheet.IsOwner(ActiveUser)) Style="margin-right: 0.75rem;" />
                             <RadzenButton Text="Add New Task" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)) Style="padding: 0 2rem" />
                         </div>
                     </div>
