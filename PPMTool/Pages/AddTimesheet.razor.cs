@@ -63,6 +63,7 @@ namespace PPMTool.Pages
         private WLMWeeklyDataChartItem wlmChartItem;
         private double totalFTEForTimesheet;
         private string timesheetHelpUrl = null;
+        private bool allowTimesheetRefresh = false;
 
         protected override void OnInitialized()
         {
@@ -238,12 +239,38 @@ namespace PPMTool.Pages
                     e.SetIsInTemplate(order.Contains(e.InnateCodeTask.InnateCodeTaskId));
                 }
 
+                // Check if the timesheet entries count is less than the template list.
+                // If so then we want to enable the button to allow the user to refresh the list of tasks
+                // against their template (mainly userful when a timesheet is rejected)
+                if (timesheet.Status == TimesheetStatus.Rejected && orderedResults.Count < order.Count) { allowTimesheetRefresh = true; }
+
                 return orderedResults;
             }
             else
             {
                 return timesheet.TimesheetEntries.ToList();
             }
+        }
+
+        /// <summary>
+        /// Repopulates the current timesheet's tasks from the template. 
+        /// Used after re-opening a rejected timesheet so the user can choose other tasks
+        /// </summary>
+        private async void RefreshFromTimesheetTemplate()
+        {
+            // Set-up the timesheet from the template, but in REFRESH mode to leave existing tasks there
+            TimesheetService.SetupTimesheetFromTemplate(Context, timesheet, ActiveUser?.Person, InnateCodeService.GetAllTasks(Context), true);
+            allowTimesheetRefresh = false;
+
+            // Show notification for refresh action
+            ShowNotification(new CapXNotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Refreshed",
+                Detail = "Your timesheet task list has been refreshed."
+            });
+
+            PopulateDataGridDataSource();
         }
 
         /// <summary>
