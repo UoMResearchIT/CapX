@@ -75,7 +75,7 @@ SPDX-License-Identifier: apache-2.0
                             <RadzenDataGridColumn Property="Info" Title="Notes" />
                             <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                                 <Template Context="timesheet">
-                                    <EditOrViewButtonComponent CanViewOnly="@(timesheet.IsPermittedToViewOnly(ActiveUser))"
+                                    <EditOrViewButtonComponent CanViewOnly="@(timesheet.IsPermittedToView(ActiveUser))"
                                                                IsDisabled="@(!timesheet.IsOwner(ActiveUser) && !timesheet.IsLineManager(ActiveUser))"
                                                                OnButtonClick="@(canView => EditTimesheet(timesheet))"
                                                                ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
@@ -267,7 +267,7 @@ SPDX-License-Identifier: apache-2.0
                                 <RadzenDataGridColumn Property="Info" Title="Notes" />
                                 <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                                     <Template Context="timesheet">
-                                        <EditOrViewButtonComponent CanViewOnly="@(timesheet.IsPermittedToViewOnly(ActiveUser))"
+                                        <EditOrViewButtonComponent CanViewOnly="@(timesheet.IsPermittedToView(ActiveUser))"
                                                                    IsDisabled="@(!timesheet.IsOwner(ActiveUser) && !timesheet.IsLineManager(ActiveUser) && ActiveUserRoleType != RoleType.Superuser)"
                                                                    OnButtonClick="@(canView => EditTimesheet(timesheet))"
                                                                    ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
