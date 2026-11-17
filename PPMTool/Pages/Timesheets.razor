@@ -122,8 +122,15 @@ SPDX-License-Identifier: apache-2.0
                     else
                     {
                         <div class="timesheet-synopsis-scroll">
-                            <table class="table table-striped table-bordered"
+                            <table class="table table-striped table-bordered timesheet-synopsis"
                                    style="border: 1px solid #ccc; margin-bottom: 0;">
+                                <colgroup>
+                                    <col class="timesheet-person-column" />
+                                    @foreach (DateTime d in synopsisDates ?? new List<DateTime>())
+                                    {
+                                        <col class="timesheet-week-column" />
+                                    }
+                                </colgroup>
                                 <tr style="background-color: var(--rz-info-lighter);">
                                     <th class="timesheet-synopsis-table">
                                         Week Commencing
