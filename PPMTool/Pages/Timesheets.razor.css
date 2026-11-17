@@ -1,31 +1,76 @@
-/* CSS for Timesheets component */
+/* Synopsis table scrolls within its RadzenCard rather than widening the page */
+.timesheet-synopsis-scroll {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.timesheet-synopsis {
+    width: max-content;
+    min-width: 100%;
+    table-layout: auto;
+}
+
+.timesheet-synopsis th,
+.timesheet-synopsis td {
+    white-space: nowrap;
+}
+
+.timesheet-synopsis th:first-child,
+.timesheet-synopsis td:first-child {
+    width: 16rem;
+    min-width: 16rem;
+}
+
+.timesheet-synopsis th:not(:first-child),
+.timesheet-synopsis td:not(:first-child) {
+    min-width: 8rem;
+}
+
+.timesheet-person {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    white-space: nowrap;
+}
+
+.timesheet-person-name {
+    flex: 1 0 auto;
+}
+
+.timesheet-person-badges {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    flex: 0 0 auto;
+}
+
 .timesheet-status-cell {
     text-align: center;
     vertical-align: middle;
     padding: 0.35rem !important;
     cursor: pointer;
-    display: table-cell;
 }
 
-    .timesheet-status-cell .rz-badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.35rem 0.45rem;
-        font-size: 0.75rem;
-        white-space: nowrap;
-        margin-left: auto;
-        margin-right: auto;
-        cursor: pointer;
-    }
+.timesheet-status-cell .rz-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem 0.45rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    margin-left: auto;
+    margin-right: auto;
+    cursor: pointer;
+}
 
-    .timesheet-status-cell:hover {
-        background-color: var(--rz-base-200) !important;
-    }
+.timesheet-status-cell:hover {
+    background-color: var(--rz-base-200) !important;
+}
 
-    .timesheet-status-cell:active {
-        transform: scale(0.97);
-    }
+.timesheet-status-cell:active {
+    transform: scale(0.97);
+}
 
 .timesheet-empty-cell {
     text-align: center;
