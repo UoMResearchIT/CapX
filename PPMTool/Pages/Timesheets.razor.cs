@@ -162,7 +162,7 @@ namespace PPMTool.Pages
             // Is a manager with staff
             myStaffTimesheets = new List<Timesheet>();
             myStaffTimesheetsInPeriod = new Dictionary<Person, List<Timesheet>>();
-            if (managedPeople.Count() > 0)
+            if (managedPeople.Any())
             {
                 dateMondayThisWeek = GetDateForMondayThisWeek();
                 synopsisStartDate = GetDateForAMonday(7); // Weeks in the past
@@ -193,11 +193,15 @@ namespace PPMTool.Pages
                 if (!ShowAllMyStaffTimesheets)
                 {
                     // Filter the list to only show items that need chasing or action: New, Submitted, Rejected
-                    myStaffTimesheets = myStaffTimesheets.Where(t => t.Status == TimesheetStatus.Submitted || t.Status == TimesheetStatus.Rejected || t.Status == TimesheetStatus.New).ToList();
+                    myStaffTimesheets = myStaffTimesheets
+                        .Where(t => t.Status == TimesheetStatus.Submitted || t.Status == TimesheetStatus.Rejected || t.Status == TimesheetStatus.New)
+                        .ToList();
                 }
 
-                // Order the list, whatever it holds (but remove any New items as these haven't been submitted by the staff member yet!)
-                myStaffTimesheets = myStaffTimesheets.Where(t => t.Status != TimesheetStatus.New).OrderByDescending(t => t.StartDate).ToList();
+                // Order the list
+                myStaffTimesheets = myStaffTimesheets
+                    .OrderByDescending(t => t.StartDate)
+                    .ToList();
             }
 
 
@@ -280,7 +284,6 @@ namespace PPMTool.Pages
         private List<Timesheet> GetPaddedTimesheetList(List<DateTime> dates, List<Timesheet> unpaddedList)
         {
             List<Timesheet> paddedList = new List<Timesheet>();
-            List<DateTime> datesFromTimesheet = unpaddedList.Select(t => t.StartDate).ToList();
             foreach (DateTime date in dates)
             {
                 // This will return null if no match

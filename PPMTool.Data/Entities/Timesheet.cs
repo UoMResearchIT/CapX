@@ -171,11 +171,24 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
+        /// Whether the user has any permission to modify the timesheet or its status.
+        /// </summary>
+        public bool IsPermittedToModify(User user)
+        {
+            return IsPermittedToEditEntries(user) ||
+                IsPermittedToSubmit(user) ||
+                IsPermittedToRetract(user) ||
+                IsPermittedToApprove(user) ||
+                IsPermittedToReject(user) ||
+                IsPermittedToDelete(user);
+        }
+
+        /// <summary>
         /// Local helper as it is called by other permissions checkers
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        private static bool IsSuperuser(User user)
+        private static bool IsSuperuser(User? user)
         {
             return user?.RoleType == RoleType.Superuser;
         }

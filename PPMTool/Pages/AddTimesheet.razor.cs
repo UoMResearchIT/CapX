@@ -830,7 +830,9 @@ namespace PPMTool.Pages
             if (args.Column.Property == "IsInTemplate" && args.Data.IsInTemplate == true)
             {
                 style = "background-color: var(--rz-panel-menu-item-2nd-level-active-background-color);";
-                title = "Task is part of your template";
+                title = timesheet.IsOwner(ActiveUser)
+                    ? "Task is part of your template"
+                    : "Task is part of the timesheet owner's template";
             }
 
             // Apply styling

@@ -320,7 +320,8 @@ SPDX-License-Identifier: apache-2.0
                             </RadzenDataGridColumn>
                         </Columns>
                     </RadzenDataGrid>
-                    <!-- Don't show hint if viewing a direct report's timesheet -->
+
+                    @* Template guidance is only relevant when editing your own timesheet *@
                     @if (timesheet.IsOwner(ActiveUser))
                     {
                         <HintComponent Message="If you don't want or need to use one or more of your default options, leave the items empty. Removing a row from this timesheet will also remove it from your template for future timesheets." />

@@ -75,8 +75,8 @@ SPDX-License-Identifier: apache-2.0
                             <RadzenDataGridColumn Property="Info" Title="Notes" />
                             <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                                 <Template Context="timesheet">
-                                    <EditOrViewButtonComponent CanViewOnly="@(timesheet.IsPermittedToView(ActiveUser))"
-                                                               IsDisabled="@(!timesheet.IsOwner(ActiveUser) && !timesheet.IsLineManager(ActiveUser))"
+                                    <EditOrViewButtonComponent CanViewOnly="@(!timesheet.IsPermittedToModify(ActiveUser))"
+                                                               IsDisabled="@(!timesheet.IsPermittedToView(ActiveUser))"
                                                                OnButtonClick="@(canView => EditTimesheet(timesheet))"
                                                                ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
                                 </Template>
@@ -228,7 +228,7 @@ SPDX-License-Identifier: apache-2.0
                 <hr />
                 <div class="row align-items-center justify-content-end">
                     <div class="col">
-                        <HintComponent Message="Timesheets are ordered by date (desc) and only ones marked as 'Submitted' are shown by default. All are shown if the 'Show All Timesheets' switch is enabled." />
+                        <HintComponent Message="Timesheets that are New, Rejected or Submitted are shown by default because they may need action. All statuses are shown when 'Show All Timesheets' is selected." />
                     </div>
                     <div class="col-auto">
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center">
@@ -261,14 +261,16 @@ SPDX-License-Identifier: apache-2.0
                                 <RadzenDataGridColumn Property="StartDate" Title="Week Commencing" FormatString="{0:d}" Width="10rem" />
                                 <RadzenDataGridColumn Property="Status" Title="Status" Width="10rem">
                                     <Template Context="timesheet">
-                                        <RadzenBadge BadgeStyle="@timesheet.Status.GetBadgeStyle()" class="timesheet-status-style" Text="@timesheet.Status.ToString()" />
+                                        <RadzenBadge BadgeStyle="@timesheet.Status.GetBadgeStyle()"
+                                                     class="timesheet-status-style"
+                                                     Text="@timesheet.Status.ToNiceString()" />
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn Property="Info" Title="Notes" />
                                 <RadzenDataGridColumn TItem="Timesheet" Frozen="true" Resizable="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px" FrozenPosition="FrozenColumnPosition.Right" Title="Action">
                                     <Template Context="timesheet">
-                                        <EditOrViewButtonComponent CanViewOnly="@(timesheet.IsPermittedToView(ActiveUser))"
-                                                                   IsDisabled="@(!timesheet.IsOwner(ActiveUser) && !timesheet.IsLineManager(ActiveUser) && ActiveUserRoleType != RoleType.Superuser)"
+                                        <EditOrViewButtonComponent CanViewOnly="@(!timesheet.IsPermittedToModify(ActiveUser))"
+                                                                   IsDisabled="@(!timesheet.IsPermittedToView(ActiveUser))"
                                                                    OnButtonClick="@(canView => EditTimesheet(timesheet))"
                                                                    ShowTooltip="@((args, message) => ShowTooltip(args, message))" />
                                     </Template>
