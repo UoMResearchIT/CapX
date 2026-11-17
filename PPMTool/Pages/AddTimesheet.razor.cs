@@ -337,6 +337,16 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Should the user see the WLM bars at the bottom of the timesheet. Superusers or line managers.
+        /// </summary>
+        /// <returns></returns>
+        private bool IsPermittedToSeeWLMBar()
+        {
+            return timesheet?.IsLineManager(ActiveUser) ?? false ||
+                ActiveUserRoleType == RoleType.Superuser);
+        }
+
+        /// <summary>
         /// Method to sum up the total hours per day and for the whole timesheet
         /// </summary>
         private void UpdateDailyTotals()

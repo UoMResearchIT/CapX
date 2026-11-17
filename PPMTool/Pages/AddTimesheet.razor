@@ -286,7 +286,7 @@ SPDX-License-Identifier: apache-2.0
                             </RadzenDataGridColumn>
                         </Columns>
                     </RadzenDataGrid>
-                    <!-- Don't show if viewing a direct report's timesheet -->
+                    <!-- Don't show hint if viewing a direct report's timesheet -->
                     @if (!timesheet?.IsLineManager(ActiveUser) ?? false)
                     {
                         <HintComponent Message="If you don't want/need to use one or more of your 'default' options then leave the item(s) empty. If you remove a row from this timesheet it will not show (when creating a new instance) on future timesheets." />
@@ -301,7 +301,7 @@ SPDX-License-Identifier: apache-2.0
                     </div>
                 </RadzenCard>
 
-                @if ((timesheet?.IsLineManager(ActiveUser) ?? false || ActiveUserRoleType == RoleType.Superuser) && currentWLM != null && wlmChartItem != null)
+                @if (IsPermittedToSeeWLMBar() && currentWLM != null && wlmChartItem != null)
                 {
                     <RadzenCard style="margin-top: 0.5rem;">
                         <div class="row">
@@ -393,6 +393,7 @@ SPDX-License-Identifier: apache-2.0
                     </RadzenCard>
                 }
 
+                @* What buttons are they permitted to see? *@
                 <div class="row" style="margin-top: 1rem;">
                     <div class="col">
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="float: left;">
