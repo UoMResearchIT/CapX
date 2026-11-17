@@ -239,10 +239,17 @@ namespace PPMTool.Pages
                     e.SetIsInTemplate(order.Contains(e.InnateCodeTask.InnateCodeTaskId));
                 }
 
-                // Check if the timesheet entries count is less than the template list.
-                // If so then we want to enable the button to allow the user to refresh the list of tasks
-                // against their template (mainly userful when a timesheet is rejected)
-                if (timesheet.Status == TimesheetStatus.Rejected && orderedResults.Count < order.Count) { allowTimesheetRefresh = true; }
+                // If the timesheet has been rejected the we need to check if the timesheet template
+                // has any tasks not on the current timesheet. If so then we want to enable the button
+                // to allow the user to refresh the list of tasks.
+                if (timesheet.Status == TimesheetStatus.Rejected)
+                {
+                    var existingTaskIds = orderedResults
+                        .Select(x => x.InnateCodeTaskId)
+                        .ToHashSet();
+
+                    allowTimesheetRefresh = order.Any(taskId => !existingTaskIds.Contains(taskId));
+                }
 
                 return orderedResults;
             }
