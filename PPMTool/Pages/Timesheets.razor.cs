@@ -192,8 +192,8 @@ namespace PPMTool.Pages
 
                 if (!ShowAllMyStaffTimesheets)
                 {
-                    // Filter the list to only show items with Submitted status
-                    myStaffTimesheets = myStaffTimesheets.Where(t => t.Status == TimesheetStatus.Submitted).ToList();
+                    // Filter the list to only show items that need chasing or action: New, Submitted, Rejected
+                    myStaffTimesheets = myStaffTimesheets.Where(t => t.Status == TimesheetStatus.Submitted || t.Status == TimesheetStatus.Rejected || t.Status == TimesheetStatus.New).ToList();
                 }
 
                 // Order the list, whatever it holds (but remove any New items as these haven't been submitted by the staff member yet!)
