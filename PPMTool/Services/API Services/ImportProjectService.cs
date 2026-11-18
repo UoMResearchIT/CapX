@@ -28,6 +28,7 @@ namespace PPMTool.Services
         private readonly FinancialReferenceService financialReferenceService;
         private readonly SettingsService settingsService;
         private readonly ImportTaskService importTaskService;
+        private readonly InnateCodeService innateCodeService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ImportProjectService"/> class.
@@ -38,13 +39,15 @@ namespace PPMTool.Services
         /// <param name="financialReferenceService">Service used to load financial references.</param>
         /// <param name="settingsService">Service used to load calculation settings.</param>
         /// <param name="importTaskService">Service whose assignment validation create-time resourcing shares.</param>
+        /// <param name="innateCodeService">Service used to create timesheet activity codes under the UI's own rules.</param>
         public ImportProjectService(
             ProjectService projectService,
             SubTaskService subTaskService,
             NoteService noteService,
             FinancialReferenceService financialReferenceService,
             SettingsService settingsService,
-            ImportTaskService importTaskService)
+            ImportTaskService importTaskService,
+            InnateCodeService innateCodeService)
         {
             this.projectService = projectService;
             this.subTaskService = subTaskService;
@@ -52,6 +55,7 @@ namespace PPMTool.Services
             this.financialReferenceService = financialReferenceService;
             this.settingsService = settingsService;
             this.importTaskService = importTaskService;
+            this.innateCodeService = innateCodeService;
         }
 
         /// <summary>
@@ -78,7 +82,7 @@ namespace PPMTool.Services
                 errors.Add($"A Project with RTP {request.RTP} already exists");
 
             if (request.TimesheetActivityCode != null)
-                errors.AddRange(ValidateTimesheetActivityCode(context, request.TimesheetActivityCode, request.Name, projectId: null));
+                errors.AddRange(ValidateTimesheetActivityCode(context, request.TimesheetActivityCode, request.Name, project: null));
 
             if (string.IsNullOrWhiteSpace(request.PI)) errors.Add("PI is required");
             if (string.IsNullOrWhiteSpace(request.RequestDocLink)) errors.Add("RequestDocLink is required");
@@ -151,7 +155,7 @@ namespace PPMTool.Services
 
             if (request.TimesheetActivityCode != null)
             {
-                project.InnateActivity = ResolveTimesheetActivityCode(context, request.TimesheetActivityCode, project.Name);
+                project.InnateActivity = ResolveTimesheetActivityCode(context, request.TimesheetActivityCode, project.Name, currentCode: null, project.ProjectId);
                 context.SaveChangesWithRetry();
             }
 
@@ -296,7 +300,7 @@ namespace PPMTool.Services
                 errors.Add($"ProjectManagerUsername '{request.ProjectManagerUsername}' not found, or has no linked Person");
 
             if (request.TimesheetActivityCode != null)
-                errors.AddRange(ValidateTimesheetActivityCode(context, request.TimesheetActivityCode, request.Name ?? project.Name, project.ProjectId));
+                errors.AddRange(ValidateTimesheetActivityCode(context, request.TimesheetActivityCode, request.Name ?? project.Name, project));
 
             return errors;
         }
@@ -327,7 +331,7 @@ namespace PPMTool.Services
             if (request.RequestDocLink != null) project.RequestDocLink = request.RequestDocLink;
             if (request.ScrumProjectLink != null) project.ScrumProjectLink = request.ScrumProjectLink == "" ? null : request.ScrumProjectLink;
             if (request.TimesheetActivityCode != null)
-                project.InnateActivity = ResolveTimesheetActivityCode(context, request.TimesheetActivityCode, project.Name);
+                project.InnateActivity = ResolveTimesheetActivityCode(context, request.TimesheetActivityCode, project.Name, project.InnateActivity, project.ProjectId);
 
             var result = projectService.Update(context, project);
             if (result < 0)
@@ -478,15 +482,17 @@ namespace PPMTool.Services
 
         /// <summary>
         /// Validates a caller-supplied timesheet activity code for a project. An existing
-        /// code may be linked only if no other project uses it; a new code must not
-        /// duplicate an existing code's name.
+        /// code may be linked only if no other project uses it. A project's current code
+        /// can be replaced only while it has no timesheet entries, since the project's
+        /// actuals come through that code. A new code must not duplicate another code's
+        /// name, the same rule the UI applies.
         /// </summary>
         /// <param name="context">Database context.</param>
         /// <param name="activityCode">Activity code supplied by the caller.</param>
         /// <param name="projectName">Name the project will have, used to name a new code.</param>
-        /// <param name="projectId">The project being updated, or <c>null</c> for a new project.</param>
+        /// <param name="project">The project being updated, or <c>null</c> for a new project.</param>
         /// <returns>Validation errors, or an empty list when valid.</returns>
-        private static List<string> ValidateTimesheetActivityCode(PPMToolContext context, string activityCode, string? projectName, int? projectId)
+        private List<string> ValidateTimesheetActivityCode(PPMToolContext context, string activityCode, string? projectName, Project? project)
         {
             var errors = new List<string>();
             if (string.IsNullOrWhiteSpace(activityCode))
@@ -495,41 +501,84 @@ namespace PPMTool.Services
                 return errors;
             }
 
-            var existingCode = ImportHelper.FindInnateCodeByActivityCode(context, activityCode);
-            if (existingCode != null)
+            var requested = ImportHelper.FindInnateCodeByActivityCode(context, activityCode);
+            var current = project?.InnateActivity;
+            if (current != null && requested?.InnateCodeId == current.InnateCodeId)
+                return errors;
+
+            if (current != null)
+            {
+                var entries = context.TimesheetEntries.Count(e => e.InnateCodeTask.InnateCode.InnateCodeId == current.InnateCodeId);
+                if (entries > 0)
+                {
+                    errors.Add($"Timesheet code '{current.ActivityCode}' has {entries} timesheet {(entries == 1 ? "entry" : "entries")}, so replacing it would hide them from this Project's actuals");
+                    return errors;
+                }
+            }
+
+            if (requested != null)
             {
                 var linkedRtp = context.Projects
-                    .Where(p => p.ProjectId != projectId && p.InnateActivity != null && p.InnateActivity.InnateCodeId == existingCode.InnateCodeId)
+                    .Where(p => p.ProjectId != (project == null ? 0 : project.ProjectId) && p.InnateActivity != null && p.InnateActivity.InnateCodeId == requested.InnateCodeId)
                     .Select(p => (int?)p.RTP)
                     .FirstOrDefault();
                 if (linkedRtp != null)
-                    errors.Add($"Timesheet code '{existingCode.ActivityCode}' already belongs to the Project with RTP {linkedRtp}");
+                    errors.Add($"Timesheet code '{requested.ActivityCode}' already belongs to the Project with RTP {linkedRtp}");
             }
-            else if (!string.IsNullOrWhiteSpace(projectName)
-                     && context.InnateCodes.Any(c => c.ActivityName.Trim().ToLower() == projectName.Trim().ToLower()))
+            else if (current == null || LinkedToAnotherProject(context, current, project!.ProjectId))
             {
-                errors.Add($"A timesheet code named '{projectName}' already exists, so a new code '{activityCode.Trim()}' for this Project would duplicate it");
+                if (innateCodeService.DuplicateDetected(context, NewTimesheetActivityCode(activityCode, projectName ?? "")))
+                    errors.Add($"A timesheet code named '{projectName}' already exists, so a new code '{activityCode.Trim()}' for this Project would duplicate it");
             }
 
             return errors;
         }
 
         /// <summary>
-        /// Returns the timesheet activity code a project should be linked to: the existing
-        /// code with that activity code, unchanged, or a new one named after the project
-        /// with the default tasks.
+        /// Returns the timesheet activity code a project should be linked to, as validated by
+        /// <see cref="ValidateTimesheetActivityCode"/>: an existing code, unchanged; the project's
+        /// current code renamed in place, when it is unused and no other project shares it; or a
+        /// new code named after the project, with the default tasks.
         /// </summary>
         /// <param name="context">Database context.</param>
         /// <param name="activityCode">Activity code supplied by the caller.</param>
         /// <param name="projectName">Project name, used to name a new code.</param>
+        /// <param name="currentCode">The project's current code, or <c>null</c>.</param>
+        /// <param name="projectId">The project being linked.</param>
         /// <returns>The code to link.</returns>
-        private static InnateCode ResolveTimesheetActivityCode(PPMToolContext context, string activityCode, string projectName) =>
-            ImportHelper.FindInnateCodeByActivityCode(context, activityCode) ?? new InnateCode
+        private InnateCode ResolveTimesheetActivityCode(PPMToolContext context, string activityCode, string projectName, InnateCode? currentCode, int projectId)
+        {
+            var requested = ImportHelper.FindInnateCodeByActivityCode(context, activityCode);
+            if (requested != null)
+                return requested;
+
+            if (currentCode != null && !LinkedToAnotherProject(context, currentCode, projectId))
             {
-                ActivityCode = activityCode.Trim(),
-                ActivityName = projectName,
-                IsActive = true,
-                Tasks = ImportHelper.DefaultInnateCodeTasks(),
-            };
+                currentCode.ActivityCode = activityCode.Trim();
+                return currentCode;
+            }
+
+            var created = NewTimesheetActivityCode(activityCode, projectName);
+            if (innateCodeService.Add(context, created, commitChanges: false) < 0)
+                throw new InvalidOperationException($"InnateCodeService.Add refused timesheet code '{created.ActivityCode}' despite passing validation");
+            return created;
+        }
+
+        /// <summary>
+        /// Whether a timesheet activity code is linked to any project other than the given one.
+        /// </summary>
+        private static bool LinkedToAnotherProject(PPMToolContext context, InnateCode code, int projectId) =>
+            context.Projects.Any(p => p.ProjectId != projectId && p.InnateActivity != null && p.InnateActivity.InnateCodeId == code.InnateCodeId);
+
+        /// <summary>
+        /// A new, unsaved timesheet activity code named after a project, with the default tasks.
+        /// </summary>
+        private static InnateCode NewTimesheetActivityCode(string activityCode, string projectName) => new()
+        {
+            ActivityCode = activityCode.Trim(),
+            ActivityName = projectName,
+            IsActive = true,
+            Tasks = ImportHelper.DefaultInnateCodeTasks(),
+        };
     }
 }
