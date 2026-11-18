@@ -314,6 +314,7 @@ namespace PPMTool.Services
         public UpdateProjectResponseDTO UpdateProject(PPMToolContext context, UpdateProjectRequestDTO request)
         {
             var project = projectService.GetByRTP(context, request.RTP)!;
+            var oldStatus = project.ProjectStatus;
 
             if (request.Name != null) project.Name = request.Name;
             if (request.PI != null) project.PI = request.PI;
@@ -332,6 +333,7 @@ namespace PPMTool.Services
             if (request.ScrumProjectLink != null) project.ScrumProjectLink = request.ScrumProjectLink == "" ? null : request.ScrumProjectLink;
             if (request.TimesheetActivityCode != null)
                 project.InnateActivity = ResolveTimesheetActivityCode(context, request.TimesheetActivityCode, project.Name, project.InnateActivity, project.ProjectId);
+            ApplyStatusSideEffects(project, oldStatus);
 
             var result = projectService.Update(context, project);
             if (result < 0)
@@ -479,6 +481,38 @@ namespace PPMTool.Services
             context.SaveChangesWithRetry();
 
             return new UpdateNoteResponseDTO(note.NoteId);
+        }
+
+        /// <summary>
+        /// Applies what saving a project in AddProject.razor.cs does around its status, so a
+        /// status changed through the API has the same consequences as one changed in the UI:
+        /// leaving New Request stops the request-duration clock; a cancelled project loses its
+        /// assignments; a finished or cancelled one loses its followers; and becoming Active
+        /// (other than from Paused) restarts the actuals clock.
+        /// </summary>
+        /// <param name="project">The project, with its new status already set.</param>
+        /// <param name="oldStatus">The status it had before this update.</param>
+        private static void ApplyStatusSideEffects(Project project, ProjectStatus oldStatus)
+        {
+            var newStatus = project.ProjectStatus;
+            if (oldStatus != newStatus && oldStatus == ProjectStatus.NewRequest)
+                project.RequestCompletedDate = ImportHelper.AsUnspecifiedKind(DateTime.Today);
+
+            // Resources are kept on finished projects as a historical record, as in the UI.
+            if (newStatus.IsCancelled())
+            {
+                foreach (var task in project.SubTasks)
+                {
+                    task.AssignedResources.Clear();
+                    task.UpdateUnmetDemand(task.AssignedResources);
+                }
+            }
+
+            if (newStatus.IsFinishedOrCancelled())
+                project.Followers.Clear();
+
+            if (oldStatus != newStatus && oldStatus != ProjectStatus.Paused && newStatus == ProjectStatus.Active)
+                project.ActualsLastUpdated = DateTime.Now.ToString("R");
         }
 
         /// <summary>
