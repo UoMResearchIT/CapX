@@ -30,6 +30,17 @@ namespace PPMTool.Tests.API
         protected static int ResourceId { get; private set; }
         protected static int WorkloadModelChangeId { get; private set; }
 
+        /// <summary>
+        /// Gets an API-ready person name guaranteed to be accessible by the manager test key.
+        /// </summary>
+        protected static string AuthorisedPersonNameForManager => ToApiPersonName(ManagerReport ?? ManagerName ?? PersonName);
+
+        /// <summary>
+        /// Converts a display name into API query format (spaces replaced with underscores).
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        protected static string ToApiPersonName(string? name) => (name ?? string.Empty).Replace(" ", "_");
 
         /// <summary>
         /// Provides a configured HttpClient for making requests to the API with an API key for a manager.
@@ -137,7 +148,7 @@ namespace PPMTool.Tests.API
 
                 // Get a person from the database for API tests
                 var firstPerson = context.People.FirstOrDefault(x => !string.IsNullOrEmpty(x.Name));
-                PersonName = firstPerson?.Name?.Replace(" ", "_");
+                PersonName = ToApiPersonName(firstPerson?.Name);
                 PersonId = firstPerson?.PersonId ?? 0;
 
                 // Get a project Project ID from the database for API tests
