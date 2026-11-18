@@ -64,7 +64,7 @@ SPDX-License-Identifier: apache-2.0
                         <RadzenStack Orientation="Radzen.Orientation.Vertical" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center">
                             <RadzenButton ButtonStyle="ButtonStyle.Primary"
                                           Text="Refresh task list from template"
-                                          Click="@RefreshFromTimesheetTemplate"
+                                          Click="@RefreshFromTimesheetTemplateAsync"
                                           Icon="autorenew"
                                           title="Add missing tasks from the timesheet owner's template"
                                           Disabled="@(!CanRefreshFromTemplate)" />

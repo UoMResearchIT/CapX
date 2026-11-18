@@ -74,7 +74,12 @@ namespace PPMTool.Pages
         private bool CanReject => timesheet?.IsPermittedToReject(ActiveUser) ?? false;
         private bool CanDelete => timesheet?.IsPermittedToDelete(ActiveUser) ?? false;
         private bool CanSeeWLM => timesheet?.IsPermittedToSeeWLM(ActiveUser) ?? false;
-        private bool CanRefreshFromTemplate => CanEditEntries && timesheet?.Status == TimesheetStatus.Rejected && allowTimesheetRefresh;
+        private bool CanRefreshFromTemplate =>
+            CanEditEntries &&
+            timesheet?.Status == TimesheetStatus.Rejected &&
+            allowTimesheetRefresh &&
+            entityToInsert == null &&
+            entityToUpdate == null;
 
         protected override void OnInitialized()
         {
@@ -291,7 +296,11 @@ namespace PPMTool.Pages
         /// Repopulates the current timesheet's tasks from the template. 
         /// Used after re-opening a rejected timesheet so the user can choose other tasks
         /// </summary>
-        private void RefreshFromTimesheetTemplate()
+        /// <summary>
+        /// Adds tasks missing from the current rejected timesheet using the timesheet owner's template.
+        /// Existing entries are retained.
+        /// </summary>
+        private async Task RefreshFromTimesheetTemplateAsync()
         {
             TimesheetService.SetupTimesheetFromTemplate(
                 Context,
@@ -303,6 +312,8 @@ namespace PPMTool.Pages
             PopulateDataGridDataSource();
             UpdateTimesheetRefreshAvailability();
             UpdateDailyTotals();
+            await LoadInnateCodesAsync();
+            await dataGrid.Reload();
 
             ShowNotification(new CapXNotificationMessage
             {
