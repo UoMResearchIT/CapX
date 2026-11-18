@@ -48,6 +48,7 @@ namespace PPMTool.Pages
         private double totalHours;
         private readonly int entryMinimum = 0;
         private readonly double entryStep = 0.25;
+        private readonly string blankWhenZeroHoursFormat = "0.00;-0.00;#"; // positive, negative, zero
         private readonly Dictionary<string, string> dayColours = new Dictionary<string, string>
         {
             { "mon", "var(--rz-grid-foot-background-color)" },
@@ -872,6 +873,24 @@ namespace PPMTool.Pages
 
             // Update the daily totals regardless of correction
             UpdateDailyTotals();
+        }
+
+        /// <summary>
+        /// Method fired when an hours cell is changed. Validates the value and saves the entry straight away.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="entry"></param>
+        /// <param name="propertyName"></param>
+        private void ValidateAndSaveHours(double value, TimesheetEntry entry, string propertyName)
+        {
+            ValidateNumericInput(value, entry, propertyName);
+
+            // A row still being added is saved with its own save button
+            var isRowBeingAdded = entry == entityToInsert;
+            if (!isRowBeingAdded)
+            {
+                TimesheetService.UpdateEntry(Context, entry);
+            }
         }
 
         /// <summary>

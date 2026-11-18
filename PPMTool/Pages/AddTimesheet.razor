@@ -139,9 +139,7 @@ SPDX-License-Identifier: apache-2.0
                                     <TimesheetDayAndDateComponent Day="DayOfWeek.Monday" StartOfWeek="@timesheet.StartDate" />
                                 </HeaderTemplate>
                                 <Template Context="entry">
-                                    <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 0">
-                                        @(entry.MondayHours == 0 ? "" : entry.MondayHours.ToString("F2"))
-                                    </RadzenText>
+                                    <RadzenNumeric TValue="double" Format="@blankWhenZeroHoursFormat" Min="@entryMinimum" Step="@entryStep.ToString()" Style="width: 100%" @bind-Value="entry.MondayHours" Change="@(args => ValidateAndSaveHours(args, entry, nameof(entry.MondayHours)))" Disabled="@(!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
                                 </Template>
                                 <EditTemplate Context="entry">
                                     <RadzenNumeric TValue="double" Min="@entryMinimum" Step="@entryStep.ToString()" Style="width: 100%" @bind-Value="entry.MondayHours" Change="@(args => ValidateNumericInput(args, entry, nameof(entry.MondayHours)))" />
