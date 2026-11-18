@@ -135,11 +135,11 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// The owner, line manager or a superuser may retract a submitted timesheet.
+        /// The owner may retract a submitted timesheet.
         /// </summary>
         public bool IsPermittedToRetract(User user)
         {
-            return (IsOwner(user) || IsLineManager(user) || IsSuperuser(user)) &&
+            return IsOwner(user) &&
                 Status == TimesheetStatus.Submitted;
         }
 
