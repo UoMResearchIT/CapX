@@ -100,7 +100,12 @@ SPDX-License-Identifier: apache-2.0
                         </RadzenStack>
                     </div>
                 </div>
-                <StatusMessageSummaryComponent Messages="@(new List<StatusMessage> {new StatusMessage("You have timesheets awaiting your review", StatusMessage.MessageType.Error, () => TimesheetService.HasStaffTimesheetActions)})" />
+                @{
+                    // Build a message on render and add to sunmmary component.
+                    var message = new StatusMessage("You have timesheets awaiting your review", StatusMessage.MessageType.Error, () => TimesheetService.HasStaffTimesheetActions);
+                    message.Update();
+                }
+                <StatusMessageSummaryComponent Messages="@(new List<StatusMessage> { message })" />
                 <hr />
                 <div class="row align-items-center justify-content-end">
                     <div class="col">

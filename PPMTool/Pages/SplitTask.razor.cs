@@ -57,6 +57,12 @@ namespace PPMTool.Pages
                 Task.Run(LoadDataAsync);
             }
 
+            // Re-evaluate the status messages on each render to ensure they are up to date
+            foreach (var message in statusMessages)
+            {
+                message.Update();
+            }
+
             Debug.WriteLine($"** SplitTask Page Rendered! Split pending = {Loading} | OriginalTaskComponentId = {originalAddTaskComponent?.TaskModel?.SubTaskId} | NewTaskComponentId = {newAddTaskComponent?.TaskModel?.SubTaskId}");
         }
 
