@@ -1,0 +1,119 @@
+/*
+ * SPDX-FileCopyrightText: 2026 University of Manchester
+ *
+ * SPDX-License-Identifier: apache-2.0
+ */
+
+/* Synopsis table scrolls within its RadzenCard rather than widening the page */
+.timesheet-synopsis-scroll {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+/* Fixed layout allows the colgroup to give every week the same width */
+.timesheet-synopsis {
+    width: max-content;
+    min-width: 100%;
+    table-layout: fixed;
+}
+
+/* Fixed widths for the person and week columns */
+.timesheet-person-column {
+    width: 16rem;
+}
+
+.timesheet-week-column {
+    width: 7.5rem;
+}
+
+.timesheet-synopsis th,
+.timesheet-synopsis td {
+    white-space: nowrap;
+}
+
+/* Keep person's name and badges together */
+.timesheet-person {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    white-space: nowrap;
+}
+
+.timesheet-person-name {
+    flex: 1 0 auto;
+}
+
+.timesheet-person-badges {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    flex: 0 0 auto;
+}
+
+/* Timesheet status cells */
+.timesheet-status-cell {
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.35rem !important;
+    cursor: pointer;
+}
+
+    /* RadzenBadge is rendered inside the child component, so ::deep is required */
+    .timesheet-status-cell ::deep .rz-badge {
+        font-size: 0.65rem !important;
+        padding: 0.1rem 0.25rem !important;
+        line-height: 1 !important;
+        white-space: nowrap;
+    }
+
+    .timesheet-status-cell:hover {
+        background-color: var(--rz-base-200) !important;
+    }
+
+    .timesheet-status-cell:active {
+        transform: scale(0.97);
+    }
+
+/* Empty week cells */
+.timesheet-empty-cell {
+    text-align: center;
+    vertical-align: middle;
+    color: var(--rz-text-disabled-color);
+    opacity: 0.65;
+}
+
+/* Grid borders */
+.timesheet-synopsis-table,
+.timesheet-status-cell,
+.timesheet-empty-cell {
+    border: 1px solid var(--rz-base-400) !important;
+}
+
+/* Person badges */
+.timesheet-person-badges ::deep .rz-badge {
+    font-size: 0.65rem !important;
+    padding: 0.1rem 0.25rem !important;
+    line-height: 1 !important;
+}
+
+/* Freeze the staff/name column while the week columns scroll */
+.timesheet-synopsis th:first-child,
+.timesheet-synopsis td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background-color: var(--rz-card-background-color);
+}
+
+/* Keep the top-left header above the frozen body cells */
+.timesheet-synopsis th:first-child {
+    z-index: 3;
+    background-color: var(--rz-card-background-color);
+}
+
+/* Visual separation between frozen column and scrolling weeks */
+.timesheet-synopsis th:first-child,
+.timesheet-synopsis td:first-child {
+    border-right: 2px solid var(--rz-base-400) !important;
+}

@@ -47,10 +47,14 @@ SPDX-License-Identifier: apache-2.0
                         <RadzenBadge BadgeStyle="@(timesheet.Status.GetBadgeStyle())" class="timesheet-status-style align-self-center" Text="@(timesheet.Status.ToNiceString())" />
                     </RadzenStack>
                 </div>
-                @if (EditAuthorised)
+                @if (CanDelete)
                 {
                     <div class="col-auto" style="align-content: center">
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Click="@DeleteTimesheet" Text="Delete" Icon="delete" Disabled=!EditAuthorised />
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                      ButtonType="ButtonType.Button"
+                                      Click="@DeleteTimesheet"
+                                      Text="Delete"
+                                      Icon="delete" />
                     </div>
                 }
 
@@ -58,7 +62,12 @@ SPDX-License-Identifier: apache-2.0
                 {
                     <div class="col-auto" style="align-content: center;">
                         <RadzenStack Orientation="Radzen.Orientation.Vertical" Wrap="FlexWrap.Wrap" AlignItems="AlignItems.Center">
-                            <RadzenButton ButtonStyle="ButtonStyle.Primary" Text="Refresh task list from template" Click="@(() => { RefreshFromTimesheetTemplate(); })" Icon="autorenew" title="Refresh tasks from template" Disabled=@(!allowTimesheetRefresh) />
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                          Text="Refresh task list from template"
+                                          Click="@(() => { RefreshFromTimesheetTemplate(); })"
+                                          Icon="autorenew"
+                                          title="Refresh tasks from template"
+                                          Disabled=@(!allowTimesheetRefresh) />
                         </RadzenStack>
                     </div>
                 }
@@ -78,11 +87,24 @@ SPDX-License-Identifier: apache-2.0
                             @if (!string.IsNullOrWhiteSpace(timesheetHelpUrl))
                             {
                                 <a href="@timesheetHelpUrl" target="_blank">
-                                    <RadzenButton class="mx-1" Icon="help" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" MouseEnter="@((args) => ShowTooltip(args, "Open the timesheet help document"))" />
+                                    <RadzenButton class="mx-1"
+                                                  Icon="help"
+                                                  ButtonStyle="ButtonStyle.Primary"
+                                                  Variant="Variant.Outlined"
+                                                  MouseEnter="@((args) => ShowTooltip(args, "Open the timesheet help document"))" />
                                 </a>
                             }
-                            <RadzenButton Variant="Variant.Outlined" Text="Reorder your template" Click="@(() => { ReorderTimesheetTemplate(@timesheet); })" Icon="cached" title="Reorder your timesheet template" Disabled=@(entityToInsert != null || entityToUpdate != null || !timesheet.IsOwner(ActiveUser)) Style="margin-right: 0.75rem;" />
-                            <RadzenButton Text="Add New Task" Icon="add" Click="@InsertRow" Disabled=@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)) Style="padding: 0 2rem" />
+                            <RadzenButton Variant="Variant.Outlined"
+                                          Text="Reorder your template"
+                                          Click="@(() => ReorderTimesheetTemplate(timesheet))"
+                                          Icon="cached" title="Reorder your timesheet template"
+                                          Disabled="@(entityToInsert != null || entityToUpdate != null || !CanReorderTemplate)"
+                                          Style="margin-right: 0.75rem;" />
+                            <RadzenButton Text="Add New Task"
+                                          Icon="add"
+                                          Click="@InsertRow"
+                                          Disabled="@(entityToInsert != null || entityToUpdate != null || !CanEditEntries)"
+                                          Style="padding: 0 2rem" />
                         </div>
                     </div>
                     <RadzenDataGrid @ref="dataGrid"
@@ -286,32 +308,58 @@ SPDX-License-Identifier: apache-2.0
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="TimesheetEntry" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Filterable="false" TextAlign="TextAlign.Center" Width="8rem" MinWidth="10px" Title="Actions" Sortable="false">
                                 <Template Context="entry">
-                                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => EditRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Edit"))" Disabled="((!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true) || entityToInsert != null || entityToUpdate != null)" />
-                                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Class="m-1" Click="@(args => DeleteRow(entry))" @onclick:stopPropagation="true" MouseEnter="@(args => ShowTooltip(args, "Delete"))" Disabled="((!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true) || entityToInsert != null || entityToUpdate != null)" />
+                                    <RadzenButton Icon="edit"
+                                                  ButtonStyle="ButtonStyle.Light"
+                                                  Class="m-1"
+                                                  Click="@(args => EditRow(entry))"
+                                                  @onclick:stopPropagation="true"
+                                                  MouseEnter="@(args => ShowTooltip(args, "Edit"))"
+                                                  Disabled="@(!CanEditEntries || entityToInsert != null || entityToUpdate != null)" />
+                                    <RadzenButton Icon="delete"
+                                                  ButtonStyle="ButtonStyle.Danger"
+                                                  Class="m-1"
+                                                  Click="@(args => DeleteRow(entry))"
+                                                  @onclick:stopPropagation="true"
+                                                  MouseEnter="@(args => ShowTooltip(args, "Delete"))"
+                                                  Disabled="@(!CanEditEntries || entityToInsert != null || entityToUpdate != null)" />
                                 </Template>
                                 <EditTemplate Context="entry">
-                                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Class="m-1" Click="@(args => SaveRow(entry))" MouseEnter="@(args => ShowTooltip(args, "Save"))" Disabled="entry.InnateCodeTask == null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
-                                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(args => CancelEdit(entry))" MouseEnter="@(args => ShowTooltip(args, "Cancel"))" Disabled="(!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
+                                    <RadzenButton Icon="check"
+                                                  ButtonStyle="ButtonStyle.Success"
+                                                  Class="m-1"
+                                                  Click="@(args => SaveRow(entry))"
+                                                  MouseEnter="@(args => ShowTooltip(args, "Save"))"
+                                                  Disabled="@(entry.InnateCodeTask == null || !CanEditEntries)" />
+                                    <RadzenButton Icon="close"
+                                                  ButtonStyle="ButtonStyle.Light"
+                                                  Class="m-1"
+                                                  Click="@(args => CancelEdit(entry))"
+                                                  MouseEnter="@(args => ShowTooltip(args, "Cancel"))" />
                                 </EditTemplate>
                             </RadzenDataGridColumn>
                         </Columns>
                     </RadzenDataGrid>
-                    <!-- Don't show if viewing a direct report's timesheet -->
-                    @if (!timesheet?.IsLineManager(ActiveUser) ?? false)
+
+                    @* Template guidance is only relevant when editing your own timesheet *@
+                    @if (timesheet.IsOwner(ActiveUser))
                     {
-                        <HintComponent Message="If you don't want/need to use one or more of your 'default' options then leave the item(s) empty. If you remove a row from this timesheet it will not show (when creating a new instance) on future timesheets." />
+                        <HintComponent Message="If you don't want or need to use one or more of your default options, leave the items empty. Removing a row from this timesheet will also remove it from your template for future timesheets." />
                     }
                     <hr />
                     <div class="row">
                         <div class="col">
                             <RadzenStack Orientation="Radzen.Orientation.Vertical" Style="margin-bottom: 1rem">
-                                <RadzenTextArea @bind-Value="timesheet.Info" Placeholder="Add any notes on this timesheet here..." Style="width: 100%" Change=@(() => NoteChanged()) Disabled="@(!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true)" />
+                                <RadzenTextArea @bind-Value="timesheet.Info"
+                                                Placeholder="Add any notes on this timesheet here..."
+                                                Style="width: 100%"
+                                                Change=@(() => NoteChanged())
+                                                Disabled="@(!CanEditEntries)" />
                             </RadzenStack>
                         </div>
                     </div>
                 </RadzenCard>
 
-                @if ((timesheet?.IsLineManager(ActiveUser) ?? false || ActiveUserRoleType == RoleType.Superuser) && currentWLM != null && wlmChartItem != null)
+                @if (CanSeeWLM && currentWLM != null && wlmChartItem != null)
                 {
                     <RadzenCard style="margin-top: 0.5rem;">
                         <div class="row">
@@ -403,28 +451,53 @@ SPDX-License-Identifier: apache-2.0
                     </RadzenCard>
                 }
 
+                @* What buttons are they permitted to see? *@
                 <div class="row" style="margin-top: 1rem;">
                     <div class="col">
                         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="float: left;">
                             <div>
-                                @if (((timesheet?.IsLineManager(ActiveUser) ?? false) || ActiveUser.RoleType == RoleType.Superuser) && timesheet.Status != TimesheetStatus.Approved)
+                                @if (CanApprove)
                                 {
-                                    <RadzenButton ButtonType="ButtonType.Submit" Text="Approve" Icon="check" ButtonStyle="ButtonStyle.Success" Click="@(() => { newStatus = TimesheetStatus.Approved; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" Style="margin-right: 0.5rem;" />
+                                    <RadzenButton ButtonType="ButtonType.Submit"
+                                                  Text="Approve"
+                                                  Icon="check"
+                                                  ButtonStyle="ButtonStyle.Success"
+                                                  Click="@(() => newStatus = TimesheetStatus.Approved)"
+                                                  Disabled="@(entityToInsert != null || entityToUpdate != null)"
+                                                  Style="margin-right: 0.5rem;" />
                                 }
-                                @if (((timesheet?.IsLineManagerButNotOwner(ActiveUser) ?? false) || ActiveUser.RoleType == RoleType.Superuser) || (timesheet?.IsSelfApprover(ActiveUser) ?? false))
+
+                                @if (CanReject)
                                 {
-                                    <RadzenButton ButtonType="ButtonType.Submit" Text="Reject" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@(() => { newStatus = TimesheetStatus.Rejected; })" Disabled="@(entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToApproveOrReject(ActiveUser) ?? true))" Style="margin-right: 0.5rem;" />
+                                    <RadzenButton ButtonType="ButtonType.Submit"
+                                                  Text="Reject"
+                                                  Icon="close"
+                                                  ButtonStyle="ButtonStyle.Danger"
+                                                  Click="@(() => newStatus = TimesheetStatus.Rejected)"
+                                                  Disabled="@(entityToInsert != null || entityToUpdate != null)"
+                                                  Style="margin-right: 0.5rem;" />
                                 }
-                                @if ((timesheet?.IsOwner(ActiveUser) ?? false) && !(timesheet?.IsLineManager(ActiveUser) ?? false))
+
+                                @if (CanRetract)
                                 {
-                                    @if (timesheet.Status == TimesheetStatus.Submitted)
-                                    {
-                                        <RadzenButton ButtonType="ButtonType.Submit" Text="Retract timesheet" Icon="undo" ButtonStyle="ButtonStyle.Warning" Click="@(() => { newStatus = TimesheetStatus.New; })" Disabled="@(entityToInsert != null || entityToUpdate != null)" Style="margin-right: 0.5rem;" />
-                                    }
-                                    else
-                                    {
-                                        <RadzenButton ButtonType="ButtonType.Submit" Text="Submit timesheet" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="@(()=> { newStatus = TimesheetStatus.Submitted; })" Disabled="@(totalHours == 0 || entityToInsert != null || entityToUpdate != null || (!timesheet?.IsPermittedToEditEntriesAndSubmit(ActiveUser) ?? true))" Style="margin-right: 0.5rem;" />
-                                    }
+                                    <RadzenButton ButtonType="ButtonType.Submit"
+                                                  Text="Retract timesheet"
+                                                  Icon="undo"
+                                                  ButtonStyle="ButtonStyle.Warning"
+                                                  Click="@(() => newStatus = TimesheetStatus.New)"
+                                                  Disabled="@(entityToInsert != null || entityToUpdate != null)"
+                                                  Style="margin-right: 0.5rem;" />
+                                }
+
+                                @if (CanSubmit)
+                                {
+                                    <RadzenButton ButtonType="ButtonType.Submit"
+                                                  Text="Submit timesheet"
+                                                  Icon="check"
+                                                  ButtonStyle="ButtonStyle.Primary"
+                                                  Click="@(() => newStatus = TimesheetStatus.Submitted)"
+                                                  Disabled="@(totalHours == 0 || entityToInsert != null || entityToUpdate != null)"
+                                                  Style="margin-right: 0.5rem;" />
                                 }
                             </div>
                         </RadzenStack>
@@ -450,5 +523,3 @@ SPDX-License-Identifier: apache-2.0
     </div>
 
 </FeatureCheckComponent>
-
-

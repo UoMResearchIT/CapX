@@ -90,54 +90,107 @@ namespace PPMTool.Data.Entities
         }
 
         /// <summary>
-        /// Checks to see if the user is the line manager of the timesheet owner but not the owner
+        /// The owner, line manager or a superuser may view the timesheet.
         /// </summary>
-        /// <param name="user"></param>
-        /// <returns></returns>
-        public bool IsLineManagerButNotOwner(User user)
+        public bool IsPermittedToView(User user)
         {
-            return IsLineManager(user) && !IsOwner(user);
+            return IsOwner(user) || IsLineManager(user) || IsSuperuser(user);
         }
 
         /// <summary>
-        /// Checks to see if the user is both the line manager of the timesheet owner and the owner (a self-approver)
+        /// Line managers and superusers may see WLM information.
         /// </summary>
-        /// <param name="user"></param>
-        /// <returns></returns>
-        public bool IsSelfApprover(User user)
+        public bool IsPermittedToSeeWLM(User user)
         {
-            return IsOwner(user) && IsLineManager(user);
+            return IsLineManager(user) || IsSuperuser(user);
         }
 
         /// <summary>
-        /// Checks to see whether this timesheet is in a state that permits submission of the timesheet by the user
+        /// Only the owner may change their timesheet template.
+        /// Superuser and line-manager permissions do not grant this capability.
         /// </summary>
-        /// <param name="user"></param>
-        /// <returns></returns>
-        public bool IsPermittedToEditEntriesAndSubmit(User user)
+        public bool IsPermittedToReorderTemplate(User user)
         {
-            return IsOwner(user) && (Status == TimesheetStatus.New || Status == TimesheetStatus.Rejected);
+            return IsOwner(user);
         }
 
         /// <summary>
-        /// Checks to see whether this timesheet is in a state that permits approval/rejection of the timesheet by the user.
-        /// Note that lilne managers can use the reject button to unapprove a previously approved timesheet.
+        /// The owner, line manager or a superuser may edit an unsubmitted
+        /// or rejected timesheet.
         /// </summary>
-        /// <param name="user"></param>
-        /// <returns></returns>
-        public bool IsPermittedToApproveOrReject(User user)
+        public bool IsPermittedToEditEntries(User user)
         {
-            return (IsLineManager(user) && (Status == TimesheetStatus.Submitted || Status == TimesheetStatus.Approved)) || (IsSelfApprover(user) && (Status == TimesheetStatus.New || Status == TimesheetStatus.Rejected || Status == TimesheetStatus.Approved)) || (user.RoleType == RoleType.Superuser && (Status == TimesheetStatus.Submitted || Status == TimesheetStatus.Approved));
+            return (IsOwner(user) || IsLineManager(user) || IsSuperuser(user)) &&
+                (Status == TimesheetStatus.New || Status == TimesheetStatus.Rejected);
         }
 
         /// <summary>
-        /// If user may be able to edit in certain circumstance, this checks to see whether based on the current timesheet state whether they are allowed to only view
+        /// The owner, line manager or a superuser may submit an unsubmitted
+        /// or rejected timesheet.
+        /// </summary>
+        public bool IsPermittedToSubmit(User user)
+        {
+            return (IsOwner(user) || IsLineManager(user) || IsSuperuser(user)) &&
+                (Status == TimesheetStatus.New || Status == TimesheetStatus.Rejected);
+        }
+
+        /// <summary>
+        /// The owner may retract a submitted timesheet.
+        /// </summary>
+        public bool IsPermittedToRetract(User user)
+        {
+            return IsOwner(user) &&
+                Status == TimesheetStatus.Submitted;
+        }
+
+        /// <summary>
+        /// A line manager or superuser may approve a submitted timesheet.
+        /// </summary>
+        public bool IsPermittedToApprove(User user)
+        {
+            return (IsLineManager(user) || IsSuperuser(user)) &&
+                Status == TimesheetStatus.Submitted;
+        }
+
+        /// <summary>
+        /// A line manager or superuser may reject a submitted timesheet,
+        /// or unapprove an approved timesheet.
+        /// </summary>
+        public bool IsPermittedToReject(User user)
+        {
+            return (IsLineManager(user) || IsSuperuser(user)) &&
+                (Status == TimesheetStatus.Submitted || Status == TimesheetStatus.Approved);
+        }
+
+        /// <summary>
+        /// Only a superuser may delete a complete timesheet.
+        /// </summary>
+        public bool IsPermittedToDelete(User user)
+        {
+            return IsSuperuser(user);
+        }
+
+        /// <summary>
+        /// Whether the user has any permission to modify the timesheet or its status.
+        /// </summary>
+        public bool IsPermittedToModify(User user)
+        {
+            return IsPermittedToEditEntries(user) ||
+                IsPermittedToSubmit(user) ||
+                IsPermittedToRetract(user) ||
+                IsPermittedToApprove(user) ||
+                IsPermittedToReject(user) ||
+                IsPermittedToDelete(user);
+        }
+
+        /// <summary>
+        /// Local helper as it is called by other permissions checkers
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        public bool IsPermittedToViewOnly(User user)
+        private static bool IsSuperuser(User? user)
         {
-            return !IsSelfApprover(user) && ((IsOwner(user) && !IsPermittedToEditEntriesAndSubmit(user)) || (IsLineManager(user) && !IsPermittedToApproveOrReject(user)));
+            return user?.RoleType == RoleType.Superuser;
         }
     }
 }
