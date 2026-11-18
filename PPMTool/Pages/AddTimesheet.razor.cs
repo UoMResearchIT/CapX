@@ -74,6 +74,7 @@ namespace PPMTool.Pages
         private bool CanReject => timesheet?.IsPermittedToReject(ActiveUser) ?? false;
         private bool CanDelete => timesheet?.IsPermittedToDelete(ActiveUser) ?? false;
         private bool CanSeeWLM => timesheet?.IsPermittedToSeeWLM(ActiveUser) ?? false;
+        private bool CanRefreshFromTemplate => CanEditEntries && timesheet?.Status == TimesheetStatus.Rejected && allowTimesheetRefresh;
 
         protected override void OnInitialized()
         {
@@ -142,6 +143,7 @@ namespace PPMTool.Pages
                         if (t.StartDate == nextDate) { nextTimesheet = t; }
                     }
 
+                    UpdateTimesheetRefreshAvailability();
                     PopulateDataGridDataSource();
                     UpdateDailyTotals();
 
@@ -248,18 +250,6 @@ namespace PPMTool.Pages
                     e.SetIsInTemplate(order.Contains(e.InnateCodeTask.InnateCodeTaskId));
                 }
 
-                // If the timesheet has been rejected the we need to check if the timesheet template
-                // has any tasks not on the current timesheet. If so then we want to enable the button
-                // to allow the user to refresh the list of tasks.
-                if (timesheet.Status == TimesheetStatus.Rejected)
-                {
-                    var existingTaskIds = orderedResults
-                        .Select(x => x.InnateCodeTaskId)
-                        .ToHashSet();
-
-                    allowTimesheetRefresh = order.Any(taskId => !existingTaskIds.Contains(taskId));
-                }
-
                 return orderedResults;
             }
             else
@@ -269,24 +259,59 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Updates timesheet refresh availability by checking whether a rejected timesheet with template data is
+        /// missing any template task IDs in its current entries.
+        /// </summary>
+        /// <remarks>Refresh is disabled by default and remains disabled unless the timesheet is rejected
+        /// and template task data is present.</remarks>
+        private void UpdateTimesheetRefreshAvailability()
+        {
+            allowTimesheetRefresh = false;
+
+            if (timesheet?.Status != TimesheetStatus.Rejected ||
+                string.IsNullOrWhiteSpace(timesheet.Owner?.TimesheetTemplateData))
+            {
+                return;
+            }
+
+            var templateTaskIds = timesheet.Owner.TimesheetTemplateData
+                .Split('|', StringSplitOptions.RemoveEmptyEntries)
+                .Select(int.Parse)
+                .ToHashSet();
+
+            var existingTaskIds = timesheet.TimesheetEntries
+                .Select(x => x.InnateCodeTaskId)
+                .ToHashSet();
+
+            allowTimesheetRefresh = templateTaskIds.Except(existingTaskIds).Any();
+        }
+
+
+        /// <summary>
         /// Repopulates the current timesheet's tasks from the template. 
         /// Used after re-opening a rejected timesheet so the user can choose other tasks
         /// </summary>
         private void RefreshFromTimesheetTemplate()
         {
-            // Set-up the timesheet from the template, but in REFRESH mode to leave existing tasks there
-            TimesheetService.SetupTimesheetFromTemplate(Context, timesheet, ActiveUser?.Person, InnateCodeService.GetAllTasks(Context), true);
-            allowTimesheetRefresh = false;
+            TimesheetService.SetupTimesheetFromTemplate(
+                Context,
+                timesheet,
+                timesheet.Owner,
+                InnateCodeService.GetAllTasks(Context),
+                true);
 
-            // Show notification for refresh action
+            PopulateDataGridDataSource();
+            UpdateTimesheetRefreshAvailability();
+            UpdateDailyTotals();
+
             ShowNotification(new CapXNotificationMessage
             {
                 Severity = NotificationSeverity.Success,
                 Summary = "Refreshed",
-                Detail = "Your timesheet task list has been refreshed."
+                Detail = timesheet.IsOwner(ActiveUser)
+                    ? "Your timesheet task list has been refreshed from your template."
+                    : $"{timesheet.Owner.Name}'s timesheet task list has been refreshed from their template."
             });
-
-            PopulateDataGridDataSource();
         }
 
         /// <summary>
@@ -737,6 +762,7 @@ namespace PPMTool.Pages
             }
 
             LoadInnateCodesAsync().GetAwaiter().GetResult();
+            UpdateTimesheetRefreshAvailability();
         }
 
         /// <summary>
@@ -810,6 +836,7 @@ namespace PPMTool.Pages
             await base.DeleteRow(entity);
             UpdateDailyTotals();
             await LoadInnateCodesAsync();
+            UpdateTimesheetRefreshAvailability();
 
             ShowNotification(new CapXNotificationMessage
             {
