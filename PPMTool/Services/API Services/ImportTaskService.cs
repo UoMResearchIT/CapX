@@ -384,6 +384,8 @@ namespace PPMTool.Services
                 assignments.Add((person, DescribeAssignee(r), r.AssignmentFTE));
             }
             errors.AddRange(ValidateAssignments(context, assignments, task.TaskDuty, task.StartDate, existingTask: task));
+            if (FixedWorkResourcingError(task) is { } fixedWork)
+                errors.Add(fixedWork);
 
             return errors;
         }
@@ -467,8 +469,26 @@ namespace PPMTool.Services
             if (ImportHelper.AssigneeStartsTooLate(resource.Person, targetTask.StartDate) is { } tooLate)
                 errors.Add(tooLate);
 
+            if (FixedWorkResourcingError(currentTask) is { } fixedWorkSource)
+                errors.Add(fixedWorkSource);
+            if (targetTask != currentTask && FixedWorkResourcingError(targetTask) is { } fixedWorkTarget)
+                errors.Add(fixedWorkTarget);
+
             return errors;
         }
+
+        /// <summary>
+        /// Returns an error for a resourcing change on a fixed-work task. Schedule() works out such
+        /// a task's duration from the FTE assigned to it, so any change of resourcing would move its
+        /// end date (to before its start, if the last assignee is retracted), and this API does not
+        /// reschedule the tasks that follow it. The CapX UI does.
+        /// </summary>
+        /// <param name="task">The task whose resourcing would change.</param>
+        /// <returns>An error message, or <c>null</c> when the change is safe.</returns>
+        private static string? FixedWorkResourcingError(SubTask task) =>
+            task.TaskType == TaskType.FixedWork
+                ? $"SubTaskId {task.SubTaskId} is a fixed-work task, whose dates CapX recalculates from the FTE assigned to it, so a resourcing change here would move them without rescheduling the tasks after it: change its resourcing in the CapX UI instead"
+                : null;
 
         /// <summary>
         /// Updates an existing task-resourcing assignment.
