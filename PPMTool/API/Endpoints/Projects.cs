@@ -303,7 +303,11 @@ public static class Projects
             logValidationFailure: errors => logger.LogWarning("API: Projects: project update validation failed for RTP {RTP}: {Errors}", request.RTP, string.Join("; ", errors)),
             execute: caller =>
             {
+                // ProjectService.Update commits (with any new timesheet code) before the cost
+                // recalculation saves again, so a failure in between would leave a partial update.
+                using var transaction = context.Database.BeginTransaction();
                 var result = importService.UpdateProject(context, request);
+                transaction.Commit();
                 logger.LogInformation(
                     "API: Projects: updated Project {ProjectId} (RTP {RTP}) by {User}",
                     result.ProjectId, request.RTP, caller.Name);

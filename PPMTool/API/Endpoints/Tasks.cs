@@ -117,7 +117,10 @@ public static class Tasks
             logValidationFailure: errors => logger.LogWarning("API: Tasks: task update validation failed for SubTaskId {SubTaskId}: {Errors}", request.SubTaskId, string.Join("; ", errors)),
             execute: caller =>
             {
+                // SubTaskService.Update commits before the cost recalculation saves again.
+                using var transaction = context.Database.BeginTransaction();
                 var result = importService.UpdateTask(context, request);
+                transaction.Commit();
                 logger.LogInformation("API: Tasks: updated SubTask {SubTaskId} by {User}", result.SubTaskId, caller.Name);
                 return Results.Ok(result);
             },

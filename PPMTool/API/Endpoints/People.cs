@@ -219,7 +219,10 @@ public static class People
             logValidationFailure: errors => logger.LogWarning("API: People: person update validation failed for PersonId {PersonId}: {Errors}", request.PersonId, string.Join("; ", errors)),
             execute: caller =>
             {
+                // PersonService.Update and the display-name update on linked Users commit separately.
+                using var transaction = context.Database.BeginTransaction();
                 var result = importService.UpdatePerson(context, request);
+                transaction.Commit();
                 logger.LogInformation(
                     "API: People: updated Person {PersonId} ('{ShortName}') by {User}",
                     result.PersonId, result.ShortName, caller.Name);
