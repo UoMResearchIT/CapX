@@ -27,7 +27,7 @@ namespace PPMTool.Services
         private readonly NoteService noteService;
         private readonly FinancialReferenceService financialReferenceService;
         private readonly SettingsService settingsService;
-        private readonly UserService userService;
+        private readonly ImportTaskService importTaskService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ImportProjectService"/> class.
@@ -37,21 +37,21 @@ namespace PPMTool.Services
         /// <param name="noteService">Service used to manage notes.</param>
         /// <param name="financialReferenceService">Service used to load financial references.</param>
         /// <param name="settingsService">Service used to load calculation settings.</param>
-        /// <param name="userService">Service used to resolve users and manager information.</param>
+        /// <param name="importTaskService">Service whose assignment validation create-time resourcing shares.</param>
         public ImportProjectService(
             ProjectService projectService,
             SubTaskService subTaskService,
             NoteService noteService,
             FinancialReferenceService financialReferenceService,
             SettingsService settingsService,
-            UserService userService)
+            ImportTaskService importTaskService)
         {
             this.projectService = projectService;
             this.subTaskService = subTaskService;
             this.noteService = noteService;
             this.financialReferenceService = financialReferenceService;
             this.settingsService = settingsService;
-            this.userService = userService;
+            this.importTaskService = importTaskService;
         }
 
         /// <summary>
@@ -121,7 +121,7 @@ namespace PPMTool.Services
                     errors.Add($"Resourcing username '{r.Username}' not found, or has no linked Person");
                 assignments.Add((person, r.Username, r.AssignmentFTE));
             }
-            errors.AddRange(ValidateAssignments(context, assignments, Duty.ProjectWork, request.ManagementStartDate));
+            errors.AddRange(importTaskService.ValidateAssignments(context, assignments, Duty.ProjectWork, request.ManagementStartDate));
 
             if ((request.Comments?.Count ?? 0) > 0 && ImportHelper.FindUserByUsername(context, FallbackAuthorUsername) == null)
                 errors.Add($"Fallback author User '{FallbackAuthorUsername}' does not exist -- create it before importing comments");
@@ -493,52 +493,6 @@ namespace PPMTool.Services
             context.SaveChangesWithRetry();
 
             return new UpdateNoteResponseDTO(note.NoteId);
-        }
-
-        /// <summary>
-        /// Validates assignment constraints including FTE, manager-only duties, availability, and duplicates.
-        /// </summary>
-        /// <param name="context">Database context.</param>
-        /// <param name="assignments">Assignments to validate.</param>
-        /// <param name="duty">Task duty for manager-only checks.</param>
-        /// <param name="taskStart">Task start date.</param>
-        /// <param name="existingTask">Optional existing task to detect duplicate assignees.</param>
-        /// <returns>Validation errors, or an empty list when valid.</returns>
-        private List<string> ValidateAssignments(
-            PPMToolContext context,
-            IEnumerable<(Person? Person, string Assignee, double FTE)> assignments,
-            Duty duty,
-            DateTime taskStart,
-            SubTask? existingTask = null)
-        {
-            var errors = new List<string>();
-            var managerPersonIds = duty == Duty.ProjectAndServiceMgmt
-                ? userService.GetAllManagerPersonId(context).ToHashSet()
-                : null;
-            var seenPersonIds = new HashSet<int>();
-
-            foreach (var (person, assignee, fte) in assignments)
-            {
-                if (ImportHelper.HasDigitsAfterThirdDecimalPlace(fte))
-                    errors.Add($"AssignmentFTE for '{assignee}' cannot have digits after the third decimal place");
-                else if (fte <= 0)
-                    errors.Add($"AssignmentFTE for '{assignee}' must be greater than zero");
-
-                if (person == null) continue;
-
-                if (managerPersonIds != null && !managerPersonIds.Contains(person.PersonId))
-                    errors.Add($"Only managers can be assigned to leadership tasks ('{assignee}')");
-
-                if (ImportHelper.AssigneeStartsTooLate(person, taskStart) is { } tooLate)
-                    errors.Add(tooLate);
-
-                if (existingTask != null && existingTask.AssignedResources.Any(existing => existing.Person.PersonId == person.PersonId))
-                    errors.Add($"'{assignee}' is already assigned to SubTaskId {existingTask.SubTaskId} -- use PUT /api/tasks/resourcing/update to change the existing assignment");
-                if (!seenPersonIds.Add(person.PersonId))
-                    errors.Add($"'{assignee}' appears more than once in this request");
-            }
-
-            return errors;
         }
     }
 }

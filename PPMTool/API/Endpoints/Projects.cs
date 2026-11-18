@@ -255,34 +255,27 @@ public static class Projects
         HttpContext http,
         [FromBody] ImportProjectRequestDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Projects.CreateProject");
-            if (!allowed) return gateResult!;
-
-            var errors = importService.Validate(context, request, caller!);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(Projects)}.{nameof(CreateProject)}",
+            validate: caller => importService.Validate(context, request, caller),
+            logValidationFailure: errors => logger.LogWarning("API: Projects: project validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: Projects: project validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
-
-            // Create saves several times (the Project, its InnateActivity, its tasks,
-            // its Notes), so without a transaction a failure part-way through leaves
-            // a half-created Project that a retry then rejects as a duplicate RTP.
-            using var transaction = context.Database.BeginTransaction();
-            var result = importService.Create(context, request, caller!);
-            transaction.Commit();
-            logger.LogInformation(
-                "API: Projects: created Project {ProjectId} '{Name}' ({ResourceCount} resources, {NoteCount} notes) by {User}",
-                result.ProjectId, request.Name, result.ResourcesCreated, result.NotesCreated, caller!.Name);
-            return Results.Created($"/api/projects/{result.ProjectId}", result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "API: Projects: error creating project '{Name}'", request.Name);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                // Create saves several times (the Project, its InnateActivity, its tasks,
+                // its Notes), so without a transaction a failure part-way through leaves
+                // a half-created Project that a retry then rejects as a duplicate RTP.
+                using var transaction = context.Database.BeginTransaction();
+                var result = importService.Create(context, request, caller);
+                transaction.Commit();
+                logger.LogInformation(
+                    "API: Projects: created Project {ProjectId} '{Name}' ({ResourceCount} resources, {NoteCount} notes) by {User}",
+                    result.ProjectId, request.Name, result.ResourcesCreated, result.NotesCreated, caller.Name);
+                return Results.Created($"/api/projects/{result.ProjectId}", result);
+            },
+            logException: ex => logger.LogError(ex, "API: Projects: error creating project '{Name}'", request.Name));
     }
 
     /// <summary>
@@ -301,29 +294,22 @@ public static class Projects
         HttpContext http,
         [FromBody] UpdateProjectRequestDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Projects.UpdateProject");
-            if (!allowed) return gateResult!;
-
-            var errors = importService.ValidateProjectUpdate(context, request);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(Projects)}.{nameof(UpdateProject)}",
+            validate: _ => importService.ValidateProjectUpdate(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Projects: project update validation failed for RTP {RTP}: {Errors}", request.RTP, string.Join("; ", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: Projects: project update validation failed for RTP {RTP}: {Errors}", request.RTP, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
-
-            var result = importService.UpdateProject(context, request);
-            logger.LogInformation(
-                "API: Projects: updated Project {ProjectId} (RTP {RTP}) by {User}",
-                result.ProjectId, request.RTP, caller!.Name);
-            return Results.Ok(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "API: Projects: error updating project RTP {RTP}", request.RTP);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                var result = importService.UpdateProject(context, request);
+                logger.LogInformation(
+                    "API: Projects: updated Project {ProjectId} (RTP {RTP}) by {User}",
+                    result.ProjectId, request.RTP, caller.Name);
+                return Results.Ok(result);
+            },
+            logException: ex => logger.LogError(ex, "API: Projects: error updating project RTP {RTP}", request.RTP));
     }
 
     /// <summary>
@@ -345,34 +331,27 @@ public static class Projects
         HttpContext http,
         [FromBody] ImportNotesRequestDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Projects.AddNotes");
-            if (!allowed) return gateResult!;
-
-            var errors = importService.ValidateNotesImport(context, request);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(Projects)}.{nameof(AddNotes)}",
+            validate: _ => importService.ValidateNotesImport(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Projects: notes import validation failed for RTP {RTP}: {Errors}", request.RTP, string.Join("; ", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: Projects: notes import validation failed for RTP {RTP}: {Errors}", request.RTP, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
-
-            // NoteService.Add commits each Note, and nothing de-duplicates them, so
-            // without a transaction a failure part-way through leaves some Notes
-            // behind that a retry of the whole request then adds a second time.
-            using var transaction = context.Database.BeginTransaction();
-            var result = importService.AddNotes(context, request);
-            transaction.Commit();
-            logger.LogInformation(
-                "API: Projects: added {NotesCreated} Note(s) to Project {ProjectId} (RTP {RTP}) by {User}",
-                result.NotesCreated, result.ProjectId, request.RTP, caller!.Name);
-            return Results.Json(result, statusCode: StatusCodes.Status201Created);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "API: Projects: error adding notes to RTP {RTP}", request.RTP);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                // NoteService.Add commits each Note, and nothing de-duplicates them, so
+                // without a transaction a failure part-way through leaves some Notes
+                // behind that a retry of the whole request then adds a second time.
+                using var transaction = context.Database.BeginTransaction();
+                var result = importService.AddNotes(context, request);
+                transaction.Commit();
+                logger.LogInformation(
+                    "API: Projects: added {NotesCreated} Note(s) to Project {ProjectId} (RTP {RTP}) by {User}",
+                    result.NotesCreated, result.ProjectId, request.RTP, caller.Name);
+                return Results.Json(result, statusCode: StatusCodes.Status201Created);
+            },
+            logException: ex => logger.LogError(ex, "API: Projects: error adding notes to RTP {RTP}", request.RTP));
     }
 
     /// <summary>
@@ -393,7 +372,7 @@ public static class Projects
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Projects.GetNotes");
+            var (allowed, caller, gateResult) = GeneralHelpers.CheckWriteApiAccess(settingsService, http, logger, "Projects.GetNotes");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidateNotesGet(context, rtp);
@@ -430,26 +409,19 @@ public static class Projects
         HttpContext http,
         [FromBody] UpdateNoteRequestDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Projects.UpdateNote");
-            if (!allowed) return gateResult!;
-
-            var errors = importService.ValidateNoteUpdate(context, request);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(Projects)}.{nameof(UpdateNote)}",
+            validate: _ => importService.ValidateNoteUpdate(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Projects: note update validation failed for NoteId {NoteId}: {Errors}", request.NoteId, string.Join("; ", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: Projects: note update validation failed for NoteId {NoteId}: {Errors}", request.NoteId, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
-
-            var result = importService.UpdateNote(context, request, caller!);
-            logger.LogInformation("API: Projects: updated Note {NoteId} by {User}", result.NoteId, caller!.Name);
-            return Results.Ok(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "API: Projects: error updating Note {NoteId}", request.NoteId);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                var result = importService.UpdateNote(context, request, caller);
+                logger.LogInformation("API: Projects: updated Note {NoteId} by {User}", result.NoteId, caller.Name);
+                return Results.Ok(result);
+            },
+            logException: ex => logger.LogError(ex, "API: Projects: error updating Note {NoteId}", request.NoteId));
     }
 }

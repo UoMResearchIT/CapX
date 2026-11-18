@@ -257,36 +257,28 @@ public static class Timesheets
         HttpContext http,
         [FromBody] ImportTimesheetEntryDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Timesheets.CreateTimesheetEntry");
-            if (!allowed) return gateResult!;
+        var person = request.Username ?? $"PersonId {request.PersonId}";
 
-            var person = request.Username ?? $"PersonId {request.PersonId}";
-
-            var errors = importService.ValidateTimesheetEntry(context, request);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(Timesheets)}.{nameof(CreateTimesheetEntry)}",
+            validate: _ => importService.ValidateTimesheetEntry(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Timesheets: timesheet validation failed for '{Person}'/{ProjectId}/{Week}: {Errors}", person, request.ProjectId, request.WeekStartDate, string.Join("; ", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: Timesheets: timesheet validation failed for '{Person}'/{ProjectId}/{Week}: {Errors}", person, request.ProjectId, request.WeekStartDate, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
-
-            // A new Timesheet is committed before its entry is saved, so a failure
-            // on the entry would otherwise leave an empty Timesheet behind.
-            using var transaction = context.Database.BeginTransaction();
-            var result = importService.CreateOrUpdateTimesheetEntry(context, request);
-            transaction.Commit();
-            logger.LogInformation(
-                "API: Timesheets: timesheet {TimesheetId} for {Person}, week {Week}, project {ProjectId}: {Hours}h ({Created}) by {User}",
-                result.TimesheetId, person, request.WeekStartDate, request.ProjectId, result.TotalHours, result.EntryCreated ? "new entry" : "updated entry", caller!.Name);
-            return Results.Created($"/api/timesheets/{result.TimesheetId}", result);
-        }
-        catch (Exception ex)
-        {
-            var person = request.Username ?? $"PersonId {request.PersonId}";
-            logger.LogError(ex, "API: Timesheets: error creating timesheet entry for '{Person}'/{ProjectId}/{Week}", person, request.ProjectId, request.WeekStartDate);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                // A new Timesheet is committed before its entry is saved, so a failure
+                // on the entry would otherwise leave an empty Timesheet behind.
+                using var transaction = context.Database.BeginTransaction();
+                var result = importService.CreateOrUpdateTimesheetEntry(context, request);
+                transaction.Commit();
+                logger.LogInformation(
+                    "API: Timesheets: timesheet {TimesheetId} for {Person}, week {Week}, project {ProjectId}: {Hours}h ({Created}) by {User}",
+                    result.TimesheetId, person, request.WeekStartDate, request.ProjectId, result.TotalHours, result.EntryCreated ? "new entry" : "updated entry", caller.Name);
+                return Results.Created($"/api/timesheets/{result.TimesheetId}", result);
+            },
+            logException: ex => logger.LogError(ex, "API: Timesheets: error creating timesheet entry for '{Person}'/{ProjectId}/{Week}", person, request.ProjectId, request.WeekStartDate));
     }
 
     /// <summary>
@@ -306,26 +298,19 @@ public static class Timesheets
         HttpContext http,
         [FromBody] UpdateTimesheetEntryRequestDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Timesheets.UpdateTimesheetEntry");
-            if (!allowed) return gateResult!;
-
-            var errors = importService.ValidateTimesheetEntryUpdate(context, request);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(Timesheets)}.{nameof(UpdateTimesheetEntry)}",
+            validate: _ => importService.ValidateTimesheetEntryUpdate(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Timesheets: timesheet entry update validation failed for TimesheetEntryId {TimesheetEntryId}: {Errors}", request.TimesheetEntryId, string.Join("; ", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: Timesheets: timesheet entry update validation failed for TimesheetEntryId {TimesheetEntryId}: {Errors}", request.TimesheetEntryId, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
-
-            var result = importService.UpdateTimesheetEntry(context, request);
-            logger.LogInformation("API: Timesheets: updated TimesheetEntry {TimesheetEntryId}, {Hours}h total, by {User}", result.TimesheetEntryId, result.TotalHours, caller!.Name);
-            return Results.Ok(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "API: Timesheets: error updating TimesheetEntry {TimesheetEntryId}", request.TimesheetEntryId);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                var result = importService.UpdateTimesheetEntry(context, request);
+                logger.LogInformation("API: Timesheets: updated TimesheetEntry {TimesheetEntryId}, {Hours}h total, by {User}", result.TimesheetEntryId, result.TotalHours, caller.Name);
+                return Results.Ok(result);
+            },
+            logException: ex => logger.LogError(ex, "API: Timesheets: error updating TimesheetEntry {TimesheetEntryId}", request.TimesheetEntryId));
     }
 }

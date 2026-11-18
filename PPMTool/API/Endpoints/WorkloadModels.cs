@@ -293,28 +293,21 @@ public static class WorkloadModels
         HttpContext http,
         [FromBody] ImportWorkloadModelChangeDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "WorkloadModels.CreateWorkloadModelChange");
-            if (!allowed) return gateResult!;
-
-            var errors = importService.ValidateWorkloadModelChange(context, request);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(WorkloadModels)}.{nameof(CreateWorkloadModelChange)}",
+            validate: _ => importService.ValidateWorkloadModelChange(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: WorkloadModels: validation failed for '{Username}'/{ChangeDate}: {Errors}", request.Username, request.ChangeDate, string.Join("; ", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: WorkloadModels: validation failed for '{Username}'/{ChangeDate}: {Errors}", request.Username, request.ChangeDate, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
-
-            var result = importService.CreateOrUpdateWorkloadModelChange(context, request);
-            logger.LogInformation(
-                "API: WorkloadModels: workload model change {WorkloadModelChangeId} for {Username}, effective {ChangeDate} ({Action}) by {User}",
-                result.WorkloadModelChangeId, request.Username, request.ChangeDate, result.Created ? "created" : "updated", caller!.Name);
-            return Results.Created($"/api/workloadmodels/{result.WorkloadModelChangeId}", result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "API: WorkloadModels: error creating workload model change for '{Username}'/{ChangeDate}", request.Username, request.ChangeDate);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                var result = importService.CreateOrUpdateWorkloadModelChange(context, request);
+                logger.LogInformation(
+                    "API: WorkloadModels: workload model change {WorkloadModelChangeId} for {Username}, effective {ChangeDate} ({Action}) by {User}",
+                    result.WorkloadModelChangeId, request.Username, request.ChangeDate, result.Created ? "created" : "updated", caller.Name);
+                return Results.Created($"/api/workloadmodels/{result.WorkloadModelChangeId}", result);
+            },
+            logException: ex => logger.LogError(ex, "API: WorkloadModels: error creating workload model change for '{Username}'/{ChangeDate}", request.Username, request.ChangeDate));
     }
 }

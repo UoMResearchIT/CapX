@@ -33,30 +33,23 @@ public static class Users
         HttpContext http,
         [FromBody] ImportUserDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Users.CreateUser");
-            if (!allowed) return gateResult!;
-
-            var errors = importService.ValidateUser(context, request);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(Users)}.{nameof(CreateUser)}",
+            validate: _ => importService.ValidateUser(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Users: user validation failed for '{CASUserName}': {Errors}", request.CASUserName, string.Join("; ", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: Users: user validation failed for '{CASUserName}': {Errors}", request.CASUserName, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
-
-            var result = importService.CreateUser(context, request);
-            logger.LogInformation(
-                "API: Users: created User {UserId} '{CASUserName}' by {User}",
-                result.UserId, request.CASUserName, caller!.Name);
-            // No GET /api/users/getById exists yet
-            // no Location header to point at, just the response body.
-            return Results.Json(result, statusCode: StatusCodes.Status201Created);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "API: Users: error creating user '{CASUserName}'", request.CASUserName);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                var result = importService.CreateUser(context, request);
+                logger.LogInformation(
+                    "API: Users: created User {UserId} '{CASUserName}' by {User}",
+                    result.UserId, request.CASUserName, caller.Name);
+                // No GET /api/users/getById exists yet
+                // no Location header to point at, just the response body.
+                return Results.Json(result, statusCode: StatusCodes.Status201Created);
+            },
+            logException: ex => logger.LogError(ex, "API: Users: error creating user '{CASUserName}'", request.CASUserName));
     }
 }

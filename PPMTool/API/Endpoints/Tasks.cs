@@ -34,7 +34,7 @@ public static class Tasks
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Tasks.GetTasks");
+            var (allowed, caller, gateResult) = GeneralHelpers.CheckWriteApiAccess(settingsService, http, logger, "Tasks.GetTasks");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidateTasksGet(context, rtp);
@@ -71,31 +71,24 @@ public static class Tasks
         HttpContext http,
         [FromBody] ImportTaskDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Tasks.CreateTask");
-            if (!allowed) return gateResult!;
-
-            var errors = importService.ValidateTaskCreate(context, request);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(Tasks)}.{nameof(CreateTask)}",
+            validate: _ => importService.ValidateTaskCreate(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Tasks: task create validation failed for RTP {RTP}/'{Name}': {Errors}", request.RTP, request.Name, string.Join("; ", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: Tasks: task create validation failed for RTP {RTP}/'{Name}': {Errors}", request.RTP, request.Name, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
-
-            // CreateTask saves more than once (SubTaskService.Add commits), so a
-            // failure part-way through would otherwise leave a partial write.
-            using var transaction = context.Database.BeginTransaction();
-            var result = importService.CreateTask(context, request);
-            transaction.Commit();
-            logger.LogInformation("API: Tasks: created SubTask {SubTaskId} ('{Name}') on RTP {RTP} by {User}", result.SubTaskId, request.Name, request.RTP, caller!.Name);
-            return Results.Created($"/api/tasks/{result.SubTaskId}", result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "API: Tasks: error creating task for RTP {RTP}/'{Name}'", request.RTP, request.Name);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                // CreateTask saves more than once (SubTaskService.Add commits), so a
+                // failure part-way through would otherwise leave a partial write.
+                using var transaction = context.Database.BeginTransaction();
+                var result = importService.CreateTask(context, request);
+                transaction.Commit();
+                logger.LogInformation("API: Tasks: created SubTask {SubTaskId} ('{Name}') on RTP {RTP} by {User}", result.SubTaskId, request.Name, request.RTP, caller.Name);
+                return Results.Created($"/api/tasks/{result.SubTaskId}", result);
+            },
+            logException: ex => logger.LogError(ex, "API: Tasks: error creating task for RTP {RTP}/'{Name}'", request.RTP, request.Name));
     }
 
     /// <summary>
@@ -115,27 +108,20 @@ public static class Tasks
         HttpContext http,
         [FromBody] UpdateTaskRequestDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Tasks.UpdateTask");
-            if (!allowed) return gateResult!;
-
-            var errors = importService.ValidateTaskUpdate(context, request);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(Tasks)}.{nameof(UpdateTask)}",
+            validate: _ => importService.ValidateTaskUpdate(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Tasks: task update validation failed for SubTaskId {SubTaskId}: {Errors}", request.SubTaskId, string.Join("; ", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: Tasks: task update validation failed for SubTaskId {SubTaskId}: {Errors}", request.SubTaskId, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
-
-            var result = importService.UpdateTask(context, request);
-            logger.LogInformation("API: Tasks: updated SubTask {SubTaskId} by {User}", result.SubTaskId, caller!.Name);
-            return Results.Ok(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "API: Tasks: error updating SubTask {SubTaskId}", request.SubTaskId);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                var result = importService.UpdateTask(context, request);
+                logger.LogInformation("API: Tasks: updated SubTask {SubTaskId} by {User}", result.SubTaskId, caller.Name);
+                return Results.Ok(result);
+            },
+            logException: ex => logger.LogError(ex, "API: Tasks: error updating SubTask {SubTaskId}", request.SubTaskId));
     }
 
     /// <summary>
@@ -157,7 +143,7 @@ public static class Tasks
     {
         try
         {
-            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Tasks.GetResourcing");
+            var (allowed, caller, gateResult) = GeneralHelpers.CheckWriteApiAccess(settingsService, http, logger, "Tasks.GetResourcing");
             if (!allowed) return gateResult!;
 
             var errors = importService.ValidateTaskResourcingGet(context, rtp);
@@ -194,27 +180,20 @@ public static class Tasks
         HttpContext http,
         [FromBody] ImportTaskResourcingRequestDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Tasks.AddResourcing");
-            if (!allowed) return gateResult!;
-
-            var errors = importService.ValidateTaskResourcingAdd(context, request);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(Tasks)}.{nameof(AddResourcing)}",
+            validate: _ => importService.ValidateTaskResourcingAdd(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Tasks: resourcing add validation failed for SubTaskId {SubTaskId}: {Errors}", request.SubTaskId, string.Join("; ", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: Tasks: resourcing add validation failed for SubTaskId {SubTaskId}: {Errors}", request.SubTaskId, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
-
-            var result = importService.AddTaskResourcing(context, request);
-            logger.LogInformation("API: Tasks: added {Count} resourcing assignment(s) to SubTask {SubTaskId} by {User}", result.ResourcesCreated, result.SubTaskId, caller!.Name);
-            return Results.Created($"/api/tasks/{result.SubTaskId}", result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "API: Tasks: error adding resourcing to SubTaskId {SubTaskId}", request.SubTaskId);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                var result = importService.AddTaskResourcing(context, request);
+                logger.LogInformation("API: Tasks: added {Count} resourcing assignment(s) to SubTask {SubTaskId} by {User}", result.ResourcesCreated, result.SubTaskId, caller.Name);
+                return Results.Created($"/api/tasks/{result.SubTaskId}", result);
+            },
+            logException: ex => logger.LogError(ex, "API: Tasks: error adding resourcing to SubTaskId {SubTaskId}", request.SubTaskId));
     }
 
     /// <summary>
@@ -235,26 +214,19 @@ public static class Tasks
         HttpContext http,
         [FromBody] UpdateTaskResourcingRequestDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "Tasks.UpdateResourcing");
-            if (!allowed) return gateResult!;
-
-            var errors = importService.ValidateTaskResourcingUpdate(context, request);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(Tasks)}.{nameof(UpdateResourcing)}",
+            validate: _ => importService.ValidateTaskResourcingUpdate(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Tasks: resourcing update validation failed for ResourceId {ResourceId}: {Errors}", request.ResourceId, string.Join("; ", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: Tasks: resourcing update validation failed for ResourceId {ResourceId}: {Errors}", request.ResourceId, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
-
-            var result = importService.UpdateTaskResourcing(context, request);
-            logger.LogInformation("API: Tasks: updated Resource {ResourceId} (now on SubTask {SubTaskId}) by {User}", result.ResourceId, result.SubTaskId, caller!.Name);
-            return Results.Ok(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "API: Tasks: error updating Resource {ResourceId}", request.ResourceId);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                var result = importService.UpdateTaskResourcing(context, request);
+                logger.LogInformation("API: Tasks: updated Resource {ResourceId} (now on SubTask {SubTaskId}) by {User}", result.ResourceId, result.SubTaskId, caller.Name);
+                return Results.Ok(result);
+            },
+            logException: ex => logger.LogError(ex, "API: Tasks: error updating Resource {ResourceId}", request.ResourceId));
     }
 }

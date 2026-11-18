@@ -155,9 +155,8 @@ public static class Faculties
             http,
             logger,
             $"{nameof(Faculties)}.{nameof(CreateFaculty)}",
-            request,
-            validate: () => importService.ValidateFaculty(context, request),
-            logValidationFailure: errors => logger.LogWarning("API: Faculties: faculty validation failed for '{Name}': {Errors}", request.Name, string.Join("|", errors)),
+            validate: _ => importService.ValidateFaculty(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Faculties: faculty validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors)),
             execute: caller =>
             {
                 var result = importService.CreateFaculty(context, request);
@@ -191,9 +190,8 @@ public static class Faculties
             http,
             logger,
             $"{nameof(Faculties)}.{nameof(UpdateFaculty)}",
-            request,
-            validate: () => importService.ValidateFacultyUpdate(context, request),
-            logValidationFailure: errors => logger.LogWarning("API: Faculties: faculty update validation failed for '{Code}': {Errors}", request.Code, string.Join("|", errors)),
+            validate: _ => importService.ValidateFacultyUpdate(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Faculties: faculty update validation failed for '{Code}': {Errors}", request.Code, string.Join("; ", errors)),
             execute: caller =>
             {
                 var result = importService.UpdateFaculty(context, request);

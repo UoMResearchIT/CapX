@@ -159,9 +159,8 @@ public static class Schools
             http,
             logger,
             $"{nameof(Schools)}.{nameof(CreateSchool)}",
-            request,
-            validate: () => importService.ValidateSchool(context, request),
-            logValidationFailure: errors => logger.LogWarning("API: Schools: school validation failed for '{Name}': {Errors}", request.Name, string.Join("|", errors)),
+            validate: _ => importService.ValidateSchool(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Schools: school validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors)),
             execute: caller =>
             {
                 var result = importService.CreateSchool(context, request);
@@ -194,9 +193,8 @@ public static class Schools
             http,
             logger,
             $"{nameof(Schools)}.{nameof(UpdateSchool)}",
-            request,
-            validate: () => importService.ValidateSchoolUpdate(context, request),
-            logValidationFailure: errors => logger.LogWarning("API: Schools: school update validation failed for '{Code}': {Errors}", request.Code, string.Join("|", errors)),
+            validate: _ => importService.ValidateSchoolUpdate(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Schools: school update validation failed for '{Code}': {Errors}", request.Code, string.Join("; ", errors)),
             execute: caller =>
             {
                 var result = importService.UpdateSchool(context, request);

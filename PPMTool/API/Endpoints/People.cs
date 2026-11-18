@@ -175,29 +175,22 @@ public static class People
         HttpContext http,
         [FromBody] ImportPersonDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "People.CreatePerson");
-            if (!allowed) return gateResult!;
-
-            var errors = importService.ValidatePerson(context, request);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(People)}.{nameof(CreatePerson)}",
+            validate: _ => importService.ValidatePerson(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: People: person validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: People: person validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
-
-            var result = importService.CreatePerson(context, request);
-            logger.LogInformation(
-                "API: People: created Person {PersonId} '{Name}' ({ShortName}) by {User}",
-                result.PersonId, request.Name, result.ShortName, caller!.Name);
-            return Results.Created($"/api/people/getById?personId={result.PersonId}", result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "API: People: error creating person '{Name}'", request.Name);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                var result = importService.CreatePerson(context, request);
+                logger.LogInformation(
+                    "API: People: created Person {PersonId} '{Name}' ({ShortName}) by {User}",
+                    result.PersonId, request.Name, result.ShortName, caller.Name);
+                return Results.Created($"/api/people/getById?personId={result.PersonId}", result);
+            },
+            logException: ex => logger.LogError(ex, "API: People: error creating person '{Name}'", request.Name));
     }
 
     /// <summary>
@@ -217,28 +210,21 @@ public static class People
         HttpContext http,
         [FromBody] UpdatePersonRequestDTO request)
     {
-        try
-        {
-            var (allowed, caller, gateResult) = GeneralHelpers.AreWritableEnpointsAllowedByCaller(settingsService, http, logger, "People.UpdatePerson");
-            if (!allowed) return gateResult!;
-
-            var errors = importService.ValidatePersonUpdate(context, request);
-            if (errors.Count > 0)
+        return GeneralHelpers.ExecuteImportWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(People)}.{nameof(UpdatePerson)}",
+            validate: _ => importService.ValidatePersonUpdate(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: People: person update validation failed for PersonId {PersonId}: {Errors}", request.PersonId, string.Join("; ", errors)),
+            execute: caller =>
             {
-                logger.LogWarning("API: People: person update validation failed for PersonId {PersonId}: {Errors}", request.PersonId, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
-            }
-
-            var result = importService.UpdatePerson(context, request);
-            logger.LogInformation(
-                "API: People: updated Person {PersonId} ('{ShortName}') by {User}",
-                result.PersonId, result.ShortName, caller!.Name);
-            return Results.Ok(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "API: People: error updating person {PersonId}", request.PersonId);
-            return Results.StatusCode(StatusCodes.Status500InternalServerError);
-        }
+                var result = importService.UpdatePerson(context, request);
+                logger.LogInformation(
+                    "API: People: updated Person {PersonId} ('{ShortName}') by {User}",
+                    result.PersonId, result.ShortName, caller.Name);
+                return Results.Ok(result);
+            },
+            logException: ex => logger.LogError(ex, "API: People: error updating person {PersonId}", request.PersonId));
     }
 }

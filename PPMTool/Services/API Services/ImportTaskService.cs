@@ -495,6 +495,8 @@ namespace PPMTool.Services
 
         /// <summary>
         /// Validates assignment constraints including FTE, manager-only duties, availability, and duplicates.
+        /// Shared by every resourcing path, including create-time resourcing on projects/add
+        /// (ImportProjectService), so they all apply the same rules.
         /// </summary>
         /// <param name="context">Database context.</param>
         /// <param name="assignments">Assignments to validate.</param>
@@ -502,7 +504,7 @@ namespace PPMTool.Services
         /// <param name="taskStart">Task start date.</param>
         /// <param name="existingTask">Optional existing task to detect duplicate assignees.</param>
         /// <returns>Validation errors, or an empty list when valid.</returns>
-        private List<string> ValidateAssignments(
+        internal List<string> ValidateAssignments(
             PPMToolContext context,
             IEnumerable<(Person? Person, string Assignee, double FTE)> assignments,
             Duty duty,

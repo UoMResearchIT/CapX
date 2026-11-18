@@ -187,13 +187,15 @@ public static class GeneralHelpers
     }
 
     /// <summary>
-    /// Shared gate for the write ("/add") endpoints to check if the endpoint is enabled and if the caller is a superuser.
+    /// Shared gate for the write endpoints, and for the reads that sit alongside them
+    /// (notes, tasks and resourcing): checks that the write endpoints are enabled and
+    /// that the caller is a Superuser.
     /// </summary>
     /// <param name="settingsService"></param>
     /// <param name="http"></param>
     /// <param name="logger"></param>
     /// <param name="endpointName">Used only for logging, to identify which endpoint rejected the call.</param>
-    internal static (bool allowed, User caller, IResult result) AreWritableEnpointsAllowedByCaller(
+    internal static (bool allowed, User caller, IResult result) CheckWriteApiAccess(
         SettingsService settingsService, HttpContext http, ILogger logger, string endpointName)
     {
         if (!settingsService.GetSetting(SettingType.WriteApiEndpointsEnabled, false))
@@ -216,13 +218,12 @@ public static class GeneralHelpers
     /// Shared execution wrapper for database-writing import endpoints:
     /// performs gate check, validation -> 400, and exception -> 500.
     /// </summary>
-    internal static IResult ExecuteImportWrite<TRequest>(
+    internal static IResult ExecuteImportWrite(
         SettingsService settingsService,
         HttpContext http,
         ILogger logger,
         string endpointName,
-        TRequest request,
-        Func<List<string>> validate,
+        Func<User, List<string>> validate,
         Action<List<string>> logValidationFailure,
         Func<User, IResult> execute,
         Action<Exception> logException)
@@ -230,14 +231,14 @@ public static class GeneralHelpers
         try
         {
             // Check if the endpoint is allowed and if the caller is a superuser.
-            var (allowed, caller, gateResult) = AreWritableEnpointsAllowedByCaller(settingsService, http, logger, endpointName);
+            var (allowed, caller, gateResult) = CheckWriteApiAccess(settingsService, http, logger, endpointName);
             if (!allowed)
             {
                 return gateResult!;
             }
 
             // Run validation method
-            var errors = validate();
+            var errors = validate(caller!);
             if (errors.Count > 0)
             {
                 logValidationFailure(errors);
