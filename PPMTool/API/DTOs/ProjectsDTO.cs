@@ -22,6 +22,11 @@ namespace PPMTool.API.DTOs
     /// <param name="CostModel">The cost model for the project.</param>
     /// <param name="StartDate">The start date of the project.</param>
     /// <param name="EndDate">The end date of the project.</param>
+    /// <param name="SchoolCode">The code of the School the project sits in, as accepted by PUT /api/projects/update.</param>
+    /// <param name="Budget">The amount the PI has requested from the funder.</param>
+    /// <param name="CostModelName">The cost model's enum name (e.g. "TechOnly"), as accepted by PUT /api/projects/update. CostModel holds its description text.</param>
+    /// <param name="DayRate">The day rate; zero unless the cost model is DayRate.</param>
+    /// <param name="Description">The project description, as HTML.</param>
     public sealed record ProjectDTO(
         int ProjectId,
         int CapXProjectId,
@@ -37,6 +42,11 @@ namespace PPMTool.API.DTOs
         int SchoolId,
         string CostModel,
         DateOnly StartDate,
-        DateOnly EndDate
+        DateOnly EndDate,
+        string SchoolCode,
+        double Budget,
+        string CostModelName,
+        double DayRate,
+        string Description
     );
 }

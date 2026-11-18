@@ -62,7 +62,12 @@ public static class Projects
                 SchoolId: x.School.SchoolId,
                 CostModel: x.CostModel.GetDescription(),
                 StartDate: DateOnly.FromDateTime(x.StartDate),
-                EndDate: DateOnly.FromDateTime(x.EndDate)
+                EndDate: DateOnly.FromDateTime(x.EndDate),
+                SchoolCode: x.School.Code,
+                Budget: x.Budget,
+                CostModelName: x.CostModel.ToString(),
+                DayRate: x.DayRate,
+                Description: x.Description
             )).ToList();
 
             logger.LogInformation("API: GetAllProjects: Returned {Count} project records.", projectDtos.Count);
@@ -137,7 +142,12 @@ public static class Projects
                 SchoolId: project.School.SchoolId,
                 CostModel: project.CostModel.GetDescription(),
                 StartDate: DateOnly.FromDateTime(project.StartDate),
-                EndDate: DateOnly.FromDateTime(project.EndDate)
+                EndDate: DateOnly.FromDateTime(project.EndDate),
+                SchoolCode: project.School.Code,
+                Budget: project.Budget,
+                CostModelName: project.CostModel.ToString(),
+                DayRate: project.DayRate,
+                Description: project.Description
             );
 
             logger.LogInformation("API: GetProjectById: Returned project record for projectId {ProjectId}", projectId);
@@ -212,7 +222,12 @@ public static class Projects
                 SchoolId: project.School.SchoolId,
                 CostModel: project.CostModel.GetDescription(),
                 StartDate: DateOnly.FromDateTime(project.StartDate),
-                EndDate: DateOnly.FromDateTime(project.EndDate)
+                EndDate: DateOnly.FromDateTime(project.EndDate),
+                SchoolCode: project.School.Code,
+                Budget: project.Budget,
+                CostModelName: project.CostModel.ToString(),
+                DayRate: project.DayRate,
+                Description: project.Description
             );
 
             logger.LogInformation("API: GetProjectByCapXProjectId: Returned project record for ID {ProjectId}", capxProjectId);
