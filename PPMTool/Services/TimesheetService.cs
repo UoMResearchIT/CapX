@@ -86,12 +86,12 @@ namespace PPMTool.Services
         /// Gets all the timesheets with related data
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="user"></param>
+        /// <param name="person"></param>
         /// <returns></returns>
-        public IEnumerable<Timesheet> GetMyTimesheets(PPMToolContext context, Person user)
+        public IEnumerable<Timesheet> GetTimesheetsForPerson(PPMToolContext context, Person person)
         {
             return context.Timesheets
-                .Where(t => t.Owner.PersonId == user.PersonId);
+                .Where(t => t.Owner.PersonId == person.PersonId);
         }
 
         /// <summary>
@@ -171,7 +171,7 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Gets all the timesheets with entries and tasks owned by person and in range [startRange, endRange)
+        /// Gets all the timesheets with entries and tasks owned by person and in range [startRange, endRange]
         /// </summary>
         /// <param name="context"></param>
         /// <param name="person"></param>
@@ -183,7 +183,7 @@ namespace PPMTool.Services
             return context.Timesheets
                 .Include(t => t.TimesheetEntries)
                 .ThenInclude(x => x.InnateCodeTask)
-                .Where(x => x.Owner.PersonId == person.PersonId && x.StartDate >= startRange && x.StartDate <= endRange);
+                .Where(x => x.Owner.PersonId == person.PersonId && x.StartDate.Date >= startRange.Date && x.StartDate.Date <= endRange.Date);
         }
 
         /// <summary>
@@ -406,6 +406,24 @@ namespace PPMTool.Services
                 .Select(x => x.InnateCodeTask.InnateCode.InnateCodeId)
                 .Distinct();
             return await bookedCodeIds.ToListAsync();
+        }
+
+        /// <summary>
+        /// Gets the ID of the earliest rejected timesheet.
+        /// </summary>
+        /// <remarks>Timesheets are ordered by start date in ascending order before selecting the first
+        /// rejected entry.</remarks>
+        /// <param name="context">Database context used to query timesheets.</param>
+        /// <param name="person">Person whose timesheets are evaluated.</param>
+        /// <returns>The ID of the first rejected timesheet ordered by start date, or 0 if no rejected timesheet exists.</returns>
+        internal async Task<int> GetFirstRejectedTimesheetIdAsync(PPMToolContext context, Person person)
+        {
+            // Get first timesheet that is rejected
+            return await context.Timesheets
+                .Where(x => x.OwnerId == person.PersonId && x.Status == TimesheetStatus.Rejected)
+                .OrderBy(x => x.StartDate)
+                .Select(x => x.TimesheetId)
+                .FirstOrDefaultAsync();
         }
     }
 }

@@ -56,13 +56,23 @@ namespace PPMTool.Pages
             { "sat", "var(--rz-warning-lighter)" },
             { "sun", "var(--rz-warning-lighter)" }
         };
-        private TimesheetStatus newStatus;
+        private TimesheetStatus? newStatus;
         private Timesheet previousTimesheet;
         private Timesheet nextTimesheet;
         private WorkloadModelChange currentWLM;
         private WLMWeeklyDataChartItem wlmChartItem;
         private double totalFTEForTimesheet;
         private string timesheetHelpUrl = null;
+
+        // Permissions
+        private bool CanEditEntries => timesheet?.IsPermittedToEditEntries(ActiveUser) ?? false;
+        private bool CanReorderTemplate => timesheet?.IsPermittedToReorderTemplate(ActiveUser) ?? false;
+        private bool CanSubmit => timesheet?.IsPermittedToSubmit(ActiveUser) ?? false;
+        private bool CanRetract => timesheet?.IsPermittedToRetract(ActiveUser) ?? false;
+        private bool CanApprove => timesheet?.IsPermittedToApprove(ActiveUser) ?? false;
+        private bool CanReject => timesheet?.IsPermittedToReject(ActiveUser) ?? false;
+        private bool CanDelete => timesheet?.IsPermittedToDelete(ActiveUser) ?? false;
+        private bool CanSeeWLM => timesheet?.IsPermittedToSeeWLM(ActiveUser) ?? false;
 
         protected override void OnInitialized()
         {
@@ -91,9 +101,6 @@ namespace PPMTool.Pages
             {
                 Debug.WriteLine("** Starting initialisation task...");
 
-                // Only superusers can delete a timesheet
-                EditAuthorised = ActiveUserRoleType == RoleType.Superuser;
-
                 // Handle if the user is not found
                 if (ActiveUser == null)
                 {
@@ -108,7 +115,7 @@ namespace PPMTool.Pages
                 }
 
                 // Check whether this user should have access or not
-                if (timesheet != null && !IsPermittedToViewTimesheetDetailsPage())
+                if (timesheet != null && !timesheet.IsPermittedToView(ActiveUser))
                 {
                     timesheet = null;
                 }
@@ -196,16 +203,18 @@ namespace PPMTool.Pages
         /// </summary>
         private void PopulateDataGridDataSource()
         {
-            if (ActiveUser?.Person?.PersonId == timesheet.Owner.PersonId)
+            if (timesheet.IsOwner(ActiveUser))
             {
-                // Use the staff member's timesheet template for the ordering
-                string templateOrdering = ActiveUser?.Person?.TimesheetTemplateData;
-                dataGridEntities = OrderByTemplate(timesheet, templateOrdering);
+                dataGridEntities = OrderByTemplate(
+                    timesheet,
+                    timesheet.Owner.TimesheetTemplateData);
             }
             else
             {
-                // Order by Duty if Line Manager viewing
-                dataGridEntities = timesheet.TimesheetEntries.OrderBy(x => x.InnateCodeTask.Duty).ToList();
+                dataGridEntities = timesheet.TimesheetEntries
+                    .OrderBy(x => x.InnateCodeTask.Duty)
+                    .ThenBy(x => x.InnateCodeTask.TaskName)
+                    .ToList();
             }
         }
 
@@ -255,7 +264,7 @@ namespace PPMTool.Pages
         {
             IQueryable<TimesheetEntry> query = timesheet.TimesheetEntries.AsQueryable();
 
-            // The ordering of timesheet entries epends on who is logged in 
+            // The ordering of timesheet entries depends on who is logged in 
             // and whose timesheet they are viewing
             if (!string.IsNullOrEmpty(args.OrderBy)) // Sorting link has been clicked
             {
@@ -326,14 +335,22 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
-        /// Should this user be allowed to view the timesheet. Only superusers, the owner or the line manager.
+        /// Determines whether a change to the specified timesheet status is permitted.
         /// </summary>
-        /// <returns></returns>
-        private bool IsPermittedToViewTimesheetDetailsPage()
+        /// <remarks>Permission is evaluated against the corresponding capability flag for each supported
+        /// status. Unsupported statuses are not permitted.</remarks>
+        /// <param name="status">The timesheet status to evaluate.</param>
+        /// <returns><see langword="true"/> if the status change is permitted; otherwise, <see langword="false"/>.</returns>
+        private bool IsPermittedStatusChange(TimesheetStatus? status)
         {
-            return (timesheet?.IsOwner(ActiveUser) ?? false) ||
-                (timesheet?.IsLineManager(ActiveUser) ?? false) ||
-                ActiveUserRoleType == RoleType.Superuser;
+            return status switch
+            {
+                TimesheetStatus.New => CanRetract,
+                TimesheetStatus.Submitted => CanSubmit,
+                TimesheetStatus.Approved => CanApprove,
+                TimesheetStatus.Rejected => CanReject,
+                _ => false
+            };
         }
 
         /// <summary>
@@ -372,7 +389,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// Delete a timesheet with prompt
         /// </summary>
-        private async void DeleteTimesheet()
+        private async Task DeleteTimesheet()
         {
             if (TimesheetId > 0)
             {
@@ -415,18 +432,30 @@ namespace PPMTool.Pages
         private async Task HandleValidSubmit()
         {
             // Validate before making any changes
-            if (!await CanChangeStatus()) return;
+            if (!IsPermittedStatusChange(newStatus))
+            {
+                SetErrorMessage(new StatusMessage(
+                    "You are not permitted to make this status change.",
+                    StatusMessage.MessageType.Error));
+                return;
+            }
+
+            if (!await CanChangeStatus())
+                return;
+
+            // Get the value
+            var targetStatus = newStatus!.Value;
 
             // Confirm the status change
             var confirmed = await DialogService.Confirm(
-                $"By continuing you will change the status of this timesheet to \"{newStatus}\".",
+                $"By continuing you will change the status of this timesheet to \"{targetStatus.ToNiceString()}\".",
                 "Change Timesheet Status") ?? false;
 
             if (!confirmed) return;
 
             // Get rejection note if required
             var rejectionNote = string.Empty;
-            if (newStatus == TimesheetStatus.Rejected)
+            if (targetStatus == TimesheetStatus.Rejected)
             {
                 // Present the dialog and handle button clicks
                 var (confirmedRejection, note) = await ShowRejectionNoteDialog();
@@ -436,7 +465,7 @@ namespace PPMTool.Pages
 
             // Store status and update the current timesheet model
             var oldStatus = timesheet.Status;
-            timesheet.Status = newStatus;
+            timesheet.Status = targetStatus;
 
             // Reset the errors
             ClearErrorMessage();
@@ -452,8 +481,8 @@ namespace PPMTool.Pages
                 return;
             }
 
-            // Update the timesheet entries in the database if the status allows editing
-            if (IsEditableStatus())
+            // Update the timesheet entries in the database if submitting
+            if (IsSubmitting())
                 UpdateTimesheetEntries();
 
             // Set the status change details if applicable
@@ -490,13 +519,14 @@ namespace PPMTool.Pages
             string rejectionNote)
         {
             // User submitted their own timesheet
-            if (timesheet.Owner == ActiveUser?.Person &&
-                oldStatus != TimesheetStatus.Submitted)
+            if (timesheet.Status == TimesheetStatus.Submitted &&
+                oldStatus != TimesheetStatus.Submitted &&
+                !timesheet.IsLineManager(ActiveUser))
             {
                 Debug.WriteLine("** Sending an email to the Line Manager...");
 
                 _ = EmailService.SendTimesheetSubmissionEmailNotificationAsync(
-                    ActiveUser?.Person,
+                    timesheet.Owner,
                     timesheet);
             }
 
@@ -564,19 +594,7 @@ namespace PPMTool.Pages
         /// <returns></returns>
         private bool IsSubmitting()
         {
-            return timesheet.Status == TimesheetStatus.Submitted ||
-                   SubmittingAsSelfApprover();
-        }
-
-        /// <summary>
-        /// Check whether the timesheet is in a status that allows editing of the entries
-        /// </summary>
-        /// <returns></returns>
-        private bool IsEditableStatus()
-        {
-            return timesheet.Status == TimesheetStatus.New ||
-                   timesheet.Status == TimesheetStatus.Submitted ||
-                   SubmittingAsSelfApprover();
+            return timesheet.Status == TimesheetStatus.Submitted;
         }
 
         /// <summary>
@@ -604,15 +622,6 @@ namespace PPMTool.Pages
                 Debug.WriteLine($"** Adding entry {entry.GetSensibleObjectName()} to timesheet");
                 timesheet.TimesheetEntries.Add(entry);
             }
-        }
-
-        /// <summary>
-        /// Check whether the active user is a self approver of this timesheet and has just changed the status to Approved
-        /// </summary>
-        /// <returns></returns>
-        private bool SubmittingAsSelfApprover()
-        {
-            return timesheet.IsSelfApprover(ActiveUser) && timesheet.Status == TimesheetStatus.Approved;
         }
 
         /// <summary>
@@ -671,14 +680,28 @@ namespace PPMTool.Pages
         {
             LogInformation($"Add row to database for <{entity?.GetSensibleObjectName()}>");
             TimesheetService.AddEntry(Context, entity);
-            TimesheetService.AddToTemplate(Context, ActiveUser?.Person, entity.InnateCodeTask);
 
-            ShowNotification(new CapXNotificationMessage
+            if (timesheet.IsOwner(ActiveUser))
             {
-                Severity = NotificationSeverity.Success,
-                Summary = "Updated",
-                Detail = "Your timesheet template has been updated. The added task row will show when you next create a new timesheet."
-            });
+                TimesheetService.AddToTemplate(Context, timesheet.Owner, entity.InnateCodeTask);
+
+                ShowNotification(new CapXNotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Updated",
+                    Detail = "Your timesheet template has been updated. The added task row will show when you next create a new timesheet."
+                });
+            }
+            else
+            {
+                ShowNotification(new CapXNotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Task added",
+                    Detail = "The task row has been added to this timesheet."
+                });
+            }
+
             LoadInnateCodesAsync().GetAwaiter().GetResult();
         }
 
@@ -737,24 +760,31 @@ namespace PPMTool.Pages
         /// <returns></returns>
         protected override async Task DeleteRow(TimesheetEntry entity)
         {
-            bool confirmDeletion = await DialogService.Confirm(
-                $"This task will be removed from your timesheet template. If you want the task to still be added to future timesheets automatically (but just don't need it for this one) then just leave it empty when you submit the timesheet.",
-                "Delete Task Row") ?? false;
-            if (confirmDeletion)
-            {
-                TimesheetService.DeleteFromTemplate(Context, ActiveUser?.Person, entity.InnateCodeTask);
-                TimesheetService.DeleteEntry(Context, entity);
-                await base.DeleteRow(entity);
-                UpdateDailyTotals();
-                await LoadInnateCodesAsync();
+            var ownerEditing = timesheet.IsOwner(ActiveUser);
+            var message = ownerEditing
+                ? "This task will be removed from your timesheet template. If you want it to remain on future timesheets, leave the row empty instead."
+                : $"This task will be removed from {timesheet.Owner.Name}'s current timesheet. Their timesheet template will not be changed.";
 
-                ShowNotification(new CapXNotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Task removed",
-                    Detail = "The task row has been removed from your template and will no longer show by default when creating a new timesheet."
-                });
-            }
+            var confirmed = await DialogService.Confirm(message, "Delete Task Row") ?? false;
+            if (!confirmed)
+                return;
+
+            if (ownerEditing)
+                TimesheetService.DeleteFromTemplate(Context, timesheet.Owner, entity.InnateCodeTask);
+
+            TimesheetService.DeleteEntry(Context, entity);
+            await base.DeleteRow(entity);
+            UpdateDailyTotals();
+            await LoadInnateCodesAsync();
+
+            ShowNotification(new CapXNotificationMessage
+            {
+                Severity = ownerEditing ? NotificationSeverity.Error : NotificationSeverity.Success,
+                Summary = "Task removed",
+                Detail = ownerEditing
+                    ? "The task row has been removed from your template and will no longer appear by default on new timesheets."
+                    : "The task row has been removed from this timesheet. The owner's template has not been changed."
+            });
         }
 
         /// <summary>
@@ -800,7 +830,9 @@ namespace PPMTool.Pages
             if (args.Column.Property == "IsInTemplate" && args.Data.IsInTemplate == true)
             {
                 style = "background-color: var(--rz-panel-menu-item-2nd-level-active-background-color);";
-                title = "Task is part of your template";
+                title = timesheet.IsOwner(ActiveUser)
+                    ? "Task is part of your template"
+                    : "Task is part of the timesheet owner's template";
             }
 
             // Apply styling
@@ -888,7 +920,7 @@ namespace PPMTool.Pages
         /// is only so we can return and reload the correct page that we came from
         /// </summary>
         /// <param name="timesheet"></param>
-        private async void ReorderTimesheetTemplate(Timesheet timesheet)
+        private async Task ReorderTimesheetTemplate(Timesheet timesheet)
         {
             await DialogService.OpenAsync<ReorderTimesheet>("Drag and drop tasks to reorder them",
                new Dictionary<string, object>()
