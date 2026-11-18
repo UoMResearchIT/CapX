@@ -133,7 +133,9 @@ namespace PPMTool.Services
             foreach (var r in request.Resourcing ?? Array.Empty<ImportResourcingDTO>())
             {
                 var person = ImportHelper.FindUserByUsername(context, r.Username)?.Person;
-                if (person == null)
+                if (string.IsNullOrWhiteSpace(r.Username))
+                    errors.Add("Each Resourcing entry needs a Username");
+                else if (person == null)
                     errors.Add($"Resourcing Username '{r.Username}' not found, or has no linked Person");
                 assignments.Add((person, r.Username, r.AssignmentFTE));
             }

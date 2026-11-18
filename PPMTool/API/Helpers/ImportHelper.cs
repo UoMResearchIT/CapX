@@ -30,7 +30,7 @@ namespace PPMTool.API.Helpers
         /// <param name="username">Username to resolve.</param>
         /// <returns>The matching user, or <c>null</c> when none exists.</returns>
         internal static User FindUserByUsername(PPMToolContext context, string username) =>
-            context.Users
+            string.IsNullOrWhiteSpace(username) ? null : context.Users
                 .Include(u => u.Person)
                     .ThenInclude(p => p!.WorkloadModelChanges)
                 .FirstOrDefault(u => u.CASUserName.Trim().ToLower() == username.Trim().ToLower());
@@ -91,7 +91,7 @@ namespace PPMTool.API.Helpers
         /// <param name="code">School code to resolve.</param>
         /// <returns>The matching active school, or <c>null</c> when none exists.</returns>
         internal static School FindActiveSchoolByCode(PPMToolContext context, string code) =>
-            context.Schools
+            string.IsNullOrWhiteSpace(code) ? null : context.Schools
                 .Include(s => s.Faculty)
                 .FirstOrDefault(s => s.IsActive && s.Code.Trim().ToLower() == code.Trim().ToLower());
 
@@ -103,6 +103,7 @@ namespace PPMTool.API.Helpers
         /// <returns>The matching innate code, or <c>null</c> when none exists.</returns>
         internal static InnateCode FindInnateCodeByActivityCode(PPMToolContext context, string activityCode)
         {
+            if (string.IsNullOrWhiteSpace(activityCode)) return null;
             var code = activityCode.Trim().ToLower();
             return context.InnateCodes
                 .Include(c => c.Tasks)

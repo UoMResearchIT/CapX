@@ -27,7 +27,9 @@ namespace PPMTool.Services
         {
             var errors = new List<string>();
 
-            if (ImportHelper.FindUserByUsername(context, request.Username)?.Person == null)
+            if (string.IsNullOrWhiteSpace(request.Username))
+                errors.Add("Username is required");
+            else if (ImportHelper.FindUserByUsername(context, request.Username)?.Person == null)
                 errors.Add($"Username '{request.Username}' not found, or has no linked Person");
 
             if (request.ChangeDate.TimeOfDay != TimeSpan.Zero)

@@ -95,8 +95,9 @@ namespace PPMTool.Services
             if (request.ManagementEndDate.Date < request.ManagementStartDate.Date)
                 errors.Add("ManagementEndDate must be on or after ManagementStartDate");
 
-            var school = ImportHelper.FindActiveSchoolByCode(context, request.SchoolCode);
-            if (school == null)
+            if (string.IsNullOrWhiteSpace(request.SchoolCode))
+                errors.Add("SchoolCode is required");
+            else if (ImportHelper.FindActiveSchoolByCode(context, request.SchoolCode) == null)
                 errors.Add($"SchoolCode '{request.SchoolCode}' does not match any active School");
 
             if (!string.IsNullOrWhiteSpace(request.ProjectManagerUsername) && ImportHelper.FindUserByUsername(context, request.ProjectManagerUsername)?.Person == null)
@@ -106,7 +107,9 @@ namespace PPMTool.Services
             foreach (var r in request.Resourcing ?? Array.Empty<ImportResourcingDTO>())
             {
                 var person = ImportHelper.FindUserByUsername(context, r.Username)?.Person;
-                if (person == null)
+                if (string.IsNullOrWhiteSpace(r.Username))
+                    errors.Add("Each Resourcing entry needs a Username");
+                else if (person == null)
                     errors.Add($"Resourcing username '{r.Username}' not found, or has no linked Person");
                 assignments.Add((person, r.Username, r.AssignmentFTE));
             }

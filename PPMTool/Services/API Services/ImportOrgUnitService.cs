@@ -137,7 +137,7 @@ namespace PPMTool.Services
         /// <param name="code">Faculty code to resolve.</param>
         /// <returns>The matching faculty, or <c>null</c> when none exists.</returns>
         private static Faculty? FindFacultyByCode(PPMToolContext context, string code) =>
-            context.Faculties
+            string.IsNullOrWhiteSpace(code) ? null : context.Faculties
                 .FirstOrDefault(f => f.Code.Trim().ToLower() == code.Trim().ToLower());
 
         /// <summary>
@@ -147,7 +147,7 @@ namespace PPMTool.Services
         /// <param name="code">School code to resolve.</param>
         /// <returns>The matching school, or <c>null</c> when none exists.</returns>
         private static School? FindSchoolByCode(PPMToolContext context, string code) =>
-            context.Schools
+            string.IsNullOrWhiteSpace(code) ? null : context.Schools
                 .Include(s => s.Faculty)
                 .FirstOrDefault(s => s.Code.Trim().ToLower() == code.Trim().ToLower());
 
