@@ -242,6 +242,19 @@ namespace PPMTool.Services
             if (resolvedEnd.Date < resolvedStart.Date)
                 errors.Add("EndDate must be on or after StartDate");
 
+            // Schedule() keeps the dates given only on a fixed-duration task with a fixed start
+            // and end and no predecessor, the shape this API creates. On any other task it would
+            // recompute them and silently undo the change, and successors are not rescheduled here.
+            var movesDates = request.StartDate.HasValue || request.EndDate.HasValue
+                || (request.Demand.HasValue && task.TaskType == TaskType.FixedWork);
+            if (movesDates)
+            {
+                var hasPredecessor = context.SubTasks.Any(t => t.SubTaskId == task.SubTaskId && t.Predecessor != null);
+                var hasSuccessors = context.SubTasks.Any(t => t.Predecessor != null && t.Predecessor.SubTaskId == task.SubTaskId);
+                if (task.TaskType != TaskType.FixedDuration || !task.HasFixedStart || !task.HasFixedEndDate || hasPredecessor || hasSuccessors)
+                    errors.Add($"SubTaskId {task.SubTaskId} is scheduled by CapX (fixed work, a floating start or end, or linked to other tasks), so a date change here would be recalculated away: change its dates in the CapX UI instead");
+            }
+
             foreach (var r in task.AssignedResources)
             {
                 if (ImportHelper.AssigneeStartsTooLate(r.Person, resolvedStart) is { } tooLate)
