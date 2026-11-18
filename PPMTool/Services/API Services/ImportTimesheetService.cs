@@ -70,7 +70,7 @@ namespace PPMTool.Services
             if (project == null)
                 errors.Add($"ProjectId {request.ProjectId} does not exist");
             else if (project.InnateActivity == null)
-                errors.Add($"Project {request.ProjectId} ('{project.Name}') has no InnateActivity code -- only projects created via POST /api/projects/add (or otherwise already linked) can receive imported timesheet entries");
+                errors.Add($"Project {request.ProjectId} ('{project.Name}') has no timesheet activity code -- link one (TimesheetActivityCode on PUT /api/projects/update, or in the UI) before importing timesheet entries");
             else if (hasTaskName && !project.InnateActivity.Tasks.Any(t => t.TaskName.Trim().Equals(request.TaskName.Trim(), StringComparison.OrdinalIgnoreCase)))
                 errors.Add($"TaskName '{request.TaskName}' does not match any InnateCodeTask under project {request.ProjectId}'s InnateActivity ('{project.InnateActivity.ActivityName}'); available: {string.Join(", ", project.InnateActivity.Tasks.Select(t => t.TaskName))}");
 

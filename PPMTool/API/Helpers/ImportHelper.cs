@@ -96,24 +96,17 @@ namespace PPMTool.API.Helpers
                 .FirstOrDefault(s => s.IsActive && s.Code.Trim().ToLower() == code.Trim().ToLower());
 
         /// <summary>
-        /// Builds the innate activity code expected for a project's RTP value.
-        /// </summary>
-        /// <param name="rtp">RTP value.</param>
-        /// <returns>Expected innate activity code.</returns>
-        internal static string InnateActivityCodeFor(int rtp) => $"S-RES-RTP-{rtp}";
-
-        /// <summary>
-        /// Finds the innate code associated with an RTP-derived activity code.
+        /// Finds an innate code by its activity code, ignoring case and surrounding whitespace.
         /// </summary>
         /// <param name="context">Database context.</param>
-        /// <param name="rtp">RTP value.</param>
+        /// <param name="activityCode">Activity code to resolve.</param>
         /// <returns>The matching innate code, or <c>null</c> when none exists.</returns>
-        internal static InnateCode FindInnateCodeForRTP(PPMToolContext context, int rtp)
+        internal static InnateCode FindInnateCodeByActivityCode(PPMToolContext context, string activityCode)
         {
-            var activityCode = InnateActivityCodeFor(rtp).ToLower();
+            var code = activityCode.Trim().ToLower();
             return context.InnateCodes
                 .Include(c => c.Tasks)
-                .FirstOrDefault(c => c.ActivityCode.Trim().ToLower() == activityCode);
+                .FirstOrDefault(c => c.ActivityCode.Trim().ToLower() == code);
         }
 
         /// <summary>

@@ -76,24 +76,9 @@ namespace PPMTool.Services
                 errors.Add(rtpRequired);
             else if (context.Projects.Any(p => p.RTP == request.RTP))
                 errors.Add($"A Project with RTP {request.RTP} already exists");
-            else
-            {
-                var existingCode = ImportHelper.FindInnateCodeForRTP(context, request.RTP);
-                if (existingCode != null)
-                {
-                    var linkedRtp = context.Projects
-                        .Where(p => p.InnateActivity != null && p.InnateActivity.InnateCodeId == existingCode.InnateCodeId)
-                        .Select(p => (int?)p.RTP)
-                        .FirstOrDefault();
-                    if (linkedRtp != null)
-                        errors.Add($"Timesheet code '{existingCode.ActivityCode}' already belongs to the Project with RTP {linkedRtp}");
-                }
-                else if (!string.IsNullOrWhiteSpace(request.Name)
-                         && context.InnateCodes.Any(c => c.ActivityName.Trim().ToLower() == request.Name.Trim().ToLower()))
-                {
-                    errors.Add($"A timesheet code named '{request.Name}' already exists, so a new code for this Project would duplicate it");
-                }
-            }
+
+            if (request.TimesheetActivityCode != null)
+                errors.AddRange(ValidateTimesheetActivityCode(context, request.TimesheetActivityCode, request.Name, projectId: null));
 
             if (string.IsNullOrWhiteSpace(request.PI)) errors.Add("PI is required");
             if (string.IsNullOrWhiteSpace(request.RequestDocLink)) errors.Add("RequestDocLink is required");
@@ -164,20 +149,11 @@ namespace PPMTool.Services
             if (projectId < 0)
                 throw new InvalidOperationException($"ProjectService.Add returned {projectId} (duplicate name/RTP) despite passing Validate() -- possible race condition");
 
-            var innateActivity = ImportHelper.FindInnateCodeForRTP(context, project.RTP) ?? new InnateCode
+            if (request.TimesheetActivityCode != null)
             {
-                ActivityCode = ImportHelper.InnateActivityCodeFor(project.RTP),
-                ActivityName = project.Name,
-                IsActive = true,
-                Tasks = new List<InnateCodeTask>(),
-            };
-            foreach (var defaultTask in ImportHelper.DefaultInnateCodeTasks())
-            {
-                if (!innateActivity.Tasks.Any(t => t.TaskName.Trim().Equals(defaultTask.TaskName, StringComparison.OrdinalIgnoreCase)))
-                    innateActivity.Tasks.Add(defaultTask);
+                project.InnateActivity = ResolveTimesheetActivityCode(context, request.TimesheetActivityCode, project.Name);
+                context.SaveChangesWithRetry();
             }
-            project.InnateActivity = innateActivity;
-            context.SaveChangesWithRetry();
 
             var managementFte = settingsService.GetSetting(SettingType.TechnicalLeadershipDefaultFTE, 0.05f);
             var managementTask = new SubTask
@@ -319,6 +295,9 @@ namespace PPMTool.Services
             if (!string.IsNullOrEmpty(request.ProjectManagerUsername) && ImportHelper.FindUserByUsername(context, request.ProjectManagerUsername)?.Person == null)
                 errors.Add($"ProjectManagerUsername '{request.ProjectManagerUsername}' not found, or has no linked Person");
 
+            if (request.TimesheetActivityCode != null)
+                errors.AddRange(ValidateTimesheetActivityCode(context, request.TimesheetActivityCode, request.Name ?? project.Name, project.ProjectId));
+
             return errors;
         }
 
@@ -347,6 +326,8 @@ namespace PPMTool.Services
             if (request.Description != null) project.Description = request.Description;
             if (request.RequestDocLink != null) project.RequestDocLink = request.RequestDocLink;
             if (request.ScrumProjectLink != null) project.ScrumProjectLink = request.ScrumProjectLink == "" ? null : request.ScrumProjectLink;
+            if (request.TimesheetActivityCode != null)
+                project.InnateActivity = ResolveTimesheetActivityCode(context, request.TimesheetActivityCode, project.Name);
 
             var result = projectService.Update(context, project);
             if (result < 0)
@@ -494,5 +475,61 @@ namespace PPMTool.Services
 
             return new UpdateNoteResponseDTO(note.NoteId);
         }
+
+        /// <summary>
+        /// Validates a caller-supplied timesheet activity code for a project. An existing
+        /// code may be linked only if no other project uses it; a new code must not
+        /// duplicate an existing code's name.
+        /// </summary>
+        /// <param name="context">Database context.</param>
+        /// <param name="activityCode">Activity code supplied by the caller.</param>
+        /// <param name="projectName">Name the project will have, used to name a new code.</param>
+        /// <param name="projectId">The project being updated, or <c>null</c> for a new project.</param>
+        /// <returns>Validation errors, or an empty list when valid.</returns>
+        private static List<string> ValidateTimesheetActivityCode(PPMToolContext context, string activityCode, string? projectName, int? projectId)
+        {
+            var errors = new List<string>();
+            if (string.IsNullOrWhiteSpace(activityCode))
+            {
+                errors.Add("TimesheetActivityCode cannot be blank");
+                return errors;
+            }
+
+            var existingCode = ImportHelper.FindInnateCodeByActivityCode(context, activityCode);
+            if (existingCode != null)
+            {
+                var linkedRtp = context.Projects
+                    .Where(p => p.ProjectId != projectId && p.InnateActivity != null && p.InnateActivity.InnateCodeId == existingCode.InnateCodeId)
+                    .Select(p => (int?)p.RTP)
+                    .FirstOrDefault();
+                if (linkedRtp != null)
+                    errors.Add($"Timesheet code '{existingCode.ActivityCode}' already belongs to the Project with RTP {linkedRtp}");
+            }
+            else if (!string.IsNullOrWhiteSpace(projectName)
+                     && context.InnateCodes.Any(c => c.ActivityName.Trim().ToLower() == projectName.Trim().ToLower()))
+            {
+                errors.Add($"A timesheet code named '{projectName}' already exists, so a new code '{activityCode.Trim()}' for this Project would duplicate it");
+            }
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Returns the timesheet activity code a project should be linked to: the existing
+        /// code with that activity code, unchanged, or a new one named after the project
+        /// with the default tasks.
+        /// </summary>
+        /// <param name="context">Database context.</param>
+        /// <param name="activityCode">Activity code supplied by the caller.</param>
+        /// <param name="projectName">Project name, used to name a new code.</param>
+        /// <returns>The code to link.</returns>
+        private static InnateCode ResolveTimesheetActivityCode(PPMToolContext context, string activityCode, string projectName) =>
+            ImportHelper.FindInnateCodeByActivityCode(context, activityCode) ?? new InnateCode
+            {
+                ActivityCode = activityCode.Trim(),
+                ActivityName = projectName,
+                IsActive = true,
+                Tasks = ImportHelper.DefaultInnateCodeTasks(),
+            };
     }
 }

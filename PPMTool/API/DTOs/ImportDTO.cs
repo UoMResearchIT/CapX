@@ -183,6 +183,7 @@ namespace PPMTool.API.DTOs
     /// <param name="ManagementEndDate">End date for the auto-created project-management SubTask</param>
     /// <param name="Resourcing"></param>
     /// <param name="Comments"></param>
+    /// <param name="TimesheetActivityCode">Timesheet activity code to link the Project to. An existing code is linked as it is, provided no other Project uses it; otherwise a new code is created with this activity code, named after the Project, with the default tasks. Omit for no code (the Project then cannot receive timesheet entries until one is linked).</param>
     public sealed record ImportProjectRequestDTO(
         string Name,
         int RTP,
@@ -199,7 +200,8 @@ namespace PPMTool.API.DTOs
         DateTime ManagementStartDate,
         DateTime ManagementEndDate,
         IReadOnlyList<ImportResourcingDTO>? Resourcing,
-        IReadOnlyList<ImportCommentDTO>? Comments
+        IReadOnlyList<ImportCommentDTO>? Comments,
+        string? TimesheetActivityCode = null
     );
 
     /// <summary>Response for a successful import.</summary>
@@ -231,6 +233,7 @@ namespace PPMTool.API.DTOs
     /// <param name="Description">HTML</param>
     /// <param name="RequestDocLink"></param>
     /// <param name="ScrumProjectLink">Pass an empty string to clear, null to leave unchanged</param>
+    /// <param name="TimesheetActivityCode">Link the Project to this timesheet activity code, on the same terms as POST /api/projects/add, replacing any current link. Null leaves it unchanged; there is no way to clear it, since that would hide the Project's logged hours.</param>
     public sealed record UpdateProjectRequestDTO(
         int RTP,
         string? Name,
@@ -243,7 +246,8 @@ namespace PPMTool.API.DTOs
         string? ProjectStatus,
         string? Description,
         string? RequestDocLink,
-        string? ScrumProjectLink
+        string? ScrumProjectLink,
+        string? TimesheetActivityCode = null
     );
 
     /// <summary>Response for a successful Project update.</summary>
@@ -418,10 +422,9 @@ namespace PPMTool.API.DTOs
     /// <summary>
     /// Request body for POST /api/timesheets/add. One week's actual
     /// hours for one person on one project, on a single InnateCodeTask
-    /// under that project's InnateActivity code (every Project imported
-    /// via POST /api/projects/add auto-provisions one, matching the
-    /// pattern SeedHelper.EnsureInnateCodeExists already establishes --
-    /// see ImportProjectService.Create). CapX computes a Project's actual hours
+    /// under that project's InnateActivity code (linked by passing
+    /// TimesheetActivityCode to POST /api/projects/add or PUT
+    /// /api/projects/update, or in the UI). CapX computes a Project's actual hours
     /// by querying Approved Timesheets linked through this InnateActivity
     /// code (see AddTask.razor.cs), so this is the real, native path for
     /// historical actuals -- not a bespoke side-channel field.
@@ -442,7 +445,7 @@ namespace PPMTool.API.DTOs
     /// <param name="PersonId">PersonId of an existing bare Person with no linked User -- exactly one of Username/PersonId required</param>
     /// <param name="ProjectId">Must already have an InnateActivity code (see remarks)</param>
     /// <param name="WeekStartDate">Must be a Monday -- CapX Timesheets are always Monday-start weeks</param>
-    /// <param name="TaskName">Must match one of the project's InnateActivity InnateCodeTask names (the default set is "Development", "Management", "Maintenance")</param>
+    /// <param name="TaskName">Must match one of the project's InnateActivity InnateCodeTask names (a code created by projects/add or projects/update starts with "Development", "Management", "Maintenance")</param>
     /// <param name="MondayHours"></param>
     /// <param name="TuesdayHours"></param>
     /// <param name="WednesdayHours"></param>
