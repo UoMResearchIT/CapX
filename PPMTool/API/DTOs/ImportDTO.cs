@@ -546,6 +546,7 @@ namespace PPMTool.API.DTOs
     /// <param name="ServiceManagementFTE">0.0-1.0</param>
     /// <param name="ProjectManagementFTE">0.0-1.0</param>
     /// <param name="Notes"></param>
+    /// <param name="CostValueKey">Cost key: the name of the financial reference value set that prices this person's time (e.g. "Grade65Costs"), as GET /api/wlm/getAll returns it. Without one, assignments under this change are costed at zero, as for a change added in the UI with no key chosen. On an existing change, null leaves its key unchanged.</param>
     public sealed record ImportWorkloadModelChangeDTO(
         string Username,
         DateTime ChangeDate,
@@ -557,7 +558,8 @@ namespace PPMTool.API.DTOs
         double ArchitectureFTE,
         double ServiceManagementFTE,
         double ProjectManagementFTE,
-        string? Notes
+        string? Notes,
+        string? CostValueKey = null
     );
 
     /// <summary>Response for a successful workload-model-change import.</summary>

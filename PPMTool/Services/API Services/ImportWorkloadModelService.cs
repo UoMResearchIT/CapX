@@ -41,6 +41,12 @@ namespace PPMTool.Services
                 if (fte < 0.0 || fte > 1.0) errors.Add($"{label} {fte} is out of range (must be 0.0-1.0)");
             }
 
+            if (request.CostValueKey != null && FindCostValueSet(context, request.CostValueKey) == null)
+            {
+                var available = context.FinancialReferenceValueSets.Select(s => s.Name).OrderBy(n => n).ToList();
+                errors.Add($"CostValueKey '{request.CostValueKey}' does not match any cost key; available: {string.Join(", ", available)}");
+            }
+
             return errors;
         }
 
@@ -73,10 +79,18 @@ namespace PPMTool.Services
             change.ServiceManagementFTE = request.ServiceManagementFTE;
             change.ProjectManagementFTE = request.ProjectManagementFTE;
             change.Notes = request.Notes;
+            if (request.CostValueKey != null)
+                change.CostValueSetId = FindCostValueSet(context, request.CostValueKey)!.FinancialReferenceValueSetId;
             context.SaveChangesWithRetry();
 
             return new ImportWorkloadModelChangeResponseDTO(change.WorkloadModelChangeId, created);
         }
+
+        /// <summary>
+        /// Finds a cost key (financial reference value set) by name, ignoring case and surrounding whitespace.
+        /// </summary>
+        private static FinancialReferenceValueSet? FindCostValueSet(PPMToolContext context, string name) =>
+            context.FinancialReferenceValueSets.FirstOrDefault(s => s.Name.Trim().ToLower() == name.Trim().ToLower());
 
         /// <summary>
         /// Enumerates the requested duty FTE values with labels for validation messages.
