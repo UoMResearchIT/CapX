@@ -221,6 +221,12 @@ namespace PPMTool.Services
             }
             var resolvedDuty = newDuty ?? task.TaskDuty;
 
+            // Every project needs a project-management task (ProjectStatusEvaluator flags one
+            // without), so the last one can't be changed to another duty.
+            if (task.TaskDuty == Duty.ProjectAndServiceMgmt && resolvedDuty != Duty.ProjectAndServiceMgmt
+                && !project.SubTasks.Any(t => t.SubTaskId != task.SubTaskId && t.TaskDuty == Duty.ProjectAndServiceMgmt))
+                errors.Add($"SubTaskId {task.SubTaskId} is Project {project.RTP}'s only leadership (ProjectAndServiceMgmt) task, which every project needs, so its duty can't be changed");
+
             if (resolvedDuty == Duty.ProjectAndServiceMgmt && task.TaskDuty != Duty.ProjectAndServiceMgmt)
             {
                 var managerPersonIds = userService.GetAllManagerPersonId(context).ToHashSet();
