@@ -473,7 +473,8 @@ namespace PPMTool.Services
             var note = context.Notes.First(n => n.NoteId == request.NoteId);
             note.HtmlContent = request.HtmlContent;
             note.Editor = caller;
-            note.EditedDate = ImportHelper.AsUnspecifiedKind(DateTime.UtcNow);
+            // Local time, as the UI stamps an edited Note (ProjectDetails.razor.cs).
+            note.EditedDate = ImportHelper.AsUnspecifiedKind(DateTime.Now);
             noteService.Update(context, note);
             context.SaveChangesWithRetry();
 
