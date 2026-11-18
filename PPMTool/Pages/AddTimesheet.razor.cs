@@ -291,11 +291,6 @@ namespace PPMTool.Pages
             allowTimesheetRefresh = templateTaskIds.Except(existingTaskIds).Any();
         }
 
-
-        /// <summary>
-        /// Repopulates the current timesheet's tasks from the template. 
-        /// Used after re-opening a rejected timesheet so the user can choose other tasks
-        /// </summary>
         /// <summary>
         /// Adds tasks missing from the current rejected timesheet using the timesheet owner's template.
         /// Existing entries are retained.
