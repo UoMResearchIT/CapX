@@ -152,6 +152,25 @@ namespace PPMTool.Services
                 .FirstOrDefault(s => s.Code.Trim().ToLower() == code.Trim().ToLower());
 
         /// <summary>
+        /// Returns an error if a School other than the given one already has this code, in
+        /// any Faculty. SchoolService only checks within a Faculty, but the API finds a School
+        /// by its code alone, so a code reused elsewhere would make that lookup ambiguous.
+        /// </summary>
+        /// <param name="context">Database context.</param>
+        /// <param name="code">School code to check.</param>
+        /// <param name="excludingSchoolId">The School being updated, if any.</param>
+        /// <returns>An error message, or <c>null</c> when the code is free.</returns>
+        private static string? SchoolCodeInUse(PPMToolContext context, string code, int? excludingSchoolId = null)
+        {
+            var existing = context.Schools
+                .Include(s => s.Faculty)
+                .FirstOrDefault(s => s.SchoolId != (excludingSchoolId ?? 0) && s.Code.Trim().ToLower() == code.Trim().ToLower());
+            return existing == null
+                ? null
+                : $"School code '{code.Trim()}' is already used by School '{existing.Name}' under Faculty '{existing.Faculty.Name}'";
+        }
+
+        /// <summary>
         /// Validates a faculty creation request without writing to the database.
         /// </summary>
         /// <param name="context">Database context.</param>
@@ -177,6 +196,8 @@ namespace PPMTool.Services
                 if (string.IsNullOrWhiteSpace(s.Code)) errors.Add($"School Code is required (name '{s.Name}')");
                 else if (!seenCodes.Add(s.Code.Trim().ToLowerInvariant()))
                     errors.Add($"Duplicate School code '{s.Code}' within this request");
+                else if (SchoolCodeInUse(context, s.Code) is { } inUse)
+                    errors.Add(inUse);
             }
 
             return errors;
@@ -237,6 +258,8 @@ namespace PPMTool.Services
             if (string.IsNullOrWhiteSpace(request.Name)) errors.Add("Name is required");
             if (string.IsNullOrWhiteSpace(request.Code)) errors.Add("Code is required");
             if (string.IsNullOrWhiteSpace(request.FacultyCode)) errors.Add("FacultyCode is required");
+            if (!string.IsNullOrWhiteSpace(request.Code) && SchoolCodeInUse(context, request.Code) is { } inUse)
+                errors.Add(inUse);
 
             if (!string.IsNullOrWhiteSpace(request.FacultyCode))
             {
@@ -284,6 +307,8 @@ namespace PPMTool.Services
                 errors.Add("Name cannot be blank");
             if (request.NewCode != null && string.IsNullOrWhiteSpace(request.NewCode))
                 errors.Add("NewCode cannot be blank");
+            else if (request.NewCode != null && SchoolCodeInUse(context, request.NewCode, school.SchoolId) is { } inUse)
+                errors.Add(inUse);
 
             var faculty = school.Faculty;
             if (request.NewFacultyCode != null)
