@@ -263,7 +263,7 @@ namespace PPMTool.Pages
         /// Repopulates the current timesheet's tasks from the template. 
         /// Used after re-opening a rejected timesheet so the user can choose other tasks
         /// </summary>
-        private async void RefreshFromTimesheetTemplate()
+        private void RefreshFromTimesheetTemplate()
         {
             // Set-up the timesheet from the template, but in REFRESH mode to leave existing tasks there
             TimesheetService.SetupTimesheetFromTemplate(Context, timesheet, ActiveUser?.Person, InnateCodeService.GetAllTasks(Context), true);
@@ -406,7 +406,7 @@ namespace PPMTool.Pages
         /// <summary>
         /// Delete a timesheet with prompt
         /// </summary>
-        private async void DeleteTimesheet()
+        private async Task DeleteTimesheet()
         {
             if (TimesheetId > 0)
             {
@@ -922,7 +922,7 @@ namespace PPMTool.Pages
         /// is only so we can return and reload the correct page that we came from
         /// </summary>
         /// <param name="timesheet"></param>
-        private async void ReorderTimesheetTemplate(Timesheet timesheet)
+        private async Task ReorderTimesheetTemplate(Timesheet timesheet)
         {
             await DialogService.OpenAsync<ReorderTimesheet>("Drag and drop tasks to reorder them",
                new Dictionary<string, object>()
