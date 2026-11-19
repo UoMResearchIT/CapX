@@ -12,7 +12,7 @@ using PPMTool.Data.Entities;
 namespace PPMTool.Services
 {
     /// <summary>
-    /// Service for DI injection that can manipulate Faculty and School entities as part of API calls.
+    /// Service for API import operations that validate and mutate faculties and schools.
     /// </summary>
     public class ImportOrgUnitService
     {
