@@ -43,15 +43,14 @@ public static class People
                 .OrderBy(x => x.Name)
                 .ToListAsync();
 
-            // Person has no navigation to User, so look usernames up from Users. A Person
-            // can have more than one User; take the lowest UserId, so the result is stable.
+            // Person has no navigation to User, so look usernames up from Users.
             var usernamesByPersonId = (await context.Users
                 .Where(u => u.Person != null)
                 .OrderBy(u => u.UserId)
                 .Select(u => new { u.Person!.PersonId, u.CASUserName })
                 .ToListAsync())
                 .GroupBy(x => x.PersonId)
-                .ToDictionary(g => g.Key, g => g.First().CASUserName);
+                .ToDictionary(g => g.Key, g => (IReadOnlyList<string>)g.Select(x => x.CASUserName).ToList());
 
             var personDtos = people.Select(x => new PersonDTO(
                 PersonId: x.PersonId,
@@ -65,7 +64,7 @@ public static class People
                     : null,
                 LineManagerId: x.LineManager?.PersonId,
                 LineManagerName: x.LineManager?.Name,
-                Username: usernamesByPersonId.GetValueOrDefault(x.PersonId)
+                Usernames: usernamesByPersonId.GetValueOrDefault(x.PersonId) ?? []
             )).ToList();
 
             logger.LogInformation("API: GetAllPeople: Returned {Count} people records.", personDtos.Count);
@@ -122,13 +121,11 @@ public static class People
                 return Results.NotFound();
             }
 
-            // A Person can back more than one User; take the lowest UserId, the same
-            // choice GetAllPeopleAsync makes, so both endpoints agree.
-            var username = await context.Users
+            var usernames = await context.Users
                 .Where(u => u.Person != null && u.Person.PersonId == person.PersonId)
                 .OrderBy(u => u.UserId)
                 .Select(u => u.CASUserName)
-                .FirstOrDefaultAsync();
+                .ToListAsync();
 
             var dto = new PersonDTO(
                 PersonId: person.PersonId,
@@ -142,7 +139,7 @@ public static class People
                     : null,
                 LineManagerId: person.LineManager?.PersonId,
                 LineManagerName: person.LineManager?.Name,
-                Username: username
+                Usernames: usernames
             );
 
             logger.LogInformation("API: GetPersonById: Returned person record for personId {PersonId}", personId);

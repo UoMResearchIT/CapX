@@ -18,7 +18,7 @@ namespace PPMTool.API.DTOs
     /// <param name="EndDate">The end date for the person, if they have left.</param>
     /// <param name="LineManagerId">The person ID of their line manager, if present.</param>
     /// <param name="LineManagerName">The name of their line manager, if present.</param>
-    /// <param name="Username">Username (CASUserName) of the Person's User, or null if they have none. Where a Person has more than one User, the one with the lowest UserId.</param>
+    /// <param name="Usernames">Usernames (CASUserName) of every User linked to the Person, in UserId order; empty if they have none.</param>
     public sealed record PersonDTO(
         int PersonId,
         string? EmployeeId,
@@ -29,6 +29,6 @@ namespace PPMTool.API.DTOs
         DateOnly? EndDate,
         int? LineManagerId,
         string? LineManagerName,
-        string? Username
+        IReadOnlyList<string> Usernames
     );
 }
