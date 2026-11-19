@@ -1,0 +1,17 @@
+@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@inject TooltipService TooltipService
+
+<RadzenLabel Text="@Text" MouseEnter="@(args => TooltipService.Open(args, Tooltip, new TooltipOptions { Delay = 250 }))" />
+
+@code {
+    [Parameter]
+    public string Text { get; set; }
+
+    [Parameter]
+    public string Tooltip { get; set; }
+}
