@@ -314,4 +314,54 @@ public static class GeneralHelpers
 
         return Encoding.UTF8.GetBytes(csvBuilder.ToString());
     }
+
+    /// <summary>
+    /// Removes the <see cref="DateTime.Kind"/> without changing the clock value.
+    /// </summary>
+    /// <param name="dt">The date/time to normalize.</param>
+    /// <returns>The same date/time value with <see cref="DateTimeKind.Unspecified"/> kind.</returns>
+    internal static DateTime AsUnspecifiedKind(DateTime dt) =>
+        DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
+
+    /// <summary>
+    /// Parses an enum value and rejects undefined values.
+    /// </summary>
+    /// <typeparam name="TEnum">Enum type.</typeparam>
+    /// <param name="value">Value to parse.</param>
+    /// <param name="result">Parsed enum value when successful.</param>
+    /// <returns><c>true</c> when parsing succeeds to a defined enum value; otherwise <c>false</c>.</returns>
+    internal static bool TryParseDefined<TEnum>(string value, out TEnum result) where TEnum : struct, Enum =>
+        Enum.TryParse(value, out result) && Enum.IsDefined(result);
+
+    /// <summary>
+    /// Parses a cost model given either as its enum name or as its description, the form
+    /// project reads return, so a value read can be written back.
+    /// </summary>
+    /// <param name="value">Value to parse.</param>
+    /// <param name="result">Parsed cost model when successful.</param>
+    /// <returns><c>true</c> when the value names a cost model; otherwise <c>false</c>.</returns>
+    internal static bool TryParseCostModel(string value, out CostModel result)
+    {
+        if (TryParseDefined(value, out result)) return true;
+        foreach (var model in Enum.GetValues<CostModel>())
+        {
+            if (string.Equals(model.GetDescription(), value?.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                result = model;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Determines whether a number contains significant digits beyond three decimal places.
+    /// </summary>
+    /// <param name="number">Number to test.</param>
+    /// <returns><c>true</c> when precision exceeds three decimal places; otherwise <c>false</c>.</returns>
+    internal static bool HasDigitsAfterThirdDecimalPlace(double number)
+    {
+        var truncated = Math.Truncate(number * 1000) / 1000;
+        return number != truncated;
+    }
 }

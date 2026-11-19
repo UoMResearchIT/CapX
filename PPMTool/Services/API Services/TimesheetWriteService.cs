@@ -63,7 +63,7 @@ namespace PPMTool.Services
             if (request.WeekStartDate.TimeOfDay != TimeSpan.Zero)
                 errors.Add($"WeekStartDate '{request.WeekStartDate:O}' must be a date with no time of day");
 
-            foreach (var (label, hours) in ImportHelper.DayHours(request))
+            foreach (var (label, hours) in DayHours(request))
             {
                 if (hours < 0) errors.Add($"{label} cannot be negative");
             }
@@ -97,7 +97,7 @@ namespace PPMTool.Services
                 : personService.GetById(context, request.PersonId!.Value);
             var project = projectService.GetByIdWithInnateActivity(context, request.ProjectId)!;
             var task = project.InnateActivity!.Tasks.First(t => t.TaskName.Trim().Equals(request.TaskName.Trim(), StringComparison.OrdinalIgnoreCase));
-            var weekStartDate = ImportHelper.AsUnspecifiedKind(request.WeekStartDate);
+            var weekStartDate = GeneralHelpers.AsUnspecifiedKind(request.WeekStartDate);
 
             var timesheet = context.Timesheets
                 .Include(t => t.TimesheetEntries)
@@ -164,7 +164,7 @@ namespace PPMTool.Services
                 return errors;
             }
 
-            foreach (var (label, hours) in ImportHelper.DayHours(request))
+            foreach (var (label, hours) in DayHours(request))
             {
                 if (hours.HasValue && hours.Value < 0) errors.Add($"{label} cannot be negative");
             }
@@ -209,6 +209,66 @@ namespace PPMTool.Services
             context.SaveChangesWithRetry();
 
             return new UpdateTimesheetEntryResponseDTO(entry.TimesheetEntryId, entry.TotalHours);
+        }
+
+        /// <summary>
+        /// Enumerates day-hour values for create-or-update timesheet validation.
+        /// </summary>
+        /// <param name="request">Incoming timesheet-entry request.</param>
+        /// <returns>Named day-hour pairs.</returns>
+        private static IEnumerable<(string Label, double Hours)> DayHours(ImportTimesheetEntryDTO request) =>
+            DayHoursCore(
+                request.MondayHours,
+                request.TuesdayHours,
+                request.WednesdayHours,
+                request.ThursdayHours,
+                request.FridayHours,
+                request.SaturdayHours,
+                request.SundayHours);
+
+        /// <summary>
+        /// Enumerates nullable day-hour values for timesheet update validation.
+        /// </summary>
+        /// <param name="request">Incoming timesheet-entry update request.</param>
+        /// <returns>Named day-hour pairs.</returns>
+        private static IEnumerable<(string Label, double? Hours)> DayHours(UpdateTimesheetEntryRequestDTO request) =>
+            DayHoursCore(
+                request.MondayHours,
+                request.TuesdayHours,
+                request.WednesdayHours,
+                request.ThursdayHours,
+                request.FridayHours,
+                request.SaturdayHours,
+                request.SundayHours);
+
+        /// <summary>
+        /// Enumerates labeled day-hour values using a shared implementation for import DTO variants.
+        /// </summary>
+        /// <typeparam name="THours">Hour value type.</typeparam>
+        /// <param name="mondayHours">Monday hours.</param>
+        /// <param name="tuesdayHours">Tuesday hours.</param>
+        /// <param name="wednesdayHours">Wednesday hours.</param>
+        /// <param name="thursdayHours">Thursday hours.</param>
+        /// <param name="fridayHours">Friday hours.</param>
+        /// <param name="saturdayHours">Saturday hours.</param>
+        /// <param name="sundayHours">Sunday hours.</param>
+        /// <returns>Named day-hour pairs.</returns>
+        private static IEnumerable<(string Label, THours Hours)> DayHoursCore<THours>(
+            THours mondayHours,
+            THours tuesdayHours,
+            THours wednesdayHours,
+            THours thursdayHours,
+            THours fridayHours,
+            THours saturdayHours,
+            THours sundayHours)
+        {
+            yield return (nameof(ImportTimesheetEntryDTO.MondayHours), mondayHours);
+            yield return (nameof(ImportTimesheetEntryDTO.TuesdayHours), tuesdayHours);
+            yield return (nameof(ImportTimesheetEntryDTO.WednesdayHours), wednesdayHours);
+            yield return (nameof(ImportTimesheetEntryDTO.ThursdayHours), thursdayHours);
+            yield return (nameof(ImportTimesheetEntryDTO.FridayHours), fridayHours);
+            yield return (nameof(ImportTimesheetEntryDTO.SaturdayHours), saturdayHours);
+            yield return (nameof(ImportTimesheetEntryDTO.SundayHours), sundayHours);
         }
     }
 }

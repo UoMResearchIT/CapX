@@ -112,7 +112,7 @@ namespace PPMTool.Services
                 errors.Add("Name cannot be blank");
 
             Duty? duty = null;
-            if (!ImportHelper.TryParseDefined<Duty>(request.TaskDuty, out var parsedDuty))
+            if (!GeneralHelpers.TryParseDefined<Duty>(request.TaskDuty, out var parsedDuty))
                 errors.Add($"TaskDuty '{request.TaskDuty}' is not a valid value");
             else
                 duty = parsedDuty;
@@ -124,7 +124,7 @@ namespace PPMTool.Services
             if (request.EndDate.Date < request.StartDate.Date)
                 errors.Add("EndDate must be on or after StartDate");
 
-            if (ImportHelper.HasDigitsAfterThirdDecimalPlace(request.Demand))
+            if (GeneralHelpers.HasDigitsAfterThirdDecimalPlace(request.Demand))
                 errors.Add("Demand cannot have digits after the third decimal place");
             else if (request.Demand <= 0)
                 errors.Add("Demand must be greater than zero");
@@ -165,8 +165,8 @@ namespace PPMTool.Services
                 Demand = request.Demand,
                 OriginalDemand = request.Demand,
                 OwningProject = project,
-                StartDate = ImportHelper.AsUnspecifiedKind(request.StartDate),
-                EndDate = ImportHelper.AsUnspecifiedKind(request.EndDate),
+                StartDate = GeneralHelpers.AsUnspecifiedKind(request.StartDate),
+                EndDate = GeneralHelpers.AsUnspecifiedKind(request.EndDate),
             };
             task.Schedule();
             subTaskService.Add(context, task);
@@ -216,7 +216,7 @@ namespace PPMTool.Services
             Duty? newDuty = null;
             if (request.TaskDuty != null)
             {
-                if (!ImportHelper.TryParseDefined<Duty>(request.TaskDuty, out var parsed))
+                if (!GeneralHelpers.TryParseDefined<Duty>(request.TaskDuty, out var parsed))
                     errors.Add($"TaskDuty '{request.TaskDuty}' is not a valid value");
                 else
                     newDuty = parsed;
@@ -271,7 +271,7 @@ namespace PPMTool.Services
 
             if (request.Demand.HasValue)
             {
-                if (ImportHelper.HasDigitsAfterThirdDecimalPlace(request.Demand.Value))
+                if (GeneralHelpers.HasDigitsAfterThirdDecimalPlace(request.Demand.Value))
                     errors.Add("Demand cannot have digits after the third decimal place");
                 else if (request.Demand.Value < 0)
                     errors.Add("Demand cannot be negative");
@@ -292,8 +292,8 @@ namespace PPMTool.Services
 
             if (request.Name != null) task.Name = request.Name;
             if (request.TaskDuty != null) task.TaskDuty = Enum.Parse<Duty>(request.TaskDuty);
-            if (request.StartDate.HasValue) task.StartDate = ImportHelper.AsUnspecifiedKind(request.StartDate.Value);
-            if (request.EndDate.HasValue) task.EndDate = ImportHelper.AsUnspecifiedKind(request.EndDate.Value);
+            if (request.StartDate.HasValue) task.StartDate = GeneralHelpers.AsUnspecifiedKind(request.StartDate.Value);
+            if (request.EndDate.HasValue) task.EndDate = GeneralHelpers.AsUnspecifiedKind(request.EndDate.Value);
             if (request.Demand.HasValue) task.Demand = request.Demand.Value;
             subTaskService.Reschedule(context, task);
             subTaskService.Update(context, task);
@@ -449,7 +449,7 @@ namespace PPMTool.Services
 
             if (request.AssignmentFTE.HasValue)
             {
-                if (ImportHelper.HasDigitsAfterThirdDecimalPlace(request.AssignmentFTE.Value))
+                if (GeneralHelpers.HasDigitsAfterThirdDecimalPlace(request.AssignmentFTE.Value))
                     errors.Add("AssignmentFTE cannot have digits after the third decimal place");
                 else if (request.AssignmentFTE.Value < 0)
                     errors.Add("AssignmentFTE cannot be negative");
@@ -560,7 +560,7 @@ namespace PPMTool.Services
 
             foreach (var (person, assignee, fte) in assignments)
             {
-                if (ImportHelper.HasDigitsAfterThirdDecimalPlace(fte))
+                if (GeneralHelpers.HasDigitsAfterThirdDecimalPlace(fte))
                     errors.Add($"AssignmentFTE for '{assignee}' cannot have digits after the third decimal place");
                 else if (fte <= 0)
                     errors.Add($"AssignmentFTE for '{assignee}' must be greater than zero");

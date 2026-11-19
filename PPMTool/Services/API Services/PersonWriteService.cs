@@ -74,8 +74,8 @@ namespace PPMTool.Services
             var person = new Person
             {
                 Name = request.Name.Trim(),
-                StartDate = ImportHelper.AsUnspecifiedKind(request.StartDate),
-                EndDate = request.EndDate.HasValue ? ImportHelper.AsUnspecifiedKind(request.EndDate.Value) : null,
+                StartDate = GeneralHelpers.AsUnspecifiedKind(request.StartDate),
+                EndDate = request.EndDate.HasValue ? GeneralHelpers.AsUnspecifiedKind(request.EndDate.Value) : null,
                 FTE = request.FTE,
             };
             personService.Add(context, person);
@@ -113,7 +113,7 @@ namespace PPMTool.Services
 
             if (request.StartDate.HasValue)
             {
-                var newStart = ImportHelper.AsUnspecifiedKind(request.StartDate.Value);
+                var newStart = GeneralHelpers.AsUnspecifiedKind(request.StartDate.Value);
                 var earlierTasks = context.Resources
                     .Where(r => r.Person.PersonId == person.PersonId && r.SubTask.StartDate < newStart)
                     .Select(r => new { r.SubTask.SubTaskId, r.SubTask.Name, r.SubTask.StartDate, r.SubTask.OwningProject.RTP })
@@ -147,8 +147,8 @@ namespace PPMTool.Services
             var person = personService.GetById(context, request.PersonId)!;
 
             if (request.Name != null) person.Name = request.Name.Trim();
-            if (request.StartDate.HasValue) person.StartDate = ImportHelper.AsUnspecifiedKind(request.StartDate.Value);
-            if (request.EndDate.HasValue) person.EndDate = ImportHelper.AsUnspecifiedKind(request.EndDate.Value);
+            if (request.StartDate.HasValue) person.StartDate = GeneralHelpers.AsUnspecifiedKind(request.StartDate.Value);
+            if (request.EndDate.HasValue) person.EndDate = GeneralHelpers.AsUnspecifiedKind(request.EndDate.Value);
             if (request.FTE.HasValue) person.FTE = request.FTE.Value;
 
             var lineManager = ResolveLineManager(context, request);

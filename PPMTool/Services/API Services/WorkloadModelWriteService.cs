@@ -76,7 +76,7 @@ namespace PPMTool.Services
         {
             var person = userService.GetByUsernameWithWorkloadModels(context, request.Username)!.Person!;
 
-            var changeDate = ImportHelper.AsUnspecifiedKind(request.ChangeDate);
+            var changeDate = GeneralHelpers.AsUnspecifiedKind(request.ChangeDate);
             var change = person.WorkloadModelChanges.FirstOrDefault(c => c.ChangeDate == changeDate);
             var created = change == null;
             if (change == null)

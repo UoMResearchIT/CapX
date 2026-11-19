@@ -58,7 +58,7 @@ namespace PPMTool.Services
                 errors.Add("Name is required when PersonId is not given");
             }
 
-            if (!string.IsNullOrWhiteSpace(request.RoleType) && !ImportHelper.TryParseDefined<RoleType>(request.RoleType, out _))
+            if (!string.IsNullOrWhiteSpace(request.RoleType) && !GeneralHelpers.TryParseDefined<RoleType>(request.RoleType, out _))
                 errors.Add($"RoleType '{request.RoleType}' is not a valid value");
 
             if (!string.IsNullOrWhiteSpace(request.CASUserName))

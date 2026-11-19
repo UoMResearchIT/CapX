@@ -94,11 +94,11 @@ namespace PPMTool.Services
 
             if (string.IsNullOrWhiteSpace(request.PI)) errors.Add("PI is required");
             if (string.IsNullOrWhiteSpace(request.RequestDocLink)) errors.Add("RequestDocLink is required");
-            if (!ImportHelper.TryParseCostModel(request.CostModel, out var costModel))
+            if (!GeneralHelpers.TryParseCostModel(request.CostModel, out var costModel))
                 errors.Add($"CostModel '{request.CostModel}' is not a valid value");
             else if (costModel == CostModel.DayRate && request.DayRate <= 0)
                 errors.Add("DayRate must be greater than zero when CostModel is 'DayRate'");
-            if (!ImportHelper.TryParseDefined<ProjectStatus>(request.ProjectStatus, out _))
+            if (!GeneralHelpers.TryParseDefined<ProjectStatus>(request.ProjectStatus, out _))
                 errors.Add($"ProjectStatus '{request.ProjectStatus}' is not a valid value");
             if (request.ManagementEndDate.Date < request.ManagementStartDate.Date)
                 errors.Add("ManagementEndDate must be on or after ManagementStartDate");
@@ -142,7 +142,7 @@ namespace PPMTool.Services
             var projectManager = string.IsNullOrWhiteSpace(request.ProjectManagerUsername)
                 ? null
                 : userService.GetByUsernameWithWorkloadModels(context, request.ProjectManagerUsername)?.Person;
-            ImportHelper.TryParseCostModel(request.CostModel, out var costModel);
+            GeneralHelpers.TryParseCostModel(request.CostModel, out var costModel);
 
             var project = new Project
             {
@@ -181,8 +181,8 @@ namespace PPMTool.Services
                 Demand = managementFte,
                 OriginalDemand = managementFte,
                 OwningProject = project,
-                StartDate = ImportHelper.AsUnspecifiedKind(request.ManagementStartDate),
-                EndDate = ImportHelper.AsUnspecifiedKind(request.ManagementEndDate),
+                StartDate = GeneralHelpers.AsUnspecifiedKind(request.ManagementStartDate),
+                EndDate = GeneralHelpers.AsUnspecifiedKind(request.ManagementEndDate),
             };
             managementTask.Schedule();
             subTaskService.Add(context, managementTask);
@@ -202,8 +202,8 @@ namespace PPMTool.Services
                     Demand = totalFte,
                     OriginalDemand = totalFte,
                     OwningProject = project,
-                    StartDate = ImportHelper.AsUnspecifiedKind(request.ManagementStartDate),
-                    EndDate = ImportHelper.AsUnspecifiedKind(request.ManagementEndDate),
+                    StartDate = GeneralHelpers.AsUnspecifiedKind(request.ManagementStartDate),
+                    EndDate = GeneralHelpers.AsUnspecifiedKind(request.ManagementEndDate),
                 };
                 delivery.Schedule();
                 subTaskService.Add(context, delivery);
@@ -238,7 +238,7 @@ namespace PPMTool.Services
                     ? $"<p><em>Originally posted by {c.AuthorDisplayName} on Planner, {c.CreatedDate:yyyy-MM-dd}:</em></p>{c.ContentHtml}"
                     : c.ContentHtml;
 
-                var createdDate = ImportHelper.AsUnspecifiedKind(c.CreatedDate);
+                var createdDate = GeneralHelpers.AsUnspecifiedKind(c.CreatedDate);
                 noteService.Add(context, new Note
                 {
                     Project = project,
@@ -291,7 +291,7 @@ namespace PPMTool.Services
             CostModel? costModel = null;
             if (request.CostModel != null)
             {
-                if (!ImportHelper.TryParseCostModel(request.CostModel, out var parsed))
+                if (!GeneralHelpers.TryParseCostModel(request.CostModel, out var parsed))
                     errors.Add($"CostModel '{request.CostModel}' is not a valid value");
                 else
                     costModel = parsed;
@@ -301,7 +301,7 @@ namespace PPMTool.Services
             if (resolvedCostModel == CostModel.DayRate && resolvedDayRate <= 0)
                 errors.Add("DayRate must be greater than zero when CostModel is 'DayRate'");
 
-            if (request.ProjectStatus != null && !ImportHelper.TryParseDefined<ProjectStatus>(request.ProjectStatus, out _))
+            if (request.ProjectStatus != null && !GeneralHelpers.TryParseDefined<ProjectStatus>(request.ProjectStatus, out _))
                 errors.Add($"ProjectStatus '{request.ProjectStatus}' is not a valid value");
 
             if (request.SchoolCode != null || request.SchoolId != null)
@@ -336,7 +336,7 @@ namespace PPMTool.Services
                     ? null
                     : userService.GetByUsernameWithWorkloadModels(context, request.ProjectManagerUsername)!.Person!;
             if (request.Budget.HasValue) project.Budget = request.Budget.Value;
-            if (request.CostModel != null && ImportHelper.TryParseCostModel(request.CostModel, out var costModel)) project.CostModel = costModel;
+            if (request.CostModel != null && GeneralHelpers.TryParseCostModel(request.CostModel, out var costModel)) project.CostModel = costModel;
             if (request.DayRate.HasValue) project.DayRate = request.DayRate.Value;
             if (project.CostModel != CostModel.DayRate) project.DayRate = 0;
             if (request.ProjectStatus != null) project.ProjectStatus = Enum.Parse<ProjectStatus>(request.ProjectStatus);
@@ -407,7 +407,7 @@ namespace PPMTool.Services
                     ? $"<p><em>Originally posted by {c.AuthorDisplayName} on Planner, {c.CreatedDate:yyyy-MM-dd}:</em></p>{c.ContentHtml}"
                     : c.ContentHtml;
 
-                var createdDate = ImportHelper.AsUnspecifiedKind(c.CreatedDate);
+                var createdDate = GeneralHelpers.AsUnspecifiedKind(c.CreatedDate);
                 noteService.Add(context, new Note
                 {
                     Project = project,
@@ -488,7 +488,7 @@ namespace PPMTool.Services
             note.HtmlContent = request.HtmlContent;
             note.Editor = caller;
             // Local time, as the UI stamps an edited Note (ProjectDetails.razor.cs).
-            note.EditedDate = ImportHelper.AsUnspecifiedKind(DateTime.Now);
+            note.EditedDate = GeneralHelpers.AsUnspecifiedKind(DateTime.Now);
             noteService.Update(context, note);
             context.SaveChangesWithRetry();
 
@@ -532,7 +532,7 @@ namespace PPMTool.Services
         {
             var newStatus = project.ProjectStatus;
             if (oldStatus != newStatus && oldStatus == ProjectStatus.NewRequest)
-                project.RequestCompletedDate = ImportHelper.AsUnspecifiedKind(DateTime.Today);
+                project.RequestCompletedDate = GeneralHelpers.AsUnspecifiedKind(DateTime.Today);
 
             // Resources are kept on finished projects as a historical record, as in the UI.
             if (newStatus.IsCancelled())
@@ -649,7 +649,18 @@ namespace PPMTool.Services
             ActivityCode = activityCode.Trim(),
             ActivityName = projectName,
             IsActive = true,
-            Tasks = ImportHelper.DefaultInnateCodeTasks(),
+            Tasks = DefaultInnateCodeTasks(),
+        };
+
+        /// <summary>
+        /// The tasks a timesheet code created by projects/add or projects/update starts with.
+        /// </summary>
+        /// <returns>Default innate-code task templates.</returns>
+        private static List<InnateCodeTask> DefaultInnateCodeTasks() => new()
+        {
+            new() { TaskName = "Development", Duty = Duty.ProjectWork },
+            new() { TaskName = "Management", Duty = Duty.ProjectAndServiceMgmt },
+            new() { TaskName = "Maintenance", Duty = Duty.ProjectWork }
         };
     }
 }
