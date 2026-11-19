@@ -22,13 +22,13 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// Request body for POST /api/tasks/add. Creates a fixed-duration Task
+    /// Request body for POST /api/subtasks/add. Creates a fixed-duration Task
     /// with a fixed start and end and no predecessor, the shape CapX schedules
     /// without moving its dates.
     /// </summary>
     /// <param name="RTP">RTP of the Project</param>
     /// <param name="Name">Unique within the Project, except for Leadership (ProjectAndServiceMgmt) tasks, as in the UI</param>
-    /// <param name="TaskDuty">A <see cref="PPMTool.Data.Enums.Duty"/> name</param>
+    /// <param name="TaskDuty">A <see cref="PPMTool.Data.Enums.Duty"/> name, or its description as task reads return it</param>
     /// <param name="StartDate"></param>
     /// <param name="EndDate">On or after StartDate</param>
     /// <param name="Demand">FTE needed; sets both Demand and OriginalDemand. Greater than zero, at most 3 decimal places.</param>
@@ -52,16 +52,16 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// Request body for PUT /api/tasks/update. Identifies the Task by
+    /// Request body for PUT /api/subtasks/update. Identifies the Task by
     /// SubTaskId and changes the fields supplied. Doesn't change assignments:
-    /// see PUT /api/tasks/resourcing/update. Dates can only be changed on the
-    /// shape POST /api/tasks/add creates; on any other Task, CapX would
+    /// see PUT /api/resources/update. Dates can only be changed on the
+    /// shape POST /api/subtasks/add creates; on any other Task, CapX would
     /// recalculate them, so change them in the UI. A Project's last
     /// Leadership task can't be given another duty.
     /// </summary>
-    /// <param name="SubTaskId">From GET /api/tasks/getAll</param>
+    /// <param name="SubTaskId">From GET /api/subtasks/getAll</param>
     /// <param name="Name">Unique within the Project, as on creation</param>
-    /// <param name="TaskDuty">A <see cref="PPMTool.Data.Enums.Duty"/> name</param>
+    /// <param name="TaskDuty">A <see cref="PPMTool.Data.Enums.Duty"/> name, or its description as task reads return it</param>
     /// <param name="StartDate"></param>
     /// <param name="EndDate">On or after the resulting StartDate</param>
     /// <param name="Demand">FTE needed, at most 3 decimal places. Changes the current Demand; OriginalDemand keeps what was asked for at creation.</param>
@@ -98,13 +98,13 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// Request body for POST /api/tasks/resourcing/add. Adds assignments to an
+    /// Request body for POST /api/resources/add. Adds assignments to an
     /// existing Task. A person already assigned to the Task is rejected rather
-    /// than duplicated: use PUT /api/tasks/resourcing/update to change their
+    /// than duplicated: use PUT /api/resources/update to change their
     /// assignment. Not allowed on a fixed-work Task, whose dates CapX
     /// recalculates from the FTE assigned to it.
     /// </summary>
-    /// <param name="SubTaskId">From GET /api/tasks/getAll</param>
+    /// <param name="SubTaskId">From GET /api/subtasks/getAll</param>
     /// <param name="Resourcing">At least one assignment</param>
     public sealed record ImportTaskResourcingRequestDTO(
         int SubTaskId,
@@ -120,13 +120,13 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// Request body for PUT /api/tasks/resourcing/update. Identifies the
+    /// Request body for PUT /api/resources/update. Identifies the
     /// assignment by ResourceId and changes the fields supplied. Setting
     /// AssignmentFTE to zero retracts the assignment; there is no DELETE.
     /// Moving it to another Task (NewSubTaskId) is how its period changes.
     /// Not allowed when either Task is fixed-work.
     /// </summary>
-    /// <param name="ResourceId">From GET /api/tasks/resourcing/getAll</param>
+    /// <param name="ResourceId">From GET /api/resources/getAllForProject or GET /api/resources/getAll</param>
     /// <param name="AssignmentFTE">Zero or more, at most 3 decimal places</param>
     /// <param name="NewSubTaskId">Task to move the assignment to</param>
     /// <param name="IsProvisional"></param>

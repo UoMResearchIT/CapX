@@ -14,13 +14,19 @@ namespace PPMTool.API.DTOs
     /// <param name="Name">The name of the sub-task.</param>
     /// <param name="StartDate">The start date of the sub-task.</param>
     /// <param name="EndDate">The end date of the sub-task.</param>
-    /// <param name="TaskDuty">The task duty.</param>
+    /// <param name="TaskDuty">The task duty, as its description. The write endpoints accept this or the enum name.</param>
+    /// <param name="Demand">The FTE the task needs.</param>
+    /// <param name="OriginalDemand">The demand when the task was created.</param>
+    /// <param name="UnmetDemand">Demand not yet covered by assignments.</param>
     public sealed record SubTaskDTO(
         int SubTaskId,
         int OwningProjectProjectId,
         string Name,
         DateOnly StartDate,
         DateOnly EndDate,
-        string TaskDuty
+        string TaskDuty,
+        double Demand,
+        double OriginalDemand,
+        double UnmetDemand
     );
 }

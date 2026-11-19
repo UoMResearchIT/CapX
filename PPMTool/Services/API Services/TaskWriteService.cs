@@ -54,39 +54,6 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Validates a tasks-by-RTP lookup request.
-        /// </summary>
-        /// <param name="context">Database context.</param>
-        /// <param name="rtp">RTP value to look up.</param>
-        /// <returns>Validation errors, or an empty list when valid.</returns>
-        public List<string> ValidateTasksGet(PPMToolContext context, int rtp)
-        {
-            var errors = new List<string>();
-            if (projectService.GetByRTP(context, rtp) == null)
-                errors.Add($"RTP {rtp} does not match any Project");
-            return errors;
-        }
-
-        /// <summary>
-        /// Gets tasks for a project identified by RTP.
-        /// </summary>
-        /// <param name="context">Database context.</param>
-        /// <param name="rtp">RTP value to look up.</param>
-        /// <returns>Tasks for the project.</returns>
-        public List<TaskDTO> GetTasksForRTP(PPMToolContext context, int rtp)
-        {
-            var project = projectService.GetByRTP(context, rtp)!;
-
-            return project.SubTasks
-                .OrderBy(t => t.StartDate)
-                .Select(t => new TaskDTO(
-                    t.SubTaskId, rtp, t.Name, t.TaskDuty.ToString(),
-                    t.StartDate, t.EndDate, t.Demand, t.OriginalDemand, t.UnmetDemand
-                ))
-                .ToList();
-        }
-
-        /// <summary>
         /// Validates a task creation request without writing to the database.
         /// </summary>
         /// <param name="context">Database context.</param>
@@ -112,7 +79,7 @@ namespace PPMTool.Services
                 errors.Add("Name cannot be blank");
 
             Duty? duty = null;
-            if (!GeneralHelpers.TryParseDefined<Duty>(request.TaskDuty, out var parsedDuty))
+            if (!GeneralHelpers.TryParseNameOrDescription<Duty>(request.TaskDuty, out var parsedDuty))
                 errors.Add($"TaskDuty '{request.TaskDuty}' is not a valid value");
             else
                 duty = parsedDuty;
@@ -153,7 +120,7 @@ namespace PPMTool.Services
         public ImportTaskResponseDTO CreateTask(PPMToolContext context, ImportTaskDTO request)
         {
             var project = projectService.GetByRTP(context, request.RTP)!;
-            var duty = Enum.Parse<Duty>(request.TaskDuty);
+            GeneralHelpers.TryParseNameOrDescription<Duty>(request.TaskDuty, out var duty);
 
             var task = new SubTask
             {
@@ -216,7 +183,7 @@ namespace PPMTool.Services
             Duty? newDuty = null;
             if (request.TaskDuty != null)
             {
-                if (!GeneralHelpers.TryParseDefined<Duty>(request.TaskDuty, out var parsed))
+                if (!GeneralHelpers.TryParseNameOrDescription<Duty>(request.TaskDuty, out var parsed))
                     errors.Add($"TaskDuty '{request.TaskDuty}' is not a valid value");
                 else
                     newDuty = parsed;
@@ -291,7 +258,7 @@ namespace PPMTool.Services
             var (project, task) = FindProjectAndTaskById(context, request.SubTaskId)!.Value;
 
             if (request.Name != null) task.Name = request.Name;
-            if (request.TaskDuty != null) task.TaskDuty = Enum.Parse<Duty>(request.TaskDuty);
+            if (request.TaskDuty != null && GeneralHelpers.TryParseNameOrDescription<Duty>(request.TaskDuty, out var newDuty)) task.TaskDuty = newDuty;
             if (request.StartDate.HasValue) task.StartDate = GeneralHelpers.AsUnspecifiedKind(request.StartDate.Value);
             if (request.EndDate.HasValue) task.EndDate = GeneralHelpers.AsUnspecifiedKind(request.EndDate.Value);
             if (request.Demand.HasValue) task.Demand = request.Demand.Value;
@@ -304,62 +271,6 @@ namespace PPMTool.Services
             context.SaveChangesWithRetry();
 
             return new UpdateTaskResponseDTO(task.SubTaskId);
-        }
-
-        /// <summary>
-        /// Validates a task-resourcing-by-RTP lookup request.
-        /// </summary>
-        /// <param name="context">Database context.</param>
-        /// <param name="rtp">RTP value to look up.</param>
-        /// <returns>Validation errors, or an empty list when valid.</returns>
-        public List<string> ValidateTaskResourcingGet(PPMToolContext context, int rtp)
-        {
-            var errors = new List<string>();
-            if (projectService.GetByRTP(context, rtp) == null)
-                errors.Add($"RTP {rtp} does not match any Project");
-            return errors;
-        }
-
-        /// <summary>
-        /// Gets task resourcing for a project identified by RTP.
-        /// </summary>
-        /// <param name="context">Database context.</param>
-        /// <param name="rtp">RTP value to look up.</param>
-        /// <returns>Resourcing rows for tasks in the project.</returns>
-        public List<TaskResourceDTO> GetResourcingForRTP(PPMToolContext context, int rtp)
-        {
-            var project = projectService.GetByRTP(context, rtp)!;
-
-            var personIds = project.SubTasks
-                .SelectMany(t => t.AssignedResources)
-                .Select(r => r.Person.PersonId)
-                .Distinct()
-                .ToList();
-            var usernamesByPersonId = context.Users
-                .Where(u => u.Person != null && personIds.Contains(u.Person.PersonId))
-                .OrderBy(u => u.UserId)
-                .Select(u => new { u.Person!.PersonId, u.CASUserName })
-                .ToList()
-                .GroupBy(x => x.PersonId)
-                .ToDictionary(g => g.Key, g => g.First().CASUserName);
-
-            return project.SubTasks
-                .OrderBy(t => t.StartDate)
-                .SelectMany(t => t.AssignedResources.Select(r => new TaskResourceDTO(
-                    r.ResourceId,
-                    t.SubTaskId,
-                    rtp,
-                    t.Name,
-                    t.TaskDuty.ToString(),
-                    t.StartDate,
-                    t.EndDate,
-                    r.Person.PersonId,
-                    r.Person.Name,
-                    usernamesByPersonId.GetValueOrDefault(r.Person.PersonId),
-                    r.AssignmentFTE,
-                    r.IsProvisional
-                )))
-                .ToList();
         }
 
         /// <summary>
@@ -574,7 +485,7 @@ namespace PPMTool.Services
                     errors.Add(tooLate);
 
                 if (existingTask != null && existingTask.AssignedResources.Any(existing => existing.Person.PersonId == person.PersonId))
-                    errors.Add($"'{assignee}' is already assigned to SubTaskId {existingTask.SubTaskId} -- use PUT /api/tasks/resourcing/update to change the existing assignment");
+                    errors.Add($"'{assignee}' is already assigned to SubTaskId {existingTask.SubTaskId} -- use PUT /api/resources/update to change the existing assignment");
                 if (!seenPersonIds.Add(person.PersonId))
                     errors.Add($"'{assignee}' appears more than once in this request");
             }

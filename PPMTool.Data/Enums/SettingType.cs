@@ -112,7 +112,7 @@ namespace PPMTool.Data.Enums
         [DefaultSettingValue("")]
         LLMModel = 24,
 
-        [Description("Whether the write endpoints (POST and PUT methods) are enabled on the API, along with the notes, tasks and resourcing reads beside them. Default: false: Superuser API key required.")]
+        [Description("Whether the write endpoints (POST and PUT methods) are enabled on the API, along with the notes read beside them. Default: false: Superuser API key required.")]
         [DefaultSettingValue("false")]
         WriteApiEndpointsEnabled = 25
     }

@@ -347,6 +347,7 @@ api.MapGet("/subtasks/getAll", SubTasks.GetAllSubTasksAsync);
 api.MapGet("/subtasks/getById", SubTasks.GetSubTaskByIdAsync);
 api.MapGet("/resources/getAll", Resources.GetAllResourcesAsync);
 api.MapGet("/resources/getById", Resources.GetResourceByIdAsync);
+api.MapGet("/resources/getAllForProject", Resources.GetAllResourcesForProjectAsync);
 api.MapGet("/schools/getAll", Schools.GetAllSchoolsAsync);
 api.MapGet("/schools/getById", Schools.GetSchoolByIdAsync);
 api.MapGet("/faculties/getAll", Faculties.GetAllFacultiesAsync);
@@ -354,8 +355,6 @@ api.MapGet("/faculties/getById", Faculties.GetFacultyByIdAsync);
 api.MapGet("/financialreferences/getAll", FinancialReferences.GetAllFinancialReferencesAsync);
 api.MapGet("/financialreferences/getByFinancialYear", FinancialReferences.GetFinancialReferenceByFinancialYearAsync);
 api.MapGet("/projects/notes/getAll", Projects.GetNotes);
-api.MapGet("/tasks/getAll", Tasks.GetTasks);
-api.MapGet("/tasks/resourcing/getAll", Tasks.GetResourcing);
 
 // Map POST (write) API endpoints
 api.MapPost("/faculties/add", Faculties.CreateFaculty);
@@ -366,8 +365,8 @@ api.MapPost("/workloadmodels/add", WorkloadModels.CreateWorkloadModelChange);
 api.MapPost("/people/add", People.CreatePerson);
 api.MapPost("/users/add", Users.CreateUser);
 api.MapPost("/projects/notes/add", Projects.AddNotes);
-api.MapPost("/tasks/add", Tasks.CreateTask);
-api.MapPost("/tasks/resourcing/add", Tasks.AddResourcing);
+api.MapPost("/subtasks/add", SubTasks.CreateSubTask);
+api.MapPost("/resources/add", Resources.AddResources);
 
 // Map PUT (update) API endpoints. workloadmodels/add updates a change on the
 // same date, so it has no separate PUT.
@@ -377,8 +376,8 @@ api.MapPut("/projects/update", Projects.UpdateProject);
 api.MapPut("/people/update", People.UpdatePerson);
 api.MapPut("/projects/notes/update", Projects.UpdateNote);
 api.MapPut("/timesheets/update", Timesheets.UpdateTimesheetEntry);
-api.MapPut("/tasks/update", Tasks.UpdateTask);
-api.MapPut("/tasks/resourcing/update", Tasks.UpdateResourcing);
+api.MapPut("/subtasks/update", SubTasks.UpdateSubTask);
+api.MapPut("/resources/update", Resources.UpdateResource);
 
 // API middleware -- conditional on /api routes only
 app.UseWhen(

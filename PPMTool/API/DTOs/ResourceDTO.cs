@@ -16,6 +16,9 @@ namespace PPMTool.API.DTOs
     /// <param name="AssignmentFTE">The assignment FTE.</param>
     /// <param name="BilledFTE">The billed FTE.</param>
     /// <param name="PlannedCost">The planned cost.</param>
+    /// <param name="PersonName">The name of the person assigned.</param>
+    /// <param name="Usernames">Usernames (CASUserName) of every User linked to the person, in UserId order; empty if they have none.</param>
+    /// <param name="IsProvisional">Whether the assignment is provisional.</param>
     public sealed record ResourceDTO(
         int ResourceId,
         int SubTaskId,
@@ -23,6 +26,9 @@ namespace PPMTool.API.DTOs
         int? FundedFromFundingSourceId,
         double AssignmentFTE,
         double BilledFTE,
-        double PlannedCost
+        double PlannedCost,
+        string PersonName,
+        IReadOnlyList<string> Usernames,
+        bool IsProvisional
     );
 }

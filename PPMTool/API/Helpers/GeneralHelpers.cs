@@ -334,20 +334,21 @@ public static class GeneralHelpers
         Enum.TryParse(value, out result) && Enum.IsDefined(result);
 
     /// <summary>
-    /// Parses a cost model given either as its enum name or as its description, the form
-    /// project reads return, so a value read can be written back.
+    /// Parses an enum value given either as its name or as its description, the form reads
+    /// return (a project's cost model, a task's duty), so a value read can be written back.
     /// </summary>
+    /// <typeparam name="TEnum">Enum type.</typeparam>
     /// <param name="value">Value to parse.</param>
-    /// <param name="result">Parsed cost model when successful.</param>
-    /// <returns><c>true</c> when the value names a cost model; otherwise <c>false</c>.</returns>
-    internal static bool TryParseCostModel(string value, out CostModel result)
+    /// <param name="result">Parsed enum value when successful.</param>
+    /// <returns><c>true</c> when the value names a defined enum value; otherwise <c>false</c>.</returns>
+    internal static bool TryParseNameOrDescription<TEnum>(string value, out TEnum result) where TEnum : struct, Enum
     {
         if (TryParseDefined(value, out result)) return true;
-        foreach (var model in Enum.GetValues<CostModel>())
+        foreach (var candidate in Enum.GetValues<TEnum>())
         {
-            if (string.Equals(model.GetDescription(), value?.Trim(), StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(candidate.GetDescription(), value?.Trim(), StringComparison.OrdinalIgnoreCase))
             {
-                result = model;
+                result = candidate;
                 return true;
             }
         }

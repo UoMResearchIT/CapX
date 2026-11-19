@@ -94,7 +94,7 @@ namespace PPMTool.Services
 
             if (string.IsNullOrWhiteSpace(request.PI)) errors.Add("PI is required");
             if (string.IsNullOrWhiteSpace(request.RequestDocLink)) errors.Add("RequestDocLink is required");
-            if (!GeneralHelpers.TryParseCostModel(request.CostModel, out var costModel))
+            if (!GeneralHelpers.TryParseNameOrDescription<CostModel>(request.CostModel, out var costModel))
                 errors.Add($"CostModel '{request.CostModel}' is not a valid value");
             else if (costModel == CostModel.DayRate && request.DayRate <= 0)
                 errors.Add("DayRate must be greater than zero when CostModel is 'DayRate'");
@@ -142,7 +142,7 @@ namespace PPMTool.Services
             var projectManager = string.IsNullOrWhiteSpace(request.ProjectManagerUsername)
                 ? null
                 : userService.GetByUsernameWithWorkloadModels(context, request.ProjectManagerUsername)?.Person;
-            GeneralHelpers.TryParseCostModel(request.CostModel, out var costModel);
+            GeneralHelpers.TryParseNameOrDescription<CostModel>(request.CostModel, out var costModel);
 
             var project = new Project
             {
@@ -291,7 +291,7 @@ namespace PPMTool.Services
             CostModel? costModel = null;
             if (request.CostModel != null)
             {
-                if (!GeneralHelpers.TryParseCostModel(request.CostModel, out var parsed))
+                if (!GeneralHelpers.TryParseNameOrDescription<CostModel>(request.CostModel, out var parsed))
                     errors.Add($"CostModel '{request.CostModel}' is not a valid value");
                 else
                     costModel = parsed;
@@ -336,7 +336,7 @@ namespace PPMTool.Services
                     ? null
                     : userService.GetByUsernameWithWorkloadModels(context, request.ProjectManagerUsername)!.Person!;
             if (request.Budget.HasValue) project.Budget = request.Budget.Value;
-            if (request.CostModel != null && GeneralHelpers.TryParseCostModel(request.CostModel, out var costModel)) project.CostModel = costModel;
+            if (request.CostModel != null && GeneralHelpers.TryParseNameOrDescription<CostModel>(request.CostModel, out var costModel)) project.CostModel = costModel;
             if (request.DayRate.HasValue) project.DayRate = request.DayRate.Value;
             if (project.CostModel != CostModel.DayRate) project.DayRate = 0;
             if (request.ProjectStatus != null) project.ProjectStatus = Enum.Parse<ProjectStatus>(request.ProjectStatus);
