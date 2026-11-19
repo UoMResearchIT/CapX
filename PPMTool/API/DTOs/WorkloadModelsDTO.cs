@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+#nullable enable
+
 namespace PPMTool.API.DTOs
 {
     /// <summary>
@@ -47,7 +49,7 @@ namespace PPMTool.API.DTOs
         int PersonId,
         DateOnly ChangeDate,
         int Grade,
-        string CostValueKey,
+        string? CostValueKey,
         double ProjectWorkFTE,
         double StaffManagementFTE,
         double ProjectManagementFTE,

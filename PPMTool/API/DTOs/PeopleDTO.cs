@@ -21,14 +21,14 @@ namespace PPMTool.API.DTOs
     /// <param name="Username">Username (CASUserName) of the Person's User, or null if they have none. Where a Person has more than one User, the one with the lowest UserId.</param>
     public sealed record PersonDTO(
         int PersonId,
-        string EmployeeId,
+        string? EmployeeId,
         string Name,
         string ShortName,
         double PostFTE,
         DateOnly StartDate,
         DateOnly? EndDate,
         int? LineManagerId,
-        string LineManagerName,
+        string? LineManagerName,
         string? Username
     );
 }

@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+#nullable enable
+
 namespace PPMTool.API.DTOs
 {
     /// <summary>
@@ -33,11 +35,11 @@ namespace PPMTool.API.DTOs
         string Name,
         string PrincipalInvestigator,
         int? ProjectManagerId,
-        string ProjectManagerName,
-        string TimesheetActivityCode,
-        string TimesheetActivityName,
+        string? ProjectManagerName,
+        string? TimesheetActivityCode,
+        string? TimesheetActivityName,
         string RequestDocLink,
-        string ScrumProjectLink,
+        string? ScrumProjectLink,
         string ProjectStatus,
         int SchoolId,
         string CostModel,

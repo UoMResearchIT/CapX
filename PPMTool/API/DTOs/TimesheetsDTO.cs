@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+#nullable enable
+
 namespace PPMTool.API.DTOs
 {
     /// <summary>
@@ -56,7 +58,7 @@ namespace PPMTool.API.DTOs
         DateTime StartDate,
         string Status,
         DateTime DateStatusChanged,
-        string Info,
+        string? Info,
         IReadOnlyList<TimesheetEntryDTO> Entries
     );
 
