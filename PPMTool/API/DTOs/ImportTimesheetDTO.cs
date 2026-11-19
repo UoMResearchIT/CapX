@@ -8,10 +8,11 @@ namespace PPMTool.API.DTOs
 {
     /// <summary>
     /// Request body for POST /api/timesheets/add. One person's hours for one
-    /// week on one task of a Project's timesheet code. Writes into the
-    /// person's existing timesheet for that week whatever its status, or
-    /// creates an Approved one. Only Approved timesheets count towards a
-    /// Project's actuals. Sending the same person, week and task again
+    /// week on one task of a Project's timesheet code. If the person has no
+    /// timesheet for that week, one is created, already Approved. If they
+    /// have one, the hours go into it and its status is left alone, unless
+    /// ApproveExistingTimesheet is set. Only Approved timesheets appear in a
+    /// Project's Actuals Report. Sending the same person, week and task again
     /// replaces that entry's hours. Name the person by exactly one of
     /// Username or PersonId.
     /// </summary>
@@ -27,6 +28,7 @@ namespace PPMTool.API.DTOs
     /// <param name="FridayHours"></param>
     /// <param name="SaturdayHours"></param>
     /// <param name="SundayHours"></param>
+    /// <param name="ApproveExistingTimesheet">Dangerous; defaults to false. When true and the person already has a timesheet for the week that isn't Approved (a draft, submitted or rejected), it is marked Approved, with the caller recorded as approver. Approval covers the whole week: any hours the person entered themselves, on any project, are approved too, without their submitting them or their line manager seeing them.</param>
     public sealed record ImportTimesheetEntryDTO(
         string? Username,
         int? PersonId,
@@ -39,7 +41,8 @@ namespace PPMTool.API.DTOs
         double ThursdayHours,
         double FridayHours,
         double SaturdayHours,
-        double SundayHours
+        double SundayHours,
+        bool ApproveExistingTimesheet = false
     );
 
     /// <summary>Response for a written timesheet entry.</summary>
@@ -47,11 +50,13 @@ namespace PPMTool.API.DTOs
     /// <param name="TimesheetCreated">False if the person already had a timesheet for that week</param>
     /// <param name="EntryCreated">False if an existing entry for the task was updated</param>
     /// <param name="TotalHours">The entry's hours for the week</param>
+    /// <param name="TimesheetStatus">The timesheet's status after the write, as a PPMTool.Data.Enums.TimesheetStatus name. Anything but "Approved" means these hours aren't in the Actuals Report yet.</param>
     public sealed record ImportTimesheetResponseDTO(
         int TimesheetId,
         bool TimesheetCreated,
         bool EntryCreated,
-        double TotalHours
+        double TotalHours,
+        string? TimesheetStatus = null
     );
 
     /// <summary>

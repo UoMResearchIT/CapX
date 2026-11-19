@@ -270,7 +270,7 @@ public static class Timesheets
                 // A new Timesheet is committed before its entry is saved, so a failure
                 // on the entry would otherwise leave an empty Timesheet behind.
                 using var transaction = context.Database.BeginTransaction();
-                var result = importService.CreateOrUpdateTimesheetEntry(context, request);
+                var result = importService.CreateOrUpdateTimesheetEntry(context, request, caller);
                 transaction.Commit();
                 logger.LogInformation(
                     "API: Timesheets: timesheet {TimesheetId} for {Person}, week {Week}, project {ProjectId}: {Hours}h ({Created}) by {User}",

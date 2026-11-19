@@ -82,8 +82,9 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming timesheet-entry request.</param>
+        /// <param name="caller">The API caller, recorded as approver of any timesheet this approves.</param>
         /// <returns>Identifier payload for the timesheet and entry creation outcome.</returns>
-        public ImportTimesheetResponseDTO CreateOrUpdateTimesheetEntry(PPMToolContext context, ImportTimesheetEntryDTO request)
+        public ImportTimesheetResponseDTO CreateOrUpdateTimesheetEntry(PPMToolContext context, ImportTimesheetEntryDTO request, User caller)
         {
             var person = !string.IsNullOrWhiteSpace(request.Username)
                 ? ImportHelper.FindUserByUsername(context, request.Username)!.Person!
@@ -97,6 +98,13 @@ namespace PPMTool.Services
                 .FirstOrDefault(t => t.Owner.PersonId == person.PersonId && t.StartDate == weekStartDate);
 
             var timesheetCreated = timesheet == null;
+            if (timesheet != null && request.ApproveExistingTimesheet && timesheet.Status != TimesheetStatus.Approved)
+            {
+                // Recorded as the UI records an approval (AddTimesheet.razor.cs).
+                timesheet.Status = TimesheetStatus.Approved;
+                timesheet.DateStatusChanged = DateTime.Now;
+                timesheet.StatusChangedBy = caller.Person;
+            }
             if (timesheet == null)
             {
                 timesheet = new Timesheet
@@ -105,6 +113,7 @@ namespace PPMTool.Services
                     StartDate = weekStartDate,
                     Status = TimesheetStatus.Approved,
                     DateStatusChanged = DateTime.Now,
+                    StatusChangedBy = caller.Person,
                 };
                 var timesheetId = timesheetService.Add(context, timesheet);
                 if (timesheetId < 0)
@@ -129,7 +138,7 @@ namespace PPMTool.Services
             entry.UpdateTotalHours();
             context.SaveChangesWithRetry();
 
-            return new ImportTimesheetResponseDTO(timesheet.TimesheetId, timesheetCreated, entryCreated, entry.TotalHours);
+            return new ImportTimesheetResponseDTO(timesheet.TimesheetId, timesheetCreated, entryCreated, entry.TotalHours, timesheet.Status.ToString());
         }
 
         /// <summary>
