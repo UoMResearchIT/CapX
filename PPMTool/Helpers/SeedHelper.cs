@@ -12,6 +12,7 @@ using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
+using PPMTool.Services;
 
 namespace PPMTool.Helpers
 {
@@ -558,6 +559,24 @@ namespace PPMTool.Helpers
                 context.ApiKeys.AddRange(keysToAdd);
                 context.SaveChanges();
             }
+        }
+
+        /// <summary>
+        /// Switch the write endpoints on for dummy data, which exists for development and testing,
+        /// so tests can exercise them. Runs after the settings cache is initialised, so the change
+        /// reaches the cache as well as the database.
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        internal static void EnableWriteApiForDummyData(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var settingsService = serviceProvider.GetRequiredService<SettingsService>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Enabling the write API endpoints for dummy data...");
+            using var context = dbContextFactory.CreateDbContext();
+            var setting = context.Settings.First(x => x.SettingType == SettingType.WriteApiEndpointsEnabled);
+            setting.SettingValue = "true";
+            settingsService.UpdateSettingValue(context, setting);
         }
 
         /// <summary>

@@ -82,10 +82,10 @@ namespace PPMTool.Tests.API
         }
 
         /// <summary>
-        /// Setup for API tests. Retrieved the API keys for a manager and developer from the database and sets them for use in tests.
+        /// Creates a context on the database the application under test uses.
         /// </summary>
-        /// <exception cref="Exception"></exception>
-        protected void SetupForAPI()
+        /// <returns></returns>
+        protected static PPMToolContext CreateDbContext()
         {
             // Build configuration from user secrets and environment variables
             var config = new ConfigurationBuilder()
@@ -109,8 +109,16 @@ namespace PPMTool.Tests.API
 
             var options = new DbContextOptionsBuilder<PPMToolContext>();
             options.AddDbProvider(connectionString, dbProvider);
+            return new PPMToolContext(options.Options);
+        }
 
-            using (var context = new PPMToolContext(options.Options))
+        /// <summary>
+        /// Setup for API tests. Retrieved the API keys for a manager and developer from the database and sets them for use in tests.
+        /// </summary>
+        /// <exception cref="Exception"></exception>
+        protected void SetupForAPI()
+        {
+            using (var context = CreateDbContext())
             {
                 // Get valid API keys with related owner and person data
                 var keys = context.ApiKeys

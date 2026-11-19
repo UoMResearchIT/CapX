@@ -467,6 +467,12 @@ using (var context = dbContextFactory.CreateDbContext())
     var settingsService = app.Services.GetRequiredService<SettingsService>();
     await settingsService.IntialiseServiceCacheAsync(context);
 
+    // Dummy data is for development and testing, so let its API keys use the write endpoints
+    if (shouldSeed)
+    {
+        SeedHelper.EnableWriteApiForDummyData(scope.ServiceProvider);
+    }
+
     // Initialise the feature cache
     var featureService = app.Services.GetRequiredService<FeatureService>();
     await featureService.IntialiseServiceCacheAsync(context);
