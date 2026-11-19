@@ -39,7 +39,7 @@ namespace PPMTool.Tests.API.Projects
             using (var client = GetClientAsManager())
             {
                 var project = await client.GetFromJsonAsync<JsonElement>($"projects/getById?projectId={ProjectId}");
-                Assert.That(project.GetProperty("schoolCode").GetString(), Is.Not.Empty);
+                Assert.That(project.GetProperty("schoolId").GetInt32(), Is.GreaterThan(0));
                 Assert.That(project.GetProperty("budget").ValueKind, Is.EqualTo(JsonValueKind.Number));
                 Assert.That(project.GetProperty("dayRate").ValueKind, Is.EqualTo(JsonValueKind.Number));
                 Assert.That(Enum.TryParse<CostModel>(project.GetProperty("costModelName").GetString(), out _));

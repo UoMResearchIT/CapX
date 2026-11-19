@@ -95,10 +95,10 @@ namespace PPMTool.Services
             if (request.ManagementEndDate.Date < request.ManagementStartDate.Date)
                 errors.Add("ManagementEndDate must be on or after ManagementStartDate");
 
-            if (string.IsNullOrWhiteSpace(request.SchoolCode))
-                errors.Add("SchoolCode is required");
-            else if (ImportHelper.FindActiveSchoolByCode(context, request.SchoolCode) == null)
-                errors.Add($"SchoolCode '{request.SchoolCode}' does not match any active School");
+            if (string.IsNullOrWhiteSpace(request.SchoolCode) && request.SchoolId == null)
+                errors.Add("SchoolCode or SchoolId is required");
+            else
+                ResolveSchool(context, request.SchoolId, request.SchoolCode, errors);
 
             if (!string.IsNullOrWhiteSpace(request.ProjectManagerUsername) && ImportHelper.FindUserByUsername(context, request.ProjectManagerUsername)?.Person == null)
                 errors.Add($"ProjectManagerUsername '{request.ProjectManagerUsername}' not found, or has no linked Person");
@@ -130,7 +130,7 @@ namespace PPMTool.Services
         /// <returns>Identifier payload for the created project and related record counts.</returns>
         public ImportProjectResponseDTO Create(PPMToolContext context, ImportProjectRequestDTO request, User caller)
         {
-            var school = ImportHelper.FindActiveSchoolByCode(context, request.SchoolCode)!;
+            var school = ResolveSchool(context, request.SchoolId, request.SchoolCode, new List<string>())!;
             var projectManager = string.IsNullOrWhiteSpace(request.ProjectManagerUsername)
                 ? null
                 : ImportHelper.FindUserByUsername(context, request.ProjectManagerUsername)?.Person;
@@ -296,8 +296,8 @@ namespace PPMTool.Services
             if (request.ProjectStatus != null && !ImportHelper.TryParseDefined<ProjectStatus>(request.ProjectStatus, out _))
                 errors.Add($"ProjectStatus '{request.ProjectStatus}' is not a valid value");
 
-            if (request.SchoolCode != null && ImportHelper.FindActiveSchoolByCode(context, request.SchoolCode) == null)
-                errors.Add($"SchoolCode '{request.SchoolCode}' does not match any active School");
+            if (request.SchoolCode != null || request.SchoolId != null)
+                ResolveSchool(context, request.SchoolId, request.SchoolCode, errors);
 
             if (!string.IsNullOrEmpty(request.ProjectManagerUsername) && ImportHelper.FindUserByUsername(context, request.ProjectManagerUsername)?.Person == null)
                 errors.Add($"ProjectManagerUsername '{request.ProjectManagerUsername}' not found, or has no linked Person");
@@ -321,7 +321,8 @@ namespace PPMTool.Services
 
             if (request.Name != null) project.Name = request.Name;
             if (request.PI != null) project.PI = request.PI;
-            if (request.SchoolCode != null) project.School = ImportHelper.FindActiveSchoolByCode(context, request.SchoolCode)!;
+            if (request.SchoolCode != null || request.SchoolId != null)
+                project.School = ResolveSchool(context, request.SchoolId, request.SchoolCode, new List<string>())!;
             if (request.ProjectManagerUsername != null)
                 project.ProjectManager = request.ProjectManagerUsername == ""
                     ? null
@@ -484,6 +485,30 @@ namespace PPMTool.Services
             context.SaveChangesWithRetry();
 
             return new UpdateNoteResponseDTO(note.NoteId);
+        }
+
+        /// <summary>
+        /// Finds the active School a request names by <paramref name="schoolId"/>, by
+        /// <paramref name="schoolCode"/>, or by both, which must then agree.
+        /// </summary>
+        /// <param name="context">Database context.</param>
+        /// <param name="schoolId">School id from the request, if any.</param>
+        /// <param name="schoolCode">School code from the request, if any.</param>
+        /// <param name="errors">Receives an error for each problem found.</param>
+        /// <returns>The School, or <c>null</c> when an error was added.</returns>
+        private static School? ResolveSchool(PPMToolContext context, int? schoolId, string? schoolCode, List<string> errors)
+        {
+            School? byId = null, byCode = null;
+            if (schoolId != null && (byId = ImportHelper.FindActiveSchoolById(context, schoolId.Value)) == null)
+                errors.Add($"SchoolId {schoolId} does not match any active School");
+            if (!string.IsNullOrWhiteSpace(schoolCode) && (byCode = ImportHelper.FindActiveSchoolByCode(context, schoolCode)) == null)
+                errors.Add($"SchoolCode '{schoolCode}' does not match any active School");
+            if (byId != null && byCode != null && byId.SchoolId != byCode.SchoolId)
+            {
+                errors.Add($"SchoolId {schoolId} and SchoolCode '{schoolCode}' name different Schools");
+                return null;
+            }
+            return byId ?? byCode;
         }
 
         /// <summary>

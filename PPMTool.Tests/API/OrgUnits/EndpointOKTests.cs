@@ -2,6 +2,9 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+using System.Net.Http.Json;
+using System.Text.Json;
+
 namespace PPMTool.Tests.API.OrgUnits
 {
     [TestFixture]
@@ -24,6 +27,17 @@ namespace PPMTool.Tests.API.OrgUnits
             {
                 var response = await client.GetAsync($"schools/getById?schoolId={SchoolId}");
                 Assert.That(response.IsSuccessStatusCode);
+            }
+        }
+
+        [Test]
+        public async Task GetSchoolByIdShouldReturnCode()
+        {
+            // The write endpoints can name a School by code, so reads must return it.
+            using (var client = GetClientAsManager())
+            {
+                var school = await client.GetFromJsonAsync<JsonElement>($"schools/getById?schoolId={SchoolId}");
+                Assert.That(school.GetProperty("code").GetString(), Is.Not.Empty);
             }
         }
 

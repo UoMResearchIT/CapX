@@ -12,9 +12,11 @@ namespace PPMTool.API.DTOs
     /// <param name="SchoolId">The unique school ID.</param>
     /// <param name="FacultyId">The ID of the faculty that the school belongs to.</param>
     /// <param name="Name">The name of the school.</param>
+    /// <param name="Code">The school's code, as the write endpoints accept it.</param>
     public sealed record SchoolDTO(
         int SchoolId,
         int FacultyId,
-        string Name
+        string Name,
+        string Code
     );
 }

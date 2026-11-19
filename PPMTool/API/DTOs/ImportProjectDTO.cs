@@ -47,7 +47,7 @@ namespace PPMTool.API.DTOs
     /// <param name="Name">Must be unique</param>
     /// <param name="RTP">Must be unique and greater than zero</param>
     /// <param name="PI"></param>
-    /// <param name="SchoolCode">Code of an active School</param>
+    /// <param name="SchoolCode">Code of an active School. Give this or SchoolId.</param>
     /// <param name="ProjectManagerUsername">Username of the Project Manager, if any; must have a linked Person</param>
     /// <param name="Budget"></param>
     /// <param name="CostModel">A <see cref="PPMTool.Data.Enums.CostModel"/> name</param>
@@ -60,12 +60,13 @@ namespace PPMTool.API.DTOs
     /// <param name="ManagementEndDate">End of the Leadership task; on or after ManagementStartDate</param>
     /// <param name="Resourcing">Assignments to create on the Delivery task, if any</param>
     /// <param name="Comments">Comments to add as Notes, if any</param>
+    /// <param name="SchoolId">Id of an active School, as an alternative to SchoolCode. If both are given, they must name the same School.</param>
     /// <param name="TimesheetActivityCode">Timesheet code to link the Project to. An existing code is linked as it is, provided no other Project uses it; otherwise a code is created with this activity code, named after the Project, with tasks Development, Management and Maintenance. Without one, the Project has no code and can't receive timesheet entries until one is linked.</param>
     public sealed record ImportProjectRequestDTO(
         string Name,
         int RTP,
         string PI,
-        string SchoolCode,
+        string? SchoolCode,
         string? ProjectManagerUsername,
         double Budget,
         string CostModel,
@@ -78,7 +79,8 @@ namespace PPMTool.API.DTOs
         DateTime ManagementEndDate,
         IReadOnlyList<ImportResourcingDTO>? Resourcing,
         IReadOnlyList<ImportCommentDTO>? Comments,
-        string? TimesheetActivityCode = null
+        string? TimesheetActivityCode = null,
+        int? SchoolId = null
     );
 
     /// <summary>Response for a created Project.</summary>
@@ -112,6 +114,7 @@ namespace PPMTool.API.DTOs
     /// <param name="Description">HTML; sanitised on save</param>
     /// <param name="RequestDocLink"></param>
     /// <param name="ScrumProjectLink">An empty string clears it</param>
+    /// <param name="SchoolId">Id of an active School, as an alternative to SchoolCode. If both are given, they must name the same School.</param>
     /// <param name="TimesheetActivityCode">Timesheet code to link the Project to, as for POST /api/projects/add. The current code can't be replaced while it has timesheet entries, since the Project's actuals come through it; an unused current code that no other Project uses is renamed instead. The link can't be cleared.</param>
     public sealed record UpdateProjectRequestDTO(
         int RTP,
@@ -126,7 +129,8 @@ namespace PPMTool.API.DTOs
         string? Description,
         string? RequestDocLink,
         string? ScrumProjectLink,
-        string? TimesheetActivityCode = null
+        string? TimesheetActivityCode = null,
+        int? SchoolId = null
     );
 
     /// <summary>Response for an updated Project.</summary>

@@ -96,6 +96,17 @@ namespace PPMTool.API.Helpers
                 .FirstOrDefault(s => s.IsActive && s.Code.Trim().ToLower() == code.Trim().ToLower());
 
         /// <summary>
+        /// Finds an active school by id.
+        /// </summary>
+        /// <param name="context">Database context.</param>
+        /// <param name="schoolId">School id to resolve.</param>
+        /// <returns>The matching active school, or <c>null</c> when none exists.</returns>
+        internal static School FindActiveSchoolById(PPMToolContext context, int schoolId) =>
+            context.Schools
+                .Include(s => s.Faculty)
+                .FirstOrDefault(s => s.IsActive && s.SchoolId == schoolId);
+
+        /// <summary>
         /// Finds an innate code by its activity code, ignoring case and surrounding whitespace.
         /// </summary>
         /// <param name="context">Database context.</param>

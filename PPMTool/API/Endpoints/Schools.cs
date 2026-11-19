@@ -49,7 +49,8 @@ namespace PPMTool.API.Endpoints
                 var schoolDtos = schools.Select(x => new SchoolDTO(
                     SchoolId: x.SchoolId,
                     FacultyId: x.Faculty.FacultyId,
-                    Name: x.Name
+                    Name: x.Name,
+                    Code: x.Code
                 )).ToList();
 
                 logger.LogInformation(
@@ -120,7 +121,8 @@ namespace PPMTool.API.Endpoints
                 var dto = new SchoolDTO(
                     SchoolId: school.SchoolId,
                     FacultyId: school.Faculty.FacultyId,
-                    Name: school.Name
+                    Name: school.Name,
+                    Code: school.Code
                 );
 
                 logger.LogInformation(
