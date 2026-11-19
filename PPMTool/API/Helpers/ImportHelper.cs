@@ -46,6 +46,27 @@ namespace PPMTool.API.Helpers
             Enum.TryParse(value, out result) && Enum.IsDefined(result);
 
         /// <summary>
+        /// Parses a cost model given either as its enum name or as its description, the form
+        /// project reads return, so a value read can be written back.
+        /// </summary>
+        /// <param name="value">Value to parse.</param>
+        /// <param name="result">Parsed cost model when successful.</param>
+        /// <returns><c>true</c> when the value names a cost model; otherwise <c>false</c>.</returns>
+        internal static bool TryParseCostModel(string value, out CostModel result)
+        {
+            if (TryParseDefined(value, out result)) return true;
+            foreach (var model in Enum.GetValues<CostModel>())
+            {
+                if (string.Equals(model.GetDescription(), value?.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    result = model;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
         /// Determines whether a number contains significant digits beyond three decimal places.
         /// </summary>
         /// <param name="number">Number to test.</param>

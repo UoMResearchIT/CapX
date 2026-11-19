@@ -42,7 +42,7 @@ namespace PPMTool.Tests.API.Projects
                 Assert.That(project.GetProperty("schoolId").GetInt32(), Is.GreaterThan(0));
                 Assert.That(project.GetProperty("budget").ValueKind, Is.EqualTo(JsonValueKind.Number));
                 Assert.That(project.GetProperty("dayRate").ValueKind, Is.EqualTo(JsonValueKind.Number));
-                Assert.That(Enum.TryParse<CostModel>(project.GetProperty("costModelName").GetString(), out _));
+                Assert.That(Enum.GetValues<CostModel>().Select(x => x.GetDescription()), Does.Contain(project.GetProperty("costModel").GetString()));
                 Assert.That(project.GetProperty("description").ValueKind, Is.EqualTo(JsonValueKind.String));
             }
         }

@@ -63,7 +63,6 @@ public static class Projects
                 StartDate: DateOnly.FromDateTime(x.StartDate),
                 EndDate: DateOnly.FromDateTime(x.EndDate),
                 Budget: x.Budget,
-                CostModelName: x.CostModel.ToString(),
                 DayRate: x.DayRate,
                 Description: x.Description
             )).ToList();
@@ -142,7 +141,6 @@ public static class Projects
                 StartDate: DateOnly.FromDateTime(project.StartDate),
                 EndDate: DateOnly.FromDateTime(project.EndDate),
                 Budget: project.Budget,
-                CostModelName: project.CostModel.ToString(),
                 DayRate: project.DayRate,
                 Description: project.Description
             );
@@ -221,7 +219,6 @@ public static class Projects
                 StartDate: DateOnly.FromDateTime(project.StartDate),
                 EndDate: DateOnly.FromDateTime(project.EndDate),
                 Budget: project.Budget,
-                CostModelName: project.CostModel.ToString(),
                 DayRate: project.DayRate,
                 Description: project.Description
             );

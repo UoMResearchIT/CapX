@@ -21,11 +21,10 @@ namespace PPMTool.API.DTOs
     /// <param name="ScrumProjectLink">The scrum project link.</param>
     /// <param name="ProjectStatus">The current project status.</param>
     /// <param name="SchoolId">The ID of the school associated with the project.</param>
-    /// <param name="CostModel">The cost model for the project.</param>
+    /// <param name="CostModel">The cost model for the project, as its description. The write endpoints accept this or the enum name.</param>
     /// <param name="StartDate">The start date of the project.</param>
     /// <param name="EndDate">The end date of the project.</param>
     /// <param name="Budget">The amount the PI has requested from the funder.</param>
-    /// <param name="CostModelName">The cost model's enum name (e.g. "TechOnly"), as accepted by PUT /api/projects/update. CostModel holds its description text.</param>
     /// <param name="DayRate">The day rate; zero unless the cost model is DayRate.</param>
     /// <param name="Description">The project description, as HTML.</param>
     public sealed record ProjectDTO(
@@ -45,7 +44,6 @@ namespace PPMTool.API.DTOs
         DateOnly StartDate,
         DateOnly EndDate,
         double Budget,
-        string CostModelName,
         double DayRate,
         string Description
     );

@@ -50,7 +50,7 @@ namespace PPMTool.API.DTOs
     /// <param name="SchoolCode">Code of an active School. Give this or SchoolId.</param>
     /// <param name="ProjectManagerUsername">Username of the Project Manager, if any; must have a linked Person</param>
     /// <param name="Budget"></param>
-    /// <param name="CostModel">A <see cref="PPMTool.Data.Enums.CostModel"/> name</param>
+    /// <param name="CostModel">A <see cref="PPMTool.Data.Enums.CostModel"/> name, or its description as project reads return it</param>
     /// <param name="DayRate">Greater than zero when CostModel is "DayRate"; ignored otherwise</param>
     /// <param name="ProjectStatus">A <see cref="PPMTool.Data.Enums.ProjectStatus"/> name</param>
     /// <param name="Description">HTML; sanitised on save</param>
@@ -108,7 +108,7 @@ namespace PPMTool.API.DTOs
     /// <param name="SchoolCode">Code of an active School</param>
     /// <param name="ProjectManagerUsername">Username of the Project Manager, which must have a linked Person; an empty string clears it</param>
     /// <param name="Budget"></param>
-    /// <param name="CostModel">A <see cref="PPMTool.Data.Enums.CostModel"/> name</param>
+    /// <param name="CostModel">A <see cref="PPMTool.Data.Enums.CostModel"/> name, or its description as project reads return it</param>
     /// <param name="DayRate">Greater than zero if the resulting CostModel is "DayRate"</param>
     /// <param name="ProjectStatus">A <see cref="PPMTool.Data.Enums.ProjectStatus"/> name</param>
     /// <param name="Description">HTML; sanitised on save</param>
