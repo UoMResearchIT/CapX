@@ -206,7 +206,9 @@ namespace PPMTool.Pages
 
 
             // Check to see if there are any rejected timesheets that need fixing and get the ID of the first one
-            timesheetIdToFix = await TimesheetService.GetFirstRejectedTimesheetIdAsync(Context, ActiveUser?.Person);
+            timesheetIdToFix = ActiveUser?.Person != null
+                ? await TimesheetService.GetFirstRejectedTimesheetIdAsync(Context, ActiveUser.Person)
+                : 0;
             if (timesheetIdToFix > 0)
             {
                 Logger.LogInformation($"TimesheetIdToFix: {timesheetIdToFix} for user {ActiveUser?.Person?.Name}");
