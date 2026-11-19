@@ -63,6 +63,7 @@ namespace PPMTool.Pages
         private WLMWeeklyDataChartItem wlmChartItem;
         private double totalFTEForTimesheet;
         private string timesheetHelpUrl = null;
+        private bool allowTimesheetRefresh = false;
 
         // Permissions
         private bool CanEditEntries => timesheet?.IsPermittedToEditEntries(ActiveUser) ?? false;
@@ -73,6 +74,12 @@ namespace PPMTool.Pages
         private bool CanReject => timesheet?.IsPermittedToReject(ActiveUser) ?? false;
         private bool CanDelete => timesheet?.IsPermittedToDelete(ActiveUser) ?? false;
         private bool CanSeeWLM => timesheet?.IsPermittedToSeeWLM(ActiveUser) ?? false;
+        private bool CanRefreshFromTemplate =>
+            CanEditEntries &&
+            timesheet?.Status == TimesheetStatus.Rejected &&
+            allowTimesheetRefresh &&
+            entityToInsert == null &&
+            entityToUpdate == null;
 
         protected override void OnInitialized()
         {
@@ -141,6 +148,7 @@ namespace PPMTool.Pages
                         if (t.StartDate == nextDate) { nextTimesheet = t; }
                     }
 
+                    UpdateTimesheetRefreshAvailability();
                     PopulateDataGridDataSource();
                     UpdateDailyTotals();
 
@@ -253,6 +261,63 @@ namespace PPMTool.Pages
             {
                 return timesheet.TimesheetEntries.ToList();
             }
+        }
+
+        /// <summary>
+        /// Updates timesheet refresh availability by checking whether a rejected timesheet with template data is
+        /// missing any template task IDs in its current entries.
+        /// </summary>
+        /// <remarks>Refresh is disabled by default and remains disabled unless the timesheet is rejected
+        /// and template task data is present.</remarks>
+        private void UpdateTimesheetRefreshAvailability()
+        {
+            allowTimesheetRefresh = false;
+
+            if (timesheet?.Status != TimesheetStatus.Rejected ||
+                string.IsNullOrWhiteSpace(timesheet.Owner?.TimesheetTemplateData))
+            {
+                return;
+            }
+
+            var templateTaskIds = timesheet.Owner.TimesheetTemplateData
+                .Split('|', StringSplitOptions.RemoveEmptyEntries)
+                .Select(int.Parse)
+                .ToHashSet();
+
+            var existingTaskIds = timesheet.TimesheetEntries
+                .Select(x => x.InnateCodeTaskId)
+                .ToHashSet();
+
+            allowTimesheetRefresh = templateTaskIds.Except(existingTaskIds).Any();
+        }
+
+        /// <summary>
+        /// Adds tasks missing from the current rejected timesheet using the timesheet owner's template.
+        /// Existing entries are retained.
+        /// </summary>
+        private async Task RefreshFromTimesheetTemplateAsync()
+        {
+            TimesheetService.SetupTimesheetFromTemplate(
+                Context,
+                timesheet,
+                timesheet.Owner,
+                InnateCodeService.GetAllTasks(Context),
+                true);
+
+            PopulateDataGridDataSource();
+            UpdateTimesheetRefreshAvailability();
+            UpdateDailyTotals();
+            await LoadInnateCodesAsync();
+            await dataGrid.Reload();
+
+            ShowNotification(new CapXNotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Refreshed",
+                Detail = timesheet.IsOwner(ActiveUser)
+                    ? "Your timesheet task list has been refreshed from your template."
+                    : $"{timesheet.Owner.Name}'s timesheet task list has been refreshed from their template."
+            });
         }
 
         /// <summary>
@@ -703,6 +768,7 @@ namespace PPMTool.Pages
             }
 
             LoadInnateCodesAsync().GetAwaiter().GetResult();
+            UpdateTimesheetRefreshAvailability();
         }
 
         /// <summary>
@@ -776,6 +842,7 @@ namespace PPMTool.Pages
             await base.DeleteRow(entity);
             UpdateDailyTotals();
             await LoadInnateCodesAsync();
+            UpdateTimesheetRefreshAvailability();
 
             ShowNotification(new CapXNotificationMessage
             {
