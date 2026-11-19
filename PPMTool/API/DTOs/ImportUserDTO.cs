@@ -16,7 +16,7 @@ namespace PPMTool.API.DTOs
     /// <param name="EmailAddress">Used to match sign-in claims; semicolon-separated if more than one</param>
     /// <param name="Name">Display name; required without PersonId, and replaced by the Person's name with one</param>
     /// <param name="PersonId">Person to link the User to, if any</param>
-    /// <param name="RoleType">A PPMTool.Data.Enums.RoleType name; defaults to "None"</param>
+    /// <param name="RoleType">A <see cref="PPMTool.Data.Enums.RoleType"/> name; defaults to "None"</param>
     public sealed record ImportUserDTO(
         string CASUserName,
         string EmailAddress,

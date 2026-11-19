@@ -486,7 +486,7 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Returns an error for a resourcing change on a fixed-work task. Schedule() works out such
+        /// Returns an error for a resourcing change on a fixed-work task. <see cref="PPMTool.Data.Entities.SubTask.Schedule"/> works out such
         /// a task's duration from the FTE assigned to it, so any change of resourcing would move its
         /// end date (to before its start, if the last assignee is retracted), and this API does not
         /// reschedule the tasks that follow it. The CapX UI does.
@@ -537,7 +537,7 @@ namespace PPMTool.Services
         /// <summary>
         /// Validates assignment constraints including FTE, manager-only duties, availability, and duplicates.
         /// Shared by every resourcing path, including create-time resourcing on projects/add
-        /// (ImportProjectService), so they all apply the same rules.
+        /// (<see cref="ImportProjectService"/>), so they all apply the same rules.
         /// </summary>
         /// <param name="context">Database context.</param>
         /// <param name="assignments">Assignments to validate.</param>

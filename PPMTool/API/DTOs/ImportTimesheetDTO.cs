@@ -50,7 +50,7 @@ namespace PPMTool.API.DTOs
     /// <param name="TimesheetCreated">False if the person already had a timesheet for that week</param>
     /// <param name="EntryCreated">False if an existing entry for the task was updated</param>
     /// <param name="TotalHours">The entry's hours for the week</param>
-    /// <param name="TimesheetStatus">The timesheet's status after the write, as a PPMTool.Data.Enums.TimesheetStatus name. Anything but "Approved" means these hours aren't in the Actuals Report yet.</param>
+    /// <param name="TimesheetStatus">The timesheet's status after the write, as a <see cref="PPMTool.Data.Enums.TimesheetStatus"/> name. Anything but "Approved" means these hours aren't in the Actuals Report yet.</param>
     public sealed record ImportTimesheetResponseDTO(
         int TimesheetId,
         bool TimesheetCreated,

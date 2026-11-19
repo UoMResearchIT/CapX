@@ -11,7 +11,7 @@ namespace PPMTool.API.DTOs
     /// <param name="NoteId">Identifies this Note for PUT /api/projects/notes/update</param>
     /// <param name="RTP">RTP of the Project this Note belongs to</param>
     /// <param name="AuthorUsername">Access Control username of the Note's author</param>
-    /// <param name="AuthorDisplayName">The author's display name (Person.Name if linked, else the bare User.Name)</param>
+    /// <param name="AuthorDisplayName">The author's display name (<see cref="PPMTool.Data.Entities.Person.Name"/> if linked, else the bare <see cref="PPMTool.Data.Entities.User.Name"/>)</param>
     /// <param name="HtmlContent"></param>
     /// <param name="CreatedDate"></param>
     /// <param name="EditedDate"></param>

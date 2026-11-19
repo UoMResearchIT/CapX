@@ -242,7 +242,7 @@ public static class Timesheets
 
     /// <summary>
     /// Write one person's hours for one week on one task of a Project's
-    /// timesheet code. See ImportTimesheetEntryDTO.
+    /// timesheet code. See <see cref="ImportTimesheetEntryDTO"/>.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportTimesheetResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -282,7 +282,7 @@ public static class Timesheets
 
     /// <summary>
     /// Update a timesheet entry's hours or task, identified by TimesheetEntryId.
-    /// See UpdateTimesheetEntryRequestDTO.
+    /// See <see cref="UpdateTimesheetEntryRequestDTO"/>.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateTimesheetEntryResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]

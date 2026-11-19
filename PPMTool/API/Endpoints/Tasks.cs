@@ -54,7 +54,7 @@ public static class Tasks
     }
 
     /// <summary>
-    /// Create a fixed-duration task on an existing Project. See ImportTaskDTO.
+    /// Create a fixed-duration task on an existing Project. See <see cref="ImportTaskDTO"/>.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportTaskResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -90,7 +90,7 @@ public static class Tasks
 
     /// <summary>
     /// Update a task's name, duty, dates or demand, identified by SubTaskId.
-    /// See UpdateTaskRequestDTO.
+    /// See <see cref="UpdateTaskRequestDTO"/>.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateTaskResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -162,7 +162,7 @@ public static class Tasks
     }
 
     /// <summary>
-    /// Add assignments to an existing task. See ImportTaskResourcingRequestDTO.
+    /// Add assignments to an existing task. See <see cref="ImportTaskResourcingRequestDTO"/>.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportTaskResourcingResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -194,7 +194,7 @@ public static class Tasks
 
     /// <summary>
     /// Update an assignment's FTE, provisional flag or task, identified by
-    /// ResourceId. See UpdateTaskResourcingRequestDTO.
+    /// ResourceId. See <see cref="UpdateTaskResourcingRequestDTO"/>.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateTaskResourcingResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]

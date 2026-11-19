@@ -28,7 +28,7 @@ namespace PPMTool.API.DTOs
     /// </summary>
     /// <param name="RTP">RTP of the Project</param>
     /// <param name="Name">Unique within the Project, except for Leadership (ProjectAndServiceMgmt) tasks, as in the UI</param>
-    /// <param name="TaskDuty">A PPMTool.Data.Enums.Duty name</param>
+    /// <param name="TaskDuty">A <see cref="PPMTool.Data.Enums.Duty"/> name</param>
     /// <param name="StartDate"></param>
     /// <param name="EndDate">On or after StartDate</param>
     /// <param name="Demand">FTE needed; sets both Demand and OriginalDemand. Greater than zero, at most 3 decimal places.</param>
@@ -61,7 +61,7 @@ namespace PPMTool.API.DTOs
     /// </summary>
     /// <param name="SubTaskId">From GET /api/tasks/getAll</param>
     /// <param name="Name">Unique within the Project, as on creation</param>
-    /// <param name="TaskDuty">A PPMTool.Data.Enums.Duty name</param>
+    /// <param name="TaskDuty">A <see cref="PPMTool.Data.Enums.Duty"/> name</param>
     /// <param name="StartDate"></param>
     /// <param name="EndDate">On or after the resulting StartDate</param>
     /// <param name="Demand">FTE needed, at most 3 decimal places. Changes the current Demand; OriginalDemand keeps what was asked for at creation.</param>

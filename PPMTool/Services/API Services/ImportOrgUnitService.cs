@@ -153,7 +153,7 @@ namespace PPMTool.Services
 
         /// <summary>
         /// Returns an error if a School other than the given one already has this code, in
-        /// any Faculty. SchoolService only checks within a Faculty, but the API finds a School
+        /// any Faculty. <see cref="SchoolService"/> only checks within a Faculty, but the API finds a School
         /// by its code alone, so a code reused elsewhere would make that lookup ambiguous.
         /// </summary>
         /// <param name="context">Database context.</param>

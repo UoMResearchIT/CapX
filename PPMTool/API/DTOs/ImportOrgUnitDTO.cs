@@ -57,7 +57,7 @@ namespace PPMTool.API.DTOs
     /// <summary>
     /// Request body for PUT /api/faculties/update. Identifies the Faculty by
     /// its current Code and changes the fields supplied. Doesn't change its
-    /// Schools: see UpdateSchoolRequestDTO.
+    /// Schools: see <see cref="UpdateSchoolRequestDTO"/>.
     /// </summary>
     /// <param name="Code">Current Code of the Faculty</param>
     /// <param name="Name">New Name, if changing</param>

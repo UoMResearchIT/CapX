@@ -487,7 +487,7 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Applies what saving a project in AddProject.razor.cs does around its status, so a
+        /// Applies what saving a project in <see cref="PPMTool.Pages.AddProject"/> does around its status, so a
         /// status changed through the API has the same consequences as one changed in the UI:
         /// leaving New Request stops the request-duration clock; a cancelled project loses its
         /// assignments; a finished or cancelled one loses its followers; and becoming Active

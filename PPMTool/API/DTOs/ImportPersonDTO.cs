@@ -15,7 +15,7 @@ namespace PPMTool.API.DTOs
     /// <param name="Name">Full name; the initials are derived from it</param>
     /// <param name="StartDate"></param>
     /// <param name="EndDate">Null if still in post</param>
-    /// <param name="FTE">The post's FTE (Person.FTE), 0.0-1.0. Part-time working belongs in a workload model change instead.</param>
+    /// <param name="FTE">The post's FTE (<see cref="PPMTool.Data.Entities.Person.FTE"/>), 0.0-1.0. Part-time working belongs in a workload model change instead.</param>
     public sealed record ImportPersonDTO(
         string Name,
         DateTime StartDate,
