@@ -16,8 +16,8 @@ namespace PPMTool.API.Endpoints;
 public static class Users
 {
     /// <summary>
-    /// Create a User directly, bare or linked to an existing Person. People
-    /// normally get their first User by signing in.
+    /// Create a User, bare or linked to an existing Person, as a Superuser can
+    /// on the Manage Access page. Signing in only finds an existing User.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportUserResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]

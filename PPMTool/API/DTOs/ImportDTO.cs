@@ -540,9 +540,10 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// Request body for POST /api/users/add. Creates a User directly: a bare
-    /// account, or one linked to an existing Person (a Person can have more
-    /// than one User). People normally get their first User by signing in.
+    /// Request body for POST /api/users/add. Creates a User, as a Superuser can
+    /// on the Manage Access page: a bare account, or one linked to an existing
+    /// Person (a Person can have more than one User). Signing in only finds an
+    /// existing User; it never creates one.
     /// </summary>
     /// <param name="CASUserName">Unique, ignoring case and surrounding whitespace</param>
     /// <param name="EmailAddress">Used to match sign-in claims; semicolon-separated if more than one</param>
