@@ -7,6 +7,7 @@ SPDX-License-Identifier: apache-2.0
 @page "/people/addavailabilitychange/{PersonId:int}"
 @inherits AddPersonProperty<WorkloadModelChange>
 @using PPMTool.Data.Entities
+@using PPMTool.Data.Enums
 @using PPMTool.Pages.Components
 <PageTitle>Add WLM Change - CapX</PageTitle>
 
@@ -67,37 +68,62 @@ SPDX-License-Identifier: apache-2.0
                             </RadzenDataGridColumn>
                         }
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectWorkFTE" Title="Project" Width="7rem" MinWidth="10px">
+                            <HeaderTemplate>
+                                <TooltipLabelComponent Text="Project" Tooltip="@Duty.ProjectWork.GetDescription()" />
+                            </HeaderTemplate>
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ProjectWorkFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="BusinessAsUsualFTE" Title="BAU" Width="7rem" MinWidth="10px">
+                            <HeaderTemplate>
+                                <TooltipLabelComponent Text="BAU" Tooltip="@Duty.BAU.GetDescription()" />
+                            </HeaderTemplate>
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.BusinessAsUsualFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="PersonalDevelopmentFTE" Title="PD" Width="7rem" MinWidth="10px">
+                            <HeaderTemplate>
+                                <TooltipLabelComponent Text="PD" Tooltip="@Duty.PersonalDevelopment.GetDescription()" />
+                            </HeaderTemplate>
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.PersonalDevelopmentFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="StaffManagementFTE" Title="Staff" Width="7rem" MinWidth="10px">
+                            <HeaderTemplate>
+                                <TooltipLabelComponent Text="Staff" Tooltip="@Duty.StaffMgmt.GetDescription()" />
+                            </HeaderTemplate>
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.StaffManagementFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectManagementFTE" Title="PM" Width="7rem" MinWidth="10px">
+                            <HeaderTemplate>
+                                <TooltipLabelComponent Text="PM" Tooltip="Project Management" />
+                            </HeaderTemplate>
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ProjectManagementFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ServiceManagementFTE" Title="SM" Width="7rem" MinWidth="10px">
+                            <HeaderTemplate>
+                                <TooltipLabelComponent Text="SM" Tooltip="Service Management" />
+                            </HeaderTemplate>
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ServiceManagementFTE" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectAndServiceManagementFTE" Title="PSM" Width="7rem" MinWidth="10px" />
+                        <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectAndServiceManagementFTE" Title="PSM" Width="7rem" MinWidth="10px">
+                            <HeaderTemplate>
+                                <TooltipLabelComponent Text="PSM" Tooltip="@Duty.ProjectAndServiceMgmt.GetDescription()" />
+                            </HeaderTemplate>
+                        </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ArchitectureFTE" Title="Tech Lead" Width="7rem" MinWidth="10px">
+                            <HeaderTemplate>
+                                <TooltipLabelComponent Text="Tech Lead" Tooltip="@Duty.RSA.GetDescription()" />
+                            </HeaderTemplate>
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ArchitectureFTE" />
                             </EditTemplate>
