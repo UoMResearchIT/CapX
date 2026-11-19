@@ -2,6 +2,9 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
@@ -17,16 +20,24 @@ namespace PPMTool.Tests.API
     /// </summary>
     public abstract class BaseWriteApiTest : BaseApiTest
     {
-        private const string superuserUsername = "write-api-test-superuser";
+        protected const string SuperuserUsername = "write-api-test-superuser";
+        protected const string SuperuserPersonName = "Write API Tester";
 
         protected static string? SuperuserApiKey { get; private set; }
         protected static int SuperuserPersonId { get; private set; }
+
+        private static readonly DateTime runStarted = DateTime.UtcNow;
 
         /// <summary>
         /// Unique to this test run, so records one run creates can't clash with another's
         /// when the database is reused.
         /// </summary>
-        protected static readonly string RunId = DateTime.UtcNow.ToString("MMddHHmmss");
+        protected static readonly string RunId = runStarted.ToString("MMddHHmmss");
+
+        /// <summary>
+        /// <see cref="RunId"/> as a number, for RTPs and dates.
+        /// </summary>
+        protected static readonly int RunNumber = int.Parse(runStarted.ToString("ddHHmmss"));
 
         /// <summary>
         /// Provides a configured HttpClient for making requests to the API with an API key for a superuser.
@@ -42,6 +53,36 @@ namespace PPMTool.Tests.API
             client.BaseAddress = new Uri($"{Setup.BaseUrl}/api/");
             client.DefaultRequestHeaders.Add("x-api-key", SuperuserApiKey!);
             return client;
+        }
+
+        /// <summary>
+        /// Creates an Active project in the first seeded school, with a timesheet code if given.
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="rtp"></param>
+        /// <param name="timesheetActivityCode"></param>
+        /// <returns>The project's database id.</returns>
+        protected static async Task<int> CreateProjectAsync(HttpClient client, int rtp, string? timesheetActivityCode = null)
+        {
+            var response = await client.PostAsJsonAsync("projects/add", new
+            {
+                Name = $"Write Test Project {rtp}",
+                RTP = rtp,
+                PI = "Test PI",
+                SchoolId,
+                Budget = 1000.0,
+                CostModel = "TechOnly",
+                DayRate = 0.0,
+                ProjectStatus = "Active",
+                Description = "<p>Created by the write API tests</p>",
+                RequestDocLink = "Unknown",
+                ManagementStartDate = new DateTime(2025, 1, 1),
+                ManagementEndDate = new DateTime(2025, 12, 31),
+                TimesheetActivityCode = timesheetActivityCode
+            });
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), await response.Content.ReadAsStringAsync());
+            var created = await response.Content.ReadFromJsonAsync<JsonElement>();
+            return created.GetProperty("projectId").GetInt32();
         }
 
         [OneTimeSetUp]
@@ -61,17 +102,17 @@ namespace PPMTool.Tests.API
             using var context = CreateDbContext();
             var user = context.Users
                 .Include(x => x.Person)
-                .FirstOrDefault(x => x.CASUserName == superuserUsername);
+                .FirstOrDefault(x => x.CASUserName == SuperuserUsername);
             if (user == null)
             {
                 user = new User
                 {
-                    CASUserName = superuserUsername,
-                    EmailAddress = $"{superuserUsername}@example.invalid",
+                    CASUserName = SuperuserUsername,
+                    EmailAddress = $"{SuperuserUsername}@example.invalid",
                     RoleType = RoleType.Superuser,
                     Person = new Person
                     {
-                        Name = "Write API Tester",
+                        Name = SuperuserPersonName,
                         ShortName = "WAT",
                         StartDate = new DateTime(2020, 1, 1),
                         FTE = 1.0
