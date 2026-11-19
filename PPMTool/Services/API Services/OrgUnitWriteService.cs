@@ -118,7 +118,7 @@ namespace PPMTool.Services
         /// <exception cref="InvalidOperationException">Thrown when persistence reports a duplicate despite successful validation.</exception>
         public ImportSchoolResponseDTO UpdateSchool(PPMToolContext context, UpdateSchoolRequestDTO request)
         {
-            var school = FindSchoolByCode(context, request.Code)!;
+            var school = schoolService.GetByCode(context, request.Code)!;
             if (request.Name != null) school.Name = request.Name;
             if (request.NewCode != null) school.Code = request.NewCode;
             if (request.NewFacultyCode != null) school.Faculty = FindFacultyByCode(context, request.NewFacultyCode)!;
@@ -141,31 +141,18 @@ namespace PPMTool.Services
                 .FirstOrDefault(f => f.Code.Trim().ToLower() == code.Trim().ToLower());
 
         /// <summary>
-        /// Finds a school by code.
-        /// </summary>
-        /// <param name="context">Database context.</param>
-        /// <param name="code">School code to resolve.</param>
-        /// <returns>The matching school, or <c>null</c> when none exists.</returns>
-        private static School? FindSchoolByCode(PPMToolContext context, string code) =>
-            string.IsNullOrWhiteSpace(code) ? null : context.Schools
-                .Include(s => s.Faculty)
-                .FirstOrDefault(s => s.Code.Trim().ToLower() == code.Trim().ToLower());
-
-        /// <summary>
-        /// Returns an error if a School other than the given one already has this code, in
-        /// any Faculty. <see cref="SchoolService"/> only checks within a Faculty, but the API finds a School
-        /// by its code alone, so a code reused elsewhere would make that lookup ambiguous.
+        /// Returns an error naming the School that already has this code, if it isn't the given
+        /// one. Codes are unique across Faculties (<see cref="SchoolService.DuplicateDetected"/>);
+        /// this only words the error.
         /// </summary>
         /// <param name="context">Database context.</param>
         /// <param name="code">School code to check.</param>
         /// <param name="excludingSchoolId">The School being updated, if any.</param>
         /// <returns>An error message, or <c>null</c> when the code is free.</returns>
-        private static string? SchoolCodeInUse(PPMToolContext context, string code, int? excludingSchoolId = null)
+        private string? SchoolCodeInUse(PPMToolContext context, string code, int? excludingSchoolId = null)
         {
-            var existing = context.Schools
-                .Include(s => s.Faculty)
-                .FirstOrDefault(s => s.SchoolId != (excludingSchoolId ?? 0) && s.Code.Trim().ToLower() == code.Trim().ToLower());
-            return existing == null
+            var existing = schoolService.GetByCode(context, code);
+            return existing == null || existing.SchoolId == excludingSchoolId
                 ? null
                 : $"School code '{code.Trim()}' is already used by School '{existing.Name}' under Faculty '{existing.Faculty.Name}'";
         }
@@ -258,8 +245,9 @@ namespace PPMTool.Services
             if (string.IsNullOrWhiteSpace(request.Name)) errors.Add("Name is required");
             if (string.IsNullOrWhiteSpace(request.Code)) errors.Add("Code is required");
             if (string.IsNullOrWhiteSpace(request.FacultyCode)) errors.Add("FacultyCode is required");
-            if (!string.IsNullOrWhiteSpace(request.Code) && SchoolCodeInUse(context, request.Code) is { } inUse)
-                errors.Add(inUse);
+            var codeInUse = string.IsNullOrWhiteSpace(request.Code) ? null : SchoolCodeInUse(context, request.Code);
+            if (codeInUse != null)
+                errors.Add(codeInUse);
 
             if (!string.IsNullOrWhiteSpace(request.FacultyCode))
             {
@@ -268,10 +256,10 @@ namespace PPMTool.Services
                 {
                     errors.Add($"FacultyCode '{request.FacultyCode}' does not match any Faculty");
                 }
-                else if (!string.IsNullOrWhiteSpace(request.Name) && !string.IsNullOrWhiteSpace(request.Code)
+                else if (codeInUse == null && !string.IsNullOrWhiteSpace(request.Name) && !string.IsNullOrWhiteSpace(request.Code)
                     && schoolService.DuplicateDetected(context, new School { Name = request.Name, Code = request.Code, Faculty = faculty }))
                 {
-                    errors.Add($"A School named '{request.Name}' or with code '{request.Code}' already exists under Faculty '{faculty.Name}'");
+                    errors.Add($"A School named '{request.Name}' already exists under Faculty '{faculty.Name}'");
                 }
             }
 
@@ -294,7 +282,7 @@ namespace PPMTool.Services
                 return errors;
             }
 
-            var school = FindSchoolByCode(context, request.Code);
+            var school = schoolService.GetByCode(context, request.Code);
             if (school == null)
             {
                 errors.Add($"Code '{request.Code}' does not match any School");
@@ -305,10 +293,11 @@ namespace PPMTool.Services
                 errors.Add("At least one of Name, NewCode, or NewFacultyCode must be supplied");
             if (request.Name != null && string.IsNullOrWhiteSpace(request.Name))
                 errors.Add("Name cannot be blank");
+            string? codeInUse = null;
             if (request.NewCode != null && string.IsNullOrWhiteSpace(request.NewCode))
                 errors.Add("NewCode cannot be blank");
-            else if (request.NewCode != null && SchoolCodeInUse(context, request.NewCode, school.SchoolId) is { } inUse)
-                errors.Add(inUse);
+            else if (request.NewCode != null && (codeInUse = SchoolCodeInUse(context, request.NewCode, school.SchoolId)) != null)
+                errors.Add(codeInUse);
 
             var faculty = school.Faculty;
             if (request.NewFacultyCode != null)
@@ -318,7 +307,7 @@ namespace PPMTool.Services
                     errors.Add($"NewFacultyCode '{request.NewFacultyCode}' does not match any Faculty");
             }
 
-            if (faculty != null)
+            if (faculty != null && codeInUse == null)
             {
                 var probe = new School
                 {
@@ -328,7 +317,7 @@ namespace PPMTool.Services
                     Faculty = faculty,
                 };
                 if (schoolService.DuplicateDetected(context, probe))
-                    errors.Add($"A different School named '{probe.Name}' or with code '{probe.Code}' already exists under Faculty '{faculty.Name}'");
+                    errors.Add($"A different School named '{probe.Name}' already exists under Faculty '{faculty.Name}'");
             }
 
             return errors;
