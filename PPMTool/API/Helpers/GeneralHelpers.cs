@@ -215,10 +215,10 @@ public static class GeneralHelpers
     }
 
     /// <summary>
-    /// Shared execution wrapper for database-writing import endpoints:
+    /// Shared execution wrapper for the API's write endpoints:
     /// performs gate check, validation -> 400, and exception -> 500.
     /// </summary>
-    internal static IResult ExecuteImportWrite(
+    internal static IResult ExecuteWrite(
         SettingsService settingsService,
         HttpContext http,
         ILogger logger,
@@ -242,7 +242,7 @@ public static class GeneralHelpers
             if (errors.Count > 0)
             {
                 logValidationFailure(errors);
-                return Results.BadRequest(new ImportErrorDTO(errors));
+                return Results.BadRequest(new WriteErrorDTO(errors));
             }
 
             // Run execution method

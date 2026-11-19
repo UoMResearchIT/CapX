@@ -12,14 +12,14 @@ using PPMTool.Data.Entities;
 namespace PPMTool.Services
 {
     /// <summary>
-    /// Service for API import operations that validate and mutate faculties and schools.
+    /// Service for API write operations that validate and mutate faculties and schools.
     /// </summary>
-    public class ImportOrgUnitService
+    public class OrgUnitWriteService
     {
         private readonly FacultyService facultyService;
         private readonly SchoolService schoolService;
 
-        public ImportOrgUnitService(
+        public OrgUnitWriteService(
             FacultyService facultyService,
             SchoolService schoolService)
         {

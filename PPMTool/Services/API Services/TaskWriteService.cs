@@ -15,9 +15,9 @@ using PPMTool.Data.Enums;
 namespace PPMTool.Services
 {
     /// <summary>
-    /// Service for API import operations that validate and mutate project tasks and task resourcing.
+    /// Service for API write operations that validate and mutate project tasks and task resourcing.
     /// </summary>
-    public class ImportTaskService
+    public class TaskWriteService
     {
         private const string rtpRequired = "RTP is required and must be greater than zero";
 
@@ -29,7 +29,7 @@ namespace PPMTool.Services
         private readonly UserService userService;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ImportTaskService"/> class.
+        /// Initializes a new instance of the <see cref="TaskWriteService"/> class.
         /// </summary>
         /// <param name="projectService">Service used to manage projects.</param>
         /// <param name="subTaskService">Service used to manage tasks.</param>
@@ -37,7 +37,7 @@ namespace PPMTool.Services
         /// <param name="settingsService">Service used to load calculation settings.</param>
         /// <param name="personService">Service used to resolve people for assignments.</param>
         /// <param name="userService">Service used to resolve user and manager information.</param>
-        public ImportTaskService(
+        public TaskWriteService(
             ProjectService projectService,
             SubTaskService subTaskService,
             FinancialReferenceService financialReferenceService,
@@ -537,7 +537,7 @@ namespace PPMTool.Services
         /// <summary>
         /// Validates assignment constraints including FTE, manager-only duties, availability, and duplicates.
         /// Shared by every resourcing path, including create-time resourcing on projects/add
-        /// (<see cref="ImportProjectService"/>), so they all apply the same rules.
+        /// (<see cref="ProjectWriteService"/>), so they all apply the same rules.
         /// </summary>
         /// <param name="context">Database context.</param>
         /// <param name="assignments">Assignments to validate.</param>

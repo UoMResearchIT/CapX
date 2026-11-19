@@ -15,9 +15,9 @@ using PPMTool.Data.Enums;
 namespace PPMTool.Services
 {
     /// <summary>
-    /// Service for API import operations that validate and mutate projects and project notes.
+    /// Service for API write operations that validate and mutate projects and project notes.
     /// </summary>
-    public class ImportProjectService
+    public class ProjectWriteService
     {
         public const string FallbackAuthorUsername = "migration-import";
         private const string rtpRequired = "RTP is required and must be greater than zero";
@@ -27,26 +27,26 @@ namespace PPMTool.Services
         private readonly NoteService noteService;
         private readonly FinancialReferenceService financialReferenceService;
         private readonly SettingsService settingsService;
-        private readonly ImportTaskService importTaskService;
+        private readonly TaskWriteService taskWriteService;
         private readonly InnateCodeService innateCodeService;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ImportProjectService"/> class.
+        /// Initializes a new instance of the <see cref="ProjectWriteService"/> class.
         /// </summary>
         /// <param name="projectService">Service used to manage projects.</param>
         /// <param name="subTaskService">Service used to manage project tasks.</param>
         /// <param name="noteService">Service used to manage notes.</param>
         /// <param name="financialReferenceService">Service used to load financial references.</param>
         /// <param name="settingsService">Service used to load calculation settings.</param>
-        /// <param name="importTaskService">Service whose assignment validation create-time resourcing shares.</param>
+        /// <param name="taskWriteService">Service whose assignment validation create-time resourcing shares.</param>
         /// <param name="innateCodeService">Service used to create timesheet activity codes under the UI's own rules.</param>
-        public ImportProjectService(
+        public ProjectWriteService(
             ProjectService projectService,
             SubTaskService subTaskService,
             NoteService noteService,
             FinancialReferenceService financialReferenceService,
             SettingsService settingsService,
-            ImportTaskService importTaskService,
+            TaskWriteService taskWriteService,
             InnateCodeService innateCodeService)
         {
             this.projectService = projectService;
@@ -54,7 +54,7 @@ namespace PPMTool.Services
             this.noteService = noteService;
             this.financialReferenceService = financialReferenceService;
             this.settingsService = settingsService;
-            this.importTaskService = importTaskService;
+            this.taskWriteService = taskWriteService;
             this.innateCodeService = innateCodeService;
         }
 
@@ -70,7 +70,7 @@ namespace PPMTool.Services
             var errors = new List<string>();
 
             if (caller.Person == null)
-                errors.Add($"Caller '{caller.CASUserName}' has no linked Person -- required to set as the imported Project's RequestOwner");
+                errors.Add($"Caller '{caller.CASUserName}' has no linked Person -- required to set as the new Project's RequestOwner");
 
             if (string.IsNullOrWhiteSpace(request.Name)) errors.Add("Name is required");
             else if (projectService.DuplicateDetected(context, new Project { Name = request.Name }))
@@ -113,16 +113,16 @@ namespace PPMTool.Services
                     errors.Add($"Resourcing username '{r.Username}' not found, or has no linked Person");
                 assignments.Add((person, r.Username, r.AssignmentFTE));
             }
-            errors.AddRange(importTaskService.ValidateAssignments(context, assignments, Duty.ProjectWork, request.ManagementStartDate));
+            errors.AddRange(taskWriteService.ValidateAssignments(context, assignments, Duty.ProjectWork, request.ManagementStartDate));
 
             if ((request.Comments?.Count ?? 0) > 0 && ImportHelper.FindUserByUsername(context, FallbackAuthorUsername) == null)
-                errors.Add($"Fallback author User '{FallbackAuthorUsername}' does not exist -- create it before importing comments");
+                errors.Add($"Fallback author User '{FallbackAuthorUsername}' does not exist -- create it before adding comments");
 
             return errors;
         }
 
         /// <summary>
-        /// Creates a project, related innate activity/task scaffolding, optional resourcing, and optional imported notes.
+        /// Creates a project, related innate activity/task scaffolding, optional resourcing, and optional notes.
         /// </summary>
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming project creation request.</param>
@@ -351,12 +351,12 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Validates a notes import request for an existing project.
+        /// Validates a notes/add request for an existing project.
         /// </summary>
         /// <param name="context">Database context.</param>
-        /// <param name="request">Incoming notes import request.</param>
+        /// <param name="request">Incoming notes/add request.</param>
         /// <returns>Validation errors, or an empty list when valid.</returns>
-        public List<string> ValidateNotesImport(PPMToolContext context, ImportNotesRequestDTO request)
+        public List<string> ValidateNotesAdd(PPMToolContext context, ImportNotesRequestDTO request)
         {
             var errors = new List<string>();
 
@@ -370,16 +370,16 @@ namespace PPMTool.Services
                 errors.Add("Comments must contain at least one entry");
 
             if (comments.Count > 0 && ImportHelper.FindUserByUsername(context, FallbackAuthorUsername) == null)
-                errors.Add($"Fallback author User '{FallbackAuthorUsername}' does not exist -- create it (POST /api/users/add) before importing comments");
+                errors.Add($"Fallback author User '{FallbackAuthorUsername}' does not exist -- create it (POST /api/users/add) before adding comments");
 
             return errors;
         }
 
         /// <summary>
-        /// Adds imported notes to an existing project.
+        /// Adds notes to an existing project.
         /// </summary>
         /// <param name="context">Database context.</param>
-        /// <param name="request">Incoming notes import request.</param>
+        /// <param name="request">Incoming notes/add request.</param>
         /// <returns>Identifier payload for the project and number of created notes.</returns>
         public ImportNotesResponseDTO AddNotes(PPMToolContext context, ImportNotesRequestDTO request)
         {

@@ -137,27 +137,27 @@ namespace PPMTool.API.Endpoints
         /// Faculty, see <see cref="Schools.CreateSchool"/>.
         /// </summary>
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportFacultyResponseDTO))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public static IResult CreateFaculty(
             PPMToolContext context,
-            ImportOrgUnitService importService,
+            OrgUnitWriteService writeService,
             SettingsService settingsService,
             ILogger logger,
             HttpContext http,
             [FromBody] ImportFacultyRequestDTO request)
         {
-            return GeneralHelpers.ExecuteImportWrite(
+            return GeneralHelpers.ExecuteWrite(
                 settingsService,
                 http,
                 logger,
                 $"{nameof(Faculties)}.{nameof(CreateFaculty)}",
-                validate: _ => importService.ValidateFaculty(context, request),
+                validate: _ => writeService.ValidateFaculty(context, request),
                 logValidationFailure: errors => logger.LogWarning("API: Faculties: faculty validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors)),
                 execute: caller =>
                 {
-                    var result = importService.CreateFaculty(context, request);
+                    var result = writeService.CreateFaculty(context, request);
 
                     logger.LogInformation(
                         "API: Faculties: created Faculty {FacultyId} '{Name}' ({SchoolCount} schools) by {User}",
@@ -172,27 +172,27 @@ namespace PPMTool.API.Endpoints
         /// Doesn't change its Schools: see <see cref="Schools.UpdateSchool"/>.
         /// </summary>
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateFacultyResponseDTO))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public static IResult UpdateFaculty(
             PPMToolContext context,
-            ImportOrgUnitService importService,
+            OrgUnitWriteService writeService,
             SettingsService settingsService,
             ILogger logger,
             HttpContext http,
             [FromBody] UpdateFacultyRequestDTO request)
         {
-            return GeneralHelpers.ExecuteImportWrite(
+            return GeneralHelpers.ExecuteWrite(
                 settingsService,
                 http,
                 logger,
                 $"{nameof(Faculties)}.{nameof(UpdateFaculty)}",
-                validate: _ => importService.ValidateFacultyUpdate(context, request),
+                validate: _ => writeService.ValidateFacultyUpdate(context, request),
                 logValidationFailure: errors => logger.LogWarning("API: Faculties: faculty update validation failed for '{Code}': {Errors}", request.Code, string.Join("; ", errors)),
                 execute: caller =>
                 {
-                    var result = importService.UpdateFaculty(context, request);
+                    var result = writeService.UpdateFaculty(context, request);
                     logger.LogInformation(
                         "API: Faculties: updated Faculty {FacultyId} (was '{Code}') by {User}",
                         result.FacultyId, request.Code, caller.Name);

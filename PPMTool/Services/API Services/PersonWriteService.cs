@@ -12,19 +12,19 @@ using PPMTool.Data.Entities;
 namespace PPMTool.Services
 {
     /// <summary>
-    /// Service for API import operations that validate and mutate Person entities.
+    /// Service for API write operations that validate and mutate Person entities.
     /// </summary>
-    public class ImportPersonService
+    public class PersonWriteService
     {
         private readonly PersonService personService;
         private readonly UserService userService;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ImportPersonService"/> class.
+        /// Initializes a new instance of the <see cref="PersonWriteService"/> class.
         /// </summary>
         /// <param name="personService">Service used to validate and persist people.</param>
         /// <param name="userService">Service used to keep linked user display names in sync.</param>
-        public ImportPersonService(
+        public PersonWriteService(
             PersonService personService,
             UserService userService)
         {

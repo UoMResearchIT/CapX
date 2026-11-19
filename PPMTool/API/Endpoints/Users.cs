@@ -20,27 +20,27 @@ public static class Users
     /// on the Manage Access page. Signing in only finds an existing User.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportUserResponseDTO))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult CreateUser(
         PPMToolContext context,
-        ImportUserService importService,
+        UserWriteService writeService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
         [FromBody] ImportUserDTO request)
     {
-        return GeneralHelpers.ExecuteImportWrite(
+        return GeneralHelpers.ExecuteWrite(
             settingsService,
             http,
             logger,
             $"{nameof(Users)}.{nameof(CreateUser)}",
-            validate: _ => importService.ValidateUser(context, request),
+            validate: _ => writeService.ValidateUser(context, request),
             logValidationFailure: errors => logger.LogWarning("API: Users: user validation failed for '{CASUserName}': {Errors}", request.CASUserName, string.Join("; ", errors)),
             execute: caller =>
             {
-                var result = importService.CreateUser(context, request);
+                var result = writeService.CreateUser(context, request);
                 logger.LogInformation(
                     "API: Users: created User {UserId} '{CASUserName}' by {User}",
                     result.UserId, request.CASUserName, caller.Name);

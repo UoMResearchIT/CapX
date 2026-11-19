@@ -8,7 +8,7 @@ namespace PPMTool.API.DTOs
 {
     /// <summary>Response for a rejected write. Nothing was written.</summary>
     /// <param name="Errors">Every validation error found</param>
-    public sealed record ImportErrorDTO(
+    public sealed record WriteErrorDTO(
         IReadOnlyList<string> Errors
     );
 }

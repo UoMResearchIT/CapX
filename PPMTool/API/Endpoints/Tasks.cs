@@ -19,12 +19,12 @@ public static class Tasks
     /// Get a Project's tasks, identified by RTP.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TaskDTO>))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult GetTasks(
         PPMToolContext context,
-        ImportTaskService importService,
+        TaskWriteService writeService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -35,14 +35,14 @@ public static class Tasks
             var (allowed, caller, gateResult) = GeneralHelpers.CheckWriteApiAccess(settingsService, http, logger, "Tasks.GetTasks");
             if (!allowed) return gateResult!;
 
-            var errors = importService.ValidateTasksGet(context, rtp);
+            var errors = writeService.ValidateTasksGet(context, rtp);
             if (errors.Count > 0)
             {
                 logger.LogWarning("API: Tasks: get tasks validation failed for RTP {RTP}: {Errors}", rtp, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
+                return Results.BadRequest(new WriteErrorDTO(errors));
             }
 
-            var tasks = importService.GetTasksForRTP(context, rtp);
+            var tasks = writeService.GetTasksForRTP(context, rtp);
             logger.LogInformation("API: Tasks: returned {Count} Task(s) for RTP {RTP} to {User}", tasks.Count, rtp, caller!.Name);
             return Results.Json(tasks);
         }
@@ -57,30 +57,30 @@ public static class Tasks
     /// Create a fixed-duration task on an existing Project. See <see cref="ImportTaskDTO"/>.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportTaskResponseDTO))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult CreateTask(
         PPMToolContext context,
-        ImportTaskService importService,
+        TaskWriteService writeService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
         [FromBody] ImportTaskDTO request)
     {
-        return GeneralHelpers.ExecuteImportWrite(
+        return GeneralHelpers.ExecuteWrite(
             settingsService,
             http,
             logger,
             $"{nameof(Tasks)}.{nameof(CreateTask)}",
-            validate: _ => importService.ValidateTaskCreate(context, request),
+            validate: _ => writeService.ValidateTaskCreate(context, request),
             logValidationFailure: errors => logger.LogWarning("API: Tasks: task create validation failed for RTP {RTP}/'{Name}': {Errors}", request.RTP, request.Name, string.Join("; ", errors)),
             execute: caller =>
             {
                 // CreateTask saves more than once (SubTaskService.Add commits), so a
                 // failure part-way through would otherwise leave a partial write.
                 using var transaction = context.Database.BeginTransaction();
-                var result = importService.CreateTask(context, request);
+                var result = writeService.CreateTask(context, request);
                 transaction.Commit();
                 logger.LogInformation("API: Tasks: created SubTask {SubTaskId} ('{Name}') on RTP {RTP} by {User}", result.SubTaskId, request.Name, request.RTP, caller.Name);
                 return Results.Created($"/api/tasks/{result.SubTaskId}", result);
@@ -93,29 +93,29 @@ public static class Tasks
     /// See <see cref="UpdateTaskRequestDTO"/>.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateTaskResponseDTO))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult UpdateTask(
         PPMToolContext context,
-        ImportTaskService importService,
+        TaskWriteService writeService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
         [FromBody] UpdateTaskRequestDTO request)
     {
-        return GeneralHelpers.ExecuteImportWrite(
+        return GeneralHelpers.ExecuteWrite(
             settingsService,
             http,
             logger,
             $"{nameof(Tasks)}.{nameof(UpdateTask)}",
-            validate: _ => importService.ValidateTaskUpdate(context, request),
+            validate: _ => writeService.ValidateTaskUpdate(context, request),
             logValidationFailure: errors => logger.LogWarning("API: Tasks: task update validation failed for SubTaskId {SubTaskId}: {Errors}", request.SubTaskId, string.Join("; ", errors)),
             execute: caller =>
             {
                 // SubTaskService.Update commits before the cost recalculation saves again.
                 using var transaction = context.Database.BeginTransaction();
-                var result = importService.UpdateTask(context, request);
+                var result = writeService.UpdateTask(context, request);
                 transaction.Commit();
                 logger.LogInformation("API: Tasks: updated SubTask {SubTaskId} by {User}", result.SubTaskId, caller.Name);
                 return Results.Ok(result);
@@ -127,12 +127,12 @@ public static class Tasks
     /// Get every assignment on a Project's tasks, identified by RTP.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TaskResourceDTO>))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult GetResourcing(
         PPMToolContext context,
-        ImportTaskService importService,
+        TaskWriteService writeService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -143,14 +143,14 @@ public static class Tasks
             var (allowed, caller, gateResult) = GeneralHelpers.CheckWriteApiAccess(settingsService, http, logger, "Tasks.GetResourcing");
             if (!allowed) return gateResult!;
 
-            var errors = importService.ValidateTaskResourcingGet(context, rtp);
+            var errors = writeService.ValidateTaskResourcingGet(context, rtp);
             if (errors.Count > 0)
             {
                 logger.LogWarning("API: Tasks: get resourcing validation failed for RTP {RTP}: {Errors}", rtp, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
+                return Results.BadRequest(new WriteErrorDTO(errors));
             }
 
-            var resourcing = importService.GetResourcingForRTP(context, rtp);
+            var resourcing = writeService.GetResourcingForRTP(context, rtp);
             logger.LogInformation("API: Tasks: returned {Count} resourcing assignment(s) for RTP {RTP} to {User}", resourcing.Count, rtp, caller!.Name);
             return Results.Json(resourcing);
         }
@@ -165,27 +165,27 @@ public static class Tasks
     /// Add assignments to an existing task. See <see cref="ImportTaskResourcingRequestDTO"/>.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportTaskResourcingResponseDTO))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult AddResourcing(
         PPMToolContext context,
-        ImportTaskService importService,
+        TaskWriteService writeService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
         [FromBody] ImportTaskResourcingRequestDTO request)
     {
-        return GeneralHelpers.ExecuteImportWrite(
+        return GeneralHelpers.ExecuteWrite(
             settingsService,
             http,
             logger,
             $"{nameof(Tasks)}.{nameof(AddResourcing)}",
-            validate: _ => importService.ValidateTaskResourcingAdd(context, request),
+            validate: _ => writeService.ValidateTaskResourcingAdd(context, request),
             logValidationFailure: errors => logger.LogWarning("API: Tasks: resourcing add validation failed for SubTaskId {SubTaskId}: {Errors}", request.SubTaskId, string.Join("; ", errors)),
             execute: caller =>
             {
-                var result = importService.AddTaskResourcing(context, request);
+                var result = writeService.AddTaskResourcing(context, request);
                 logger.LogInformation("API: Tasks: added {Count} resourcing assignment(s) to SubTask {SubTaskId} by {User}", result.ResourcesCreated, result.SubTaskId, caller.Name);
                 return Results.Created($"/api/tasks/{result.SubTaskId}", result);
             },
@@ -197,27 +197,27 @@ public static class Tasks
     /// ResourceId. See <see cref="UpdateTaskResourcingRequestDTO"/>.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateTaskResourcingResponseDTO))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult UpdateResourcing(
         PPMToolContext context,
-        ImportTaskService importService,
+        TaskWriteService writeService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
         [FromBody] UpdateTaskResourcingRequestDTO request)
     {
-        return GeneralHelpers.ExecuteImportWrite(
+        return GeneralHelpers.ExecuteWrite(
             settingsService,
             http,
             logger,
             $"{nameof(Tasks)}.{nameof(UpdateResourcing)}",
-            validate: _ => importService.ValidateTaskResourcingUpdate(context, request),
+            validate: _ => writeService.ValidateTaskResourcingUpdate(context, request),
             logValidationFailure: errors => logger.LogWarning("API: Tasks: resourcing update validation failed for ResourceId {ResourceId}: {Errors}", request.ResourceId, string.Join("; ", errors)),
             execute: caller =>
             {
-                var result = importService.UpdateTaskResourcing(context, request);
+                var result = writeService.UpdateTaskResourcing(context, request);
                 logger.LogInformation("API: Tasks: updated Resource {ResourceId} (now on SubTask {SubTaskId}) by {User}", result.ResourceId, result.SubTaskId, caller.Name);
                 return Results.Ok(result);
             },

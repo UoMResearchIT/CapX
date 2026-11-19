@@ -243,23 +243,23 @@ public static class Projects
     /// Create a Project with its Leadership task, any resourcing and its Notes, in one call.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportProjectResponseDTO))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult CreateProject(
         PPMToolContext context,
-        ImportProjectService importService,
+        ProjectWriteService writeService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
         [FromBody] ImportProjectRequestDTO request)
     {
-        return GeneralHelpers.ExecuteImportWrite(
+        return GeneralHelpers.ExecuteWrite(
             settingsService,
             http,
             logger,
             $"{nameof(Projects)}.{nameof(CreateProject)}",
-            validate: caller => importService.Validate(context, request, caller),
+            validate: caller => writeService.Validate(context, request, caller),
             logValidationFailure: errors => logger.LogWarning("API: Projects: project validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors)),
             execute: caller =>
             {
@@ -267,7 +267,7 @@ public static class Projects
                 // its Notes), so without a transaction a failure part-way through leaves
                 // a half-created Project that a retry then rejects as a duplicate RTP.
                 using var transaction = context.Database.BeginTransaction();
-                var result = importService.Create(context, request, caller);
+                var result = writeService.Create(context, request, caller);
                 transaction.Commit();
                 logger.LogInformation(
                     "API: Projects: created Project {ProjectId} '{Name}' ({ResourceCount} resources, {NoteCount} notes) by {User}",
@@ -282,30 +282,30 @@ public static class Projects
     /// same side effects as in the UI. Doesn't change tasks, resourcing or Notes.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateProjectResponseDTO))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult UpdateProject(
         PPMToolContext context,
-        ImportProjectService importService,
+        ProjectWriteService writeService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
         [FromBody] UpdateProjectRequestDTO request)
     {
-        return GeneralHelpers.ExecuteImportWrite(
+        return GeneralHelpers.ExecuteWrite(
             settingsService,
             http,
             logger,
             $"{nameof(Projects)}.{nameof(UpdateProject)}",
-            validate: _ => importService.ValidateProjectUpdate(context, request),
+            validate: _ => writeService.ValidateProjectUpdate(context, request),
             logValidationFailure: errors => logger.LogWarning("API: Projects: project update validation failed for RTP {RTP}: {Errors}", request.RTP, string.Join("; ", errors)),
             execute: caller =>
             {
                 // ProjectService.Update commits (with any new timesheet code) before the cost
                 // recalculation saves again, so a failure in between would leave a partial update.
                 using var transaction = context.Database.BeginTransaction();
-                var result = importService.UpdateProject(context, request);
+                var result = writeService.UpdateProject(context, request);
                 transaction.Commit();
                 logger.LogInformation(
                     "API: Projects: updated Project {ProjectId} (RTP {RTP}) by {User}",
@@ -320,31 +320,31 @@ public static class Projects
     /// aren't deduplicated.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportNotesResponseDTO))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult AddNotes(
         PPMToolContext context,
-        ImportProjectService importService,
+        ProjectWriteService writeService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
         [FromBody] ImportNotesRequestDTO request)
     {
-        return GeneralHelpers.ExecuteImportWrite(
+        return GeneralHelpers.ExecuteWrite(
             settingsService,
             http,
             logger,
             $"{nameof(Projects)}.{nameof(AddNotes)}",
-            validate: _ => importService.ValidateNotesImport(context, request),
-            logValidationFailure: errors => logger.LogWarning("API: Projects: notes import validation failed for RTP {RTP}: {Errors}", request.RTP, string.Join("; ", errors)),
+            validate: _ => writeService.ValidateNotesAdd(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Projects: notes/add validation failed for RTP {RTP}: {Errors}", request.RTP, string.Join("; ", errors)),
             execute: caller =>
             {
                 // NoteService.Add commits each Note, and nothing de-duplicates them, so
                 // without a transaction a failure part-way through leaves some Notes
                 // behind that a retry of the whole request then adds a second time.
                 using var transaction = context.Database.BeginTransaction();
-                var result = importService.AddNotes(context, request);
+                var result = writeService.AddNotes(context, request);
                 transaction.Commit();
                 logger.LogInformation(
                     "API: Projects: added {NotesCreated} Note(s) to Project {ProjectId} (RTP {RTP}) by {User}",
@@ -358,12 +358,12 @@ public static class Projects
     /// Get a Project's Notes, identified by RTP. A Project with no Notes gives an empty list.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<NoteDTO>))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult GetNotes(
         PPMToolContext context,
-        ImportProjectService importService,
+        ProjectWriteService writeService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
@@ -374,14 +374,14 @@ public static class Projects
             var (allowed, caller, gateResult) = GeneralHelpers.CheckWriteApiAccess(settingsService, http, logger, "Projects.GetNotes");
             if (!allowed) return gateResult!;
 
-            var errors = importService.ValidateNotesGet(context, rtp);
+            var errors = writeService.ValidateNotesGet(context, rtp);
             if (errors.Count > 0)
             {
                 logger.LogWarning("API: Projects: get notes validation failed for RTP {RTP}: {Errors}", rtp, string.Join("; ", errors));
-                return Results.BadRequest(new ImportErrorDTO(errors));
+                return Results.BadRequest(new WriteErrorDTO(errors));
             }
 
-            var notes = importService.GetNotesForRTP(context, rtp);
+            var notes = writeService.GetNotesForRTP(context, rtp);
             logger.LogInformation("API: Projects: returned {Count} Note(s) for RTP {RTP} to {User}", notes.Count, rtp, caller!.Name);
             return Results.Json(notes);
         }
@@ -396,27 +396,27 @@ public static class Projects
     /// Replace a Note's content, identified by NoteId (from GET /api/projects/notes/getAll).
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateNoteResponseDTO))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult UpdateNote(
         PPMToolContext context,
-        ImportProjectService importService,
+        ProjectWriteService writeService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
         [FromBody] UpdateNoteRequestDTO request)
     {
-        return GeneralHelpers.ExecuteImportWrite(
+        return GeneralHelpers.ExecuteWrite(
             settingsService,
             http,
             logger,
             $"{nameof(Projects)}.{nameof(UpdateNote)}",
-            validate: _ => importService.ValidateNoteUpdate(context, request),
+            validate: _ => writeService.ValidateNoteUpdate(context, request),
             logValidationFailure: errors => logger.LogWarning("API: Projects: note update validation failed for NoteId {NoteId}: {Errors}", request.NoteId, string.Join("; ", errors)),
             execute: caller =>
             {
-                var result = importService.UpdateNote(context, request, caller);
+                var result = writeService.UpdateNote(context, request, caller);
                 logger.LogInformation("API: Projects: updated Note {NoteId} by {User}", result.NoteId, caller.Name);
                 return Results.Ok(result);
             },

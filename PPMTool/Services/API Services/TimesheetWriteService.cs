@@ -15,19 +15,19 @@ using PPMTool.Data.Enums;
 namespace PPMTool.Services
 {
     /// <summary>
-    /// Service for API import operations that validate and mutate timesheets and timesheet entries.
+    /// Service for API write operations that validate and mutate timesheets and timesheet entries.
     /// </summary>
-    public class ImportTimesheetService
+    public class TimesheetWriteService
     {
         private readonly TimesheetService timesheetService;
         private readonly PersonService personService;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ImportTimesheetService"/> class.
+        /// Initializes a new instance of the <see cref="TimesheetWriteService"/> class.
         /// </summary>
         /// <param name="timesheetService">Service used to validate and persist timesheets.</param>
-        /// <param name="personService">Service used to resolve people for imported timesheet data.</param>
-        public ImportTimesheetService(TimesheetService timesheetService, PersonService personService)
+        /// <param name="personService">Service used to resolve the people timesheets belong to.</param>
+        public TimesheetWriteService(TimesheetService timesheetService, PersonService personService)
         {
             this.timesheetService = timesheetService;
             this.personService = personService;
@@ -70,7 +70,7 @@ namespace PPMTool.Services
             if (project == null)
                 errors.Add($"ProjectId {request.ProjectId} does not exist");
             else if (project.InnateActivity == null)
-                errors.Add($"Project {request.ProjectId} ('{project.Name}') has no timesheet activity code -- link one (TimesheetActivityCode on PUT /api/projects/update, or in the UI) before importing timesheet entries");
+                errors.Add($"Project {request.ProjectId} ('{project.Name}') has no timesheet activity code -- link one (TimesheetActivityCode on PUT /api/projects/update, or in the UI) before adding timesheet entries");
             else if (hasTaskName && !project.InnateActivity.Tasks.Any(t => t.TaskName.Trim().Equals(request.TaskName.Trim(), StringComparison.OrdinalIgnoreCase)))
                 errors.Add($"TaskName '{request.TaskName}' does not match any InnateCodeTask under project {request.ProjectId}'s InnateActivity ('{project.InnateActivity.ActivityName}'); available: {string.Join(", ", project.InnateActivity.Tasks.Select(t => t.TaskName))}");
 

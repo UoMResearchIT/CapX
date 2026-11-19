@@ -13,12 +13,12 @@ using PPMTool.Data.Entities;
 namespace PPMTool.Services
 {
     /// <summary>
-    /// Service for API import operations that validate and mutate <see cref="WorkloadModelChange"/> entities.
+    /// Service for API write operations that validate and mutate <see cref="WorkloadModelChange"/> entities.
     /// </summary>
-    public class ImportWorkloadModelService
+    public class WorkloadModelWriteService
     {
         /// <summary>
-        /// Validates an import workload-model-change request without writing to the database.
+        /// Validates a workload-model-change request without writing to the database.
         /// </summary>
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming workload-model-change request.</param>

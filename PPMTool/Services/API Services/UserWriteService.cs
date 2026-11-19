@@ -13,29 +13,29 @@ using PPMTool.Data.Enums;
 namespace PPMTool.Services
 {
     /// <summary>
-    /// Service for API import operations that validate and create User entities.
+    /// Service for API write operations that validate and create User entities.
     /// </summary>
-    public class ImportUserService
+    public class UserWriteService
     {
         private readonly PersonService personService;
         private readonly UserService userService;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ImportUserService"/> class.
+        /// Initializes a new instance of the <see cref="UserWriteService"/> class.
         /// </summary>
-        /// <param name="personService">Service used to resolve people linked to imported users.</param>
+        /// <param name="personService">Service used to resolve people linked to new users.</param>
         /// <param name="userService">Service used to validate and persist users.</param>
-        public ImportUserService(PersonService personService, UserService userService)
+        public UserWriteService(PersonService personService, UserService userService)
         {
             this.personService = personService;
             this.userService = userService;
         }
 
         /// <summary>
-        /// Validates a user import request without writing to the database.
+        /// Validates a users/add request without writing to the database.
         /// </summary>
         /// <param name="context">Database context.</param>
-        /// <param name="request">Incoming user import request.</param>
+        /// <param name="request">Incoming users/add request.</param>
         /// <returns>Validation errors, or an empty list when valid.</returns>
         public List<string> ValidateUser(PPMToolContext context, ImportUserDTO request)
         {
@@ -72,10 +72,10 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Creates a user from an already-validated import request.
+        /// Creates a user from an already-validated users/add request.
         /// </summary>
         /// <param name="context">Database context.</param>
-        /// <param name="request">Incoming user import request.</param>
+        /// <param name="request">Incoming users/add request.</param>
         /// <returns>The created user identifier payload.</returns>
         public ImportUserResponseDTO CreateUser(PPMToolContext context, ImportUserDTO request)
         {

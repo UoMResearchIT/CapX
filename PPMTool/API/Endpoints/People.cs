@@ -156,27 +156,27 @@ public static class People
     /// Create a Person with no User. Superuser only.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportPersonResponseDTO))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult CreatePerson(
         PPMToolContext context,
-        ImportPersonService importService,
+        PersonWriteService writeService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
         [FromBody] ImportPersonDTO request)
     {
-        return GeneralHelpers.ExecuteImportWrite(
+        return GeneralHelpers.ExecuteWrite(
             settingsService,
             http,
             logger,
             $"{nameof(People)}.{nameof(CreatePerson)}",
-            validate: _ => importService.ValidatePerson(context, request),
+            validate: _ => writeService.ValidatePerson(context, request),
             logValidationFailure: errors => logger.LogWarning("API: People: person validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors)),
             execute: caller =>
             {
-                var result = importService.CreatePerson(context, request);
+                var result = writeService.CreatePerson(context, request);
                 logger.LogInformation(
                     "API: People: created Person {PersonId} '{Name}' ({ShortName}) by {User}",
                     result.PersonId, request.Name, result.ShortName, caller.Name);
@@ -190,29 +190,29 @@ public static class People
     /// identified by PersonId. Superuser only.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ImportPersonResponseDTO))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public static IResult UpdatePerson(
         PPMToolContext context,
-        ImportPersonService importService,
+        PersonWriteService writeService,
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
         [FromBody] UpdatePersonRequestDTO request)
     {
-        return GeneralHelpers.ExecuteImportWrite(
+        return GeneralHelpers.ExecuteWrite(
             settingsService,
             http,
             logger,
             $"{nameof(People)}.{nameof(UpdatePerson)}",
-            validate: _ => importService.ValidatePersonUpdate(context, request),
+            validate: _ => writeService.ValidatePersonUpdate(context, request),
             logValidationFailure: errors => logger.LogWarning("API: People: person update validation failed for PersonId {PersonId}: {Errors}", request.PersonId, string.Join("; ", errors)),
             execute: caller =>
             {
                 // PersonService.Update and the display-name update on linked Users commit separately.
                 using var transaction = context.Database.BeginTransaction();
-                var result = importService.UpdatePerson(context, request);
+                var result = writeService.UpdatePerson(context, request);
                 transaction.Commit();
                 logger.LogInformation(
                     "API: People: updated Person {PersonId} ('{ShortName}') by {User}",

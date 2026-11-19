@@ -281,27 +281,27 @@ namespace PPMTool.API.Endpoints
         /// <see cref="ImportWorkloadModelChangeDTO"/>.
         /// </summary>
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportWorkloadModelChangeResponseDTO))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public static IResult CreateWorkloadModelChange(
             PPMToolContext context,
-            ImportWorkloadModelService importService,
+            WorkloadModelWriteService writeService,
             SettingsService settingsService,
             ILogger logger,
             HttpContext http,
             [FromBody] ImportWorkloadModelChangeDTO request)
         {
-            return GeneralHelpers.ExecuteImportWrite(
+            return GeneralHelpers.ExecuteWrite(
                 settingsService,
                 http,
                 logger,
                 $"{nameof(WorkloadModels)}.{nameof(CreateWorkloadModelChange)}",
-                validate: _ => importService.ValidateWorkloadModelChange(context, request),
+                validate: _ => writeService.ValidateWorkloadModelChange(context, request),
                 logValidationFailure: errors => logger.LogWarning("API: WorkloadModels: validation failed for '{Username}'/{ChangeDate}: {Errors}", request.Username, request.ChangeDate, string.Join("; ", errors)),
                 execute: caller =>
                 {
-                    var result = importService.CreateOrUpdateWorkloadModelChange(context, request);
+                    var result = writeService.CreateOrUpdateWorkloadModelChange(context, request);
                     logger.LogInformation(
                         "API: WorkloadModels: workload model change {WorkloadModelChangeId} for {Username}, effective {ChangeDate} ({Action}) by {User}",
                         result.WorkloadModelChangeId, request.Username, request.ChangeDate, result.Created ? "created" : "updated", caller.Name);
