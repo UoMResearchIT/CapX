@@ -6,62 +6,53 @@
 
 namespace PPMTool.API.DTOs
 {
-    /// <summary>Response for a failed import -- nothing was written.</summary>
-    /// <param name="Errors"></param>
+    /// <summary>Response for a rejected write. Nothing was written.</summary>
+    /// <param name="Errors">Every validation error found</param>
     public sealed record ImportErrorDTO(
         IReadOnlyList<string> Errors
     );
 
-    /// <summary>One School to create under the imported Faculty.</summary>
+    /// <summary>One School to create with a new Faculty.</summary>
     /// <param name="Name"></param>
-    /// <param name="Code">Must be unique within the Faculty</param>
+    /// <param name="Code">Must not be used by any other School, in any Faculty</param>
     public sealed record ImportSchoolDTO(
         string Name,
         string Code
     );
 
     /// <summary>
-    /// Request body for POST /api/faculties/add. There's no other bulk way
-    /// to populate an institution's own faculty/school list -- /manageorgunits
-    /// is one row at a time, and SeedHelper.SeedOrganisationalUnits() is
-    /// hardcoded to Manchester's own list (see discussion on
-    /// UoMResearchIT/CapX#1310). Always creates a brand-new Faculty --
-    /// to add a School under one that already exists, use
-    /// POST /api/schools/add instead.
+    /// Request body for POST /api/faculties/add. Creates a new Faculty with
+    /// its Schools. To add a School to an existing Faculty, use
+    /// POST /api/schools/add.
     /// </summary>
     /// <param name="Name"></param>
     /// <param name="Code">Must be unique across all Faculties</param>
-    /// <param name="Schools"></param>
+    /// <param name="Schools">Schools to create in the Faculty, if any</param>
     public sealed record ImportFacultyRequestDTO(
         string Name,
         string Code,
         IReadOnlyList<ImportSchoolDTO>? Schools
     );
 
-    /// <summary>Response for a successful Faculty (+ Schools) import.</summary>
+    /// <summary>Response for a created Faculty.</summary>
     /// <param name="FacultyId"></param>
-    /// <param name="SchoolIds">In the same order as the request's Schools list</param>
+    /// <param name="SchoolIds">In the same order as the request's Schools</param>
     public sealed record ImportFacultyResponseDTO(
         int FacultyId,
         IReadOnlyList<int> SchoolIds
     );
 
-    /// <summary>
-    /// Request body for POST /api/schools/add -- adds a single School under
-    /// a Faculty that already exists (unlike ImportFacultyRequestDTO's
-    /// nested Schools, which only ever create Schools alongside a brand-new
-    /// Faculty). See UoMResearchIT/CapX#1310.
-    /// </summary>
+    /// <summary>Request body for POST /api/schools/add. Adds one School to an existing Faculty.</summary>
     /// <param name="Name"></param>
-    /// <param name="Code">Must be unique within the Faculty</param>
-    /// <param name="FacultyCode">Code of an existing Faculty to add this School under</param>
+    /// <param name="Code">Must not be used by any other School, in any Faculty</param>
+    /// <param name="FacultyCode">Code of the Faculty to add the School to</param>
     public sealed record ImportSchoolRequestDTO(
         string Name,
         string Code,
         string FacultyCode
     );
 
-    /// <summary>Response for a successful School import.</summary>
+    /// <summary>Response for a created School.</summary>
     /// <param name="SchoolId"></param>
     /// <param name="FacultyId"></param>
     public sealed record ImportSchoolResponseDTO(
@@ -70,35 +61,34 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// Request body for PUT /api/faculties/update. Identifies an existing
-    /// Faculty by its current Code; Name and/or Code (rename) are updated
-    /// when supplied. Doesn't touch Schools -- see UpdateSchoolRequestDTO.
+    /// Request body for PUT /api/faculties/update. Identifies the Faculty by
+    /// its current Code and changes the fields supplied. Doesn't change its
+    /// Schools: see UpdateSchoolRequestDTO.
     /// </summary>
-    /// <param name="Code">Current Code of the Faculty to update</param>
+    /// <param name="Code">Current Code of the Faculty</param>
     /// <param name="Name">New Name, if changing</param>
-    /// <param name="NewCode">New Code, if renaming</param>
+    /// <param name="NewCode">New Code, if changing</param>
     public sealed record UpdateFacultyRequestDTO(
         string Code,
         string? Name,
         string? NewCode
     );
 
-    /// <summary>Response for a successful Faculty update.</summary>
+    /// <summary>Response for an updated Faculty.</summary>
     /// <param name="FacultyId"></param>
     public sealed record UpdateFacultyResponseDTO(
         int FacultyId
     );
 
     /// <summary>
-    /// Request body for PUT /api/schools/update. Identifies an existing
-    /// School by its current Code; Name, Code (rename), and/or
-    /// NewFacultyCode (re-parent under a different existing Faculty) are
-    /// updated when supplied.
+    /// Request body for PUT /api/schools/update. Identifies the School by its
+    /// current Code and changes the fields supplied, including moving it to
+    /// another Faculty.
     /// </summary>
-    /// <param name="Code">Current Code of the School to update</param>
+    /// <param name="Code">Current Code of the School</param>
     /// <param name="Name">New Name, if changing</param>
-    /// <param name="NewCode">New Code, if renaming</param>
-    /// <param name="NewFacultyCode">Code of a different existing Faculty to move this School under, if re-parenting</param>
+    /// <param name="NewCode">New Code, if changing; must not be used by any other School</param>
+    /// <param name="NewFacultyCode">Code of the Faculty to move the School to, if moving</param>
     public sealed record UpdateSchoolRequestDTO(
         string Code,
         string? Name,
@@ -107,14 +97,13 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// One resourcing/FTE allocation to create alongside the imported project,
-    /// on a single "Delivery" SubTask. Matched against an existing Person via
-    /// Access Control username.
+    /// One assignment created with a new Project, or with a new Task, on that
+    /// Task. The person is identified by username.
     /// </summary>
-    /// <param name="Username">CapX Access Control username of an existing Person</param>
-    /// <param name="AssignmentFTE"></param>
-    /// <param name="StartDate"></param>
-    /// <param name="EndDate"></param>
+    /// <param name="Username">Username of a User with a linked Person</param>
+    /// <param name="AssignmentFTE">Greater than zero, at most 3 decimal places</param>
+    /// <param name="StartDate">Not used: an assignment's period is its Task's</param>
+    /// <param name="EndDate">Not used: an assignment's period is its Task's</param>
     public sealed record ImportResourcingDTO(
         string Username,
         double AssignmentFTE,
@@ -122,13 +111,11 @@ namespace PPMTool.API.DTOs
         DateTime EndDate
     );
 
-    /// <summary>
-    /// One comment to create as a Note on the imported project.
-    /// </summary>
-    /// <param name="AuthorUsername">CapX Access Control username of the author, if resolved; null/empty attributes to the fallback migration-import User</param>
-    /// <param name="AuthorDisplayName">Original author's display name, preserved in the Note text when AuthorUsername can't be resolved</param>
-    /// <param name="ContentHtml"></param>
-    /// <param name="CreatedDate"></param>
+    /// <summary>One comment to add as a Note on a Project.</summary>
+    /// <param name="AuthorUsername">Username of the comment's author, if known. When it's missing or matches no User, the Note is attributed to the "migration-import" User, which must exist, and AuthorDisplayName is kept in its text.</param>
+    /// <param name="AuthorDisplayName">The author's name as the source recorded it</param>
+    /// <param name="ContentHtml">The comment, as HTML; sanitised on save</param>
+    /// <param name="CreatedDate">When the comment was made</param>
     public sealed record ImportCommentDTO(
         string? AuthorUsername,
         string AuthorDisplayName,
@@ -137,22 +124,18 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// Request body for POST /api/projects/notes/add. Adds Comments as
-    /// Notes to an existing Project, identified by RTP -- the counterpart
-    /// to ImportProjectRequestDTO.Comments for a project that's already
-    /// been created (that field only ever gets processed at creation
-    /// time; POST /api/projects/add's own Validate() rejects the whole
-    /// call outright once the RTP/Name already exists, so there was no
-    /// way to add Comments after the fact until this endpoint).
+    /// Request body for POST /api/projects/notes/add. Adds comments as Notes to
+    /// an existing Project. Notes aren't deduplicated, so sending the same
+    /// comments twice adds them twice: check GET /api/projects/notes/getAll first.
     /// </summary>
-    /// <param name="RTP">RTP of the existing Project to add Notes to</param>
-    /// <param name="Comments"></param>
+    /// <param name="RTP">RTP of the Project</param>
+    /// <param name="Comments">At least one</param>
     public sealed record ImportNotesRequestDTO(
         int RTP,
         IReadOnlyList<ImportCommentDTO> Comments
     );
 
-    /// <summary>Response for a successful POST /api/projects/notes/add.</summary>
+    /// <summary>Response for added Notes.</summary>
     /// <param name="ProjectId"></param>
     /// <param name="NotesCreated"></param>
     public sealed record ImportNotesResponseDTO(
@@ -161,27 +144,28 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// Request body for POST /api/projects/add. One project, with its
-    /// resourcing and comments created in the same call. The shape is
-    /// source-agnostic: any institution's own extraction tooling can target it.
+    /// Request body for POST /api/projects/add. Creates a Project with its
+    /// Leadership task over the management dates, a "Delivery" task carrying
+    /// any Resourcing, and its Notes. The caller's own Person becomes the
+    /// Request Owner, so the API key's owner needs a linked Person.
     /// </summary>
-    /// <param name="Name"></param>
-    /// <param name="RTP"></param>
+    /// <param name="Name">Must be unique</param>
+    /// <param name="RTP">Must be unique and greater than zero</param>
     /// <param name="PI"></param>
-    /// <param name="SchoolCode">Access Control School code (e.g. "SMS")</param>
-    /// <param name="ProjectManagerUsername">Access Control username of the Project Manager, if known</param>
+    /// <param name="SchoolCode">Code of an active School</param>
+    /// <param name="ProjectManagerUsername">Username of the Project Manager, if any; must have a linked Person</param>
     /// <param name="Budget"></param>
-    /// <param name="CostModel">Must parse as a PPMTool.Data.Enums.CostModel value</param>
-    /// <param name="DayRate">Required (must be greater than zero) only when CostModel is "DayRate"</param>
-    /// <param name="ProjectStatus">Must parse as a PPMTool.Data.Enums.ProjectStatus value</param>
-    /// <param name="Description">HTML</param>
-    /// <param name="RequestDocLink"></param>
+    /// <param name="CostModel">A PPMTool.Data.Enums.CostModel name</param>
+    /// <param name="DayRate">Greater than zero when CostModel is "DayRate"; ignored otherwise</param>
+    /// <param name="ProjectStatus">A PPMTool.Data.Enums.ProjectStatus name</param>
+    /// <param name="Description">HTML; sanitised on save</param>
+    /// <param name="RequestDocLink">Required; need not be a URL</param>
     /// <param name="ScrumProjectLink"></param>
-    /// <param name="ManagementStartDate">Start date for the auto-created project-management SubTask (Duty.ProjectAndServiceMgmt) -- every Project needs one, see ProjectStatusEvaluator</param>
-    /// <param name="ManagementEndDate">End date for the auto-created project-management SubTask</param>
-    /// <param name="Resourcing"></param>
-    /// <param name="Comments"></param>
-    /// <param name="TimesheetActivityCode">Timesheet activity code to link the Project to. An existing code is linked as it is, provided no other Project uses it; otherwise a new code is created with this activity code, named after the Project, with the default tasks. Omit for no code (the Project then cannot receive timesheet entries until one is linked).</param>
+    /// <param name="ManagementStartDate">Start of the Leadership (ProjectAndServiceMgmt) task every Project needs</param>
+    /// <param name="ManagementEndDate">End of the Leadership task; on or after ManagementStartDate</param>
+    /// <param name="Resourcing">Assignments to create on the Delivery task, if any</param>
+    /// <param name="Comments">Comments to add as Notes, if any</param>
+    /// <param name="TimesheetActivityCode">Timesheet code to link the Project to. An existing code is linked as it is, provided no other Project uses it; otherwise a code is created with this activity code, named after the Project, with tasks Development, Management and Maintenance. Without one, the Project has no code and can't receive timesheet entries until one is linked.</param>
     public sealed record ImportProjectRequestDTO(
         string Name,
         int RTP,
@@ -202,8 +186,8 @@ namespace PPMTool.API.DTOs
         string? TimesheetActivityCode = null
     );
 
-    /// <summary>Response for a successful import.</summary>
-    /// <param name="ProjectId"></param>
+    /// <summary>Response for a created Project.</summary>
+    /// <param name="ProjectId">The Project's database id</param>
     /// <param name="ResourcesCreated"></param>
     /// <param name="NotesCreated"></param>
     public sealed record ImportProjectResponseDTO(
@@ -213,25 +197,27 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// Request body for PUT /api/projects/update. Identifies an existing
-    /// Project by its RTP; only the core scalar fields are updatable here
-    /// -- Resourcing and Comments are additive actions with their own
-    /// semantics via POST /api/projects/add, not something a partial
-    /// update should touch. Any field left null is left unchanged.
+    /// Request body for PUT /api/projects/update. Identifies the Project by
+    /// RTP and changes the fields supplied; a field left out or null is
+    /// unchanged. Doesn't change tasks, assignments or Notes. A status change
+    /// has the same side effects as in the UI: leaving New Request records
+    /// when the request was completed, a cancelled status removes the
+    /// Project's assignments, Finished or cancelled removes its followers,
+    /// and becoming Active (other than from Paused) restarts the actuals clock.
     /// </summary>
-    /// <param name="RTP">RTP of the Project to update</param>
-    /// <param name="Name"></param>
+    /// <param name="RTP">RTP of the Project</param>
+    /// <param name="Name">Must be unique</param>
     /// <param name="PI"></param>
-    /// <param name="SchoolCode">Access Control School code</param>
-    /// <param name="ProjectManagerUsername">Pass an empty string to clear the Project Manager, null to leave unchanged</param>
+    /// <param name="SchoolCode">Code of an active School</param>
+    /// <param name="ProjectManagerUsername">Username of the Project Manager, which must have a linked Person; an empty string clears it</param>
     /// <param name="Budget"></param>
-    /// <param name="CostModel">Must parse as a PPMTool.Data.Enums.CostModel value, if changing</param>
-    /// <param name="DayRate">Must be greater than zero if the resulting CostModel is "DayRate"</param>
-    /// <param name="ProjectStatus">Must parse as a PPMTool.Data.Enums.ProjectStatus value, if changing</param>
-    /// <param name="Description">HTML</param>
+    /// <param name="CostModel">A PPMTool.Data.Enums.CostModel name</param>
+    /// <param name="DayRate">Greater than zero if the resulting CostModel is "DayRate"</param>
+    /// <param name="ProjectStatus">A PPMTool.Data.Enums.ProjectStatus name</param>
+    /// <param name="Description">HTML; sanitised on save</param>
     /// <param name="RequestDocLink"></param>
-    /// <param name="ScrumProjectLink">Pass an empty string to clear, null to leave unchanged</param>
-    /// <param name="TimesheetActivityCode">Link the Project to this timesheet activity code, on the same terms as POST /api/projects/add, replacing any current link. Null leaves it unchanged; there is no way to clear it, since that would hide the Project's logged hours.</param>
+    /// <param name="ScrumProjectLink">An empty string clears it</param>
+    /// <param name="TimesheetActivityCode">Timesheet code to link the Project to, as for POST /api/projects/add. The current code can't be replaced while it has timesheet entries, since the Project's actuals come through it; an unused current code that no other Project uses is renamed instead. The link can't be cleared.</param>
     public sealed record UpdateProjectRequestDTO(
         int RTP,
         string? Name,
@@ -248,30 +234,24 @@ namespace PPMTool.API.DTOs
         string? TimesheetActivityCode = null
     );
 
-    /// <summary>Response for a successful Project update.</summary>
+    /// <summary>Response for an updated Project.</summary>
     /// <param name="ProjectId"></param>
     public sealed record UpdateProjectResponseDTO(
         int ProjectId
     );
 
     /// <summary>
-    /// Request body for POST /api/tasks/add. Creates one fixed-duration,
-    /// fixed-start/fixed-end SubTask on an existing Project -- the same
-    /// shape ImportProjectService.Create already uses for the auto-created
-    /// Leadership/Delivery tasks, generalised so real RSE work tasks can
-    /// be created individually during import rather than folded into one
-    /// aggregate "Delivery" task. Deliberately doesn't expose TaskType
-    /// (FixedWork), predecessor/Lag chains, or SkillsRequired -- SubTask.
-    /// Schedule()'s more complex branches aren't needed for the
-    /// migration/import use case this API serves.
+    /// Request body for POST /api/tasks/add. Creates a fixed-duration Task
+    /// with a fixed start and end and no predecessor, the shape CapX schedules
+    /// without moving its dates.
     /// </summary>
-    /// <param name="RTP">RTP of the existing Project to add this task to</param>
-    /// <param name="Name">Must be unique within the Project (Duty.ProjectAndServiceMgmt tasks are exempt -- same rule AddTask.razor enforces via SubTaskService.IsUniqueTaskNameInProject)</param>
-    /// <param name="TaskDuty">Must parse as a PPMTool.Data.Enums.Duty value</param>
+    /// <param name="RTP">RTP of the Project</param>
+    /// <param name="Name">Unique within the Project, except for Leadership (ProjectAndServiceMgmt) tasks, as in the UI</param>
+    /// <param name="TaskDuty">A PPMTool.Data.Enums.Duty name</param>
     /// <param name="StartDate"></param>
-    /// <param name="EndDate">Must be on or after StartDate</param>
-    /// <param name="Demand">FTE. Sets both Demand and OriginalDemand (there's no prior state at creation time) -- must be greater than zero, at most 3 decimal places</param>
-    /// <param name="Resourcing">Optional -- same shape as ImportProjectRequestDTO.Resourcing. AssignmentFTE is used; StartDate/EndDate on each row are not -- a Resource has no schedule of its own, it inherits the owning SubTask's, same as the existing Delivery-task resourcing code this mirrors</param>
+    /// <param name="EndDate">On or after StartDate</param>
+    /// <param name="Demand">FTE needed; sets both Demand and OriginalDemand. Greater than zero, at most 3 decimal places.</param>
+    /// <param name="Resourcing">Assignments to create on the Task, if any. Each assignee must start by the Task's start, and only managers can go on a Leadership task.</param>
     public sealed record ImportTaskDTO(
         int RTP,
         string Name,
@@ -282,7 +262,7 @@ namespace PPMTool.API.DTOs
         IReadOnlyList<ImportResourcingDTO>? Resourcing
     );
 
-    /// <summary>Response for a successful Task import.</summary>
+    /// <summary>Response for a created Task.</summary>
     /// <param name="SubTaskId"></param>
     /// <param name="ResourcesCreated"></param>
     public sealed record ImportTaskResponseDTO(
@@ -291,22 +271,19 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// Request body for PUT /api/tasks/update. Identifies an existing
-    /// SubTask by SubTaskId (from GET /api/tasks/getAll); only fields
-    /// actually supplied are updated. Doesn't touch Resourcing --
-    /// additive, same as Project's own Resourcing/Comments split from
-    /// UpdateProjectRequestDTO. Demand updates only the current Demand,
-    /// never OriginalDemand -- OriginalDemand is a fixed historical
-    /// record of "the ask when the task was first created" (see the
-    /// entity's own doc comment) and a correction here shouldn't rewrite
-    /// that history.
+    /// Request body for PUT /api/tasks/update. Identifies the Task by
+    /// SubTaskId and changes the fields supplied. Doesn't change assignments:
+    /// see PUT /api/tasks/resourcing/update. Dates can only be changed on the
+    /// shape POST /api/tasks/add creates; on any other Task, CapX would
+    /// recalculate them, so change them in the UI. A Project's last
+    /// Leadership task can't be given another duty.
     /// </summary>
-    /// <param name="SubTaskId">SubTaskId of the Task to update (see GET /api/tasks/getAll)</param>
-    /// <param name="Name">New name, if changing (subject to the same uniqueness rule as creation)</param>
-    /// <param name="TaskDuty">Must parse as a PPMTool.Data.Enums.Duty value, if changing</param>
+    /// <param name="SubTaskId">From GET /api/tasks/getAll</param>
+    /// <param name="Name">Unique within the Project, as on creation</param>
+    /// <param name="TaskDuty">A PPMTool.Data.Enums.Duty name</param>
     /// <param name="StartDate"></param>
-    /// <param name="EndDate">Must be on or after the resulting StartDate</param>
-    /// <param name="Demand">FTE, at most 3 decimal places. Updates the current Demand only -- see remarks</param>
+    /// <param name="EndDate">On or after the resulting StartDate</param>
+    /// <param name="Demand">FTE needed, at most 3 decimal places. Changes the current Demand; OriginalDemand keeps what was asked for at creation.</param>
     public sealed record UpdateTaskRequestDTO(
         int SubTaskId,
         string? Name,
@@ -316,36 +293,22 @@ namespace PPMTool.API.DTOs
         double? Demand
     );
 
-    /// <summary>Response for a successful Task update.</summary>
+    /// <summary>Response for an updated Task.</summary>
     /// <param name="SubTaskId"></param>
     public sealed record UpdateTaskResponseDTO(
         int SubTaskId
     );
 
     /// <summary>
-    /// One resourcing assignment to add to an existing SubTask via
-    /// POST /api/tasks/resourcing/add.
-    ///
-    /// Identify the person by exactly one of Username or PersonId --
-    /// Username for anyone with a real CapX login, PersonId for a bare
-    /// Person with no linked User. That second path matters here for the
-    /// same reason it does on timesheets/add: historical resourcing
-    /// routinely belongs to people who have since left and were added
-    /// via POST /api/people/add specifically without a User, and
-    /// ImportResourcingDTO (create-time, username-only) cannot express
-    /// them at all.
-    ///
-    /// Deliberately carries no dates: a Resource has none. The
-    /// assignment's period is its SubTask's period, so an allocation
-    /// covering a different period belongs on a different task rather
-    /// than being expressed as a date range here. (ImportResourcingDTO
-    /// does accept StartDate/EndDate at project-create time, but nothing
-    /// reads them -- see ImportProjectService.Create.)
+    /// One assignment to add to an existing Task. Name the person by exactly
+    /// one of Username or PersonId; PersonId reaches a Person with no User,
+    /// such as one created by POST /api/people/add. An assignment has no dates
+    /// of its own: its period is its Task's.
     /// </summary>
-    /// <param name="Username">Access Control username of an existing Person -- exactly one of Username/PersonId required</param>
-    /// <param name="PersonId">PersonId of an existing Person, including one with no linked User -- exactly one of Username/PersonId required</param>
-    /// <param name="AssignmentFTE">FTE, greater than zero, at most 3 decimal places</param>
-    /// <param name="IsProvisional">Defaults to true when omitted -- imported resourcing is flagged for PM review rather than treated as confirmed, matching ImportProjectService.Create</param>
+    /// <param name="Username">Username of a User with a linked Person</param>
+    /// <param name="PersonId">Id of a Person, with or without a User</param>
+    /// <param name="AssignmentFTE">Greater than zero, at most 3 decimal places</param>
+    /// <param name="IsProvisional">Defaults to true</param>
     public sealed record ImportResourceAssignmentDTO(
         string? Username,
         int? PersonId,
@@ -354,24 +317,20 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// Request body for POST /api/tasks/resourcing/add. Adds one or more
-    /// resourcing assignments to an existing SubTask, identified by
-    /// SubTaskId (from GET /api/tasks/getAll).
-    ///
-    /// Additive, and not idempotent on its own: assigning a Person who
-    /// already has an assignment on this task is rejected rather than
-    /// merged or duplicated, so a re-run can't silently double a task's
-    /// resourcing. Read GET /api/tasks/resourcing/getAll first and use
-    /// PUT /api/tasks/resourcing/update to change an existing one.
+    /// Request body for POST /api/tasks/resourcing/add. Adds assignments to an
+    /// existing Task. A person already assigned to the Task is rejected rather
+    /// than duplicated: use PUT /api/tasks/resourcing/update to change their
+    /// assignment. Not allowed on a fixed-work Task, whose dates CapX
+    /// recalculates from the FTE assigned to it.
     /// </summary>
-    /// <param name="SubTaskId">SubTaskId of the Task to resource (see GET /api/tasks/getAll)</param>
-    /// <param name="Resourcing">One or more assignments to add</param>
+    /// <param name="SubTaskId">From GET /api/tasks/getAll</param>
+    /// <param name="Resourcing">At least one assignment</param>
     public sealed record ImportTaskResourcingRequestDTO(
         int SubTaskId,
         IReadOnlyList<ImportResourceAssignmentDTO> Resourcing
     );
 
-    /// <summary>Response for a successful resourcing import.</summary>
+    /// <summary>Response for added assignments.</summary>
     /// <param name="SubTaskId"></param>
     /// <param name="ResourcesCreated"></param>
     public sealed record ImportTaskResourcingResponseDTO(
@@ -380,28 +339,16 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// Request body for PUT /api/tasks/resourcing/update. Identifies an
-    /// existing assignment by ResourceId (from
-    /// GET /api/tasks/resourcing/getAll); only fields actually supplied
-    /// are updated.
-    ///
-    /// NewSubTaskId moves the assignment to a different task, mirroring
-    /// what PUT /api/timesheets/update already allows for a timesheet
-    /// entry. Because a Resource has no dates of its own, moving it to a
-    /// task with different dates IS how an assignment's period gets
-    /// corrected -- there is no other way to express it.
-    ///
-    /// AssignmentFTE may be set to zero here, unlike on add, matching how
-    /// Demand behaves on PUT /api/tasks/update. With no DELETE on this
-    /// API (a deliberate standing choice -- Superuser-only writes into a
-    /// live database with no soft-delete or audit story designed yet),
-    /// zeroing an assignment is the available way to retract one while
-    /// leaving it visible and attributable.
+    /// Request body for PUT /api/tasks/resourcing/update. Identifies the
+    /// assignment by ResourceId and changes the fields supplied. Setting
+    /// AssignmentFTE to zero retracts the assignment; there is no DELETE.
+    /// Moving it to another Task (NewSubTaskId) is how its period changes.
+    /// Not allowed when either Task is fixed-work.
     /// </summary>
-    /// <param name="ResourceId">ResourceId of the assignment to update (see GET /api/tasks/resourcing/getAll)</param>
-    /// <param name="AssignmentFTE">New FTE if changing -- may be zero, at most 3 decimal places</param>
-    /// <param name="NewSubTaskId">SubTaskId of a different existing Task to move this assignment to, if reassigning</param>
-    /// <param name="IsProvisional">Whether the assignment is provisional, if changing</param>
+    /// <param name="ResourceId">From GET /api/tasks/resourcing/getAll</param>
+    /// <param name="AssignmentFTE">Zero or more, at most 3 decimal places</param>
+    /// <param name="NewSubTaskId">Task to move the assignment to</param>
+    /// <param name="IsProvisional"></param>
     public sealed record UpdateTaskResourcingRequestDTO(
         int ResourceId,
         double? AssignmentFTE,
@@ -409,41 +356,28 @@ namespace PPMTool.API.DTOs
         bool? IsProvisional
     );
 
-    /// <summary>Response for a successful resourcing update.</summary>
+    /// <summary>Response for an updated assignment.</summary>
     /// <param name="ResourceId"></param>
-    /// <param name="SubTaskId">The task the assignment now belongs to</param>
+    /// <param name="SubTaskId">The Task the assignment is now on</param>
     public sealed record UpdateTaskResourcingResponseDTO(
         int ResourceId,
         int SubTaskId
     );
 
     /// <summary>
-    /// Request body for POST /api/timesheets/add. One week's actual
-    /// hours for one person on one project, on a single InnateCodeTask
-    /// under that project's InnateActivity code (linked by passing
-    /// TimesheetActivityCode to POST /api/projects/add or PUT
-    /// /api/projects/update, or in the UI). CapX computes a Project's actual hours
-    /// by querying Approved Timesheets linked through this InnateActivity
-    /// code (see AddTask.razor.cs), so this is the real, native path for
-    /// historical actuals -- not a bespoke side-channel field.
-    ///
-    /// Re-importing the same (Person, WeekStartDate, TaskName) is safe:
-    /// the existing entry's hours are overwritten, not accumulated, so a
-    /// repeated import doesn't double-count.
-    ///
-    /// Identify the person by exactly one of Username or PersonId --
-    /// Username for anyone with a real CapX login; PersonId for a bare
-    /// Person with no linked User (e.g. a departed RSE added via
-    /// POST /api/people/add specifically without one). Username has no
-    /// way to reach that second group at all, and PersonId is the same
-    /// identifier ImportPersonResponseDTO already hands back, so this
-    /// isn't a new concept, just a second path to the same Person.
+    /// Request body for POST /api/timesheets/add. One person's hours for one
+    /// week on one task of a Project's timesheet code. Writes into the
+    /// person's existing timesheet for that week whatever its status, or
+    /// creates an Approved one. Only Approved timesheets count towards a
+    /// Project's actuals. Sending the same person, week and task again
+    /// replaces that entry's hours. Name the person by exactly one of
+    /// Username or PersonId.
     /// </summary>
-    /// <param name="Username">CapX Access Control username of an existing Person -- exactly one of Username/PersonId required</param>
-    /// <param name="PersonId">PersonId of an existing bare Person with no linked User -- exactly one of Username/PersonId required</param>
-    /// <param name="ProjectId">Must already have an InnateActivity code (see remarks)</param>
-    /// <param name="WeekStartDate">Must be a Monday -- CapX Timesheets are always Monday-start weeks</param>
-    /// <param name="TaskName">Must match one of the project's InnateActivity InnateCodeTask names (a code created by projects/add or projects/update starts with "Development", "Management", "Maintenance")</param>
+    /// <param name="Username">Username of a User with a linked Person</param>
+    /// <param name="PersonId">Id of a Person, with or without a User</param>
+    /// <param name="ProjectId">The Project's database id, not its RTP. The Project must have a timesheet code.</param>
+    /// <param name="WeekStartDate">A Monday, with no time of day</param>
+    /// <param name="TaskName">One of the tasks on the Project's timesheet code</param>
     /// <param name="MondayHours"></param>
     /// <param name="TuesdayHours"></param>
     /// <param name="WednesdayHours"></param>
@@ -466,11 +400,11 @@ namespace PPMTool.API.DTOs
         double SundayHours
     );
 
-    /// <summary>Response for a successful timesheet-entry import.</summary>
+    /// <summary>Response for a written timesheet entry.</summary>
     /// <param name="TimesheetId"></param>
-    /// <param name="TimesheetCreated">False if an existing Timesheet for this person/week was reused</param>
-    /// <param name="EntryCreated">False if an existing entry for this task was updated instead</param>
-    /// <param name="TotalHours">Sum of the week's hours for this entry</param>
+    /// <param name="TimesheetCreated">False if the person already had a timesheet for that week</param>
+    /// <param name="EntryCreated">False if an existing entry for the task was updated</param>
+    /// <param name="TotalHours">The entry's hours for the week</param>
     public sealed record ImportTimesheetResponseDTO(
         int TimesheetId,
         bool TimesheetCreated,
@@ -479,17 +413,13 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// Request body for PUT /api/timesheets/update. Corrects an existing
-    /// TimesheetEntry -- identified by TimesheetEntryId (already exposed by
-    /// GET /api/timesheets' TimesheetEntryDTO, so no separate discovery
-    /// endpoint is needed). Unlike POST /api/timesheets/add, which always
-    /// overwrites all seven days at once (identified by the natural
-    /// Username/ProjectId/WeekStartDate/TaskName key), this only touches
-    /// fields actually supplied -- correct a single day, or move the entry
-    /// to a different task, without resending the rest of the week.
+    /// Request body for PUT /api/timesheets/update. Identifies the entry by
+    /// TimesheetEntryId and changes the fields supplied, so a single day can
+    /// be corrected, or the entry moved to another task, without resending
+    /// the week.
     /// </summary>
-    /// <param name="TimesheetEntryId">TimesheetEntryId of the entry to update (see GET /api/timesheets)</param>
-    /// <param name="NewTaskName">Move this entry to a different InnateCodeTask under the same project's InnateActivity, if changing. Must not already have its own separate entry on this Timesheet.</param>
+    /// <param name="TimesheetEntryId">From GET /api/timesheets/getEntries</param>
+    /// <param name="NewTaskName">Another task on the same timesheet code, which has no entry on this timesheet yet</param>
     /// <param name="MondayHours"></param>
     /// <param name="TuesdayHours"></param>
     /// <param name="WednesdayHours"></param>
@@ -509,33 +439,24 @@ namespace PPMTool.API.DTOs
         double? SundayHours
     );
 
-    /// <summary>Response for a successful TimesheetEntry update.</summary>
+    /// <summary>Response for an updated timesheet entry.</summary>
     /// <param name="TimesheetEntryId"></param>
-    /// <param name="TotalHours">Sum of the week's hours for this entry, after the update</param>
+    /// <param name="TotalHours">The entry's hours for the week, after the update</param>
     public sealed record UpdateTimesheetEntryResponseDTO(
         int TimesheetEntryId,
         double TotalHours
     );
 
     /// <summary>
-    /// Request body for POST /api/workloadmodels/add. One workload model
-    /// change (duty/role FTE split, effective from ChangeDate) for an
-    /// existing Person, identified by Access Control username -- mirrors
-    /// WorkloadModelChange, with the same Grade (4-9) and per-duty FTE
-    /// (0.0-1.0) ranges the UI enforces (Pages/AddWorkloadModelChange.razor).
-    /// ProjectAndServiceManagementFTE isn't accepted directly: it's derived
-    /// from ProjectManagementFTE + ServiceManagementFTE, the same as the
-    /// entity's own UpdatePSM().
-    ///
-    /// Idempotent: re-importing the same (Username, ChangeDate) overwrites
-    /// the existing change's values rather than creating a duplicate --
-    /// CapX itself rejects two changes on the same date for one person (see
-    /// AddWorkloadModelChange.razor.cs), so upsert is the only sane import
-    /// semantics for repeated/corrected runs.
+    /// Request body for POST /api/workloadmodels/add. A person's duty split,
+    /// in effect from ChangeDate until their next change, with the same
+    /// ranges the UI enforces. ProjectAndServiceManagementFTE is derived from
+    /// ProjectManagementFTE and ServiceManagementFTE. A change on the same
+    /// date as an existing one updates it.
     /// </summary>
-    /// <param name="Username">CapX Access Control username of an existing Person</param>
-    /// <param name="ChangeDate">Date this workload model takes effect; applies forward until superseded by the next later ChangeDate (see Person.GetWorkloadModelOnDate)</param>
-    /// <param name="Grade">Must be 4-9</param>
+    /// <param name="Username">Username of a User with a linked Person</param>
+    /// <param name="ChangeDate">With no time of day</param>
+    /// <param name="Grade">4-9</param>
     /// <param name="ProjectWorkFTE">0.0-1.0</param>
     /// <param name="BusinessAsUsualFTE">0.0-1.0</param>
     /// <param name="PersonalDevelopmentFTE">0.0-1.0</param>
@@ -544,7 +465,7 @@ namespace PPMTool.API.DTOs
     /// <param name="ServiceManagementFTE">0.0-1.0</param>
     /// <param name="ProjectManagementFTE">0.0-1.0</param>
     /// <param name="Notes"></param>
-    /// <param name="CostValueKey">Cost key: the name of the financial reference value set that prices this person's time (e.g. "Grade65Costs"), as GET /api/wlm/getAll returns it. Without one, assignments under this change are costed at zero, as for a change added in the UI with no key chosen. On an existing change, null leaves its key unchanged.</param>
+    /// <param name="CostValueKey">Cost key: the name of the financial reference value set that prices the person's time (e.g. "Grade65Costs"), as GET /api/wlm/getAll returns it. Without one, assignments under this change are costed at zero, as in the UI. Null leaves an existing change's key unchanged.</param>
     public sealed record ImportWorkloadModelChangeDTO(
         string Username,
         DateTime ChangeDate,
@@ -560,31 +481,24 @@ namespace PPMTool.API.DTOs
         string? CostValueKey = null
     );
 
-    /// <summary>Response for a successful workload-model-change import.</summary>
+    /// <summary>Response for a written workload model change.</summary>
     /// <param name="WorkloadModelChangeId"></param>
-    /// <param name="Created">False if an existing change on this date was updated instead</param>
+    /// <param name="Created">False if an existing change on that date was updated</param>
     public sealed record ImportWorkloadModelChangeResponseDTO(
         int WorkloadModelChangeId,
         bool Created
     );
 
     /// <summary>
-    /// Request body for POST /api/people/add. Creates a bare Person record --
-    /// no linked User/Access-Control account, unlike the Username the other
-    /// import endpoints (Resourcing, Timesheets, WorkloadModels) require an
-    /// existing one for. For bootstrapping people who never need to log in
-    /// (e.g. departed staff, needed only so historical cost data can be
-    /// matched against a real Person) -- not for provisioning active staff,
-    /// which should go through normal onboarding instead. Rejects a
-    /// duplicate Name/initials the same way Pages/AddPerson.razor does
-    /// (PersonService.Add) rather than upserting -- unlike
-    /// WorkloadModelChange/Timesheet imports, there's no natural
-    /// (key, date) pair to upsert on here.
+    /// Request body for POST /api/people/add. Creates a Person with no User,
+    /// for someone who never logs in, such as a former member of staff whose
+    /// work is being recorded. A duplicate name or initials is rejected, as
+    /// in the UI.
     /// </summary>
-    /// <param name="Name">Full name -- ShortName (initials) is auto-derived the same way Person.Name's setter does for the UI</param>
+    /// <param name="Name">Full name; the initials are derived from it</param>
     /// <param name="StartDate"></param>
     /// <param name="EndDate">Null if still in post</param>
-    /// <param name="FTE">FTE of the post (see Person.FTE) -- 0.0-1.0, same range Pages/AddPerson.razor enforces</param>
+    /// <param name="FTE">The post's FTE (Person.FTE), 0.0-1.0. Part-time working belongs in a workload model change instead.</param>
     public sealed record ImportPersonDTO(
         string Name,
         DateTime StartDate,
@@ -592,46 +506,29 @@ namespace PPMTool.API.DTOs
         double FTE
     );
 
-    /// <summary>Response for a successful Person import.</summary>
+    /// <summary>Response for a created Person.</summary>
     /// <param name="PersonId"></param>
-    /// <param name="ShortName">Auto-derived initials</param>
+    /// <param name="ShortName">The derived initials</param>
     public sealed record ImportPersonResponseDTO(
         int PersonId,
         string ShortName
     );
 
     /// <summary>
-    /// Request body for PUT /api/people/update. Identifies an existing bare
-    /// Person by PersonId (returned from POST /api/people/add); Name,
-    /// StartDate, EndDate, and/or FTE are updated when supplied. Supersedes
-    /// the original 2026-09-01 decision to leave this endpoint create-only
-    /// -- manual corrections (e.g. reconciling a placeholder StartDate)
-    /// turned out common enough to be worth a real endpoint rather than
-    /// always going through the UI.
-    ///
-    /// EndDate follows plain nullable-field semantics: omitted/null in the
-    /// request leaves the existing EndDate unchanged. There's no way to
-    /// clear an already-set EndDate back to null via this endpoint -- do
-    /// that directly in the UI.
-    ///
-    /// LineManager can be given either as LineManagerPersonId or
-    /// LineManagerUsername, at most one of the two. Both forms exist for
-    /// the same reason POST /api/timesheets/add takes either: a Person
-    /// created by POST /api/people/add has no linked User at all, so a
-    /// username cannot name one. That applies to the line manager
-    /// themselves, not just the person being updated -- a departed team
-    /// lead is exactly the case the UI's own picker cannot express, since
-    /// AddPerson.razor.cs builds its dropdown from Users holding a
-    /// Manager/Superuser role, which a bare imported Person never has.
-    /// Like the other fields here, it can be set but not cleared.
+    /// Request body for PUT /api/people/update. Identifies the Person by
+    /// PersonId and changes the fields supplied. EndDate and the line manager
+    /// can be set but not cleared; clear them in the UI. Name the line manager
+    /// by at most one of LineManagerPersonId or LineManagerUsername;
+    /// LineManagerPersonId reaches a Person with no User, whom the UI's own
+    /// line-manager picker can't offer.
     /// </summary>
-    /// <param name="PersonId">PersonId of the Person to update</param>
-    /// <param name="Name">New full name, if changing -- ShortName is re-derived automatically</param>
-    /// <param name="StartDate"></param>
-    /// <param name="EndDate">See remarks -- can only be set, not cleared, via this endpoint</param>
+    /// <param name="PersonId"></param>
+    /// <param name="Name">Full name; the initials are re-derived</param>
+    /// <param name="StartDate">Not after the start of any Task the person is assigned to</param>
+    /// <param name="EndDate"></param>
     /// <param name="FTE">0.0-1.0</param>
-    /// <param name="LineManagerPersonId">PersonId of the line manager. Mutually exclusive with LineManagerUsername.</param>
-    /// <param name="LineManagerUsername">Username of the line manager, who must have a linked Person. Mutually exclusive with LineManagerPersonId.</param>
+    /// <param name="LineManagerPersonId">Id of the line manager's Person; not the Person being updated</param>
+    /// <param name="LineManagerUsername">Username of the line manager, which must have a linked Person</param>
     public sealed record UpdatePersonRequestDTO(
         int PersonId,
         string? Name,
@@ -643,26 +540,15 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// Request body for POST /api/users/add. Creates an Access Control
-    /// User directly, general-purpose: a bare User (e.g. a synthetic
-    /// system account), or one linked to an existing Person via PersonId
-    /// (e.g. provisioning a second account -- Manager/Superuser/API -- on
-    /// a Person who already has one, the same way that's already
-    /// possible in the data model; see People.GetAllPeopleAsync's own
-    /// usernamesByPersonId comment). Not a substitute for normal SSO
-    /// first-login (which is how someone gets their own first CapX
-    /// account) -- for direct provisioning instead. One caller: the
-    /// migration tooling's own use of this to create
-    /// ImportProjectService.FallbackAuthorUsername ("migration-import", the User
-    /// Notes attribute to when a comment's original author can't be
-    /// resolved) -- not what this endpoint is *for*, just one thing it's
-    /// used for.
+    /// Request body for POST /api/users/add. Creates a User directly: a bare
+    /// account, or one linked to an existing Person (a Person can have more
+    /// than one User). People normally get their first User by signing in.
     /// </summary>
-    /// <param name="CASUserName">Must be unique (case/whitespace-insensitive, same check as every other User)</param>
-    /// <param name="EmailAddress">Required (matches User.EmailAddress -- non-nullable in the data model, used for SSO claim matching via User.MatchesClaim); semicolon-separated if more than one</param>
-    /// <param name="Name">Display name -- required only when PersonId is omitted; when PersonId is given, the linked Person's own Name is used instead (same as the entity's own User.Person setter behaviour) and this is ignored</param>
-    /// <param name="PersonId">Existing Person to link, if any -- omit for a bare User with no linked Person</param>
-    /// <param name="RoleType">Must parse as a PPMTool.Data.Enums.RoleType value; defaults to "None" (no real permissions) if omitted</param>
+    /// <param name="CASUserName">Unique, ignoring case and surrounding whitespace</param>
+    /// <param name="EmailAddress">Used to match sign-in claims; semicolon-separated if more than one</param>
+    /// <param name="Name">Display name; required without PersonId, and replaced by the Person's name with one</param>
+    /// <param name="PersonId">Person to link the User to, if any</param>
+    /// <param name="RoleType">A PPMTool.Data.Enums.RoleType name; defaults to "None"</param>
     public sealed record ImportUserDTO(
         string CASUserName,
         string EmailAddress,
@@ -671,29 +557,24 @@ namespace PPMTool.API.DTOs
         string? RoleType
     );
 
-    /// <summary>Response for a successful User import.</summary>
+    /// <summary>Response for a created User.</summary>
     /// <param name="UserId"></param>
     public sealed record ImportUserResponseDTO(
         int UserId
     );
 
     /// <summary>
-    /// Request body for PUT /api/projects/notes/update. Corrects an
-    /// existing Note's content -- identified by NoteId (from
-    /// GET /api/projects/notes/getAll), not by any natural key, since
-    /// unlike Timesheets/WorkloadModelChanges a Note has no unique
-    /// (RTP, date) pair to upsert on (a project can have several Notes
-    /// with the same CreatedDate). Doesn't touch Author -- an edit
-    /// corrects the text, it doesn't reassign who posted it.
+    /// Request body for PUT /api/projects/notes/update. Replaces a Note's
+    /// content, identified by NoteId. The author is unchanged.
     /// </summary>
-    /// <param name="NoteId">NoteId of the Note to update</param>
-    /// <param name="HtmlContent">Replacement content (required, whole-value replace, not a diff/patch)</param>
+    /// <param name="NoteId">From GET /api/projects/notes/getAll</param>
+    /// <param name="HtmlContent">The whole new content, as HTML; sanitised on save</param>
     public sealed record UpdateNoteRequestDTO(
         int NoteId,
         string HtmlContent
     );
 
-    /// <summary>Response for a successful Note update.</summary>
+    /// <summary>Response for an updated Note.</summary>
     /// <param name="NoteId"></param>
     public sealed record UpdateNoteResponseDTO(
         int NoteId
