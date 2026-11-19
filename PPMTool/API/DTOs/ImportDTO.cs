@@ -111,7 +111,7 @@ namespace PPMTool.API.DTOs
     /// on a single "Delivery" SubTask. Matched against an existing Person via
     /// Access Control username.
     /// </summary>
-    /// <param name="Username">CapX Access Control username (e.g. "jrhq77") of an existing Person</param>
+    /// <param name="Username">CapX Access Control username of an existing Person</param>
     /// <param name="AssignmentFTE"></param>
     /// <param name="StartDate"></param>
     /// <param name="EndDate"></param>
@@ -162,10 +162,8 @@ namespace PPMTool.API.DTOs
 
     /// <summary>
     /// Request body for POST /api/projects/add. One project, with its
-    /// resourcing and comments created in the same call. See MIGRATION.md
-    /// (rse-project-scrape, Durham ARC) for the source-side worksheet this
-    /// is generated from -- this DTO shape is intentionally source-agnostic,
-    /// any institution's own extraction tooling can target it.
+    /// resourcing and comments created in the same call. The shape is
+    /// source-agnostic: any institution's own extraction tooling can target it.
     /// </summary>
     /// <param name="Name"></param>
     /// <param name="RTP"></param>
