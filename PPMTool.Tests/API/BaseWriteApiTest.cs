@@ -6,24 +6,22 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
 
 namespace PPMTool.Tests.API
 {
     /// <summary>
-    /// Base for tests of the write endpoints, which need a Superuser key and the
-    /// WriteApiEndpointsEnabled setting (switched on when the dummy data is seeded).
-    /// The Superuser is created here, with a linked Person because projects/add makes the
-    /// caller's Person the Request Owner, rather than changing the seeded one. Tests create
-    /// their own records, named with <see cref="RunId"/>, and leave the seeded ones alone.
+    /// Base for tests of the write endpoints. The dummy data seed switches
+    /// WriteApiEndpointsEnabled on and gives a Superuser with a linked Person an API key
+    /// (projects/add makes the caller's Person the Request Owner); the tests can only read the
+    /// database, so they find that key here. Tests create their own records, named with
+    /// <see cref="RunId"/>, and leave the seeded ones alone.
     /// </summary>
     public abstract class BaseWriteApiTest : BaseApiTest
     {
-        protected const string SuperuserUsername = "write-api-test-superuser";
-        protected const string SuperuserPersonName = "Write API Tester";
-
         protected static string? SuperuserApiKey { get; private set; }
+        protected static string SuperuserUsername { get; private set; } = string.Empty;
+        protected static string SuperuserPersonName { get; private set; } = string.Empty;
         protected static int SuperuserPersonId { get; private set; }
 
         private static readonly DateTime runStarted = DateTime.UtcNow;
@@ -93,47 +91,26 @@ namespace PPMTool.Tests.API
         }
 
         /// <summary>
-        /// Creates the test Superuser, its Person and an API key, once per test run.
+        /// Finds the seeded Superuser's API key, username and Person.
         /// </summary>
+        /// <exception cref="Exception"></exception>
         private static void SetupSuperuser()
         {
             if (SuperuserApiKey != null) return;
 
             using var context = CreateDbContext();
-            var user = context.Users
-                .Include(x => x.Person)
-                .FirstOrDefault(x => x.CASUserName == SuperuserUsername);
-            if (user == null)
-            {
-                user = new User
-                {
-                    CASUserName = SuperuserUsername,
-                    EmailAddress = $"{SuperuserUsername}@example.invalid",
-                    RoleType = RoleType.Superuser,
-                    Person = new Person
-                    {
-                        Name = SuperuserPersonName,
-                        ShortName = "WAT",
-                        StartDate = new DateTime(2020, 1, 1),
-                        FTE = 1.0
-                    }
-                };
-                context.Users.Add(user);
-            }
-
-            var key = new ApiKey
-            {
-                Active = true,
-                Description = "Write API tests",
-                ExpiresAt = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(1), DateTimeKind.Unspecified),
-                Key = $"write-api-test-{Guid.NewGuid():N}",
-                Owner = user
-            };
-            context.ApiKeys.Add(key);
-            context.SaveChanges();
+            var key = context.ApiKeys
+                .Include(x => x.Owner)
+                    .ThenInclude(x => x.Person)
+                .Where(x => x.ExpiresAt > DateTime.Now && x.Active)
+                .AsEnumerable()
+                .FirstOrDefault(x => x.Owner.RoleType == RoleType.Superuser && x.Owner.Person != null)
+                ?? throw new Exception("No valid API key found for a superuser with a person in the database. Please create one for testing.");
 
             SuperuserApiKey = key.Key;
-            SuperuserPersonId = user.Person!.PersonId;
+            SuperuserUsername = key.Owner.CASUserName;
+            SuperuserPersonName = key.Owner.Person!.Name;
+            SuperuserPersonId = key.Owner.Person.PersonId;
         }
     }
 }
