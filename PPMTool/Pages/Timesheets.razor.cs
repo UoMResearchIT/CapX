@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
-using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data.Entities;
@@ -31,6 +30,7 @@ namespace PPMTool.Pages
         private List<Timesheet> myStaffTimesheets;
         private Dictionary<Person, List<Timesheet>> myStaffTimesheetsInPeriod;
         private bool initialLoadComplete;
+        private int timesheetIdToFix;
 
         public bool ShowAllMyTimesheets
         {
@@ -137,7 +137,7 @@ namespace PPMTool.Pages
             myTimesheets = new List<Timesheet>();
             if (ActiveUser?.Person != null)
             {
-                myTimesheets = TimesheetService.GetMyTimesheets(Context, ActiveUser?.Person).OrderByDescending(t => t.StartDate).ToList();
+                myTimesheets = TimesheetService.GetTimesheetsForPerson(Context, ActiveUser?.Person).OrderByDescending(t => t.StartDate).ToList();
 
                 // Set the start date for the next one
                 dateNextTimesheet = TimesheetService.GetNextTimesheetStartDateForUser(Context, ActiveUser?.Person);
@@ -162,7 +162,7 @@ namespace PPMTool.Pages
             // Is a manager with staff
             myStaffTimesheets = new List<Timesheet>();
             myStaffTimesheetsInPeriod = new Dictionary<Person, List<Timesheet>>();
-            if (managedPeople.Count() > 0)
+            if (managedPeople.Any())
             {
                 dateMondayThisWeek = GetDateForMondayThisWeek();
                 synopsisStartDate = GetDateForAMonday(7); // Weeks in the past
@@ -171,10 +171,10 @@ namespace PPMTool.Pages
 
                 foreach (Person p in managedPeople
                     .Where(p => p.PersonId != ActiveUser?.Person?.PersonId)
-                    .OrderBy(p => p.ShortName)) // For AH who is self-managed
+                    .OrderBy(p => p.ShortName))
                 {
                     // Get timesheets of the person
-                    myStaffTimesheets.AddRange(TimesheetService.GetMyTimesheets(Context, p).ToList());
+                    myStaffTimesheets.AddRange(TimesheetService.GetTimesheetsForPerson(Context, p).ToList());
 
                     // Only add the person to the synopsis if they are currently here in the window
                     if (p.EndDate == null || p.EndDate >= synopsisStartDate)
@@ -192,12 +192,24 @@ namespace PPMTool.Pages
 
                 if (!ShowAllMyStaffTimesheets)
                 {
-                    // Filter the list to only show items with Submitted status
-                    myStaffTimesheets = myStaffTimesheets.Where(t => t.Status == TimesheetStatus.Submitted).ToList();
+                    // Filter the list to only show items that need chasing or action: New, Submitted, Rejected
+                    myStaffTimesheets = myStaffTimesheets
+                        .Where(t => t.Status == TimesheetStatus.Submitted || t.Status == TimesheetStatus.Rejected || t.Status == TimesheetStatus.New)
+                        .ToList();
                 }
 
-                // Order the list, whatever it holds (but remove any New items as these haven't been submitted by the staff member yet!)
-                myStaffTimesheets = myStaffTimesheets.Where(t => t.Status != TimesheetStatus.New).OrderByDescending(t => t.StartDate).ToList();
+                // Order the list
+                myStaffTimesheets = myStaffTimesheets
+                    .OrderByDescending(t => t.StartDate)
+                    .ToList();
+            }
+
+
+            // Check to see if there are any rejected timesheets that need fixing and get the ID of the first one
+            timesheetIdToFix = await TimesheetService.GetFirstRejectedTimesheetIdAsync(Context, ActiveUser?.Person);
+            if (timesheetIdToFix > 0)
+            {
+                Logger.LogInformation($"TimesheetIdToFix: {timesheetIdToFix} for user {ActiveUser?.Person?.Name}");
             }
 
             // Finish off
@@ -272,7 +284,6 @@ namespace PPMTool.Pages
         private List<Timesheet> GetPaddedTimesheetList(List<DateTime> dates, List<Timesheet> unpaddedList)
         {
             List<Timesheet> paddedList = new List<Timesheet>();
-            List<DateTime> datesFromTimesheet = unpaddedList.Select(t => t.StartDate).ToList();
             foreach (DateTime date in dates)
             {
                 // This will return null if no match
