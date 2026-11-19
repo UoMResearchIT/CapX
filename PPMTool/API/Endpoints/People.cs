@@ -43,12 +43,8 @@ public static class People
                 .OrderBy(x => x.Name)
                 .ToListAsync();
 
-            // Person has no reverse nav to User -- look usernames up the other way round.
-            // A Person can legitimately be linked to more than one User (no unique
-            // constraint on Users.PersonId, e.g. a Manager account and a separate
-            // Superuser/API account both linked to the same real person) -- ToDictionary
-            // would throw on the duplicate key, so dedupe deterministically (lowest
-            // UserId, i.e. the earliest-created linked account) instead of crashing.
+            // Person has no navigation to User, so look usernames up from Users. A Person
+            // can have more than one User; take the lowest UserId, so the result is stable.
             var usernamesByPersonId = (await context.Users
                 .Where(u => u.Person != null)
                 .OrderBy(u => u.UserId)
@@ -160,8 +156,7 @@ public static class People
     }
 
     /// <summary>
-    /// Create a bare Person record, with no linked User/Access-Control
-    /// account. Superuser-only write access.
+    /// Create a Person with no User. Superuser only.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportPersonResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -194,9 +189,8 @@ public static class People
     }
 
     /// <summary>
-    /// Update an existing bare Person's Name, StartDate, EndDate, FTE
-    /// and/or LineManager. Identified by PersonId. Superuser-only write
-    /// access.
+    /// Update a Person's Name, StartDate, EndDate, FTE or line manager,
+    /// identified by PersonId. Superuser only.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ImportPersonResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]

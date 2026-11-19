@@ -240,8 +240,7 @@ public static class Projects
     }
 
     /// <summary>
-    /// Create a Project (+ project-management SubTask, Resourcing, Comments)
-    /// in one call. See UoMResearchIT/CapX#1310.
+    /// Create a Project with its Leadership task, any resourcing and its Notes, in one call.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportProjectResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -279,8 +278,8 @@ public static class Projects
     }
 
     /// <summary>
-    /// Update an existing Project's core scalar fields. Identified by RTP.
-    /// Doesn't touch Resourcing or Comments -- see Projects.CreateProject.
+    /// Update a Project's fields, identified by RTP. A status change has the
+    /// same side effects as in the UI. Doesn't change tasks, resourcing or Notes.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateProjectResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -317,11 +316,8 @@ public static class Projects
     }
 
     /// <summary>
-    /// Add Comments as Notes to an existing Project. Identified by RTP.
-    /// The counterpart to CreateProject's own Comments handling for a
-    /// project that's already been created -- CreateProject's Validate()
-    /// rejects the whole call once the RTP/Name already exists, so there
-    /// was previously no way to add Comments after the fact.
+    /// Add comments as Notes to an existing Project, identified by RTP. Notes
+    /// aren't deduplicated.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportNotesResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -359,8 +355,7 @@ public static class Projects
     }
 
     /// <summary>
-    /// Get all Notes for an existing Project, identified by RTP. An empty
-    /// list is a normal result (a Project with no Notes yet), not an error.
+    /// Get a Project's Notes, identified by RTP. A Project with no Notes gives an empty list.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<NoteDTO>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -398,8 +393,7 @@ public static class Projects
     }
 
     /// <summary>
-    /// Correct an existing Note's content. Identified by NoteId (from
-    /// GET /api/projects/notes/getAll).
+    /// Replace a Note's content, identified by NoteId (from GET /api/projects/notes/getAll).
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateNoteResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]

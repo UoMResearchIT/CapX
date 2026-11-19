@@ -16,9 +16,7 @@ namespace PPMTool.API.Endpoints;
 public static class Tasks
 {
     /// <summary>
-    /// Get all SubTasks for an existing Project, identified by RTP. An
-    /// empty list is a normal result (a Project with only its
-    /// auto-created Leadership task, or none at all), not an error.
+    /// Get a Project's tasks, identified by RTP.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TaskDTO>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -56,8 +54,7 @@ public static class Tasks
     }
 
     /// <summary>
-    /// Create one fixed-duration SubTask on an existing Project. See
-    /// ImportTaskDTO.
+    /// Create a fixed-duration task on an existing Project. See ImportTaskDTO.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportTaskResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -92,9 +89,8 @@ public static class Tasks
     }
 
     /// <summary>
-    /// Correct an existing SubTask's Name/TaskDuty/dates/Demand.
-    /// Identified by SubTaskId (from GET /api/tasks/getAll). See
-    /// UpdateTaskRequestDTO.
+    /// Update a task's name, duty, dates or demand, identified by SubTaskId.
+    /// See UpdateTaskRequestDTO.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateTaskResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -128,9 +124,7 @@ public static class Tasks
     }
 
     /// <summary>
-    /// Get every resourcing assignment across a Project's SubTasks,
-    /// identified by RTP. An empty list is a normal result (a Project
-    /// whose tasks have no one assigned yet), not an error.
+    /// Get every assignment on a Project's tasks, identified by RTP.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TaskResourceDTO>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -168,8 +162,7 @@ public static class Tasks
     }
 
     /// <summary>
-    /// Add resourcing to an existing SubTask. See
-    /// ImportTaskResourcingRequestDTO.
+    /// Add assignments to an existing task. See ImportTaskResourcingRequestDTO.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportTaskResourcingResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -200,10 +193,8 @@ public static class Tasks
     }
 
     /// <summary>
-    /// Correct an existing resourcing assignment's FTE, provisional
-    /// flag, and/or owning task. Identified by ResourceId (from
-    /// GET /api/tasks/resourcing/getAll). See
-    /// UpdateTaskResourcingRequestDTO.
+    /// Update an assignment's FTE, provisional flag or task, identified by
+    /// ResourceId. See UpdateTaskResourcingRequestDTO.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateTaskResourcingResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]

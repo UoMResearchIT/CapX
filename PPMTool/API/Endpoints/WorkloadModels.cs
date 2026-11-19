@@ -277,8 +277,7 @@ namespace PPMTool.API.Endpoints
         }
 
         /// <summary>
-        /// Create or update one staff member's workload model change (duty/role
-        /// FTE split, effective from ChangeDate) -- see
+        /// Create or update a person's workload model change. See
         /// ImportWorkloadModelChangeDTO.
         /// </summary>
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportWorkloadModelChangeResponseDTO))]

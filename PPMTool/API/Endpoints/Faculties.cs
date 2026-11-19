@@ -133,10 +133,8 @@ namespace PPMTool.API.Endpoints
         }
 
         /// <summary>
-        /// Create a Faculty (+ Schools) -- there's no other bulk way to
-        /// populate an institution's own org-unit list today (see #1310).
-        /// Always creates a brand-new Faculty; to add a School under one
-        /// that already exists, see Schools.CreateSchool.
+        /// Create a Faculty with its Schools. To add a School to an existing
+        /// Faculty, see Schools.CreateSchool.
         /// </summary>
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportFacultyResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -170,8 +168,8 @@ namespace PPMTool.API.Endpoints
         }
 
         /// <summary>
-        /// Update an existing Faculty's Name and/or Code. Identified by its
-        /// current Code. Doesn't touch Schools -- see Schools.UpdateSchool.
+        /// Update a Faculty's Name or Code, identified by its current Code.
+        /// Doesn't change its Schools: see Schools.UpdateSchool.
         /// </summary>
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateFacultyResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]

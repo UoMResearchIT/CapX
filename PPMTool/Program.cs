@@ -369,8 +369,8 @@ api.MapPost("/projects/notes/add", Projects.AddNotes);
 api.MapPost("/tasks/add", Tasks.CreateTask);
 api.MapPost("/tasks/resourcing/add", Tasks.AddResourcing);
 
-// Map PUT (update) API endpoints -- workloadmodels/add
-// is already upsert-on-post, so no separate PUT for that.
+// Map PUT (update) API endpoints. workloadmodels/add updates a change on the
+// same date, so it has no separate PUT.
 api.MapPut("/faculties/update", Faculties.UpdateFaculty);
 api.MapPut("/schools/update", Schools.UpdateSchool);
 api.MapPut("/projects/update", Projects.UpdateProject);

@@ -137,10 +137,7 @@ namespace PPMTool.API.Endpoints
         }
 
         /// <summary>
-        /// Add a single School under a Faculty that already exists. Unlike
-        /// Faculties.CreateFaculty, this doesn't create a new Faculty --
-        /// use this once an institution's Faculty list is already bootstrapped
-        /// and a new School needs adding under one of them.
+        /// Add a School to an existing Faculty.
         /// </summary>
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportSchoolResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -173,8 +170,7 @@ namespace PPMTool.API.Endpoints
         }
 
         /// <summary>
-        /// Update an existing School's Name, Code, and/or parent Faculty.
-        /// Identified by its current Code.
+        /// Update a School's Name, Code or Faculty, identified by its current Code.
         /// </summary>
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ImportSchoolResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]

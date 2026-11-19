@@ -2,19 +2,12 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
-// TaskResourceDTO.Username is genuinely nullable (a Person can have no
-// linked User), same as PersonDTO.Username -- matching ImportDTO.cs,
-// which enables this file-scoped rather than leaving a CS8632 behind.
 #nullable enable
 
 namespace PPMTool.API.DTOs
 {
     /// <summary>
-    /// One SubTask on a Project. Read-only summary matching the same
-    /// fixed-duration, no-predecessor shape this API's write side
-    /// supports (see ImportTaskDTO remarks in ImportDTO.cs) -- doesn't
-    /// expose TaskType, Predecessor/Lag, or SkillsRequired, since this
-    /// API doesn't let you set those either.
+    /// One task on a Project, as GET /api/tasks/getAll returns it.
     /// </summary>
     /// <param name="SubTaskId"></param>
     /// <param name="RTP"></param>
@@ -23,7 +16,7 @@ namespace PPMTool.API.DTOs
     /// <param name="StartDate"></param>
     /// <param name="EndDate"></param>
     /// <param name="Demand">Current FTE demand</param>
-    /// <param name="OriginalDemand">FTE demand when the task was first created -- doesn't change on a later Demand update</param>
+    /// <param name="OriginalDemand">FTE demand when the task was created; unchanged by later updates</param>
     /// <param name="UnmetDemand">Demand minus assigned resource FTE</param>
     public sealed record TaskDTO(
         int SubTaskId,
@@ -38,24 +31,17 @@ namespace PPMTool.API.DTOs
     );
 
     /// <summary>
-    /// One person's resourcing assignment to one SubTask, as returned by
-    /// GET /api/tasks/resourcing/getAll.
-    ///
-    /// A Resource carries no dates of its own -- the assignment's period
-    /// is its SubTask's period (see the Resource entity, which has no
-    /// StartDate/EndDate). StartDate/EndDate are repeated here from the
-    /// owning task so a caller can reconcile an assignment against a
-    /// dated allocation without a second lookup, and so the consequence
-    /// of that modelling is visible rather than surprising: an assignment
-    /// covering a different period is a different task.
+    /// One person's assignment to a task, as GET /api/tasks/resourcing/getAll
+    /// returns it. An assignment has no dates of its own; StartDate and EndDate
+    /// are its task's.
     /// </summary>
     /// <param name="ResourceId">Identifies this assignment for PUT /api/tasks/resourcing/update</param>
     /// <param name="SubTaskId"></param>
     /// <param name="RTP">RTP of the Project owning the task</param>
     /// <param name="TaskName"></param>
     /// <param name="TaskDuty"></param>
-    /// <param name="StartDate">The owning task's start -- see remarks</param>
-    /// <param name="EndDate">The owning task's end -- see remarks</param>
+    /// <param name="StartDate">The task's start</param>
+    /// <param name="EndDate">The task's end</param>
     /// <param name="PersonId"></param>
     /// <param name="PersonName"></param>
     /// <param name="Username">Access Control username of the person's linked User, or null for a Person with no login</param>

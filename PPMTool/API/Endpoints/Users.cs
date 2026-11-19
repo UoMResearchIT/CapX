@@ -16,10 +16,8 @@ namespace PPMTool.API.Endpoints;
 public static class Users
 {
     /// <summary>
-    /// Create an Access Control User directly -- a bare User, or one
-    /// linked to an existing Person via PersonId. Not a substitute for
-    /// normal SSO first-login (how someone gets their own first CapX
-    /// account); for direct provisioning instead.
+    /// Create a User directly, bare or linked to an existing Person. People
+    /// normally get their first User by signing in.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportUserResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ImportErrorDTO))]
@@ -46,8 +44,7 @@ public static class Users
                 logger.LogInformation(
                     "API: Users: created User {UserId} '{CASUserName}' by {User}",
                     result.UserId, request.CASUserName, caller.Name);
-                // No GET /api/users/getById exists yet
-                // no Location header to point at, just the response body.
+                // There is no GET /api/users/getById to point a Location header at.
                 return Results.Json(result, statusCode: StatusCodes.Status201Created);
             },
             logException: ex => logger.LogError(ex, "API: Users: error creating user '{CASUserName}'", request.CASUserName));
