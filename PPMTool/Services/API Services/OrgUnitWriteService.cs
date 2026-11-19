@@ -75,7 +75,7 @@ namespace PPMTool.Services
         /// <exception cref="InvalidOperationException">Thrown when persistence reports a duplicate despite successful validation.</exception>
         public UpdateFacultyResponseDTO UpdateFaculty(PPMToolContext context, UpdateFacultyRequestDTO request)
         {
-            var faculty = FindFacultyByCode(context, request.Code)!;
+            var faculty = facultyService.GetByCode(context, request.Code)!;
             if (request.Name != null) faculty.Name = request.Name;
             if (request.NewCode != null) faculty.Code = request.NewCode;
 
@@ -95,7 +95,7 @@ namespace PPMTool.Services
         /// <exception cref="InvalidOperationException">Thrown when persistence reports a duplicate despite successful validation.</exception>
         public ImportSchoolResponseDTO CreateSchool(PPMToolContext context, ImportSchoolRequestDTO request)
         {
-            var faculty = FindFacultyByCode(context, request.FacultyCode)!;
+            var faculty = facultyService.GetByCode(context, request.FacultyCode)!;
             var school = new School
             {
                 Name = request.Name,
@@ -121,7 +121,7 @@ namespace PPMTool.Services
             var school = schoolService.GetByCode(context, request.Code)!;
             if (request.Name != null) school.Name = request.Name;
             if (request.NewCode != null) school.Code = request.NewCode;
-            if (request.NewFacultyCode != null) school.Faculty = FindFacultyByCode(context, request.NewFacultyCode)!;
+            if (request.NewFacultyCode != null) school.Faculty = facultyService.GetByCode(context, request.NewFacultyCode)!;
 
             var result = schoolService.Update(context, school);
             if (result < 0)
@@ -129,16 +129,6 @@ namespace PPMTool.Services
 
             return new ImportSchoolResponseDTO(school.SchoolId, school.Faculty.FacultyId);
         }
-
-        /// <summary>
-        /// Finds a faculty by code.
-        /// </summary>
-        /// <param name="context">Database context.</param>
-        /// <param name="code">Faculty code to resolve.</param>
-        /// <returns>The matching faculty, or <c>null</c> when none exists.</returns>
-        private static Faculty? FindFacultyByCode(PPMToolContext context, string code) =>
-            string.IsNullOrWhiteSpace(code) ? null : context.Faculties
-                .FirstOrDefault(f => f.Code.Trim().ToLower() == code.Trim().ToLower());
 
         /// <summary>
         /// Returns an error naming the School that already has this code, if it isn't the given
@@ -206,7 +196,7 @@ namespace PPMTool.Services
                 return errors;
             }
 
-            var faculty = FindFacultyByCode(context, request.Code);
+            var faculty = facultyService.GetByCode(context, request.Code);
             if (faculty == null)
             {
                 errors.Add($"Code '{request.Code}' does not match any Faculty");
@@ -251,7 +241,7 @@ namespace PPMTool.Services
 
             if (!string.IsNullOrWhiteSpace(request.FacultyCode))
             {
-                var faculty = FindFacultyByCode(context, request.FacultyCode);
+                var faculty = facultyService.GetByCode(context, request.FacultyCode);
                 if (faculty == null)
                 {
                     errors.Add($"FacultyCode '{request.FacultyCode}' does not match any Faculty");
@@ -302,7 +292,7 @@ namespace PPMTool.Services
             var faculty = school.Faculty;
             if (request.NewFacultyCode != null)
             {
-                faculty = FindFacultyByCode(context, request.NewFacultyCode);
+                faculty = facultyService.GetByCode(context, request.NewFacultyCode);
                 if (faculty == null)
                     errors.Add($"NewFacultyCode '{request.NewFacultyCode}' does not match any Faculty");
             }

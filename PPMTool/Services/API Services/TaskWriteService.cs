@@ -132,7 +132,7 @@ namespace PPMTool.Services
             var assignments = new List<(Person? Person, string Assignee, double FTE)>();
             foreach (var r in request.Resourcing ?? Array.Empty<ImportResourcingDTO>())
             {
-                var person = ImportHelper.FindUserByUsername(context, r.Username)?.Person;
+                var person = userService.GetByUsernameWithWorkloadModels(context, r.Username)?.Person;
                 if (string.IsNullOrWhiteSpace(r.Username))
                     errors.Add("Each Resourcing entry needs a Username");
                 else if (person == null)
@@ -174,7 +174,7 @@ namespace PPMTool.Services
             var created = new List<Resource>();
             foreach (var r in request.Resourcing ?? Array.Empty<ImportResourcingDTO>())
             {
-                var person = ImportHelper.FindUserByUsername(context, r.Username)!.Person!;
+                var person = userService.GetByUsernameWithWorkloadModels(context, r.Username)!.Person!;
                 var resource = new Resource
                 {
                     Person = person,
@@ -185,7 +185,7 @@ namespace PPMTool.Services
                 context.Resources.Add(resource);
                 created.Add(resource);
             }
-            ImportHelper.Reschedule(context, task);
+            subTaskService.Reschedule(context, task);
 
             var financialReferences = financialReferenceService.GetAllOrDefault(context);
             var indirectsPercentage = settingsService.GetSetting(SettingType.BAUTopSliceFractionDefault, 0f);
@@ -265,7 +265,7 @@ namespace PPMTool.Services
 
             foreach (var r in task.AssignedResources)
             {
-                if (ImportHelper.AssigneeStartsTooLate(r.Person, resolvedStart) is { } tooLate)
+                if (SubTaskService.AssigneeStartsTooLate(r.Person, resolvedStart) is { } tooLate)
                     errors.Add(tooLate);
             }
 
@@ -295,7 +295,7 @@ namespace PPMTool.Services
             if (request.StartDate.HasValue) task.StartDate = ImportHelper.AsUnspecifiedKind(request.StartDate.Value);
             if (request.EndDate.HasValue) task.EndDate = ImportHelper.AsUnspecifiedKind(request.EndDate.Value);
             if (request.Demand.HasValue) task.Demand = request.Demand.Value;
-            ImportHelper.Reschedule(context, task);
+            subTaskService.Reschedule(context, task);
             subTaskService.Update(context, task);
 
             var financialReferences = financialReferenceService.GetAllOrDefault(context);
@@ -423,7 +423,7 @@ namespace PPMTool.Services
                 created.Add(resource);
             }
 
-            ImportHelper.Reschedule(context, task);
+            subTaskService.Reschedule(context, task);
             RecalculateProject(context, project);
 
             return new ImportTaskResourcingResponseDTO(task.SubTaskId, created.Count);
@@ -474,7 +474,7 @@ namespace PPMTool.Services
                 && !userService.GetAllManagerPersonId(context).Contains(resource.Person.PersonId))
                 errors.Add($"Only managers can be assigned to leadership tasks ('{resource.Person.Name}')");
 
-            if (ImportHelper.AssigneeStartsTooLate(resource.Person, targetTask.StartDate) is { } tooLate)
+            if (SubTaskService.AssigneeStartsTooLate(resource.Person, targetTask.StartDate) is { } tooLate)
                 errors.Add(tooLate);
 
             if (FixedWorkResourcingError(currentTask) is { } fixedWorkSource)
@@ -525,9 +525,9 @@ namespace PPMTool.Services
 
             context.Resources.Update(resource);
             if (landedOn != currentTask)
-                ImportHelper.Reschedule(context, currentTask, landedOn);
+                subTaskService.Reschedule(context, currentTask, landedOn);
             else
-                ImportHelper.Reschedule(context, currentTask);
+                subTaskService.Reschedule(context, currentTask);
             if (movedFromProject != null) RecalculateProject(context, movedFromProject, commit: false);
             RecalculateProject(context, project);
 
@@ -570,7 +570,7 @@ namespace PPMTool.Services
                 if (managerPersonIds != null && !managerPersonIds.Contains(person.PersonId))
                     errors.Add($"Only managers can be assigned to leadership tasks ('{assignee}')");
 
-                if (ImportHelper.AssigneeStartsTooLate(person, taskStart) is { } tooLate)
+                if (SubTaskService.AssigneeStartsTooLate(person, taskStart) is { } tooLate)
                     errors.Add(tooLate);
 
                 if (existingTask != null && existingTask.AssignedResources.Any(existing => existing.Person.PersonId == person.PersonId))
@@ -622,7 +622,7 @@ namespace PPMTool.Services
 
             if (hasUsername)
             {
-                var person = ImportHelper.FindUserByUsername(context, assignment.Username!)?.Person;
+                var person = userService.GetByUsernameWithWorkloadModels(context, assignment.Username!)?.Person;
                 if (person == null)
                     errors.Add($"Username '{assignment.Username}' not found, or has no linked Person");
                 return (person, errors);

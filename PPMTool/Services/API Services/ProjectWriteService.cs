@@ -29,6 +29,8 @@ namespace PPMTool.Services
         private readonly SettingsService settingsService;
         private readonly TaskWriteService taskWriteService;
         private readonly InnateCodeService innateCodeService;
+        private readonly SchoolService schoolService;
+        private readonly UserService userService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ProjectWriteService"/> class.
@@ -40,6 +42,8 @@ namespace PPMTool.Services
         /// <param name="settingsService">Service used to load calculation settings.</param>
         /// <param name="taskWriteService">Service whose assignment validation create-time resourcing shares.</param>
         /// <param name="innateCodeService">Service used to create timesheet activity codes under the UI's own rules.</param>
+        /// <param name="schoolService">Service used to find schools.</param>
+        /// <param name="userService">Service used to find users.</param>
         public ProjectWriteService(
             ProjectService projectService,
             SubTaskService subTaskService,
@@ -47,7 +51,9 @@ namespace PPMTool.Services
             FinancialReferenceService financialReferenceService,
             SettingsService settingsService,
             TaskWriteService taskWriteService,
-            InnateCodeService innateCodeService)
+            InnateCodeService innateCodeService,
+            SchoolService schoolService,
+            UserService userService)
         {
             this.projectService = projectService;
             this.subTaskService = subTaskService;
@@ -56,6 +62,8 @@ namespace PPMTool.Services
             this.settingsService = settingsService;
             this.taskWriteService = taskWriteService;
             this.innateCodeService = innateCodeService;
+            this.schoolService = schoolService;
+            this.userService = userService;
         }
 
         /// <summary>
@@ -100,13 +108,13 @@ namespace PPMTool.Services
             else
                 ResolveSchool(context, request.SchoolId, request.SchoolCode, errors);
 
-            if (!string.IsNullOrWhiteSpace(request.ProjectManagerUsername) && ImportHelper.FindUserByUsername(context, request.ProjectManagerUsername)?.Person == null)
+            if (!string.IsNullOrWhiteSpace(request.ProjectManagerUsername) && userService.GetByUsernameWithWorkloadModels(context, request.ProjectManagerUsername)?.Person == null)
                 errors.Add($"ProjectManagerUsername '{request.ProjectManagerUsername}' not found, or has no linked Person");
 
             var assignments = new List<(Person? Person, string Assignee, double FTE)>();
             foreach (var r in request.Resourcing ?? Array.Empty<ImportResourcingDTO>())
             {
-                var person = ImportHelper.FindUserByUsername(context, r.Username)?.Person;
+                var person = userService.GetByUsernameWithWorkloadModels(context, r.Username)?.Person;
                 if (string.IsNullOrWhiteSpace(r.Username))
                     errors.Add("Each Resourcing entry needs a Username");
                 else if (person == null)
@@ -115,7 +123,7 @@ namespace PPMTool.Services
             }
             errors.AddRange(taskWriteService.ValidateAssignments(context, assignments, Duty.ProjectWork, request.ManagementStartDate));
 
-            if ((request.Comments?.Count ?? 0) > 0 && ImportHelper.FindUserByUsername(context, FallbackAuthorUsername) == null)
+            if ((request.Comments?.Count ?? 0) > 0 && userService.GetByUsernameWithWorkloadModels(context, FallbackAuthorUsername) == null)
                 errors.Add($"Fallback author User '{FallbackAuthorUsername}' does not exist -- create it before adding comments");
 
             return errors;
@@ -133,7 +141,7 @@ namespace PPMTool.Services
             var school = ResolveSchool(context, request.SchoolId, request.SchoolCode, new List<string>())!;
             var projectManager = string.IsNullOrWhiteSpace(request.ProjectManagerUsername)
                 ? null
-                : ImportHelper.FindUserByUsername(context, request.ProjectManagerUsername)?.Person;
+                : userService.GetByUsernameWithWorkloadModels(context, request.ProjectManagerUsername)?.Person;
             ImportHelper.TryParseCostModel(request.CostModel, out var costModel);
 
             var project = new Project
@@ -202,7 +210,7 @@ namespace PPMTool.Services
 
                 foreach (var r in resourcing)
                 {
-                    var person = ImportHelper.FindUserByUsername(context, r.Username)!.Person!;
+                    var person = userService.GetByUsernameWithWorkloadModels(context, r.Username)!.Person!;
                     var resource = new Resource
                     {
                         Person = person,
@@ -213,17 +221,17 @@ namespace PPMTool.Services
                     context.Resources.Add(resource);
                     resourcesCreated++;
                 }
-                ImportHelper.Reschedule(context, delivery);
+                subTaskService.Reschedule(context, delivery);
                 context.SaveChangesWithRetry();
             }
 
             var notesCreated = 0;
-            var fallbackAuthor = ImportHelper.FindUserByUsername(context, FallbackAuthorUsername);
+            var fallbackAuthor = userService.GetByUsernameWithWorkloadModels(context, FallbackAuthorUsername);
             foreach (var c in request.Comments ?? Array.Empty<ImportCommentDTO>())
             {
                 var author = string.IsNullOrWhiteSpace(c.AuthorUsername)
                     ? null
-                    : ImportHelper.FindUserByUsername(context, c.AuthorUsername);
+                    : userService.GetByUsernameWithWorkloadModels(context, c.AuthorUsername);
                 author ??= fallbackAuthor!;
 
                 var content = author.CASUserName == FallbackAuthorUsername
@@ -299,7 +307,7 @@ namespace PPMTool.Services
             if (request.SchoolCode != null || request.SchoolId != null)
                 ResolveSchool(context, request.SchoolId, request.SchoolCode, errors);
 
-            if (!string.IsNullOrEmpty(request.ProjectManagerUsername) && ImportHelper.FindUserByUsername(context, request.ProjectManagerUsername)?.Person == null)
+            if (!string.IsNullOrEmpty(request.ProjectManagerUsername) && userService.GetByUsernameWithWorkloadModels(context, request.ProjectManagerUsername)?.Person == null)
                 errors.Add($"ProjectManagerUsername '{request.ProjectManagerUsername}' not found, or has no linked Person");
 
             if (request.TimesheetActivityCode != null)
@@ -326,7 +334,7 @@ namespace PPMTool.Services
             if (request.ProjectManagerUsername != null)
                 project.ProjectManager = request.ProjectManagerUsername == ""
                     ? null
-                    : ImportHelper.FindUserByUsername(context, request.ProjectManagerUsername)!.Person!;
+                    : userService.GetByUsernameWithWorkloadModels(context, request.ProjectManagerUsername)!.Person!;
             if (request.Budget.HasValue) project.Budget = request.Budget.Value;
             if (request.CostModel != null && ImportHelper.TryParseCostModel(request.CostModel, out var costModel)) project.CostModel = costModel;
             if (request.DayRate.HasValue) project.DayRate = request.DayRate.Value;
@@ -370,7 +378,7 @@ namespace PPMTool.Services
             if (comments.Count == 0)
                 errors.Add("Comments must contain at least one entry");
 
-            if (comments.Count > 0 && ImportHelper.FindUserByUsername(context, FallbackAuthorUsername) == null)
+            if (comments.Count > 0 && userService.GetByUsernameWithWorkloadModels(context, FallbackAuthorUsername) == null)
                 errors.Add($"Fallback author User '{FallbackAuthorUsername}' does not exist -- create it (POST /api/users/add) before adding comments");
 
             return errors;
@@ -385,14 +393,14 @@ namespace PPMTool.Services
         public ImportNotesResponseDTO AddNotes(PPMToolContext context, ImportNotesRequestDTO request)
         {
             var project = projectService.GetByRTP(context, request.RTP)!;
-            var fallbackAuthor = ImportHelper.FindUserByUsername(context, FallbackAuthorUsername);
+            var fallbackAuthor = userService.GetByUsernameWithWorkloadModels(context, FallbackAuthorUsername);
 
             var notesCreated = 0;
             foreach (var c in request.Comments)
             {
                 var author = string.IsNullOrWhiteSpace(c.AuthorUsername)
                     ? null
-                    : ImportHelper.FindUserByUsername(context, c.AuthorUsername);
+                    : userService.GetByUsernameWithWorkloadModels(context, c.AuthorUsername);
                 author ??= fallbackAuthor!;
 
                 var content = author.CASUserName == FallbackAuthorUsername
@@ -496,12 +504,12 @@ namespace PPMTool.Services
         /// <param name="schoolCode">School code from the request, if any.</param>
         /// <param name="errors">Receives an error for each problem found.</param>
         /// <returns>The School, or <c>null</c> when an error was added.</returns>
-        private static School? ResolveSchool(PPMToolContext context, int? schoolId, string? schoolCode, List<string> errors)
+        private School? ResolveSchool(PPMToolContext context, int? schoolId, string? schoolCode, List<string> errors)
         {
             School? byId = null, byCode = null;
-            if (schoolId != null && (byId = ImportHelper.FindActiveSchoolById(context, schoolId.Value)) == null)
+            if (schoolId != null && (byId = schoolService.GetById(context, schoolId.Value, activeOnly: true)) == null)
                 errors.Add($"SchoolId {schoolId} does not match any active School");
-            if (!string.IsNullOrWhiteSpace(schoolCode) && (byCode = ImportHelper.FindActiveSchoolByCode(context, schoolCode)) == null)
+            if (!string.IsNullOrWhiteSpace(schoolCode) && (byCode = schoolService.GetByCode(context, schoolCode, activeOnly: true)) == null)
                 errors.Add($"SchoolCode '{schoolCode}' does not match any active School");
             if (byId != null && byCode != null && byId.SchoolId != byCode.SchoolId)
             {
@@ -564,7 +572,7 @@ namespace PPMTool.Services
                 return errors;
             }
 
-            var requested = ImportHelper.FindInnateCodeByActivityCode(context, activityCode);
+            var requested = innateCodeService.GetByActivityCode(context, activityCode);
             var current = project?.InnateActivity;
             if (current != null && requested?.InnateCodeId == current.InnateCodeId)
                 return errors;
@@ -611,7 +619,7 @@ namespace PPMTool.Services
         /// <returns>The code to link.</returns>
         private InnateCode ResolveTimesheetActivityCode(PPMToolContext context, string activityCode, string projectName, InnateCode? currentCode, int projectId)
         {
-            var requested = ImportHelper.FindInnateCodeByActivityCode(context, activityCode);
+            var requested = innateCodeService.GetByActivityCode(context, activityCode);
             if (requested != null)
                 return requested;
 

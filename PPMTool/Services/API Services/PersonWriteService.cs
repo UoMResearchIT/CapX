@@ -213,7 +213,7 @@ namespace PPMTool.Services
                 return personService.GetById(context, request.LineManagerPersonId.Value);
 
             if (!string.IsNullOrWhiteSpace(request.LineManagerUsername))
-                return ImportHelper.FindUserByUsername(context, request.LineManagerUsername)?.Person;
+                return userService.GetByUsernameWithWorkloadModels(context, request.LineManagerUsername)?.Person;
 
             return null;
         }

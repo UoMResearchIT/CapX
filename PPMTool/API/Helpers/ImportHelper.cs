@@ -24,18 +24,6 @@ namespace PPMTool.API.Helpers
             DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
 
         /// <summary>
-        /// Finds a user by username with linked person and workload-model-change data loaded.
-        /// </summary>
-        /// <param name="context">Database context.</param>
-        /// <param name="username">Username to resolve.</param>
-        /// <returns>The matching user, or <c>null</c> when none exists.</returns>
-        internal static User FindUserByUsername(PPMToolContext context, string username) =>
-            string.IsNullOrWhiteSpace(username) ? null : context.Users
-                .Include(u => u.Person)
-                    .ThenInclude(p => p!.WorkloadModelChanges)
-                .FirstOrDefault(u => u.CASUserName.Trim().ToLower() == username.Trim().ToLower());
-
-        /// <summary>
         /// Parses an enum value and rejects undefined values.
         /// </summary>
         /// <typeparam name="TEnum">Enum type.</typeparam>
@@ -75,71 +63,6 @@ namespace PPMTool.API.Helpers
         {
             var truncated = Math.Truncate(number * 1000) / 1000;
             return number != truncated;
-        }
-
-        /// <summary>
-        /// Re-schedules one or more tasks and recalculates unmet demand.
-        /// </summary>
-        /// <param name="context">Database context.</param>
-        /// <param name="tasks">Tasks to re-schedule.</param>
-        internal static void Reschedule(PPMToolContext context, params SubTask[] tasks)
-        {
-            context.ChangeTracker.DetectChanges();
-            foreach (var task in tasks)
-            {
-                var error = task.Schedule();
-                if (error != null)
-                    throw new InvalidOperationException($"SubTask.Schedule() failed for SubTaskId {task.SubTaskId} despite passing validation: {error}");
-                task.UpdateUnmetDemand();
-            }
-        }
-
-        /// <summary>
-        /// Returns an error message when a person starts after a task start date.
-        /// </summary>
-        /// <param name="person">Person being assigned.</param>
-        /// <param name="taskStart">Task start date.</param>
-        /// <returns>An error string when invalid; otherwise <c>null</c>.</returns>
-        internal static string AssigneeStartsTooLate(Person person, DateTime taskStart) =>
-            person.StartDate > taskStart
-                ? $"'{person.Name}' does not start until {person.StartDate:yyyy-MM-dd}, after the task's start date {taskStart:yyyy-MM-dd}"
-                : null;
-
-        /// <summary>
-        /// Finds an active school by code.
-        /// </summary>
-        /// <param name="context">Database context.</param>
-        /// <param name="code">School code to resolve.</param>
-        /// <returns>The matching active school, or <c>null</c> when none exists.</returns>
-        internal static School FindActiveSchoolByCode(PPMToolContext context, string code) =>
-            string.IsNullOrWhiteSpace(code) ? null : context.Schools
-                .Include(s => s.Faculty)
-                .FirstOrDefault(s => s.IsActive && s.Code.Trim().ToLower() == code.Trim().ToLower());
-
-        /// <summary>
-        /// Finds an active school by id.
-        /// </summary>
-        /// <param name="context">Database context.</param>
-        /// <param name="schoolId">School id to resolve.</param>
-        /// <returns>The matching active school, or <c>null</c> when none exists.</returns>
-        internal static School FindActiveSchoolById(PPMToolContext context, int schoolId) =>
-            context.Schools
-                .Include(s => s.Faculty)
-                .FirstOrDefault(s => s.IsActive && s.SchoolId == schoolId);
-
-        /// <summary>
-        /// Finds an innate code by its activity code, ignoring case and surrounding whitespace.
-        /// </summary>
-        /// <param name="context">Database context.</param>
-        /// <param name="activityCode">Activity code to resolve.</param>
-        /// <returns>The matching innate code, or <c>null</c> when none exists.</returns>
-        internal static InnateCode FindInnateCodeByActivityCode(PPMToolContext context, string activityCode)
-        {
-            if (string.IsNullOrWhiteSpace(activityCode)) return null;
-            var code = activityCode.Trim().ToLower();
-            return context.InnateCodes
-                .Include(c => c.Tasks)
-                .FirstOrDefault(c => c.ActivityCode.Trim().ToLower() == code);
         }
 
         /// <summary>

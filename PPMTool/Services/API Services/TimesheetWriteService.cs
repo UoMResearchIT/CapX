@@ -21,16 +21,22 @@ namespace PPMTool.Services
     {
         private readonly TimesheetService timesheetService;
         private readonly PersonService personService;
+        private readonly UserService userService;
+        private readonly ProjectService projectService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TimesheetWriteService"/> class.
         /// </summary>
         /// <param name="timesheetService">Service used to validate and persist timesheets.</param>
         /// <param name="personService">Service used to resolve the people timesheets belong to.</param>
-        public TimesheetWriteService(TimesheetService timesheetService, PersonService personService)
+        /// <param name="userService">Service used to find users.</param>
+        /// <param name="projectService">Service used to find projects.</param>
+        public TimesheetWriteService(TimesheetService timesheetService, PersonService personService, UserService userService, ProjectService projectService)
         {
             this.timesheetService = timesheetService;
             this.personService = personService;
+            this.userService = userService;
+            this.projectService = projectService;
         }
 
         /// <summary>
@@ -47,7 +53,7 @@ namespace PPMTool.Services
             var hasPersonId = request.PersonId.HasValue;
             if (hasUsername == hasPersonId)
                 errors.Add("Exactly one of Username or PersonId must be supplied");
-            else if (hasUsername && ImportHelper.FindUserByUsername(context, request.Username!)?.Person == null)
+            else if (hasUsername && userService.GetByUsernameWithWorkloadModels(context, request.Username!)?.Person == null)
                 errors.Add($"Username '{request.Username}' not found, or has no linked Person");
             else if (hasPersonId && personService.GetById(context, request.PersonId!.Value) == null)
                 errors.Add($"PersonId {request.PersonId} does not exist");
@@ -66,7 +72,7 @@ namespace PPMTool.Services
             if (!hasTaskName)
                 errors.Add("TaskName is required");
 
-            var project = FindProjectWithInnateActivity(context, request.ProjectId);
+            var project = projectService.GetByIdWithInnateActivity(context, request.ProjectId);
             if (project == null)
                 errors.Add($"ProjectId {request.ProjectId} does not exist");
             else if (project.InnateActivity == null)
@@ -87,9 +93,9 @@ namespace PPMTool.Services
         public ImportTimesheetResponseDTO CreateOrUpdateTimesheetEntry(PPMToolContext context, ImportTimesheetEntryDTO request, User caller)
         {
             var person = !string.IsNullOrWhiteSpace(request.Username)
-                ? ImportHelper.FindUserByUsername(context, request.Username)!.Person!
+                ? userService.GetByUsernameWithWorkloadModels(context, request.Username)!.Person!
                 : personService.GetById(context, request.PersonId!.Value);
-            var project = FindProjectWithInnateActivity(context, request.ProjectId)!;
+            var project = projectService.GetByIdWithInnateActivity(context, request.ProjectId)!;
             var task = project.InnateActivity!.Tasks.First(t => t.TaskName.Trim().Equals(request.TaskName.Trim(), StringComparison.OrdinalIgnoreCase));
             var weekStartDate = ImportHelper.AsUnspecifiedKind(request.WeekStartDate);
 
@@ -151,7 +157,7 @@ namespace PPMTool.Services
         {
             var errors = new List<string>();
 
-            var entry = FindTimesheetEntryById(context, request.TimesheetEntryId);
+            var entry = timesheetService.GetEntryById(context, request.TimesheetEntryId);
             if (entry == null)
             {
                 errors.Add($"TimesheetEntryId {request.TimesheetEntryId} does not exist");
@@ -185,7 +191,7 @@ namespace PPMTool.Services
         /// <returns>Identifier payload for the updated timesheet entry.</returns>
         public UpdateTimesheetEntryResponseDTO UpdateTimesheetEntry(PPMToolContext context, UpdateTimesheetEntryRequestDTO request)
         {
-            var entry = FindTimesheetEntryById(context, request.TimesheetEntryId)!;
+            var entry = timesheetService.GetEntryById(context, request.TimesheetEntryId)!;
 
             if (request.NewTaskName != null)
                 entry.InnateCodeTask = entry.InnateCodeTask.InnateCode.Tasks.First(t => t.TaskName.Trim().Equals(request.NewTaskName.Trim(), StringComparison.OrdinalIgnoreCase));
@@ -204,32 +210,5 @@ namespace PPMTool.Services
 
             return new UpdateTimesheetEntryResponseDTO(entry.TimesheetEntryId, entry.TotalHours);
         }
-
-        /// <summary>
-        /// Finds a project by ID with innate activity and tasks loaded.
-        /// </summary>
-        /// <param name="context">Database context.</param>
-        /// <param name="projectId">Project identifier.</param>
-        /// <returns>The matching project, or <c>null</c> when none exists.</returns>
-        private static Project? FindProjectWithInnateActivity(PPMToolContext context, int projectId) =>
-            context.Projects
-                .Include(p => p.InnateActivity)
-                    .ThenInclude(a => a!.Tasks)
-                .FirstOrDefault(p => p.ProjectId == projectId);
-
-        /// <summary>
-        /// Finds a timesheet entry by ID with related timesheet and task data loaded.
-        /// </summary>
-        /// <param name="context">Database context.</param>
-        /// <param name="timesheetEntryId">Timesheet-entry identifier.</param>
-        /// <returns>The matching timesheet entry, or <c>null</c> when none exists.</returns>
-        private static TimesheetEntry? FindTimesheetEntryById(PPMToolContext context, int timesheetEntryId) =>
-            context.TimesheetEntries
-                .Include(e => e.Timesheet)
-                    .ThenInclude(t => t.TimesheetEntries)
-                .Include(e => e.InnateCodeTask)
-                    .ThenInclude(t => t.InnateCode)
-                        .ThenInclude(c => c.Tasks)
-                .FirstOrDefault(e => e.TimesheetEntryId == timesheetEntryId);
     }
 }

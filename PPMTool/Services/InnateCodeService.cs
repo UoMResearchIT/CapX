@@ -189,6 +189,22 @@ namespace PPMTool.Services
         }
 
         /// <summary>
+        /// Get the innate code with the given activity code, ignoring case and surrounding
+        /// whitespace, with its tasks.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="activityCode"></param>
+        /// <returns>The code, or null if there is none.</returns>
+        public InnateCode GetByActivityCode(PPMToolContext context, string activityCode)
+        {
+            if (string.IsNullOrWhiteSpace(activityCode)) return null;
+            var normalised = activityCode.Trim().ToLower();
+            return context.InnateCodes
+                .Include(x => x.Tasks)
+                .FirstOrDefault(x => x.ActivityCode.Trim().ToLower() == normalised);
+        }
+
+        /// <summary>
         /// Object to represent information about a code to be deactivated
         /// </summary>
         public class CodeToDeactivate

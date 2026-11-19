@@ -17,6 +17,20 @@ namespace PPMTool.Services
     /// </summary>
     public class WorkloadModelWriteService
     {
+        private readonly UserService userService;
+        private readonly FinancialReferenceService financialReferenceService;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WorkloadModelWriteService"/> class.
+        /// </summary>
+        /// <param name="userService">Service used to find users.</param>
+        /// <param name="financialReferenceService">Service used to find cost keys.</param>
+        public WorkloadModelWriteService(UserService userService, FinancialReferenceService financialReferenceService)
+        {
+            this.userService = userService;
+            this.financialReferenceService = financialReferenceService;
+        }
+
         /// <summary>
         /// Validates a workload-model-change request without writing to the database.
         /// </summary>
@@ -29,7 +43,7 @@ namespace PPMTool.Services
 
             if (string.IsNullOrWhiteSpace(request.Username))
                 errors.Add("Username is required");
-            else if (ImportHelper.FindUserByUsername(context, request.Username)?.Person == null)
+            else if (userService.GetByUsernameWithWorkloadModels(context, request.Username)?.Person == null)
                 errors.Add($"Username '{request.Username}' not found, or has no linked Person");
 
             if (request.ChangeDate.TimeOfDay != TimeSpan.Zero)
@@ -43,7 +57,7 @@ namespace PPMTool.Services
                 if (fte < 0.0 || fte > 1.0) errors.Add($"{label} {fte} is out of range (must be 0.0-1.0)");
             }
 
-            if (request.CostValueKey != null && FindCostValueSet(context, request.CostValueKey) == null)
+            if (request.CostValueKey != null && financialReferenceService.GetValueSetByName(context, request.CostValueKey) == null)
             {
                 var available = context.FinancialReferenceValueSets.Select(s => s.Name).OrderBy(n => n).ToList();
                 errors.Add($"CostValueKey '{request.CostValueKey}' does not match any cost key; available: {string.Join(", ", available)}");
@@ -60,7 +74,7 @@ namespace PPMTool.Services
         /// <returns>Identifier payload indicating whether a record was created.</returns>
         public ImportWorkloadModelChangeResponseDTO CreateOrUpdateWorkloadModelChange(PPMToolContext context, ImportWorkloadModelChangeDTO request)
         {
-            var person = ImportHelper.FindUserByUsername(context, request.Username)!.Person!;
+            var person = userService.GetByUsernameWithWorkloadModels(context, request.Username)!.Person!;
 
             var changeDate = ImportHelper.AsUnspecifiedKind(request.ChangeDate);
             var change = person.WorkloadModelChanges.FirstOrDefault(c => c.ChangeDate == changeDate);
@@ -82,17 +96,11 @@ namespace PPMTool.Services
             change.ProjectManagementFTE = request.ProjectManagementFTE;
             change.Notes = request.Notes;
             if (request.CostValueKey != null)
-                change.CostValueSetId = FindCostValueSet(context, request.CostValueKey)!.FinancialReferenceValueSetId;
+                change.CostValueSetId = financialReferenceService.GetValueSetByName(context, request.CostValueKey)!.FinancialReferenceValueSetId;
             context.SaveChangesWithRetry();
 
             return new ImportWorkloadModelChangeResponseDTO(change.WorkloadModelChangeId, created);
         }
-
-        /// <summary>
-        /// Finds a cost key (financial reference value set) by name, ignoring case and surrounding whitespace.
-        /// </summary>
-        private static FinancialReferenceValueSet? FindCostValueSet(PPMToolContext context, string name) =>
-            context.FinancialReferenceValueSets.FirstOrDefault(s => s.Name.Trim().ToLower() == name.Trim().ToLower());
 
         /// <summary>
         /// Enumerates the requested duty FTE values with labels for validation messages.

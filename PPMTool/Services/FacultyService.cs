@@ -92,5 +92,19 @@ namespace PPMTool.Services
                     (x.Name.Trim().ToLower() == entity.Name.Trim().ToLower() || x.Code.Trim().ToLower() == entity.Code.Trim().ToLower())
                 );
         }
+
+        /// <summary>
+        /// Get the faculty with the given code, ignoring case and surrounding whitespace.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="code"></param>
+        /// <returns>The faculty, or null if there is none.</returns>
+        public Faculty GetByCode(PPMToolContext context, string code)
+        {
+            if (string.IsNullOrWhiteSpace(code)) return null;
+            var normalised = code.Trim().ToLower();
+            return context.Faculties
+                .FirstOrDefault(x => x.Code.Trim().ToLower() == normalised);
+        }
     }
 }
