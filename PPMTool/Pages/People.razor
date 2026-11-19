@@ -74,6 +74,9 @@ SPDX-License-Identifier: apache-2.0
                     <RadzenDataGridColumn TItem="Person" Property="StartDate" Title="Started" Width="6rem" FormatString="{0:d}" MinWidth="10px" Filterable="false" />
                     <RadzenDataGridColumn TItem="Person" Property="EndDate" Title="Left" Width="6rem" FormatString="{0:d}" MinWidth="10px" Filterable="false" />
                     <RadzenDataGridColumn TItem="Person" Property="WorkloadModelChanges" Width="4rem" Title="Current Project Work FTE" MinWidth="10px" Sortable="false" Filterable="false">
+                        <HeaderTemplate>
+                            <TooltipLabelComponent Text="Current Project Work FTE" Tooltip="Current Project Work Full-Time Equivalent" />
+                        </HeaderTemplate>
                         <Template Context="p">
                             @p.WorkloadModelChanges.Where(x => x.ChangeDate <= DateTime.Today).OrderBy(x => x.ChangeDate).LastOrDefault()?.ProjectWorkFTE
                         </Template>

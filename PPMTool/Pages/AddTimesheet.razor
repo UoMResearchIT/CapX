@@ -116,6 +116,9 @@ SPDX-License-Identifier: apache-2.0
                                 </EditTemplate>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="TimesheetEntry" Property="InnateCodeTask.Duty" Sortable="true" Title="WLM Duty & Task" MinWidth="10px" Width="12rem">
+                                <HeaderTemplate>
+                                    <TooltipLabelComponent Text="WLM Duty & Task" Tooltip="Workload Model Duty & Task" />
+                                </HeaderTemplate>
                                 <Template Context="entry">
                                     <TimesheetEntryTaskComponent Entry="@entry" />
                                 </Template>
