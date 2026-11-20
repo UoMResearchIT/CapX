@@ -15,12 +15,16 @@ namespace PPMTool.Tests.API.Timesheets
         public async Task TimesheetEntryCanBeCreatedThenUpdated()
         {
             var code = $"WTT{RunNumber}";
-            // A Monday unique to this run, after the test Superuser's start date
-            var week = new DateTime(2021, 1, 4).AddDays(7 * (RunNumber % 500));
-            var range = $"startDate={week:yyyy-MM-dd}&endDate={week.AddDays(6):yyyy-MM-dd}&name={ToApiPersonName(SuperuserPersonName)}";
 
             using (var client = GetClientAsSuperuser())
             {
+                // Timesheet weeks must be on or after the person's employment start date.
+                var person = await client.GetFromJsonAsync<JsonElement>($"people/getById?personId={SuperuserPersonId}");
+                var startDate = DateTime.Parse(person.GetProperty("startDate").GetString()!).Date;
+                var daysUntilMonday = ((int)DayOfWeek.Monday - (int)startDate.DayOfWeek + 7) % 7;
+                var week = startDate.AddDays(daysUntilMonday).AddDays(7 * (RunNumber % 500));
+                var range = $"startDate={week:yyyy-MM-dd}&endDate={week.AddDays(6):yyyy-MM-dd}&name={ToApiPersonName(SuperuserPersonName)}";
+
                 var projectId = await CreateProjectAsync(client, RunNumber * 10 + 4, code);
 
                 var response = await client.PostAsJsonAsync("timesheets/add", new
