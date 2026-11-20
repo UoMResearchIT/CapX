@@ -12,6 +12,7 @@ using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
+using PPMTool.Services;
 
 namespace PPMTool.Helpers
 {
@@ -465,6 +466,18 @@ namespace PPMTool.Helpers
                     Person = context.People.FirstOrDefault(x => x.ShortName == "JN")
                 };
                 context.Users.Add(none);
+
+                // Superuser -- Eggplant's separate admin account, linked to her Person, so tests can use the
+                // write endpoints (projects/add makes the caller's Person the Request Owner)
+                var superUserWithPerson = new User
+                {
+                    Name = "Eggplant Acrobat",
+                    CASUserName = "eacrobatadmin",
+                    EmailAddress = "eacrobat.admin@manc.ac.uk",
+                    RoleType = RoleType.Superuser,
+                    Person = context.People.FirstOrDefault(x => x.ShortName == "EA")
+                };
+                context.Users.Add(superUserWithPerson);
                 context.SaveChanges();
             }
         }
@@ -498,8 +511,16 @@ namespace PPMTool.Helpers
                         && x.Owner.RoleType == RoleType.Developer
                         && x.Owner.Person != null);
 
+                // Check if there is already a key for a superuser with a person, for the write endpoint tests
+                var superUserKeyExists = context.ApiKeys
+                    .Include(x => x.Owner)
+                    .ThenInclude(x => x.Person)
+                    .Any(x => x.ExpiresAt > DateTime.Now
+                        && x.Owner.RoleType == RoleType.Superuser
+                        && x.Owner.Person != null);
+
                 // If there are the keys we need then no need to seed anything
-                if (managerWithReportExists && developerKeyExists)
+                if (managerWithReportExists && developerKeyExists && superUserKeyExists)
                 {
                     return;
                 }
@@ -517,6 +538,10 @@ namespace PPMTool.Helpers
                     .Include(x => x.Person)
                     .FirstOrDefault(x => x.RoleType == RoleType.Developer && x.Person != null)
                     ?? throw new InvalidOperationException("Cannot find a developer to seed an API key for testing.");
+                var superUser = context.Users
+                    .Include(x => x.Person)
+                    .FirstOrDefault(x => x.RoleType == RoleType.Superuser && x.Person != null)
+                    ?? throw new InvalidOperationException("Cannot find a superuser with a person to seed an API key for testing.");
 
                 // Create a one day long token so it will be useful for tests but not a lingering security issue
                 var tokenProvider = new ApiTokenProvider(configuration);
@@ -548,6 +573,18 @@ namespace PPMTool.Helpers
                     });
                 }
 
+                if (!superUserKeyExists)
+                {
+                    keysToAdd.Add(new ApiKey
+                    {
+                        Active = true,
+                        Description = "Dummy data superuser API key",
+                        ExpiresAt = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(expirationInDays), DateTimeKind.Unspecified),
+                        Key = tokenProvider.CreateToken(superUser, expirationInDays),
+                        Owner = superUser
+                    });
+                }
+
                 // Check the keys are valid and we didn't mess up the generation
                 if (keysToAdd.Any(x => string.IsNullOrWhiteSpace(x.Key)))
                 {
@@ -558,6 +595,24 @@ namespace PPMTool.Helpers
                 context.ApiKeys.AddRange(keysToAdd);
                 context.SaveChanges();
             }
+        }
+
+        /// <summary>
+        /// Switch the write endpoints on for dummy data, which exists for development and testing,
+        /// so tests can exercise them. Runs after the settings cache is initialised, so the change
+        /// reaches the cache as well as the database.
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        internal static void EnableWriteApiForDummyData(IServiceProvider serviceProvider)
+        {
+            var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<PPMToolContext>>();
+            var settingsService = serviceProvider.GetRequiredService<SettingsService>();
+            var logger = serviceProvider.GetRequiredService<ILogger>();
+            logger.LogInformation("Enabling the write API endpoints for dummy data...");
+            using var context = dbContextFactory.CreateDbContext();
+            var setting = context.Settings.First(x => x.SettingType == SettingType.WriteApiEndpointsEnabled);
+            setting.SettingValue = "true";
+            settingsService.UpdateSettingValue(context, setting);
         }
 
         /// <summary>

@@ -5,9 +5,11 @@
 using System.Globalization;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using PPMTool.API.DTOs;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
+using PPMTool.Services;
 
 namespace PPMTool.API.Helpers;
 
@@ -185,6 +187,75 @@ public static class GeneralHelpers
     }
 
     /// <summary>
+    /// Shared gate for the write endpoints, and for the reads that sit alongside them
+    /// (notes, tasks and resourcing): checks that the write endpoints are enabled and
+    /// that the caller is a Superuser.
+    /// </summary>
+    /// <param name="settingsService"></param>
+    /// <param name="http"></param>
+    /// <param name="logger"></param>
+    /// <param name="endpointName">Used only for logging, to identify which endpoint rejected the call.</param>
+    internal static (bool allowed, User caller, IResult result) CheckWriteApiAccess(
+        SettingsService settingsService, HttpContext http, ILogger logger, string endpointName)
+    {
+        if (!settingsService.GetSetting(SettingType.WriteApiEndpointsEnabled, false))
+        {
+            logger.LogWarning("API: {Endpoint}: rejected, endpoints that write to the database are turned off by the system administrator.", endpointName);
+            return (false, null, Results.StatusCode(StatusCodes.Status403Forbidden));
+        }
+
+        var caller = GetCurrentUser(http);
+        if (!IsSuperUser(caller))
+        {
+            logger.LogWarning("API: {Endpoint}: caller {User} is not a Superuser", endpointName, caller.Name);
+            return (false, null, Results.StatusCode(StatusCodes.Status403Forbidden));
+        }
+
+        return (true, caller, null);
+    }
+
+    /// <summary>
+    /// Shared execution wrapper for the API's write endpoints:
+    /// performs gate check, validation -> 400, and exception -> 500.
+    /// </summary>
+    internal static IResult ExecuteWrite(
+        SettingsService settingsService,
+        HttpContext http,
+        ILogger logger,
+        string endpointName,
+        Func<User, List<string>> validate,
+        Action<List<string>> logValidationFailure,
+        Func<User, IResult> execute,
+        Action<Exception> logException)
+    {
+        try
+        {
+            // Check if the endpoint is allowed and if the caller is a superuser.
+            var (allowed, caller, gateResult) = CheckWriteApiAccess(settingsService, http, logger, endpointName);
+            if (!allowed)
+            {
+                return gateResult!;
+            }
+
+            // Run validation method
+            var errors = validate(caller!);
+            if (errors.Count > 0)
+            {
+                logValidationFailure(errors);
+                return Results.BadRequest(new WriteErrorDTO(errors));
+            }
+
+            // Run execution method
+            return execute(caller!);
+        }
+        catch (Exception ex)
+        {
+            logException(ex);
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
     /// Formats a single object value for inclusion in a CSV field.
     /// It handles nulls and applies RFC 4180 escaping for commas, quotes, and line terminators.
     /// </summary>
@@ -242,5 +313,56 @@ public static class GeneralHelpers
         }
 
         return Encoding.UTF8.GetBytes(csvBuilder.ToString());
+    }
+
+    /// <summary>
+    /// Removes the <see cref="DateTime.Kind"/> without changing the clock value.
+    /// </summary>
+    /// <param name="dt">The date/time to normalize.</param>
+    /// <returns>The same date/time value with <see cref="DateTimeKind.Unspecified"/> kind.</returns>
+    internal static DateTime AsUnspecifiedKind(DateTime dt) =>
+        DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
+
+    /// <summary>
+    /// Parses an enum value and rejects undefined values.
+    /// </summary>
+    /// <typeparam name="TEnum">Enum type.</typeparam>
+    /// <param name="value">Value to parse.</param>
+    /// <param name="result">Parsed enum value when successful.</param>
+    /// <returns><c>true</c> when parsing succeeds to a defined enum value; otherwise <c>false</c>.</returns>
+    internal static bool TryParseDefined<TEnum>(string value, out TEnum result) where TEnum : struct, Enum =>
+        Enum.TryParse(value, out result) && Enum.IsDefined(result);
+
+    /// <summary>
+    /// Parses an enum value given either as its name or as its description, the form reads
+    /// return (a project's cost model, a task's duty), so a value read can be written back.
+    /// </summary>
+    /// <typeparam name="TEnum">Enum type.</typeparam>
+    /// <param name="value">Value to parse.</param>
+    /// <param name="result">Parsed enum value when successful.</param>
+    /// <returns><c>true</c> when the value names a defined enum value; otherwise <c>false</c>.</returns>
+    internal static bool TryParseNameOrDescription<TEnum>(string value, out TEnum result) where TEnum : struct, Enum
+    {
+        if (TryParseDefined(value, out result)) return true;
+        foreach (var candidate in Enum.GetValues<TEnum>())
+        {
+            if (string.Equals(candidate.GetDescription(), value?.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                result = candidate;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Determines whether a number contains significant digits beyond three decimal places.
+    /// </summary>
+    /// <param name="number">Number to test.</param>
+    /// <returns><c>true</c> when precision exceeds three decimal places; otherwise <c>false</c>.</returns>
+    internal static bool HasDigitsAfterThirdDecimalPlace(double number)
+    {
+        var truncated = Math.Truncate(number * 1000) / 1000;
+        return number != truncated;
     }
 }

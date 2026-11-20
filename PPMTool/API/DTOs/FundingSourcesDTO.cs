@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+#nullable enable
+
 namespace PPMTool.API.DTOs
 {
     /// <summary>
@@ -17,8 +19,8 @@ namespace PPMTool.API.DTOs
         int FundingSourceId,
         int ProjectId,
         double AmountAvailable,
-        string Description,
-        string AccountCode,
+        string? Description,
+        string? AccountCode,
         string FundingSourceType
     );
 }

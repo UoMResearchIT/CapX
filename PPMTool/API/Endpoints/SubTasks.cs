@@ -8,6 +8,7 @@ using PPMTool.API.DTOs;
 using PPMTool.API.Helpers;
 using PPMTool.Data.Context;
 using PPMTool.Data.Enums;
+using PPMTool.Services;
 
 namespace PPMTool.API.Endpoints
 {
@@ -68,7 +69,10 @@ namespace PPMTool.API.Endpoints
                     Name: x.Name,
                     StartDate: DateOnly.FromDateTime(x.StartDate),
                     EndDate: DateOnly.FromDateTime(x.EndDate),
-                    TaskDuty: x.TaskDuty.GetDescription()
+                    TaskDuty: x.TaskDuty.GetDescription(),
+                    Demand: x.Demand,
+                    OriginalDemand: x.OriginalDemand,
+                    UnmetDemand: x.UnmetDemand
                 )).ToList();
 
                 logger.LogInformation(
@@ -144,7 +148,10 @@ namespace PPMTool.API.Endpoints
                     Name: subTask.Name,
                     StartDate: DateOnly.FromDateTime(subTask.StartDate),
                     EndDate: DateOnly.FromDateTime(subTask.EndDate),
-                    TaskDuty: subTask.TaskDuty.GetDescription()
+                    TaskDuty: subTask.TaskDuty.GetDescription(),
+                    Demand: subTask.Demand,
+                    OriginalDemand: subTask.OriginalDemand,
+                    UnmetDemand: subTask.UnmetDemand
                 );
 
                 logger.LogInformation(
@@ -158,6 +165,76 @@ namespace PPMTool.API.Endpoints
                 logger.LogError(ex, "API: GetSubTaskById: error");
                 return Results.StatusCode(StatusCodes.Status500InternalServerError);
             }
+        }
+
+        /// <summary>
+        /// Create a fixed-duration task on an existing Project. See <see cref="WriteSubTaskDTO"/>.
+        /// </summary>
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WriteSubTaskResponseDTO))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public static IResult CreateSubTask(
+            PPMToolContext context,
+            TaskWriteService writeService,
+            SettingsService settingsService,
+            ILogger logger,
+            HttpContext http,
+            [FromBody] WriteSubTaskDTO request)
+        {
+            return GeneralHelpers.ExecuteWrite(
+                settingsService,
+                http,
+                logger,
+                $"{nameof(SubTasks)}.{nameof(CreateSubTask)}",
+                validate: _ => writeService.ValidateTaskCreate(context, request),
+                logValidationFailure: errors => logger.LogWarning("API: SubTasks: task create validation failed for RTP {RTP}/'{Name}': {Errors}", request.RTP, request.Name, string.Join("; ", errors)),
+                execute: caller =>
+                {
+                    // CreateTask saves more than once (SubTaskService.Add commits), so a
+                    // failure part-way through would otherwise leave a partial write.
+                    using var transaction = context.Database.BeginTransaction();
+                    var result = writeService.CreateTask(context, request);
+                    transaction.Commit();
+                    logger.LogInformation("API: SubTasks: created SubTask {SubTaskId} ('{Name}') on RTP {RTP} by {User}", result.SubTaskId, request.Name, request.RTP, caller.Name);
+                    return Results.Created($"/api/subtasks/getById?subTaskId={result.SubTaskId}", result);
+                },
+                logException: ex => logger.LogError(ex, "API: SubTasks: error creating task for RTP {RTP}/'{Name}'", request.RTP, request.Name));
+        }
+
+        /// <summary>
+        /// Update a task's name, duty, dates or demand, identified by SubTaskId.
+        /// See <see cref="UpdateSubTaskRequestDTO"/>.
+        /// </summary>
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateSubTaskResponseDTO))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public static IResult UpdateSubTask(
+            PPMToolContext context,
+            TaskWriteService writeService,
+            SettingsService settingsService,
+            ILogger logger,
+            HttpContext http,
+            [FromBody] UpdateSubTaskRequestDTO request)
+        {
+            return GeneralHelpers.ExecuteWrite(
+                settingsService,
+                http,
+                logger,
+                $"{nameof(SubTasks)}.{nameof(UpdateSubTask)}",
+                validate: _ => writeService.ValidateTaskUpdate(context, request),
+                logValidationFailure: errors => logger.LogWarning("API: SubTasks: task update validation failed for SubTaskId {SubTaskId}: {Errors}", request.SubTaskId, string.Join("; ", errors)),
+                execute: caller =>
+                {
+                    // SubTaskService.Update commits before the cost recalculation saves again.
+                    using var transaction = context.Database.BeginTransaction();
+                    var result = writeService.UpdateTask(context, request);
+                    transaction.Commit();
+                    logger.LogInformation("API: SubTasks: updated SubTask {SubTaskId} by {User}", result.SubTaskId, caller.Name);
+                    return Results.Ok(result);
+                },
+                logException: ex => logger.LogError(ex, "API: SubTasks: error updating SubTask {SubTaskId}", request.SubTaskId));
         }
     }
 }

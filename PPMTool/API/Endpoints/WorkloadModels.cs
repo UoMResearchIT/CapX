@@ -2,11 +2,14 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+#nullable enable
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
 using PPMTool.API.Helpers;
 using PPMTool.Data.Context;
+using PPMTool.Services;
 
 namespace PPMTool.API.Endpoints
 {
@@ -271,6 +274,40 @@ namespace PPMTool.API.Endpoints
 
                 return Results.StatusCode(StatusCodes.Status500InternalServerError);
             }
+        }
+
+        /// <summary>
+        /// Create or update a person's workload model change. See
+        /// <see cref="WriteWorkloadModelChangeDTO"/>.
+        /// </summary>
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WriteWorkloadModelChangeResponseDTO))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public static IResult CreateWorkloadModelChange(
+            PPMToolContext context,
+            WorkloadModelWriteService writeService,
+            SettingsService settingsService,
+            ILogger logger,
+            HttpContext http,
+            [FromBody] WriteWorkloadModelChangeDTO request)
+        {
+            return GeneralHelpers.ExecuteWrite(
+                settingsService,
+                http,
+                logger,
+                $"{nameof(WorkloadModels)}.{nameof(CreateWorkloadModelChange)}",
+                validate: _ => writeService.ValidateWorkloadModelChange(context, request),
+                logValidationFailure: errors => logger.LogWarning("API: WorkloadModels: validation failed for '{Username}'/{ChangeDate}: {Errors}", request.Username, request.ChangeDate, string.Join("; ", errors)),
+                execute: caller =>
+                {
+                    var result = writeService.CreateOrUpdateWorkloadModelChange(context, request);
+                    logger.LogInformation(
+                        "API: WorkloadModels: workload model change {WorkloadModelChangeId} for {Username}, effective {ChangeDate} ({Action}) by {User}",
+                        result.WorkloadModelChangeId, request.Username, request.ChangeDate, result.Created ? "created" : "updated", caller.Name);
+                    return Results.Created($"/api/workloadmodels/{result.WorkloadModelChangeId}", result);
+                },
+                logException: ex => logger.LogError(ex, "API: WorkloadModels: error creating workload model change for '{Username}'/{ChangeDate}", request.Username, request.ChangeDate));
         }
     }
 }

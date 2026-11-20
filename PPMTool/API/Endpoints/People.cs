@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
 using PPMTool.API.Helpers;
 using PPMTool.Data.Context;
+using PPMTool.Services;
 
 namespace PPMTool.API.Endpoints;
 
@@ -42,6 +43,15 @@ public static class People
                 .OrderBy(x => x.Name)
                 .ToListAsync();
 
+            // Person has no navigation to User, so look usernames up from Users.
+            var usernamesByPersonId = (await context.Users
+                .Where(u => u.Person != null)
+                .OrderBy(u => u.UserId)
+                .Select(u => new { u.Person!.PersonId, u.CASUserName })
+                .ToListAsync())
+                .GroupBy(x => x.PersonId)
+                .ToDictionary(g => g.Key, g => (IReadOnlyList<string>)g.Select(x => x.CASUserName).ToList());
+
             var personDtos = people.Select(x => new PersonDTO(
                 PersonId: x.PersonId,
                 EmployeeId: x.StaffId,
@@ -53,7 +63,8 @@ public static class People
                     ? DateOnly.FromDateTime(x.EndDate.Value)
                     : null,
                 LineManagerId: x.LineManager?.PersonId,
-                LineManagerName: x.LineManager?.Name
+                LineManagerName: x.LineManager?.Name,
+                Usernames: usernamesByPersonId.GetValueOrDefault(x.PersonId) ?? []
             )).ToList();
 
             logger.LogInformation("API: GetAllPeople: Returned {Count} people records.", personDtos.Count);
@@ -110,6 +121,12 @@ public static class People
                 return Results.NotFound();
             }
 
+            var usernames = await context.Users
+                .Where(u => u.Person != null && u.Person.PersonId == person.PersonId)
+                .OrderBy(u => u.UserId)
+                .Select(u => u.CASUserName)
+                .ToListAsync();
+
             var dto = new PersonDTO(
                 PersonId: person.PersonId,
                 EmployeeId: person.StaffId,
@@ -121,7 +138,8 @@ public static class People
                     ? DateOnly.FromDateTime(person.EndDate.Value)
                     : null,
                 LineManagerId: person.LineManager?.PersonId,
-                LineManagerName: person.LineManager?.Name
+                LineManagerName: person.LineManager?.Name,
+                Usernames: usernames
             );
 
             logger.LogInformation("API: GetPersonById: Returned person record for personId {PersonId}", personId);
@@ -132,5 +150,75 @@ public static class People
             logger.LogError(ex, "API: GetPersonById: error");
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
+    }
+
+    /// <summary>
+    /// Create a Person with no User. Superuser only.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WritePersonResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult CreatePerson(
+        PPMToolContext context,
+        PersonWriteService writeService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] WritePersonDTO request)
+    {
+        return GeneralHelpers.ExecuteWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(People)}.{nameof(CreatePerson)}",
+            validate: _ => writeService.ValidatePerson(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: People: person validation failed for '{Name}': {Errors}", request.Name, string.Join("; ", errors)),
+            execute: caller =>
+            {
+                var result = writeService.CreatePerson(context, request);
+                logger.LogInformation(
+                    "API: People: created Person {PersonId} '{Name}' ({ShortName}) by {User}",
+                    result.PersonId, request.Name, result.ShortName, caller.Name);
+                return Results.Created($"/api/people/getById?personId={result.PersonId}", result);
+            },
+            logException: ex => logger.LogError(ex, "API: People: error creating person '{Name}'", request.Name));
+    }
+
+    /// <summary>
+    /// Update a Person's Name, StartDate, EndDate, FTE or line manager,
+    /// identified by PersonId. Superuser only.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(WritePersonResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult UpdatePerson(
+        PPMToolContext context,
+        PersonWriteService writeService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] UpdatePersonRequestDTO request)
+    {
+        return GeneralHelpers.ExecuteWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(People)}.{nameof(UpdatePerson)}",
+            validate: _ => writeService.ValidatePersonUpdate(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: People: person update validation failed for PersonId {PersonId}: {Errors}", request.PersonId, string.Join("; ", errors)),
+            execute: caller =>
+            {
+                // PersonService.Update and the display-name update on linked Users commit separately.
+                using var transaction = context.Database.BeginTransaction();
+                var result = writeService.UpdatePerson(context, request);
+                transaction.Commit();
+                logger.LogInformation(
+                    "API: People: updated Person {PersonId} ('{ShortName}') by {User}",
+                    result.PersonId, result.ShortName, caller.Name);
+                return Results.Ok(result);
+            },
+            logException: ex => logger.LogError(ex, "API: People: error updating person {PersonId}", request.PersonId));
     }
 }

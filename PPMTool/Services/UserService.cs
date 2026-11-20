@@ -170,5 +170,22 @@ namespace PPMTool.Services
             return GetAll(context)
                 .FirstOrDefault(x => x.UserId == userId);
         }
+
+        /// <summary>
+        /// Get the user with the given username, ignoring case and surrounding whitespace, with
+        /// their person and that person's workload model changes, which assignment checks need.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="username"></param>
+        /// <returns>The user, or null if there is none.</returns>
+        public User GetByUsernameWithWorkloadModels(PPMToolContext context, string username)
+        {
+            if (string.IsNullOrWhiteSpace(username)) return null;
+            var normalised = username.Trim().ToLower();
+            return context.Users
+                .Include(x => x.Person)
+                    .ThenInclude(x => x.WorkloadModelChanges)
+                .FirstOrDefault(x => x.CASUserName.Trim().ToLower() == normalised);
+        }
     }
 }
