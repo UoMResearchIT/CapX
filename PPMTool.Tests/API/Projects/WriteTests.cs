@@ -85,7 +85,7 @@ namespace PPMTool.Tests.API.Projects
             {
                 await CreateProjectAsync(client, rtp);
 
-                // A 400 here means an earlier run on this database already created it
+                // A 400 is acceptable only when an earlier run already created it.
                 var response = await client.PostAsJsonAsync("users/add", new
                 {
                     CASUserName = fallbackAuthorUsername,
@@ -93,7 +93,14 @@ namespace PPMTool.Tests.API.Projects
                     Name = "Migration Import",
                     RoleType = "None"
                 });
-                Assert.That(response.StatusCode, Is.AnyOf(HttpStatusCode.Created, HttpStatusCode.BadRequest), await response.Content.ReadAsStringAsync());
+                if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    Assert.That(await response.Content.ReadAsStringAsync(), Does.Contain("already exists"));
+                }
+                else
+                {
+                    Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), await response.Content.ReadAsStringAsync());
+                }
 
                 response = await client.PostAsJsonAsync("projects/notes/add", new
                 {
