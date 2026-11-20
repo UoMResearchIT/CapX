@@ -63,17 +63,19 @@ namespace PPMTool.API.DTOs
     /// Request body for PUT /api/people/update. Identifies the Person by
     /// PersonId and changes the fields supplied. EndDate and the line manager
     /// can be set but not cleared; clear them in the UI. Name the line manager
-    /// by at most one of LineManagerPersonId or LineManagerUsername;
-    /// LineManagerPersonId reaches a Person with no User, whom the UI's own
-    /// line-manager picker can't offer.
+    /// by at most one of LineManagerPersonId or LineManagerUsername; a request
+    /// with both is refused. LineManagerPersonId is the primary form and always
+    /// works, including for a Person with no User, whom the UI's own
+    /// line-manager picker can't offer. LineManagerUsername is a convenience for
+    /// imports keyed on logins.
     /// </summary>
     /// <param name="PersonId"></param>
     /// <param name="Name">Full name; the initials are re-derived</param>
     /// <param name="StartDate">Not after the start of any Task the person is assigned to</param>
     /// <param name="EndDate"></param>
     /// <param name="FTE">0.0-1.0</param>
-    /// <param name="LineManagerPersonId">Id of the line manager's Person; not the Person being updated</param>
-    /// <param name="LineManagerUsername">Username of the line manager, which must have a linked Person</param>
+    /// <param name="LineManagerPersonId">Id of the line manager's Person, the primary form; not the Person being updated</param>
+    /// <param name="LineManagerUsername">Username (CASUserName) of a User linked to the line manager's Person. A username that matches no User, or whose User has no linked Person, fails validation with a 400.</param>
     public sealed record UpdatePersonRequestDTO(
         int PersonId,
         string? Name,

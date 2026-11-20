@@ -186,12 +186,26 @@ namespace PPMTool.Services
 
             if (!hasId && !hasUsername) return errors;
 
+            if (hasUsername)
+            {
+                // A line manager is a Person, so the username has to lead to one
+                var user = userService.GetByUsernameWithWorkloadModels(context, request.LineManagerUsername!);
+                if (user == null)
+                {
+                    errors.Add($"LineManagerUsername '{request.LineManagerUsername}' does not match any User");
+                    return errors;
+                }
+                if (user.Person == null)
+                {
+                    errors.Add($"LineManagerUsername '{request.LineManagerUsername}' belongs to a User with no linked Person, so it can't name a line manager; use LineManagerPersonId");
+                    return errors;
+                }
+            }
+
             var manager = ResolveLineManager(context, request);
             if (manager == null)
             {
-                errors.Add(hasId
-                    ? $"LineManagerPersonId {request.LineManagerPersonId} does not exist"
-                    : $"LineManagerUsername '{request.LineManagerUsername}' not found, or has no linked Person");
+                errors.Add($"LineManagerPersonId {request.LineManagerPersonId} does not exist");
             }
             else if (manager.PersonId == subjectPersonId)
             {
