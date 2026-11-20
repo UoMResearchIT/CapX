@@ -278,9 +278,9 @@ namespace PPMTool.API.Endpoints
 
         /// <summary>
         /// Create or update a person's workload model change. See
-        /// <see cref="ImportWorkloadModelChangeDTO"/>.
+        /// <see cref="WriteWorkloadModelChangeDTO"/>.
         /// </summary>
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportWorkloadModelChangeResponseDTO))]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WriteWorkloadModelChangeResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -290,7 +290,7 @@ namespace PPMTool.API.Endpoints
             SettingsService settingsService,
             ILogger logger,
             HttpContext http,
-            [FromBody] ImportWorkloadModelChangeDTO request)
+            [FromBody] WriteWorkloadModelChangeDTO request)
         {
             return GeneralHelpers.ExecuteWrite(
                 settingsService,

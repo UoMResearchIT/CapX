@@ -236,7 +236,7 @@ public static class Projects
     /// <summary>
     /// Create a Project with its Leadership task, any resourcing and its Notes, in one call.
     /// </summary>
-    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportProjectResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WriteProjectResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -246,7 +246,7 @@ public static class Projects
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
-        [FromBody] ImportProjectRequestDTO request)
+        [FromBody] WriteProjectDTO request)
     {
         return GeneralHelpers.ExecuteWrite(
             settingsService,
@@ -313,7 +313,7 @@ public static class Projects
     /// Add comments as Notes to an existing Project, identified by RTP. Notes
     /// aren't deduplicated.
     /// </summary>
-    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportNotesResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WriteNotesResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -323,7 +323,7 @@ public static class Projects
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
-        [FromBody] ImportNotesRequestDTO request)
+        [FromBody] WriteNotesDTO request)
     {
         return GeneralHelpers.ExecuteWrite(
             settingsService,

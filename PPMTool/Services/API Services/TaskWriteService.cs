@@ -59,7 +59,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming task creation request.</param>
         /// <returns>Validation errors, or an empty list when valid.</returns>
-        public List<string> ValidateTaskCreate(PPMToolContext context, ImportTaskDTO request)
+        public List<string> ValidateTaskCreate(PPMToolContext context, WriteSubTaskDTO request)
         {
             var errors = new List<string>();
 
@@ -97,7 +97,7 @@ namespace PPMTool.Services
                 errors.Add("Demand must be greater than zero");
 
             var assignments = new List<(Person? Person, string Assignee, double FTE)>();
-            foreach (var r in request.Resourcing ?? Array.Empty<ImportResourcingDTO>())
+            foreach (var r in request.Resourcing ?? Array.Empty<WriteSubTaskResourcingDTO>())
             {
                 var person = userService.GetByUsernameWithWorkloadModels(context, r.Username)?.Person;
                 if (string.IsNullOrWhiteSpace(r.Username))
@@ -117,7 +117,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming task creation request.</param>
         /// <returns>Identifier payload for the created task and assignment count.</returns>
-        public ImportTaskResponseDTO CreateTask(PPMToolContext context, ImportTaskDTO request)
+        public WriteSubTaskResponseDTO CreateTask(PPMToolContext context, WriteSubTaskDTO request)
         {
             var project = projectService.GetByRTP(context, request.RTP)!;
             GeneralHelpers.TryParseNameOrDescription<Duty>(request.TaskDuty, out var duty);
@@ -139,7 +139,7 @@ namespace PPMTool.Services
             subTaskService.Add(context, task);
 
             var created = new List<Resource>();
-            foreach (var r in request.Resourcing ?? Array.Empty<ImportResourcingDTO>())
+            foreach (var r in request.Resourcing ?? Array.Empty<WriteSubTaskResourcingDTO>())
             {
                 var person = userService.GetByUsernameWithWorkloadModels(context, r.Username)!.Person!;
                 var resource = new Resource
@@ -159,7 +159,7 @@ namespace PPMTool.Services
             project.UpdateProjectMetaData(true, financialReferences, indirectsPercentage);
             context.SaveChangesWithRetry();
 
-            return new ImportTaskResponseDTO(task.SubTaskId, created.Count);
+            return new WriteSubTaskResponseDTO(task.SubTaskId, created.Count);
         }
 
         /// <summary>
@@ -168,7 +168,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming task update request.</param>
         /// <returns>Validation errors, or an empty list when valid.</returns>
-        public List<string> ValidateTaskUpdate(PPMToolContext context, UpdateTaskRequestDTO request)
+        public List<string> ValidateTaskUpdate(PPMToolContext context, UpdateSubTaskRequestDTO request)
         {
             var errors = new List<string>();
 
@@ -253,7 +253,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming task update request.</param>
         /// <returns>Identifier payload for the updated task.</returns>
-        public UpdateTaskResponseDTO UpdateTask(PPMToolContext context, UpdateTaskRequestDTO request)
+        public UpdateSubTaskResponseDTO UpdateTask(PPMToolContext context, UpdateSubTaskRequestDTO request)
         {
             var (project, task) = FindProjectAndTaskById(context, request.SubTaskId)!.Value;
 
@@ -270,7 +270,7 @@ namespace PPMTool.Services
             project.UpdateProjectMetaData(true, financialReferences, indirectsPercentage);
             context.SaveChangesWithRetry();
 
-            return new UpdateTaskResponseDTO(task.SubTaskId);
+            return new UpdateSubTaskResponseDTO(task.SubTaskId);
         }
 
         /// <summary>
@@ -279,7 +279,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming task-resourcing add request.</param>
         /// <returns>Validation errors, or an empty list when valid.</returns>
-        public List<string> ValidateTaskResourcingAdd(PPMToolContext context, ImportTaskResourcingRequestDTO request)
+        public List<string> ValidateTaskResourcingAdd(PPMToolContext context, WriteResourcesDTO request)
         {
             var errors = new List<string>();
 
@@ -291,7 +291,7 @@ namespace PPMTool.Services
             }
             var (_, task) = found.Value;
 
-            var resourcing = request.Resourcing ?? Array.Empty<ImportResourceAssignmentDTO>();
+            var resourcing = request.Resourcing ?? Array.Empty<WriteResourceDTO>();
             if (resourcing.Count == 0)
                 errors.Add("Resourcing must contain at least one assignment");
 
@@ -315,7 +315,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming task-resourcing add request.</param>
         /// <returns>Identifier payload for the task and number of assignments created.</returns>
-        public ImportTaskResourcingResponseDTO AddTaskResourcing(PPMToolContext context, ImportTaskResourcingRequestDTO request)
+        public WriteResourcesResponseDTO AddTaskResourcing(PPMToolContext context, WriteResourcesDTO request)
         {
             var (project, task) = FindProjectAndTaskById(context, request.SubTaskId)!.Value;
 
@@ -337,7 +337,7 @@ namespace PPMTool.Services
             subTaskService.Reschedule(context, task);
             RecalculateProject(context, project);
 
-            return new ImportTaskResourcingResponseDTO(task.SubTaskId, created.Count);
+            return new WriteResourcesResponseDTO(task.SubTaskId, created.Count);
         }
 
         /// <summary>
@@ -346,7 +346,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming task-resourcing update request.</param>
         /// <returns>Validation errors, or an empty list when valid.</returns>
-        public List<string> ValidateTaskResourcingUpdate(PPMToolContext context, UpdateTaskResourcingRequestDTO request)
+        public List<string> ValidateTaskResourcingUpdate(PPMToolContext context, UpdateResourceRequestDTO request)
         {
             var errors = new List<string>();
 
@@ -415,7 +415,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming task-resourcing update request.</param>
         /// <returns>Identifier payload for the updated assignment.</returns>
-        public UpdateTaskResourcingResponseDTO UpdateTaskResourcing(PPMToolContext context, UpdateTaskResourcingRequestDTO request)
+        public UpdateResourceResponseDTO UpdateTaskResourcing(PPMToolContext context, UpdateResourceRequestDTO request)
         {
             var (project, currentTask, resource) = FindProjectAndResourceById(context, request.ResourceId)!.Value;
 
@@ -442,7 +442,7 @@ namespace PPMTool.Services
             if (movedFromProject != null) RecalculateProject(context, movedFromProject, commit: false);
             RecalculateProject(context, project);
 
-            return new UpdateTaskResourcingResponseDTO(resource.ResourceId, landedOn.SubTaskId);
+            return new UpdateResourceResponseDTO(resource.ResourceId, landedOn.SubTaskId);
         }
 
         /// <summary>
@@ -519,7 +519,7 @@ namespace PPMTool.Services
         /// <param name="assignment">Assignment identity payload.</param>
         /// <returns>The resolved person and any validation errors.</returns>
         private (Person? Person, List<string> Errors) ResolveAssignmentPerson(
-            PPMToolContext context, ImportResourceAssignmentDTO assignment)
+            PPMToolContext context, WriteResourceDTO assignment)
         {
             var errors = new List<string>();
             var hasUsername = !string.IsNullOrWhiteSpace(assignment.Username);
@@ -550,7 +550,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="assignment">Assignment identity payload.</param>
         /// <returns>Username, person-id label, or a fallback marker.</returns>
-        private static string DescribeAssignee(ImportResourceAssignmentDTO assignment) =>
+        private static string DescribeAssignee(WriteResourceDTO assignment) =>
             !string.IsNullOrWhiteSpace(assignment.Username)
                 ? assignment.Username!
                 : assignment.PersonId.HasValue ? $"PersonId {assignment.PersonId}" : "(no Username or PersonId)";

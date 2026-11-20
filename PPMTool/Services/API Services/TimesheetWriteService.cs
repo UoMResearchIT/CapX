@@ -45,7 +45,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming timesheet-entry request.</param>
         /// <returns>Validation errors, or an empty list when valid.</returns>
-        public List<string> ValidateTimesheetEntry(PPMToolContext context, ImportTimesheetEntryDTO request)
+        public List<string> ValidateTimesheetEntry(PPMToolContext context, WriteTimesheetEntryDTO request)
         {
             var errors = new List<string>();
 
@@ -90,7 +90,7 @@ namespace PPMTool.Services
         /// <param name="request">Incoming timesheet-entry request.</param>
         /// <param name="caller">The API caller, recorded as approver of any timesheet this approves.</param>
         /// <returns>Identifier payload for the timesheet and entry creation outcome.</returns>
-        public ImportTimesheetResponseDTO CreateOrUpdateTimesheetEntry(PPMToolContext context, ImportTimesheetEntryDTO request, User caller)
+        public WriteTimesheetEntryResponseDTO CreateOrUpdateTimesheetEntry(PPMToolContext context, WriteTimesheetEntryDTO request, User caller)
         {
             var person = !string.IsNullOrWhiteSpace(request.Username)
                 ? userService.GetByUsernameWithWorkloadModels(context, request.Username)!.Person!
@@ -144,7 +144,7 @@ namespace PPMTool.Services
             entry.UpdateTotalHours();
             context.SaveChangesWithRetry();
 
-            return new ImportTimesheetResponseDTO(timesheet.TimesheetId, timesheetCreated, entryCreated, entry.TotalHours, timesheet.Status.ToString());
+            return new WriteTimesheetEntryResponseDTO(timesheet.TimesheetId, timesheetCreated, entryCreated, entry.TotalHours, timesheet.Status.ToString());
         }
 
         /// <summary>
@@ -216,7 +216,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="request">Incoming timesheet-entry request.</param>
         /// <returns>Named day-hour pairs.</returns>
-        private static IEnumerable<(string Label, double Hours)> DayHours(ImportTimesheetEntryDTO request) =>
+        private static IEnumerable<(string Label, double Hours)> DayHours(WriteTimesheetEntryDTO request) =>
             DayHoursCore(
                 request.MondayHours,
                 request.TuesdayHours,
@@ -262,13 +262,13 @@ namespace PPMTool.Services
             THours saturdayHours,
             THours sundayHours)
         {
-            yield return (nameof(ImportTimesheetEntryDTO.MondayHours), mondayHours);
-            yield return (nameof(ImportTimesheetEntryDTO.TuesdayHours), tuesdayHours);
-            yield return (nameof(ImportTimesheetEntryDTO.WednesdayHours), wednesdayHours);
-            yield return (nameof(ImportTimesheetEntryDTO.ThursdayHours), thursdayHours);
-            yield return (nameof(ImportTimesheetEntryDTO.FridayHours), fridayHours);
-            yield return (nameof(ImportTimesheetEntryDTO.SaturdayHours), saturdayHours);
-            yield return (nameof(ImportTimesheetEntryDTO.SundayHours), sundayHours);
+            yield return (nameof(WriteTimesheetEntryDTO.MondayHours), mondayHours);
+            yield return (nameof(WriteTimesheetEntryDTO.TuesdayHours), tuesdayHours);
+            yield return (nameof(WriteTimesheetEntryDTO.WednesdayHours), wednesdayHours);
+            yield return (nameof(WriteTimesheetEntryDTO.ThursdayHours), thursdayHours);
+            yield return (nameof(WriteTimesheetEntryDTO.FridayHours), fridayHours);
+            yield return (nameof(WriteTimesheetEntryDTO.SaturdayHours), saturdayHours);
+            yield return (nameof(WriteTimesheetEntryDTO.SundayHours), sundayHours);
         }
     }
 }

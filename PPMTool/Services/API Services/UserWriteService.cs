@@ -37,7 +37,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming users/add request.</param>
         /// <returns>Validation errors, or an empty list when valid.</returns>
-        public List<string> ValidateUser(PPMToolContext context, ImportUserDTO request)
+        public List<string> ValidateUser(PPMToolContext context, UserDTO request)
         {
             var errors = new List<string>();
 
@@ -77,7 +77,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming users/add request.</param>
         /// <returns>The created user identifier payload.</returns>
-        public ImportUserResponseDTO CreateUser(PPMToolContext context, ImportUserDTO request)
+        public WriteUserResponseDTO CreateUser(PPMToolContext context, UserDTO request)
         {
             var user = new User
             {
@@ -90,7 +90,7 @@ namespace PPMTool.Services
                 user.Person = personService.GetById(context, request.PersonId.Value);
             userService.Add(context, user);
 
-            return new ImportUserResponseDTO(user.UserId);
+            return new WriteUserResponseDTO(user.UserId);
         }
     }
 }

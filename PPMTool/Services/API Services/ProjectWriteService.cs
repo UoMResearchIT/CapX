@@ -73,7 +73,7 @@ namespace PPMTool.Services
         /// <param name="request">Incoming project creation request.</param>
         /// <param name="caller">Authenticated caller creating the project.</param>
         /// <returns>Validation errors, or an empty list when valid.</returns>
-        public List<string> Validate(PPMToolContext context, ImportProjectRequestDTO request, User caller)
+        public List<string> Validate(PPMToolContext context, WriteProjectDTO request, User caller)
         {
             var errors = new List<string>();
 
@@ -112,7 +112,7 @@ namespace PPMTool.Services
                 errors.Add($"ProjectManagerUsername '{request.ProjectManagerUsername}' not found, or has no linked Person");
 
             var assignments = new List<(Person? Person, string Assignee, double FTE)>();
-            foreach (var r in request.Resourcing ?? Array.Empty<ImportResourcingDTO>())
+            foreach (var r in request.Resourcing ?? Array.Empty<WriteSubTaskResourcingDTO>())
             {
                 var person = userService.GetByUsernameWithWorkloadModels(context, r.Username)?.Person;
                 if (string.IsNullOrWhiteSpace(r.Username))
@@ -136,7 +136,7 @@ namespace PPMTool.Services
         /// <param name="request">Incoming project creation request.</param>
         /// <param name="caller">Authenticated caller creating the project.</param>
         /// <returns>Identifier payload for the created project and related record counts.</returns>
-        public ImportProjectResponseDTO Create(PPMToolContext context, ImportProjectRequestDTO request, User caller)
+        public WriteProjectResponseDTO Create(PPMToolContext context, WriteProjectDTO request, User caller)
         {
             var school = ResolveSchool(context, request.SchoolId, request.SchoolCode, new List<string>())!;
             var projectManager = string.IsNullOrWhiteSpace(request.ProjectManagerUsername)
@@ -188,7 +188,7 @@ namespace PPMTool.Services
             subTaskService.Add(context, managementTask);
 
             var resourcesCreated = 0;
-            var resourcing = request.Resourcing ?? Array.Empty<ImportResourcingDTO>();
+            var resourcing = request.Resourcing ?? Array.Empty<WriteSubTaskResourcingDTO>();
             if (resourcing.Count > 0)
             {
                 var totalFte = resourcing.Sum(r => r.AssignmentFTE);
@@ -227,7 +227,7 @@ namespace PPMTool.Services
 
             var notesCreated = 0;
             var fallbackAuthor = userService.GetByUsernameWithWorkloadModels(context, FallbackAuthorUsername);
-            foreach (var c in request.Comments ?? Array.Empty<ImportCommentDTO>())
+            foreach (var c in request.Comments ?? Array.Empty<WriteNoteDTO>())
             {
                 var author = string.IsNullOrWhiteSpace(c.AuthorUsername)
                     ? null
@@ -255,7 +255,7 @@ namespace PPMTool.Services
             project.UpdateProjectMetaData(true, financialReferences, indirectsPercentage);
             context.SaveChangesWithRetry();
 
-            return new ImportProjectResponseDTO(project.ProjectId, resourcesCreated, notesCreated);
+            return new WriteProjectResponseDTO(project.ProjectId, resourcesCreated, notesCreated);
         }
 
         /// <summary>
@@ -365,7 +365,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming notes/add request.</param>
         /// <returns>Validation errors, or an empty list when valid.</returns>
-        public List<string> ValidateNotesAdd(PPMToolContext context, ImportNotesRequestDTO request)
+        public List<string> ValidateNotesAdd(PPMToolContext context, WriteNotesDTO request)
         {
             var errors = new List<string>();
 
@@ -374,7 +374,7 @@ namespace PPMTool.Services
             else if (projectService.GetByRTP(context, request.RTP) == null)
                 errors.Add($"RTP {request.RTP} does not match any Project");
 
-            var comments = request.Comments ?? Array.Empty<ImportCommentDTO>();
+            var comments = request.Comments ?? Array.Empty<WriteNoteDTO>();
             if (comments.Count == 0)
                 errors.Add("Comments must contain at least one entry");
 
@@ -390,7 +390,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming notes/add request.</param>
         /// <returns>Identifier payload for the project and number of created notes.</returns>
-        public ImportNotesResponseDTO AddNotes(PPMToolContext context, ImportNotesRequestDTO request)
+        public WriteNotesResponseDTO AddNotes(PPMToolContext context, WriteNotesDTO request)
         {
             var project = projectService.GetByRTP(context, request.RTP)!;
             var fallbackAuthor = userService.GetByUsernameWithWorkloadModels(context, FallbackAuthorUsername);
@@ -420,7 +420,7 @@ namespace PPMTool.Services
             }
             context.SaveChangesWithRetry();
 
-            return new ImportNotesResponseDTO(project.ProjectId, notesCreated);
+            return new WriteNotesResponseDTO(project.ProjectId, notesCreated);
         }
 
         /// <summary>

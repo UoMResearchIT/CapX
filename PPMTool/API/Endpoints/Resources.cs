@@ -250,9 +250,9 @@ namespace PPMTool.API.Endpoints
         }
 
         /// <summary>
-        /// Add assignments to an existing task. See <see cref="ImportTaskResourcingRequestDTO"/>.
+        /// Add assignments to an existing task. See <see cref="WriteResourcesDTO"/>.
         /// </summary>
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportTaskResourcingResponseDTO))]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WriteResourcesResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -262,7 +262,7 @@ namespace PPMTool.API.Endpoints
             SettingsService settingsService,
             ILogger logger,
             HttpContext http,
-            [FromBody] ImportTaskResourcingRequestDTO request)
+            [FromBody] WriteResourcesDTO request)
         {
             return GeneralHelpers.ExecuteWrite(
                 settingsService,
@@ -282,9 +282,9 @@ namespace PPMTool.API.Endpoints
 
         /// <summary>
         /// Update an assignment's FTE, provisional flag or task, identified by
-        /// ResourceId. See <see cref="UpdateTaskResourcingRequestDTO"/>.
+        /// ResourceId. See <see cref="UpdateResourceRequestDTO"/>.
         /// </summary>
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateTaskResourcingResponseDTO))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateResourceResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -294,7 +294,7 @@ namespace PPMTool.API.Endpoints
             SettingsService settingsService,
             ILogger logger,
             HttpContext http,
-            [FromBody] UpdateTaskResourcingRequestDTO request)
+            [FromBody] UpdateResourceRequestDTO request)
         {
             return GeneralHelpers.ExecuteWrite(
                 settingsService,

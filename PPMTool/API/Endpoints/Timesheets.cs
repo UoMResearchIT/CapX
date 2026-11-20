@@ -242,9 +242,9 @@ public static class Timesheets
 
     /// <summary>
     /// Write one person's hours for one week on one task of a Project's
-    /// timesheet code. See <see cref="ImportTimesheetEntryDTO"/>.
+    /// timesheet code. See <see cref="WriteTimesheetEntryDTO"/>.
     /// </summary>
-    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportTimesheetResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WriteTimesheetEntryResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -254,7 +254,7 @@ public static class Timesheets
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
-        [FromBody] ImportTimesheetEntryDTO request)
+        [FromBody] WriteTimesheetEntryDTO request)
     {
         var person = request.Username ?? $"PersonId {request.PersonId}";
 

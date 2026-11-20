@@ -141,7 +141,7 @@ namespace PPMTool.API.Endpoints
         /// <summary>
         /// Add a School to an existing Faculty.
         /// </summary>
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportSchoolResponseDTO))]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WriteSchoolResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -151,7 +151,7 @@ namespace PPMTool.API.Endpoints
             SettingsService settingsService,
             ILogger logger,
             HttpContext http,
-            [FromBody] ImportSchoolRequestDTO request)
+            [FromBody] WriteSchoolDTO request)
         {
             return GeneralHelpers.ExecuteWrite(
                 settingsService,
@@ -174,7 +174,7 @@ namespace PPMTool.API.Endpoints
         /// <summary>
         /// Update a School's Name, Code or Faculty, identified by its current Code.
         /// </summary>
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ImportSchoolResponseDTO))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(WriteSchoolResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

@@ -38,7 +38,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming person creation request.</param>
         /// <returns>Validation errors, or an empty list when valid.</returns>
-        public List<string> ValidatePerson(PPMToolContext context, ImportPersonDTO request)
+        public List<string> ValidatePerson(PPMToolContext context, WritePersonDTO request)
         {
             var errors = new List<string>();
 
@@ -69,7 +69,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming person creation request.</param>
         /// <returns>Identifier payload for the created person.</returns>
-        public ImportPersonResponseDTO CreatePerson(PPMToolContext context, ImportPersonDTO request)
+        public WritePersonResponseDTO CreatePerson(PPMToolContext context, WritePersonDTO request)
         {
             var person = new Person
             {
@@ -80,7 +80,7 @@ namespace PPMTool.Services
             };
             personService.Add(context, person);
 
-            return new ImportPersonResponseDTO(person.PersonId, person.ShortName);
+            return new WritePersonResponseDTO(person.PersonId, person.ShortName);
         }
 
         /// <summary>
@@ -142,7 +142,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming person update request.</param>
         /// <returns>Identifier payload for the updated person.</returns>
-        public ImportPersonResponseDTO UpdatePerson(PPMToolContext context, UpdatePersonRequestDTO request)
+        public WritePersonResponseDTO UpdatePerson(PPMToolContext context, UpdatePersonRequestDTO request)
         {
             var person = personService.GetById(context, request.PersonId)!;
 
@@ -161,7 +161,7 @@ namespace PPMTool.Services
             if (request.Name != null)
                 userService.UpdateDisplayName(context, person);
 
-            return new ImportPersonResponseDTO(person.PersonId, person.ShortName);
+            return new WritePersonResponseDTO(person.PersonId, person.ShortName);
         }
 
         /// <summary>

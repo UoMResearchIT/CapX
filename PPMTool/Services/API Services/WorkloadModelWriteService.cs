@@ -37,7 +37,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming workload-model-change request.</param>
         /// <returns>Validation errors, or an empty list when valid.</returns>
-        public List<string> ValidateWorkloadModelChange(PPMToolContext context, ImportWorkloadModelChangeDTO request)
+        public List<string> ValidateWorkloadModelChange(PPMToolContext context, WriteWorkloadModelChangeDTO request)
         {
             var errors = new List<string>();
 
@@ -72,7 +72,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming workload-model-change request.</param>
         /// <returns>Identifier payload indicating whether a record was created.</returns>
-        public ImportWorkloadModelChangeResponseDTO CreateOrUpdateWorkloadModelChange(PPMToolContext context, ImportWorkloadModelChangeDTO request)
+        public WriteWorkloadModelChangeResponseDTO CreateOrUpdateWorkloadModelChange(PPMToolContext context, WriteWorkloadModelChangeDTO request)
         {
             var person = userService.GetByUsernameWithWorkloadModels(context, request.Username)!.Person!;
 
@@ -99,7 +99,7 @@ namespace PPMTool.Services
                 change.CostValueSetId = financialReferenceService.GetValueSetByName(context, request.CostValueKey)!.FinancialReferenceValueSetId;
             context.SaveChangesWithRetry();
 
-            return new ImportWorkloadModelChangeResponseDTO(change.WorkloadModelChangeId, created);
+            return new WriteWorkloadModelChangeResponseDTO(change.WorkloadModelChangeId, created);
         }
 
         /// <summary>
@@ -107,7 +107,7 @@ namespace PPMTool.Services
         /// </summary>
         /// <param name="request">Incoming workload-model-change request.</param>
         /// <returns>Named FTE values for each duty field.</returns>
-        private static IEnumerable<(string Label, double FTE)> DutyFTEs(ImportWorkloadModelChangeDTO request)
+        private static IEnumerable<(string Label, double FTE)> DutyFTEs(WriteWorkloadModelChangeDTO request)
         {
             yield return (nameof(WorkloadModelChange.ProjectWorkFTE), request.ProjectWorkFTE);
             yield return (nameof(WorkloadModelChange.BusinessAsUsualFTE), request.BusinessAsUsualFTE);

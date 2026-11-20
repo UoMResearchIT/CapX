@@ -155,7 +155,7 @@ public static class People
     /// <summary>
     /// Create a Person with no User. Superuser only.
     /// </summary>
-    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportPersonResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WritePersonResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -165,7 +165,7 @@ public static class People
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
-        [FromBody] ImportPersonDTO request)
+        [FromBody] WritePersonDTO request)
     {
         return GeneralHelpers.ExecuteWrite(
             settingsService,
@@ -189,7 +189,7 @@ public static class People
     /// Update a Person's Name, StartDate, EndDate, FTE or line manager,
     /// identified by PersonId. Superuser only.
     /// </summary>
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ImportPersonResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(WritePersonResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]

@@ -34,7 +34,7 @@ namespace PPMTool.Services
         /// <param name="request">Incoming faculty creation request.</param>
         /// <returns>Identifier payload for the created faculty and school identifiers.</returns>
         /// <exception cref="InvalidOperationException">Thrown when persistence reports a duplicate despite successful validation.</exception>
-        public ImportFacultyResponseDTO CreateFaculty(PPMToolContext context, ImportFacultyRequestDTO request)
+        public WriteFacultyResponseDTO CreateFaculty(PPMToolContext context, WriteFacultyDTO request)
         {
             using var transaction = context.Database.BeginTransaction();
 
@@ -48,7 +48,7 @@ namespace PPMTool.Services
                 throw new InvalidOperationException($"FacultyService.Add returned {facultyId} (duplicate) despite passing ValidateFaculty() -- possible race condition");
 
             var schoolIds = new List<int>();
-            foreach (var s in request.Schools ?? Array.Empty<ImportSchoolDTO>())
+            foreach (var s in request.Schools ?? Array.Empty<WriteFacultySchoolDTO>())
             {
                 var school = new School
                 {
@@ -63,7 +63,7 @@ namespace PPMTool.Services
             }
 
             transaction.Commit();
-            return new ImportFacultyResponseDTO(faculty.FacultyId, schoolIds);
+            return new WriteFacultyResponseDTO(faculty.FacultyId, schoolIds);
         }
 
         /// <summary>
@@ -93,7 +93,7 @@ namespace PPMTool.Services
         /// <param name="request">Incoming school creation request.</param>
         /// <returns>Identifier payload for the created school and its faculty.</returns>
         /// <exception cref="InvalidOperationException">Thrown when persistence reports a duplicate despite successful validation.</exception>
-        public ImportSchoolResponseDTO CreateSchool(PPMToolContext context, ImportSchoolRequestDTO request)
+        public WriteSchoolResponseDTO CreateSchool(PPMToolContext context, WriteSchoolDTO request)
         {
             var faculty = facultyService.GetByCode(context, request.FacultyCode)!;
             var school = new School
@@ -106,7 +106,7 @@ namespace PPMTool.Services
             if (schoolId < 0)
                 throw new InvalidOperationException($"SchoolService.Add returned {schoolId} for School '{request.Name}' despite passing ValidateSchool() -- possible race condition");
 
-            return new ImportSchoolResponseDTO(schoolId, faculty.FacultyId);
+            return new WriteSchoolResponseDTO(schoolId, faculty.FacultyId);
         }
 
         /// <summary>
@@ -116,7 +116,7 @@ namespace PPMTool.Services
         /// <param name="request">Incoming school update request.</param>
         /// <returns>Identifier payload for the updated school and its faculty.</returns>
         /// <exception cref="InvalidOperationException">Thrown when persistence reports a duplicate despite successful validation.</exception>
-        public ImportSchoolResponseDTO UpdateSchool(PPMToolContext context, UpdateSchoolRequestDTO request)
+        public WriteSchoolResponseDTO UpdateSchool(PPMToolContext context, UpdateSchoolRequestDTO request)
         {
             var school = schoolService.GetByCode(context, request.Code)!;
             if (request.Name != null) school.Name = request.Name;
@@ -127,7 +127,7 @@ namespace PPMTool.Services
             if (result < 0)
                 throw new InvalidOperationException($"SchoolService.Update returned {result} (duplicate) despite passing ValidateSchoolUpdate() -- possible race condition");
 
-            return new ImportSchoolResponseDTO(school.SchoolId, school.Faculty.FacultyId);
+            return new WriteSchoolResponseDTO(school.SchoolId, school.Faculty.FacultyId);
         }
 
         /// <summary>
@@ -153,7 +153,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming faculty creation request.</param>
         /// <returns>Validation errors, or an empty list when valid.</returns>
-        public List<string> ValidateFaculty(PPMToolContext context, ImportFacultyRequestDTO request)
+        public List<string> ValidateFaculty(PPMToolContext context, WriteFacultyDTO request)
         {
             var errors = new List<string>();
 
@@ -165,7 +165,7 @@ namespace PPMTool.Services
 
             var seenCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var seenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var s in request.Schools ?? Array.Empty<ImportSchoolDTO>())
+            foreach (var s in request.Schools ?? Array.Empty<WriteFacultySchoolDTO>())
             {
                 if (string.IsNullOrWhiteSpace(s.Name)) errors.Add($"School Name is required (code '{s.Code}')");
                 else if (!seenNames.Add(s.Name.Trim().ToLowerInvariant()))
@@ -228,7 +228,7 @@ namespace PPMTool.Services
         /// <param name="context">Database context.</param>
         /// <param name="request">Incoming school creation request.</param>
         /// <returns>Validation errors, or an empty list when valid.</returns>
-        public List<string> ValidateSchool(PPMToolContext context, ImportSchoolRequestDTO request)
+        public List<string> ValidateSchool(PPMToolContext context, WriteSchoolDTO request)
         {
             var errors = new List<string>();
 

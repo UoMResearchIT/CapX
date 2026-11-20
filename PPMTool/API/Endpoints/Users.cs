@@ -19,7 +19,7 @@ public static class Users
     /// Create a User, bare or linked to an existing Person, as a Superuser can
     /// on the Manage Access page. Signing in only finds an existing User.
     /// </summary>
-    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ImportUserResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WriteUserResponseDTO))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -29,7 +29,7 @@ public static class Users
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
-        [FromBody] ImportUserDTO request)
+        [FromBody] UserDTO request)
     {
         return GeneralHelpers.ExecuteWrite(
             settingsService,
