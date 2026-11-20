@@ -67,12 +67,12 @@ SPDX-License-Identifier: apache-2.0
                             <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ProjectName" Title="Project Name" Width="15rem" />
                             <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ProjectPI" Title="Project PI" Width="10rem">
                                 <HeaderTemplate>
-                                    <TooltipLabelComponent Text="Project PI" Tooltip="Project Principal Investigator" />
+                                    <LabelWithTooltipComponent Text="Project PI" Tooltip="Project Principal Investigator" />
                                 </HeaderTemplate>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ProjectPM" Title="PM" Width="10rem">
                                 <HeaderTemplate>
-                                    <TooltipLabelComponent Text="PM" Tooltip="Project Manager" />
+                                    <LabelWithTooltipComponent Text="PM" Tooltip="Project Manager" />
                                 </HeaderTemplate>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="ProjectStatus" Title="Status" Width="10rem">
@@ -147,7 +147,7 @@ SPDX-License-Identifier: apache-2.0
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsDI" Title="Funds Requested DI">
                                 <HeaderTemplate>
-                                    <TooltipLabelComponent Text="Funds Requested DI" Tooltip="@($"Funds Requested {FundingSourceType.DI.GetDescription()}")" />
+                                    <LabelWithTooltipComponent Text="Funds Requested DI" Tooltip="@($"Funds Requested {FundingSourceType.DI.GetDescription()}")" />
                                 </HeaderTemplate>
                                 <Template Context="item">
                                     <span style="color:@item.FundsDIColour">@item.FundsDI.ToString("C0")</span>
@@ -155,7 +155,7 @@ SPDX-License-Identifier: apache-2.0
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsDA" Title="Funds Requested DA" FormatString="{0:C0}">
                                 <HeaderTemplate>
-                                    <TooltipLabelComponent Text="Funds Requested DA" Tooltip="@($"Funds Requested {FundingSourceType.DA.GetDescription()}")" />
+                                    <LabelWithTooltipComponent Text="Funds Requested DA" Tooltip="@($"Funds Requested {FundingSourceType.DA.GetDescription()}")" />
                                 </HeaderTemplate>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsRequestedOther" Title="Funds Requested Other" FormatString="{0:C0}" />
@@ -166,7 +166,7 @@ SPDX-License-Identifier: apache-2.0
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsReceivedDI" Title="Funds Received DI">
                                 <HeaderTemplate>
-                                    <TooltipLabelComponent Text="Funds Received DI" Tooltip="@($"Funds Received {FundingSourceType.DI.GetDescription()}")" />
+                                    <LabelWithTooltipComponent Text="Funds Received DI" Tooltip="@($"Funds Received {FundingSourceType.DI.GetDescription()}")" />
                                 </HeaderTemplate>
                                 <Template Context="item">
                                     <span style="color:@item.FundsDIColour">@item.FundsReceivedDI.ToString("C0")</span>
@@ -174,7 +174,7 @@ SPDX-License-Identifier: apache-2.0
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsDA" Title="Funds Received DA" FormatString="{0:C0}">
                                 <HeaderTemplate>
-                                    <TooltipLabelComponent Text="Funds Received DA" Tooltip="@($"Funds Received {FundingSourceType.DA.GetDescription()}")" />
+                                    <LabelWithTooltipComponent Text="Funds Received DA" Tooltip="@($"Funds Received {FundingSourceType.DA.GetDescription()}")" />
                                 </HeaderTemplate>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="FinanceSummaryItem" Property="FundsReceivedOther" Title="Funds Received Other" FormatString="{0:C0}" />

@@ -69,7 +69,7 @@ SPDX-License-Identifier: apache-2.0
                         }
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectWorkFTE" Title="Project" Width="7rem" MinWidth="10px">
                             <HeaderTemplate>
-                                <TooltipLabelComponent Text="Project" Tooltip="@Duty.ProjectWork.GetDescription()" />
+                                <LabelWithTooltipComponent Text="Project" Tooltip="@Duty.ProjectWork.GetDescription()" />
                             </HeaderTemplate>
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ProjectWorkFTE" />
@@ -77,7 +77,7 @@ SPDX-License-Identifier: apache-2.0
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="BusinessAsUsualFTE" Title="BAU" Width="7rem" MinWidth="10px">
                             <HeaderTemplate>
-                                <TooltipLabelComponent Text="BAU" Tooltip="@Duty.BAU.GetDescription()" />
+                                <LabelWithTooltipComponent Text="BAU" Tooltip="@Duty.BAU.GetDescription()" />
                             </HeaderTemplate>
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.BusinessAsUsualFTE" />
@@ -85,7 +85,7 @@ SPDX-License-Identifier: apache-2.0
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="PersonalDevelopmentFTE" Title="PD" Width="7rem" MinWidth="10px">
                             <HeaderTemplate>
-                                <TooltipLabelComponent Text="PD" Tooltip="@Duty.PersonalDevelopment.GetDescription()" />
+                                <LabelWithTooltipComponent Text="PD" Tooltip="@Duty.PersonalDevelopment.GetDescription()" />
                             </HeaderTemplate>
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.PersonalDevelopmentFTE" />
@@ -93,7 +93,7 @@ SPDX-License-Identifier: apache-2.0
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="StaffManagementFTE" Title="Staff" Width="7rem" MinWidth="10px">
                             <HeaderTemplate>
-                                <TooltipLabelComponent Text="Staff" Tooltip="@Duty.StaffMgmt.GetDescription()" />
+                                <LabelWithTooltipComponent Text="Staff" Tooltip="@Duty.StaffMgmt.GetDescription()" />
                             </HeaderTemplate>
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.StaffManagementFTE" />
@@ -101,7 +101,7 @@ SPDX-License-Identifier: apache-2.0
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectManagementFTE" Title="PM" Width="7rem" MinWidth="10px">
                             <HeaderTemplate>
-                                <TooltipLabelComponent Text="PM" Tooltip="Project Management" />
+                                <LabelWithTooltipComponent Text="PM" Tooltip="Project Management" />
                             </HeaderTemplate>
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ProjectManagementFTE" />
@@ -109,7 +109,7 @@ SPDX-License-Identifier: apache-2.0
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ServiceManagementFTE" Title="SM" Width="7rem" MinWidth="10px">
                             <HeaderTemplate>
-                                <TooltipLabelComponent Text="SM" Tooltip="Service Management" />
+                                <LabelWithTooltipComponent Text="SM" Tooltip="Service Management" />
                             </HeaderTemplate>
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ServiceManagementFTE" />
@@ -117,12 +117,12 @@ SPDX-License-Identifier: apache-2.0
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ProjectAndServiceManagementFTE" Title="PSM" Width="7rem" MinWidth="10px">
                             <HeaderTemplate>
-                                <TooltipLabelComponent Text="PSM" Tooltip="@Duty.ProjectAndServiceMgmt.GetDescription()" />
+                                <LabelWithTooltipComponent Text="PSM" Tooltip="@Duty.ProjectAndServiceMgmt.GetDescription()" />
                             </HeaderTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="WorkloadModelChange" Property="ArchitectureFTE" Title="Tech Lead" Width="7rem" MinWidth="10px">
                             <HeaderTemplate>
-                                <TooltipLabelComponent Text="Tech Lead" Tooltip="@Duty.RSA.GetDescription()" />
+                                <LabelWithTooltipComponent Text="Tech Lead" Tooltip="@Duty.RSA.GetDescription()" />
                             </HeaderTemplate>
                             <EditTemplate Context="c">
                                 <RadzenNumeric class="radzen-numeric" TValue="double" Min="@Convert.ToDecimal(0.0)" Step="0.001" Max="@Convert.ToDecimal(1.0)" @bind-Value="c.ArchitectureFTE" />
