@@ -104,7 +104,7 @@ namespace PPMTool.Tests.API.Projects
 
                 response = await client.PostAsJsonAsync("projects/notes/add", new
                 {
-                    RTP = rtp,
+                    CapXProjectId = rtp,
                     Comments = new[]
                     {
                         new { AuthorUsername = (string?)SuperuserUsername, AuthorDisplayName = SuperuserPersonName, ContentHtml = "<p>First note</p>", CreatedDate = new DateTime(2025, 2, 1) },
@@ -113,10 +113,12 @@ namespace PPMTool.Tests.API.Projects
                 });
                 Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), await response.Content.ReadAsStringAsync());
 
-                var notes = await client.GetFromJsonAsync<JsonElement>($"projects/notes/getAll?rtp={rtp}");
+                var notes = await client.GetFromJsonAsync<JsonElement>($"projects/notes/getAll?capxProjectId={rtp}");
                 Assert.That(notes.GetArrayLength(), Is.EqualTo(2));
                 var first = notes.EnumerateArray().First(n => n.GetProperty("htmlContent").GetString()!.Contains("First note"));
                 var second = notes.EnumerateArray().First(n => n.GetProperty("htmlContent").GetString()!.Contains("Second note"));
+                Assert.That(first.GetProperty("capXProjectId").GetInt32(), Is.EqualTo(rtp));
+                Assert.That(second.GetProperty("capXProjectId").GetInt32(), Is.EqualTo(rtp));
                 Assert.That(first.GetProperty("authorUsername").GetString(), Is.EqualTo(SuperuserUsername));
                 Assert.That(second.GetProperty("authorUsername").GetString(), Is.EqualTo(fallbackAuthorUsername));
 
@@ -124,7 +126,7 @@ namespace PPMTool.Tests.API.Projects
                 response = await client.PutAsJsonAsync("projects/notes/update", new { NoteId = noteId, HtmlContent = "<p>First note, edited</p>" });
                 Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), await response.Content.ReadAsStringAsync());
 
-                notes = await client.GetFromJsonAsync<JsonElement>($"projects/notes/getAll?rtp={rtp}");
+                notes = await client.GetFromJsonAsync<JsonElement>($"projects/notes/getAll?capxProjectId={rtp}");
                 var edited = notes.EnumerateArray().First(n => n.GetProperty("noteId").GetInt32() == noteId);
                 Assert.That(edited.GetProperty("htmlContent").GetString(), Does.Contain("First note, edited"));
             }

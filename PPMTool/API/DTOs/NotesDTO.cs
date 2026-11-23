@@ -11,7 +11,7 @@ namespace PPMTool.API.DTOs
     /// GET /api/projects/notes/getAll.
     /// </summary>
     /// <param name="NoteId">Identifies this Note for PUT /api/projects/notes/update</param>
-    /// <param name="RTP">RTP of the Project this Note belongs to</param>
+    /// <param name="CapXProjectId">CapX project id of the Project this Note belongs to</param>
     /// <param name="AuthorUsername">Access Control username of the Note's author</param>
     /// <param name="AuthorDisplayName">The author's display name (<see cref="PPMTool.Data.Entities.Person.Name"/> if linked, else the bare <see cref="PPMTool.Data.Entities.User.Name"/>)</param>
     /// <param name="HtmlContent"></param>
@@ -19,7 +19,7 @@ namespace PPMTool.API.DTOs
     /// <param name="EditedDate"></param>
     public sealed record NoteDTO(
         int NoteId,
-        int RTP,
+        int CapXProjectId,
         string AuthorUsername,
         string AuthorDisplayName,
         string HtmlContent,
@@ -48,10 +48,10 @@ namespace PPMTool.API.DTOs
     /// an existing Project. Notes aren't deduplicated, so sending the same
     /// comments twice adds them twice: check GET /api/projects/notes/getAll first.
     /// </summary>
-    /// <param name="RTP">RTP of the Project</param>
+    /// <param name="CapXProjectId">CapX project id of the Project</param>
     /// <param name="Comments">At least one</param>
     public sealed record WriteNotesDTO(
-        int RTP,
+        int CapXProjectId,
         IReadOnlyList<WriteNoteDTO> Comments
     );
 

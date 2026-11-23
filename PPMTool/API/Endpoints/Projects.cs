@@ -310,7 +310,7 @@ public static class Projects
     }
 
     /// <summary>
-    /// Add comments as Notes to an existing Project, identified by RTP. Notes
+    /// Add comments as Notes to an existing Project, identified by CapXProjectId. Notes
     /// aren't deduplicated.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WriteNotesResponseDTO))]
@@ -331,7 +331,7 @@ public static class Projects
             logger,
             $"{nameof(Projects)}.{nameof(AddNotes)}",
             validate: _ => writeService.ValidateNotesAdd(context, request),
-            logValidationFailure: errors => logger.LogWarning("API: Projects: notes/add validation failed for RTP {RTP}: {Errors}", request.RTP, string.Join("; ", errors)),
+            logValidationFailure: errors => logger.LogWarning("API: Projects: notes/add validation failed for CapXProjectId {CapXProjectId}: {Errors}", request.CapXProjectId, string.Join("; ", errors)),
             execute: caller =>
             {
                 // NoteService.Add commits each Note, and nothing de-duplicates them, so
@@ -341,15 +341,15 @@ public static class Projects
                 var result = writeService.AddNotes(context, request);
                 transaction.Commit();
                 logger.LogInformation(
-                    "API: Projects: added {NotesCreated} Note(s) to Project {ProjectId} (RTP {RTP}) by {User}",
-                    result.NotesCreated, result.ProjectId, request.RTP, caller.Name);
+                    "API: Projects: added {NotesCreated} Note(s) to Project {ProjectId} (CapXProjectId {CapXProjectId}) by {User}",
+                    result.NotesCreated, result.ProjectId, request.CapXProjectId, caller.Name);
                 return Results.Json(result, statusCode: StatusCodes.Status201Created);
             },
-            logException: ex => logger.LogError(ex, "API: Projects: error adding notes to RTP {RTP}", request.RTP));
+            logException: ex => logger.LogError(ex, "API: Projects: error adding notes to CapXProjectId {CapXProjectId}", request.CapXProjectId));
     }
 
     /// <summary>
-    /// Get a Project's Notes, identified by RTP. A Project with no Notes gives an empty list.
+    /// Get a Project's Notes, identified by CapXProjectId. A Project with no Notes gives an empty list.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<NoteDTO>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
@@ -361,27 +361,27 @@ public static class Projects
         SettingsService settingsService,
         ILogger logger,
         HttpContext http,
-        [FromQuery] int rtp)
+        [FromQuery] int capxProjectId)
     {
         try
         {
             var (allowed, caller, gateResult) = GeneralHelpers.CheckWriteApiAccess(settingsService, http, logger, "Projects.GetNotes");
             if (!allowed) return gateResult!;
 
-            var errors = writeService.ValidateNotesGet(context, rtp);
+            var errors = writeService.ValidateNotesGet(context, capxProjectId);
             if (errors.Count > 0)
             {
-                logger.LogWarning("API: Projects: get notes validation failed for RTP {RTP}: {Errors}", rtp, string.Join("; ", errors));
+                logger.LogWarning("API: Projects: get notes validation failed for CapXProjectId {CapXProjectId}: {Errors}", capxProjectId, string.Join("; ", errors));
                 return Results.BadRequest(new WriteErrorDTO(errors));
             }
 
-            var notes = writeService.GetNotesForRTP(context, rtp);
-            logger.LogInformation("API: Projects: returned {Count} Note(s) for RTP {RTP} to {User}", notes.Count, rtp, caller!.Name);
+            var notes = writeService.GetNotesForCapXProjectId(context, capxProjectId);
+            logger.LogInformation("API: Projects: returned {Count} Note(s) for CapXProjectId {CapXProjectId} to {User}", notes.Count, capxProjectId, caller!.Name);
             return Results.Json(notes);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "API: Projects: error getting notes for RTP {RTP}", rtp);
+            logger.LogError(ex, "API: Projects: error getting notes for CapXProjectId {CapXProjectId}", capxProjectId);
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

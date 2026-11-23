@@ -369,10 +369,10 @@ namespace PPMTool.Services
         {
             var errors = new List<string>();
 
-            if (request.RTP <= 0)
-                errors.Add(rtpRequired);
-            else if (projectService.GetByRTP(context, request.RTP) == null)
-                errors.Add($"RTP {request.RTP} does not match any Project");
+            if (request.CapXProjectId <= 0)
+                errors.Add("CapXProjectId is required and must be greater than zero");
+            else if (projectService.GetByRTP(context, request.CapXProjectId) == null)
+                errors.Add($"CapXProjectId {request.CapXProjectId} does not match any Project");
 
             var comments = request.Comments ?? Array.Empty<WriteNoteDTO>();
             if (comments.Count == 0)
@@ -392,7 +392,7 @@ namespace PPMTool.Services
         /// <returns>Identifier payload for the project and number of created notes.</returns>
         public WriteNotesResponseDTO AddNotes(PPMToolContext context, WriteNotesDTO request)
         {
-            var project = projectService.GetByRTP(context, request.RTP)!;
+            var project = projectService.GetByRTP(context, request.CapXProjectId)!;
             var fallbackAuthor = userService.GetByUsernameWithWorkloadModels(context, FallbackAuthorUsername);
 
             var notesCreated = 0;
@@ -424,28 +424,28 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Validates a notes-by-RTP lookup request.
+        /// Validates a notes-by-CapX-project-id lookup request.
         /// </summary>
         /// <param name="context">Database context.</param>
-        /// <param name="rtp">RTP value to look up.</param>
+        /// <param name="capXProjectId">CapX project id to look up.</param>
         /// <returns>Validation errors, or an empty list when valid.</returns>
-        public List<string> ValidateNotesGet(PPMToolContext context, int rtp)
+        public List<string> ValidateNotesGet(PPMToolContext context, int capXProjectId)
         {
             var errors = new List<string>();
-            if (projectService.GetByRTP(context, rtp) == null)
-                errors.Add($"RTP {rtp} does not match any Project");
+            if (projectService.GetByRTP(context, capXProjectId) == null)
+                errors.Add($"CapXProjectId {capXProjectId} does not match any Project");
             return errors;
         }
 
         /// <summary>
-        /// Gets notes for a project identified by RTP.
+        /// Gets notes for a project identified by its CapX project id.
         /// </summary>
         /// <param name="context">Database context.</param>
-        /// <param name="rtp">RTP value to look up.</param>
+        /// <param name="capXProjectId">CapX project id to look up.</param>
         /// <returns>Notes for the project.</returns>
-        public List<NoteDTO> GetNotesForRTP(PPMToolContext context, int rtp)
+        public List<NoteDTO> GetNotesForCapXProjectId(PPMToolContext context, int capXProjectId)
         {
-            var project = projectService.GetByRTP(context, rtp)!;
+            var project = projectService.GetByRTP(context, capXProjectId)!;
 
             var notes = context.Notes
                 .Where(n => n.Project.ProjectId == project.ProjectId)
@@ -454,7 +454,7 @@ namespace PPMTool.Services
                 .ToList();
 
             return notes.Select(n => new NoteDTO(
-                n.NoteId, rtp, n.Author.CASUserName, n.Author.GetName(),
+                n.NoteId, capXProjectId, n.Author.CASUserName, n.Author.GetName(),
                 n.HtmlContent, n.CreatedDate, n.EditedDate
             )).ToList();
         }
