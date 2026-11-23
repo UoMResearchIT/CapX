@@ -226,6 +226,8 @@ namespace PPMTool.Pages
         private IEnumerable<CompetencyGroup> competencyGroups = new List<CompetencyGroup>();
         private bool showUnMetOnly;
         private bool showAllStaff = true;
+        private DateTime? assessedFrom;
+        private DateTime? assessedTo;
         private bool exportRunning;
         private bool downloadFrameworkRunning;
 
@@ -563,6 +565,18 @@ namespace PPMTool.Pages
 
                     // Remove from the competencies all those within the exception list
                     competencies = competencies.Where(x => !exceptionList.Contains(x.CompetencyId));
+                }
+
+                // Filter the competencies by those whose latest assessment falls within the date range (inclusive)
+                if (assessedFrom != null || assessedTo != null)
+                {
+                    competencies = competencies
+                        .Where(x => x.Assessments
+                            .Where(a => a.PersonId == selectedPerson?.PersonId)
+                            .Max(a => (DateTime?)DateTime.Parse(a.DateCreated).Date) is DateTime latest
+                            && latest >= (assessedFrom?.Date ?? DateTime.MinValue)
+                            && latest <= (assessedTo?.Date ?? DateTime.MaxValue))
+                        .ToList();
                 }
 
                 // Setup the accordion data
