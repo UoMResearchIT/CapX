@@ -37,7 +37,7 @@ namespace PPMTool.API.DTOs
     /// Kept separate from <see cref="SubTaskDTO"/>: a request carries only what the caller
     /// supplies, and the read record adds the ids and fields CapX derives or links.
     /// </summary>
-    /// <param name="RTP">RTP of the Project</param>
+    /// <param name="CapXProjectId">CapX project id of the Project</param>
     /// <param name="Name">Unique within the Project, except for Leadership (ProjectAndServiceMgmt) tasks, as in the UI</param>
     /// <param name="TaskDuty">A <see cref="PPMTool.Data.Enums.Duty"/> name, or its description as task reads return it</param>
     /// <param name="StartDate"></param>
@@ -45,7 +45,7 @@ namespace PPMTool.API.DTOs
     /// <param name="Demand">FTE needed; sets both Demand and OriginalDemand. Greater than zero, at most 3 decimal places.</param>
     /// <param name="Resourcing">Assignments to create on the Task, if any. Each assignee must start by the Task's start, and only managers can go on a Leadership task.</param>
     public sealed record WriteSubTaskDTO(
-        int RTP,
+        int CapXProjectId,
         string Name,
         string TaskDuty,
         DateTime StartDate,

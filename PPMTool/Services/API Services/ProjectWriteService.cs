@@ -20,7 +20,7 @@ namespace PPMTool.Services
     public class ProjectWriteService
     {
         public const string FallbackAuthorUsername = "migration-import";
-        private const string rtpRequired = "RTP is required and must be greater than zero";
+        private const string capXProjectIdRequired = "CapXProjectId is required and must be greater than zero";
 
         private readonly ProjectService projectService;
         private readonly SubTaskService subTaskService;
@@ -84,10 +84,10 @@ namespace PPMTool.Services
             else if (projectService.DuplicateDetected(context, new Project { Name = request.Name }))
                 errors.Add($"A Project named '{request.Name}' already exists");
 
-            if (request.RTP <= 0)
-                errors.Add(rtpRequired);
-            else if (context.Projects.Any(p => p.RTP == request.RTP))
-                errors.Add($"A Project with RTP {request.RTP} already exists");
+            if (request.CapXProjectId <= 0)
+                errors.Add(capXProjectIdRequired);
+            else if (context.Projects.Any(p => p.RTP == request.CapXProjectId))
+                errors.Add($"A Project with CapXProjectId {request.CapXProjectId} already exists");
 
             if (request.TimesheetActivityCode != null)
                 errors.AddRange(ValidateTimesheetActivityCode(context, request.TimesheetActivityCode, request.Name, project: null));
@@ -147,7 +147,7 @@ namespace PPMTool.Services
             var project = new Project
             {
                 Name = request.Name,
-                RTP = request.RTP,
+                RTP = request.CapXProjectId,
                 PI = request.PI,
                 School = school,
                 ProjectManager = projectManager,
@@ -268,15 +268,15 @@ namespace PPMTool.Services
         {
             var errors = new List<string>();
 
-            if (request.RTP <= 0)
+            if (request.CapXProjectId <= 0)
             {
-                errors.Add(rtpRequired);
+                errors.Add(capXProjectIdRequired);
                 return errors;
             }
-            var project = projectService.GetByRTP(context, request.RTP);
+            var project = projectService.GetByRTP(context, request.CapXProjectId);
             if (project == null)
             {
-                errors.Add($"RTP {request.RTP} does not match any Project");
+                errors.Add($"CapXProjectId {request.CapXProjectId} does not match any Project");
                 return errors;
             }
 
@@ -324,7 +324,7 @@ namespace PPMTool.Services
         /// <returns>Identifier payload for the updated project.</returns>
         public UpdateProjectResponseDTO UpdateProject(PPMToolContext context, UpdateProjectRequestDTO request)
         {
-            var project = projectService.GetByRTP(context, request.RTP)!;
+            var project = projectService.GetByRTP(context, request.CapXProjectId)!;
             var oldStatus = project.ProjectStatus;
 
             if (request.Name != null) project.Name = request.Name;

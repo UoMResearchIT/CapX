@@ -57,7 +57,7 @@ namespace PPMTool.API.DTOs
     /// supplies, and the read record adds the ids and fields CapX derives or links.
     /// </summary>
     /// <param name="Name">Must be unique</param>
-    /// <param name="RTP">Must be unique and greater than zero</param>
+    /// <param name="CapXProjectId">Must be unique and greater than zero</param>
     /// <param name="PI"></param>
     /// <param name="SchoolCode">Code of an active School. Give this or SchoolId.</param>
     /// <param name="ProjectManagerUsername">Username of the Project Manager, if any; must have a linked Person</param>
@@ -76,7 +76,7 @@ namespace PPMTool.API.DTOs
     /// <param name="TimesheetActivityCode">Timesheet code to link the Project to. An existing code is linked as it is, provided no other Project uses it; otherwise a code is created with this activity code, named after the Project, with tasks Development, Management and Maintenance. Without one, the Project has no code and can't receive timesheet entries until one is linked.</param>
     public sealed record WriteProjectDTO(
         string Name,
-        int RTP,
+        int CapXProjectId,
         string PI,
         string? SchoolCode,
         string? ProjectManagerUsername,
@@ -107,14 +107,14 @@ namespace PPMTool.API.DTOs
 
     /// <summary>
     /// Request body for PUT /api/projects/update. Identifies the Project by
-    /// RTP and changes the fields supplied; a field left out or null is
+    /// CapXProjectId and changes the fields supplied; a field left out or null is
     /// unchanged. Doesn't change tasks, assignments or Notes. A status change
     /// has the same side effects as in the UI: leaving New Request records
     /// when the request was completed, a cancelled status removes the
     /// Project's assignments, Finished or cancelled removes its followers,
     /// and becoming Active (other than from Paused) restarts the actuals clock.
     /// </summary>
-    /// <param name="RTP">RTP of the Project</param>
+    /// <param name="CapXProjectId">CapX project id of the Project</param>
     /// <param name="Name">Must be unique</param>
     /// <param name="PI"></param>
     /// <param name="SchoolCode">Code of an active School</param>
@@ -129,7 +129,7 @@ namespace PPMTool.API.DTOs
     /// <param name="SchoolId">Id of an active School, as an alternative to SchoolCode. If both are given, they must name the same School.</param>
     /// <param name="TimesheetActivityCode">Timesheet code to link the Project to, as for POST /api/projects/add. The current code can't be replaced while it has timesheet entries, since the Project's actuals come through it; an unused current code that no other Project uses is renamed instead. The link can't be cleared.</param>
     public sealed record UpdateProjectRequestDTO(
-        int RTP,
+        int CapXProjectId,
         string? Name,
         string? PI,
         string? SchoolCode,

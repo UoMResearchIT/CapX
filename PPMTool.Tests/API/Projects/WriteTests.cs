@@ -30,7 +30,7 @@ namespace PPMTool.Tests.API.Projects
 
                 var response = await client.PutAsJsonAsync("projects/update", new
                 {
-                    RTP = rtp,
+                    CapXProjectId = rtp,
                     Budget = 2500.0,
                     ProjectStatus = "Paused",
                     CostModel = "DayRate",
@@ -60,7 +60,7 @@ namespace PPMTool.Tests.API.Projects
 
                 var response = await client.PutAsJsonAsync("projects/update", new
                 {
-                    RTP = rtp,
+                    CapXProjectId = rtp,
                     Name = before.GetProperty("name").GetString(),
                     PI = before.GetProperty("principalInvestigator").GetString(),
                     SchoolId = before.GetProperty("schoolId").GetInt32(),

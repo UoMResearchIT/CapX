@@ -65,7 +65,7 @@ namespace PPMTool.Tests.API
             var response = await client.PostAsJsonAsync("projects/add", new
             {
                 Name = $"Write Test Project {rtp}",
-                RTP = rtp,
+                CapXProjectId = rtp,
                 PI = "Test PI",
                 SchoolId,
                 Budget = 1000.0,

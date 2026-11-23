@@ -20,7 +20,7 @@ namespace PPMTool.Tests.API.Resources
                 var projectId = await CreateProjectAsync(client, rtp);
                 var response = await client.PostAsJsonAsync("subtasks/add", new
                 {
-                    RTP = rtp,
+                    CapXProjectId = rtp,
                     Name = "Write Test Resourced Task",
                     TaskDuty = "ProjectWork",
                     StartDate = new DateTime(2030, 1, 1),

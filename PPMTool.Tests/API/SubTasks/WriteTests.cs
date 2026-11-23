@@ -21,7 +21,7 @@ namespace PPMTool.Tests.API.SubTasks
 
                 var response = await client.PostAsJsonAsync("subtasks/add", new
                 {
-                    RTP = rtp,
+                    CapXProjectId = rtp,
                     Name = "Write Test Task",
                     TaskDuty = "ProjectWork",
                     StartDate = new DateTime(2030, 1, 1),

@@ -272,7 +272,7 @@ public static class Projects
     }
 
     /// <summary>
-    /// Update a Project's fields, identified by RTP. A status change has the
+    /// Update a Project's fields, identified by CapXProjectId. A status change has the
     /// same side effects as in the UI. Doesn't change tasks, resourcing or Notes.
     /// </summary>
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateProjectResponseDTO))]
@@ -293,7 +293,7 @@ public static class Projects
             logger,
             $"{nameof(Projects)}.{nameof(UpdateProject)}",
             validate: _ => writeService.ValidateProjectUpdate(context, request),
-            logValidationFailure: errors => logger.LogWarning("API: Projects: project update validation failed for RTP {RTP}: {Errors}", request.RTP, string.Join("; ", errors)),
+            logValidationFailure: errors => logger.LogWarning("API: Projects: project update validation failed for CapXProjectId {CapXProjectId}: {Errors}", request.CapXProjectId, string.Join("; ", errors)),
             execute: caller =>
             {
                 // ProjectService.Update commits (with any new timesheet code) before the cost
@@ -302,11 +302,11 @@ public static class Projects
                 var result = writeService.UpdateProject(context, request);
                 transaction.Commit();
                 logger.LogInformation(
-                    "API: Projects: updated Project {ProjectId} (RTP {RTP}) by {User}",
-                    result.ProjectId, request.RTP, caller.Name);
+                    "API: Projects: updated Project {ProjectId} (CapXProjectId {CapXProjectId}) by {User}",
+                    result.ProjectId, request.CapXProjectId, caller.Name);
                 return Results.Ok(result);
             },
-            logException: ex => logger.LogError(ex, "API: Projects: error updating project RTP {RTP}", request.RTP));
+            logException: ex => logger.LogError(ex, "API: Projects: error updating project with CapXProjectId {CapXProjectId}", request.CapXProjectId));
     }
 
     /// <summary>

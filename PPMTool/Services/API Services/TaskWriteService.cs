@@ -19,7 +19,7 @@ namespace PPMTool.Services
     /// </summary>
     public class TaskWriteService
     {
-        private const string rtpRequired = "RTP is required and must be greater than zero";
+        private const string capXProjectIdRequired = "CapXProjectId is required and must be greater than zero";
 
         private readonly ProjectService projectService;
         private readonly SubTaskService subTaskService;
@@ -63,15 +63,15 @@ namespace PPMTool.Services
         {
             var errors = new List<string>();
 
-            if (request.RTP <= 0)
+            if (request.CapXProjectId <= 0)
             {
-                errors.Add(rtpRequired);
+                errors.Add(capXProjectIdRequired);
                 return errors;
             }
-            var project = projectService.GetByRTP(context, request.RTP);
+            var project = projectService.GetByRTP(context, request.CapXProjectId);
             if (project == null)
             {
-                errors.Add($"RTP {request.RTP} does not match any Project");
+                errors.Add($"CapXProjectId {request.CapXProjectId} does not match any Project");
                 return errors;
             }
 
@@ -86,7 +86,7 @@ namespace PPMTool.Services
 
             if (!string.IsNullOrWhiteSpace(request.Name) && duty != null && duty != Duty.ProjectAndServiceMgmt
                 && project.SubTasks.Any(t => t.Name == request.Name))
-                errors.Add($"A task named '{request.Name}' already exists on Project {request.RTP}");
+                errors.Add($"A task named '{request.Name}' already exists on Project {request.CapXProjectId}");
 
             if (request.EndDate.Date < request.StartDate.Date)
                 errors.Add("EndDate must be on or after StartDate");
@@ -119,7 +119,7 @@ namespace PPMTool.Services
         /// <returns>Identifier payload for the created task and assignment count.</returns>
         public WriteSubTaskResponseDTO CreateTask(PPMToolContext context, WriteSubTaskDTO request)
         {
-            var project = projectService.GetByRTP(context, request.RTP)!;
+            var project = projectService.GetByRTP(context, request.CapXProjectId)!;
             GeneralHelpers.TryParseNameOrDescription<Duty>(request.TaskDuty, out var duty);
 
             var task = new SubTask

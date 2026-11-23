@@ -188,7 +188,7 @@ namespace PPMTool.API.Endpoints
                 logger,
                 $"{nameof(SubTasks)}.{nameof(CreateSubTask)}",
                 validate: _ => writeService.ValidateTaskCreate(context, request),
-                logValidationFailure: errors => logger.LogWarning("API: SubTasks: task create validation failed for RTP {RTP}/'{Name}': {Errors}", request.RTP, request.Name, string.Join("; ", errors)),
+                logValidationFailure: errors => logger.LogWarning("API: SubTasks: task create validation failed for CapXProjectId {CapXProjectId}/'{Name}': {Errors}", request.CapXProjectId, request.Name, string.Join("; ", errors)),
                 execute: caller =>
                 {
                     // CreateTask saves more than once (SubTaskService.Add commits), so a
@@ -196,10 +196,10 @@ namespace PPMTool.API.Endpoints
                     using var transaction = context.Database.BeginTransaction();
                     var result = writeService.CreateTask(context, request);
                     transaction.Commit();
-                    logger.LogInformation("API: SubTasks: created SubTask {SubTaskId} ('{Name}') on RTP {RTP} by {User}", result.SubTaskId, request.Name, request.RTP, caller.Name);
+                    logger.LogInformation("API: SubTasks: created SubTask {SubTaskId} ('{Name}') on CapXProjectId {CapXProjectId} by {User}", result.SubTaskId, request.Name, request.CapXProjectId, caller.Name);
                     return Results.Created($"/api/subtasks/getById?subTaskId={result.SubTaskId}", result);
                 },
-                logException: ex => logger.LogError(ex, "API: SubTasks: error creating task for RTP {RTP}/'{Name}'", request.RTP, request.Name));
+                logException: ex => logger.LogError(ex, "API: SubTasks: error creating task for CapXProjectId {CapXProjectId}/'{Name}'", request.CapXProjectId, request.Name));
         }
 
         /// <summary>
