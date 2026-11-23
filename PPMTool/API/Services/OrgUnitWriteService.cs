@@ -8,8 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Services;
 
-namespace PPMTool.Services
+namespace PPMTool.API.Services
 {
     /// <summary>
     /// Service for API write operations that validate and mutate faculties and schools.

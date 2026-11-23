@@ -9,8 +9,9 @@ using PPMTool.API.Helpers;
 using PPMTool.Data;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Services;
 
-namespace PPMTool.Services
+namespace PPMTool.API.Services
 {
     /// <summary>
     /// Service for API write operations that validate and mutate <see cref="WorkloadModelChange"/> entities.
