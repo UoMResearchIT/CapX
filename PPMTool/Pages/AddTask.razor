@@ -381,6 +381,9 @@ SPDX-License-Identifier: apache-2.0
                                         </EditTemplate>
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="Resource" Property="AssignmentFTE" Title="FTE" Width="120px" MinWidth="10px">
+                                        <HeaderTemplate>
+                                            <LabelWithTooltipComponent Text="FTE" Tooltip="Full-Time Equivalent" />
+                                        </HeaderTemplate>
                                         <Template Context="res">
                                             <RadzenText Style="margin-bottom: 0rem;" Text="@($"{res.AssignmentFTE}{(ProjectModel.CostModel.HasIndirects() ? $" ({Math.Round(res.BilledFTE, 3)})" : "")}")" />
                                         </Template>
