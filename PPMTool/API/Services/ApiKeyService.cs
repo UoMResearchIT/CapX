@@ -5,8 +5,9 @@
 using Microsoft.EntityFrameworkCore;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
+using PPMTool.Services;
 
-namespace PPMTool.Services
+namespace PPMTool.API.Services
 {
     /// <summary>
     /// Service for managing the API keys

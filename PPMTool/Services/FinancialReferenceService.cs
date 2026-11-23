@@ -319,5 +319,20 @@ namespace PPMTool.Services
         {
             return GetAll(context).GetSuitableFinancialReference(startDate);
         }
+
+        /// <summary>
+        /// Retrieves a financial reference value set (a cost key) by name, ignoring case and
+        /// surrounding whitespace. Returns null if no matching value set exists.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public FinancialReferenceValueSet GetValueSetByName(PPMToolContext context, string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return null;
+            var normalised = name.Trim().ToLower();
+            return context.FinancialReferenceValueSets
+                .FirstOrDefault(x => x.Name.Trim().ToLower() == normalised);
+        }
     }
 }

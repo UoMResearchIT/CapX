@@ -291,5 +291,19 @@ namespace PPMTool.Services
             // Create the model and return it
             return new RequestClockDetails(endDate.Subtract(DateTime.Today), clockTime);
         }
+
+        /// <summary>
+        /// Get the project with the given id, with its timesheet activity code and that code's tasks.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="projectId"></param>
+        /// <returns>The project, or null if there is none.</returns>
+        public Project GetByIdWithInnateActivity(PPMToolContext context, int projectId)
+        {
+            return context.Projects
+                .Include(x => x.InnateActivity)
+                    .ThenInclude(x => x.Tasks)
+                .FirstOrDefault(x => x.ProjectId == projectId);
+        }
     }
 }

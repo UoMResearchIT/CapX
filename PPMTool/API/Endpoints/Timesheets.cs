@@ -6,13 +6,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPMTool.API.DTOs;
 using PPMTool.API.Helpers;
+using PPMTool.API.Services;
 using PPMTool.Data.Context;
+using PPMTool.Services;
 
 namespace PPMTool.API.Endpoints;
 
 /// <summary>
-/// Read only transfer of weekly timesheets and nested entries.
-/// Access: superuser, the person, or their line manager.
+/// Methods for the timesheets endpoints.
 /// </summary>
 public static class Timesheets
 {
@@ -238,5 +239,77 @@ public static class Timesheets
             logger.LogError(ex, "Timesheets: error in GetTimesheetBookingsByCodeTask");
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
+    }
+
+    /// <summary>
+    /// Write one person's hours for one week on one task of a Project's
+    /// timesheet code. See <see cref="WriteTimesheetEntryDTO"/>.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WriteTimesheetEntryResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult CreateTimesheetEntry(
+        PPMToolContext context,
+        TimesheetWriteService writeService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] WriteTimesheetEntryDTO request)
+    {
+        var person = request.Username ?? $"PersonId {request.PersonId}";
+
+        return GeneralHelpers.ExecuteWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(Timesheets)}.{nameof(CreateTimesheetEntry)}",
+            validate: _ => writeService.ValidateTimesheetEntry(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Timesheets: timesheet validation failed for '{Person}'/{ProjectId}/{Week}: {Errors}", person, request.ProjectId, request.WeekStartDate, string.Join("; ", errors)),
+            execute: caller =>
+            {
+                // A new Timesheet is committed before its entry is saved, so a failure
+                // on the entry would otherwise leave an empty Timesheet behind.
+                using var transaction = context.Database.BeginTransaction();
+                var result = writeService.CreateOrUpdateTimesheetEntry(context, request, caller);
+                transaction.Commit();
+                logger.LogInformation(
+                    "API: Timesheets: timesheet {TimesheetId} for {Person}, week {Week}, project {ProjectId}: {Hours}h ({Created}) by {User}",
+                    result.TimesheetId, person, request.WeekStartDate, request.ProjectId, result.TotalHours, result.EntryCreated ? "new entry" : "updated entry", caller.Name);
+                return Results.Created($"/api/timesheets/{result.TimesheetId}", result);
+            },
+            logException: ex => logger.LogError(ex, "API: Timesheets: error creating timesheet entry for '{Person}'/{ProjectId}/{Week}", person, request.ProjectId, request.WeekStartDate));
+    }
+
+    /// <summary>
+    /// Update a timesheet entry's hours or task, identified by TimesheetEntryId.
+    /// See <see cref="UpdateTimesheetEntryRequestDTO"/>.
+    /// </summary>
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateTimesheetEntryResponseDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public static IResult UpdateTimesheetEntry(
+        PPMToolContext context,
+        TimesheetWriteService writeService,
+        SettingsService settingsService,
+        ILogger logger,
+        HttpContext http,
+        [FromBody] UpdateTimesheetEntryRequestDTO request)
+    {
+        return GeneralHelpers.ExecuteWrite(
+            settingsService,
+            http,
+            logger,
+            $"{nameof(Timesheets)}.{nameof(UpdateTimesheetEntry)}",
+            validate: _ => writeService.ValidateTimesheetEntryUpdate(context, request),
+            logValidationFailure: errors => logger.LogWarning("API: Timesheets: timesheet entry update validation failed for TimesheetEntryId {TimesheetEntryId}: {Errors}", request.TimesheetEntryId, string.Join("; ", errors)),
+            execute: caller =>
+            {
+                var result = writeService.UpdateTimesheetEntry(context, request);
+                logger.LogInformation("API: Timesheets: updated TimesheetEntry {TimesheetEntryId}, {Hours}h total, by {User}", result.TimesheetEntryId, result.TotalHours, caller.Name);
+                return Results.Ok(result);
+            },
+            logException: ex => logger.LogError(ex, "API: Timesheets: error updating TimesheetEntry {TimesheetEntryId}", request.TimesheetEntryId));
     }
 }

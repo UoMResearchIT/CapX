@@ -1,0 +1,122 @@
+// SPDX-FileCopyrightText: 2026 University of Manchester
+//
+// SPDX-License-Identifier: apache-2.0
+
+#nullable enable
+
+using PPMTool.API.DTOs;
+using PPMTool.API.Helpers;
+using PPMTool.Data;
+using PPMTool.Data.Context;
+using PPMTool.Data.Entities;
+using PPMTool.Services;
+
+namespace PPMTool.API.Services
+{
+    /// <summary>
+    /// Service for API write operations that validate and mutate <see cref="WorkloadModelChange"/> entities.
+    /// </summary>
+    public class WorkloadModelWriteService
+    {
+        private readonly UserService userService;
+        private readonly FinancialReferenceService financialReferenceService;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WorkloadModelWriteService"/> class.
+        /// </summary>
+        /// <param name="userService">Service used to find users.</param>
+        /// <param name="financialReferenceService">Service used to find cost keys.</param>
+        public WorkloadModelWriteService(UserService userService, FinancialReferenceService financialReferenceService)
+        {
+            this.userService = userService;
+            this.financialReferenceService = financialReferenceService;
+        }
+
+        /// <summary>
+        /// Validates a workload-model-change request without writing to the database.
+        /// </summary>
+        /// <param name="context">Database context.</param>
+        /// <param name="request">Incoming workload-model-change request.</param>
+        /// <returns>Validation errors, or an empty list when valid.</returns>
+        public List<string> ValidateWorkloadModelChange(PPMToolContext context, WriteWorkloadModelChangeDTO request)
+        {
+            var errors = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(request.Username))
+                errors.Add("Username is required");
+            else if (userService.GetByUsernameWithWorkloadModels(context, request.Username)?.Person == null)
+                errors.Add($"Username '{request.Username}' not found, or has no linked Person");
+
+            if (request.ChangeDate.TimeOfDay != TimeSpan.Zero)
+                errors.Add($"ChangeDate '{request.ChangeDate:O}' must be a date with no time of day");
+
+            if (request.Grade < 4 || request.Grade > 9)
+                errors.Add($"Grade {request.Grade} is out of range (must be 4-9)");
+
+            foreach (var (label, fte) in DutyFTEs(request))
+            {
+                if (fte < 0.0 || fte > 1.0) errors.Add($"{label} {fte} is out of range (must be 0.0-1.0)");
+            }
+
+            if (request.CostValueKey != null && financialReferenceService.GetValueSetByName(context, request.CostValueKey) == null)
+            {
+                var available = context.FinancialReferenceValueSets.Select(s => s.Name).OrderBy(n => n).ToList();
+                errors.Add($"CostValueKey '{request.CostValueKey}' does not match any cost key; available: {string.Join(", ", available)}");
+            }
+
+            return errors;
+        }
+
+        /// <summary>
+        /// Creates or updates one workload model change for a person at a specific change date.
+        /// </summary>
+        /// <param name="context">Database context.</param>
+        /// <param name="request">Incoming workload-model-change request.</param>
+        /// <returns>Identifier payload indicating whether a record was created.</returns>
+        public WriteWorkloadModelChangeResponseDTO CreateOrUpdateWorkloadModelChange(PPMToolContext context, WriteWorkloadModelChangeDTO request)
+        {
+            var person = userService.GetByUsernameWithWorkloadModels(context, request.Username)!.Person!;
+
+            var changeDate = GeneralHelpers.AsUnspecifiedKind(request.ChangeDate);
+            var change = person.WorkloadModelChanges.FirstOrDefault(c => c.ChangeDate == changeDate);
+            var created = change == null;
+            if (change == null)
+            {
+                change = new WorkloadModelChange { Person = person };
+                context.WorkloadModelChanges.Add(change);
+            }
+
+            change.ChangeDate = changeDate;
+            change.Grade = request.Grade;
+            change.ProjectWorkFTE = request.ProjectWorkFTE;
+            change.BusinessAsUsualFTE = request.BusinessAsUsualFTE;
+            change.PersonalDevelopmentFTE = request.PersonalDevelopmentFTE;
+            change.StaffManagementFTE = request.StaffManagementFTE;
+            change.ArchitectureFTE = request.ArchitectureFTE;
+            change.ServiceManagementFTE = request.ServiceManagementFTE;
+            change.ProjectManagementFTE = request.ProjectManagementFTE;
+            change.Notes = request.Notes;
+            if (request.CostValueKey != null)
+                change.CostValueSetId = financialReferenceService.GetValueSetByName(context, request.CostValueKey)!.FinancialReferenceValueSetId;
+            context.SaveChangesWithRetry();
+
+            return new WriteWorkloadModelChangeResponseDTO(change.WorkloadModelChangeId, created);
+        }
+
+        /// <summary>
+        /// Enumerates the requested duty FTE values with labels for validation messages.
+        /// </summary>
+        /// <param name="request">Incoming workload-model-change request.</param>
+        /// <returns>Named FTE values for each duty field.</returns>
+        private static IEnumerable<(string Label, double FTE)> DutyFTEs(WriteWorkloadModelChangeDTO request)
+        {
+            yield return (nameof(WorkloadModelChange.ProjectWorkFTE), request.ProjectWorkFTE);
+            yield return (nameof(WorkloadModelChange.BusinessAsUsualFTE), request.BusinessAsUsualFTE);
+            yield return (nameof(WorkloadModelChange.PersonalDevelopmentFTE), request.PersonalDevelopmentFTE);
+            yield return (nameof(WorkloadModelChange.StaffManagementFTE), request.StaffManagementFTE);
+            yield return (nameof(WorkloadModelChange.ArchitectureFTE), request.ArchitectureFTE);
+            yield return (nameof(WorkloadModelChange.ServiceManagementFTE), request.ServiceManagementFTE);
+            yield return (nameof(WorkloadModelChange.ProjectManagementFTE), request.ProjectManagementFTE);
+        }
+    }
+}

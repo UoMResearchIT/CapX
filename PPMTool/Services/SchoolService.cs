@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using PPMTool.Data.Context;
 using PPMTool.Data.Entities;
@@ -77,19 +78,55 @@ namespace PPMTool.Services
         }
 
         /// <summary>
-        /// Detect a duplicate school if the name or code is the same as another in the same faculty. 
+        /// Detect a duplicate school: another with the same name in the same faculty, or with the
+        /// same code in any faculty. Codes are unique across faculties so that a code alone
+        /// identifies a school.
         /// </summary>
         /// <param name="context"></param>
         /// <param name="entity"></param>
         /// <returns></returns>
         public override bool DuplicateDetected(PPMToolContext context, School entity)
         {
-            return GetAll(context)
+            // Queried in the database, so other schools' faculties needn't be loaded
+            var code = entity.Code.Trim().ToLower();
+            var name = entity.Name.Trim().ToLower();
+            var facultyId = entity.Faculty.FacultyId;
+            return context.Schools
                 .Any(x =>
                     x.SchoolId != entity.SchoolId &&
-                    ((x.Name.Trim().ToLower() == entity.Name.Trim().ToLower() || x.Code.Trim().ToLower() == entity.Code.Trim().ToLower())
-                        && x.Faculty.FacultyId == entity.Faculty.FacultyId)
+                    (x.Code.Trim().ToLower() == code
+                        || (x.Name.Trim().ToLower() == name && x.Faculty.FacultyId == facultyId))
                 );
+        }
+
+        /// <summary>
+        /// Get the school with the given code, ignoring case and surrounding whitespace, with its faculty.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="code"></param>
+        /// <param name="activeOnly"></param>
+        /// <returns>The school, or null if there is none.</returns>
+        public School GetByCode(PPMToolContext context, string code, bool activeOnly = false)
+        {
+            if (string.IsNullOrWhiteSpace(code)) return null;
+            var normalised = code.Trim().ToLower();
+            return context.Schools
+                .Include(x => x.Faculty)
+                .FirstOrDefault(x => (!activeOnly || x.IsActive) && x.Code.Trim().ToLower() == normalised);
+        }
+
+        /// <summary>
+        /// Get the school with the given id, with its faculty.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="schoolId"></param>
+        /// <param name="activeOnly"></param>
+        /// <returns>The school, or null if there is none.</returns>
+        public School GetById(PPMToolContext context, int schoolId, bool activeOnly = false)
+        {
+            return context.Schools
+                .Include(x => x.Faculty)
+                .FirstOrDefault(x => (!activeOnly || x.IsActive) && x.SchoolId == schoolId);
         }
 
         /// <summary>

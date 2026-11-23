@@ -512,5 +512,38 @@ namespace PPMTool.Services
                 .Distinct()
                 .ToListAsync();
         }
+
+        /// <summary>
+        /// Schedule the given tasks and recalculate their unmet demand. Only scheduling sets a
+        /// task's planned work hours and keeps its unmet demand right after its resourcing changes.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="tasks"></param>
+        /// <exception cref="InvalidOperationException">A task fails to schedule.</exception>
+        public void Reschedule(PPMToolContext context, params SubTask[] tasks)
+        {
+            context.ChangeTracker.DetectChanges();
+            foreach (var task in tasks)
+            {
+                var error = task.Schedule();
+                if (error != null)
+                    throw new InvalidOperationException($"SubTask.Schedule() failed for SubTaskId {task.SubTaskId}: {error}");
+                task.UpdateUnmetDemand();
+            }
+        }
+
+        /// <summary>
+        /// Check a person can be assigned to a task starting on the given date: they must have
+        /// started by then.
+        /// </summary>
+        /// <param name="person"></param>
+        /// <param name="taskStart"></param>
+        /// <returns>An error message, or null if they can.</returns>
+        public static string AssigneeStartsTooLate(Person person, DateTime taskStart)
+        {
+            return person.StartDate > taskStart
+                ? $"'{person.Name}' does not start until {person.StartDate:yyyy-MM-dd}, after the task's start date {taskStart:yyyy-MM-dd}"
+                : null;
+        }
     }
 }

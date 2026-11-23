@@ -89,6 +89,13 @@ builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<FundingSourceService>();
 builder.Services.AddScoped<FacultyService>();
 builder.Services.AddScoped<SchoolService>();
+builder.Services.AddScoped<OrgUnitWriteService>();
+builder.Services.AddScoped<PersonWriteService>();
+builder.Services.AddScoped<ProjectWriteService>();
+builder.Services.AddScoped<TaskWriteService>();
+builder.Services.AddScoped<TimesheetWriteService>();
+builder.Services.AddScoped<WorkloadModelWriteService>();
+builder.Services.AddScoped<UserWriteService>();
 builder.Services.AddScoped<HtmlContentSanitizerService>();
 builder.Services.AddScoped<CssVariableService>();
 builder.Services.AddSingleton<APIAuthService>();
@@ -318,7 +325,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapBlazorHub();
 
-// Map API endpoints
+// Map GET API endpoints
 var api = app.MapGroup("/api");
 api.MapGet("/skills/getAll", Skills.GetAllSkillTagsAsync);
 api.MapGet("/skills/getAllForPerson", Skills.GetAllSkillsTagsForPersonAsync);
@@ -340,12 +347,37 @@ api.MapGet("/subtasks/getAll", SubTasks.GetAllSubTasksAsync);
 api.MapGet("/subtasks/getById", SubTasks.GetSubTaskByIdAsync);
 api.MapGet("/resources/getAll", Resources.GetAllResourcesAsync);
 api.MapGet("/resources/getById", Resources.GetResourceByIdAsync);
+api.MapGet("/resources/getAllForProject", Resources.GetAllResourcesForProjectAsync);
 api.MapGet("/schools/getAll", Schools.GetAllSchoolsAsync);
 api.MapGet("/schools/getById", Schools.GetSchoolByIdAsync);
 api.MapGet("/faculties/getAll", Faculties.GetAllFacultiesAsync);
 api.MapGet("/faculties/getById", Faculties.GetFacultyByIdAsync);
 api.MapGet("/financialreferences/getAll", FinancialReferences.GetAllFinancialReferencesAsync);
 api.MapGet("/financialreferences/getByFinancialYear", FinancialReferences.GetFinancialReferenceByFinancialYearAsync);
+api.MapGet("/projects/notes/getAll", Projects.GetNotes);
+
+// Map POST (write) API endpoints
+api.MapPost("/faculties/add", Faculties.CreateFaculty);
+api.MapPost("/timesheets/add", Timesheets.CreateTimesheetEntry);
+api.MapPost("/projects/add", Projects.CreateProject);
+api.MapPost("/schools/add", Schools.CreateSchool);
+api.MapPost("/workloadmodels/add", WorkloadModels.CreateWorkloadModelChange);
+api.MapPost("/people/add", People.CreatePerson);
+api.MapPost("/users/add", Users.CreateUser);
+api.MapPost("/projects/notes/add", Projects.AddNotes);
+api.MapPost("/subtasks/add", SubTasks.CreateSubTask);
+api.MapPost("/resources/add", Resources.AddResources);
+
+// Map PUT (update) API endpoints. workloadmodels/add updates a change on the
+// same date, so it has no separate PUT.
+api.MapPut("/faculties/update", Faculties.UpdateFaculty);
+api.MapPut("/schools/update", Schools.UpdateSchool);
+api.MapPut("/projects/update", Projects.UpdateProject);
+api.MapPut("/people/update", People.UpdatePerson);
+api.MapPut("/projects/notes/update", Projects.UpdateNote);
+api.MapPut("/timesheets/update", Timesheets.UpdateTimesheetEntry);
+api.MapPut("/subtasks/update", SubTasks.UpdateSubTask);
+api.MapPut("/resources/update", Resources.UpdateResource);
 
 // API middleware -- conditional on /api routes only
 app.UseWhen(
@@ -433,6 +465,12 @@ using (var context = dbContextFactory.CreateDbContext())
     // Initialise the settings cache
     var settingsService = app.Services.GetRequiredService<SettingsService>();
     await settingsService.IntialiseServiceCacheAsync(context);
+
+    // Dummy data is for development and testing, so let its API keys use the write endpoints
+    if (shouldSeed)
+    {
+        SeedHelper.EnableWriteApiForDummyData(scope.ServiceProvider);
+    }
 
     // Initialise the feature cache
     var featureService = app.Services.GetRequiredService<FeatureService>();

@@ -110,6 +110,10 @@ namespace PPMTool.Data.Enums
 
         [Description("The model for the LLM API driving the AI chat functionality.")]
         [DefaultSettingValue("")]
-        LLMModel = 24
+        LLMModel = 24,
+
+        [Description("Whether the write endpoints (POST and PUT methods) are enabled on the API, along with the notes read beside them. Default: false: Superuser API key required.")]
+        [DefaultSettingValue("false")]
+        WriteApiEndpointsEnabled = 25
     }
 }

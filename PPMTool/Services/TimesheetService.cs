@@ -437,5 +437,23 @@ namespace PPMTool.Services
                 .Select(x => x.TimesheetId)
                 .FirstOrDefaultAsync();
         }
+
+        /// <summary>
+        /// Get the timesheet entry with the given id, with its timesheet and that timesheet's
+        /// entries, and its task, code and the code's tasks.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="timesheetEntryId"></param>
+        /// <returns>The entry, or null if there is none.</returns>
+        public TimesheetEntry GetEntryById(PPMToolContext context, int timesheetEntryId)
+        {
+            return context.TimesheetEntries
+                .Include(x => x.Timesheet)
+                    .ThenInclude(x => x.TimesheetEntries)
+                .Include(x => x.InnateCodeTask)
+                    .ThenInclude(x => x.InnateCode)
+                        .ThenInclude(x => x.Tasks)
+                .FirstOrDefault(x => x.TimesheetEntryId == timesheetEntryId);
+        }
     }
 }
