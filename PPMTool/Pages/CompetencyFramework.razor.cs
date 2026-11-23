@@ -220,6 +220,7 @@ namespace PPMTool.Pages
 
         private IEnumerable<Person> availablePeople;
         private IEnumerable<Competency> competencies;
+        private IEnumerable<Competency> allCompetencies;
         private bool userIsSuperuser;
         private int activeUserId;
         private string competencySearchTerms;
@@ -567,6 +568,9 @@ namespace PPMTool.Pages
                     competencies = competencies.Where(x => !exceptionList.Contains(x.CompetencyId));
                 }
 
+                // The summary gauges show the whole journey, so keep the list from before the date range is applied
+                allCompetencies = competencies;
+
                 // Filter the competencies by those whose latest assessment falls within the date range (inclusive)
                 if (assessedFrom != null || assessedTo != null)
                 {
@@ -589,7 +593,7 @@ namespace PPMTool.Pages
                         .Where(x => x.Grade == 5)
                         .GroupBy(x => x.Category)
                         .OrderBy(x => x.Key),
-                    competencies
+                    allCompetencies
                         .Where(x => x.Grade == 5)
                         .SelectMany(x => x.Assessments)
                         .Where(x => x.PersonId == selectedPerson?.PersonId)
@@ -605,7 +609,7 @@ namespace PPMTool.Pages
                         .Where(x => x.Grade == 6)
                         .GroupBy(x => x.Category)
                         .OrderBy(x => x.Key),
-                    competencies
+                    allCompetencies
                         .Where(x => x.Grade == 6)
                         .SelectMany(x => x.Assessments)
                         .Where(x => x.PersonId == selectedPerson?.PersonId)
@@ -621,7 +625,7 @@ namespace PPMTool.Pages
                         .Where(x => x.Grade == 7)
                         .GroupBy(x => x.Category)
                         .OrderBy(x => x.Key),
-                    competencies
+                    allCompetencies
                         .Where(x => x.Grade == 7)
                         .SelectMany(x => x.Assessments)
                         .Where(x => x.PersonId == selectedPerson?.PersonId)
