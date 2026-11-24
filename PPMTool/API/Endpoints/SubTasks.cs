@@ -169,7 +169,7 @@ namespace PPMTool.API.Endpoints
         }
 
         /// <summary>
-        /// Create a fixed-duration task on an existing Project. See <see cref="WriteSubTaskDTO"/>.
+        /// Create a fixed-duration task on an existing Project.
         /// </summary>
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WriteSubTaskResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
@@ -205,7 +205,6 @@ namespace PPMTool.API.Endpoints
 
         /// <summary>
         /// Update a task's name, duty, dates or demand, identified by SubTaskId.
-        /// See <see cref="UpdateSubTaskRequestDTO"/>.
         /// </summary>
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateSubTaskResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]

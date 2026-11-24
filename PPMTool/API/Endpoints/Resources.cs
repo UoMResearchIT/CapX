@@ -251,7 +251,7 @@ namespace PPMTool.API.Endpoints
         }
 
         /// <summary>
-        /// Add assignments to an existing task. See <see cref="WriteResourcesDTO"/>.
+        /// Add assignments to an existing task.
         /// </summary>
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WriteResourcesResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
@@ -283,7 +283,7 @@ namespace PPMTool.API.Endpoints
 
         /// <summary>
         /// Update an assignment's FTE, provisional flag or task, identified by
-        /// ResourceId. See <see cref="UpdateResourceRequestDTO"/>.
+        /// ResourceId.
         /// </summary>
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateResourceResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]

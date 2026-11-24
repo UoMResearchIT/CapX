@@ -134,8 +134,7 @@ namespace PPMTool.API.Endpoints
         }
 
         /// <summary>
-        /// Create a Faculty with its Schools. To add a School to an existing
-        /// Faculty, see <see cref="Schools.CreateSchool"/>.
+        /// Create a Faculty with its Schools.
         /// </summary>
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WriteFacultyResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
@@ -170,7 +169,7 @@ namespace PPMTool.API.Endpoints
 
         /// <summary>
         /// Update a Faculty's Name or Code, identified by its current Code.
-        /// Doesn't change its Schools: see <see cref="Schools.UpdateSchool"/>.
+        /// Doesn't change its Schools.
         /// </summary>
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateFacultyResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
