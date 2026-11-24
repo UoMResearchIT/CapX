@@ -48,6 +48,9 @@ namespace PPMTool.Shared
         private SkillTagService SkillTagService { get; set; }
 
         [Inject]
+        private CompetencyService CompetencyService { get; set; }
+
+        [Inject]
         private ILocalStorageService LocalStorage { get; set; }
 
         [Inject]
@@ -82,6 +85,7 @@ namespace PPMTool.Shared
         private int totalTimesheetIssues;
         private int totalTimesheetCodesToDeactivate;
         private int totalIncompleteSkills;
+        private int totalUnassessedCompetencies;
         private bool adminMenuItemExpanded = false;
         private int? activeUserPersonId;
         private RoleType activeUserRoleType;
@@ -252,10 +256,17 @@ namespace PPMTool.Shared
                     var oldIncompleteSkillsValue = totalIncompleteSkills;
                     totalIncompleteSkills = await SkillTagService.GetIncompleteRecordCountAsync(context, activeUserPersonId ?? 0);
 
+                    // Update competencies badge (only for users associated with a person)
+                    var oldUnassessedCompetenciesValue = totalUnassessedCompetencies;
+                    totalUnassessedCompetencies = activeUserPersonId == null
+                        ? 0
+                        : await CompetencyService.GetUnassessedCountAsync(context, activeUserPersonId.Value);
+
                     // Only call state has changed when something has changed
                     if (oldTimesheetCodeIssuesValue != totalTimesheetCodesToDeactivate ||
                         oldTimesheetIssuesValue != totalTimesheetIssues ||
-                        oldIncompleteSkillsValue != totalIncompleteSkills)
+                        oldIncompleteSkillsValue != totalIncompleteSkills ||
+                        oldUnassessedCompetenciesValue != totalUnassessedCompetencies)
                     {
                         // Only expand the Admin menu item if SuperUser accessing the page and there are codes to be deactivated
                         adminMenuItemExpanded = totalTimesheetCodesToDeactivate > 0 && loginView.ActiveUser.RoleType == RoleType.Superuser;

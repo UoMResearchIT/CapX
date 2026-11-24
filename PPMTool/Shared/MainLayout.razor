@@ -159,7 +159,20 @@ else
                         }
                         @if (FeatureService.IsFeatureEnabled(FeatureType.DevelopmentJourney))
                         {
-                            <RadzenPanelMenuItem Path="competencies" Text="Development Journey" Icon="signpost" />
+                            <RadzenPanelMenuItem Path="competencies" Icon="signpost">
+                                <Template>
+                                    <div style="flex: 1;">
+                                        @if (sidebarExpanded)
+                                        {
+                                            <span>Development Journey</span>
+                                        }
+                                        @if (totalUnassessedCompetencies > 0)
+                                        {
+                                            <span class="rz-badge rz-badge-warning notification-badge" style="margin-left: 0.25rem;">@totalUnassessedCompetencies</span>
+                                        }
+                                    </div>
+                                </Template>
+                            </RadzenPanelMenuItem>
                         }
                         @if (FeatureService.IsFeatureEnabled(FeatureType.Timesheets))
                         {
