@@ -54,6 +54,13 @@ SPDX-License-Identifier: apache-2.0
                 <RadzenIcon Icon="person" IconStyle="IconStyle.Primary" />
                 <RadzenDropDown @bind-Value="@selectedPerson" TValue="Person" TextProperty="Name" Change="PersonSelectedAsync" Data="@availablePeople" Style="width:100%" Disabled="!EditAuthorised" />
             </RadzenStack>
+            @{
+                var unassessedIds = GetUnassessedCompetencyIds();
+            }
+            @if (unassessedIds.Count > 0)
+            {
+                <StatusMessageComponent Message="@(new StatusMessage($"You have not assessed the following competencies: {string.Join(", ", unassessedIds)}", StatusMessage.MessageType.Warning))" />
+            }
             
             @if (Loading)
             {
