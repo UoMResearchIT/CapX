@@ -65,7 +65,7 @@ SPDX-License-Identifier: apache-2.0
                     @foreach (var comp in competencyGroups)
                     {
                         <PathwayGaugeComponent AssessmentsForGradeAndPerson="@comp.CompetencyAssessments"
-                                               TotalNumberOfCompetenciesInGrade="@allCompetencies.Count(x => x.Grade == comp.Grade)"
+                                               TotalNumberOfCompetenciesInGrade="@competenciesBeforeDateFilter.Count(x => x.Grade == comp.Grade)"
                                                Title="@comp.Description" />
                     }
                 </RadzenStack>
