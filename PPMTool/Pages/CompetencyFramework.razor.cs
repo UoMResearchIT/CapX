@@ -220,12 +220,15 @@ namespace PPMTool.Pages
 
         private IEnumerable<Person> availablePeople;
         private IEnumerable<Competency> competencies;
+        private IEnumerable<Competency> competenciesBeforeDateFilter;
         private bool userIsSuperuser;
         private int activeUserId;
         private string competencySearchTerms;
         private IEnumerable<CompetencyGroup> competencyGroups = new List<CompetencyGroup>();
         private bool showUnMetOnly;
         private bool showAllStaff = true;
+        private DateTime? assessedFrom;
+        private DateTime? assessedTo;
         private bool exportRunning;
         private bool downloadFrameworkRunning;
 
@@ -565,7 +568,25 @@ namespace PPMTool.Pages
                     competencies = competencies.Where(x => !exceptionList.Contains(x.CompetencyId));
                 }
 
-                // Setup the accordion data
+                // Keep the list as it is before the date range is applied, for the summary gauges only.
+                // This is not every competency: it is still active only and unmet only if that switch is on.
+                // The date range is the one filter it excludes.
+                competenciesBeforeDateFilter = competencies;
+
+                // Filter the competencies by those whose latest assessment falls within the date range (inclusive)
+                if (assessedFrom != null || assessedTo != null)
+                {
+                    competencies = competencies
+                        .Where(x => x.Assessments
+                            .Where(a => a.PersonId == selectedPerson?.PersonId)
+                            .Max(a => (DateTime?)DateTime.Parse(a.DateCreated).Date) is DateTime latest
+                            && latest >= (assessedFrom?.Date ?? DateTime.MinValue)
+                            && latest <= (assessedTo?.Date ?? DateTime.MaxValue))
+                        .ToList();
+                }
+
+                // Setup the accordion data from the date filtered competencies.
+                // The assessments passed to each group only feed its summary gauge, so they come from competenciesBeforeDateFilter.
                 var groups = new List<CompetencyGroup>();
                 var newGroup = new CompetencyGroup(
                     5,
@@ -575,7 +596,7 @@ namespace PPMTool.Pages
                         .Where(x => x.Grade == 5)
                         .GroupBy(x => x.Category)
                         .OrderBy(x => x.Key),
-                    competencies
+                    competenciesBeforeDateFilter
                         .Where(x => x.Grade == 5)
                         .SelectMany(x => x.Assessments)
                         .Where(x => x.PersonId == selectedPerson?.PersonId)
@@ -591,7 +612,7 @@ namespace PPMTool.Pages
                         .Where(x => x.Grade == 6)
                         .GroupBy(x => x.Category)
                         .OrderBy(x => x.Key),
-                    competencies
+                    competenciesBeforeDateFilter
                         .Where(x => x.Grade == 6)
                         .SelectMany(x => x.Assessments)
                         .Where(x => x.PersonId == selectedPerson?.PersonId)
@@ -607,7 +628,7 @@ namespace PPMTool.Pages
                         .Where(x => x.Grade == 7)
                         .GroupBy(x => x.Category)
                         .OrderBy(x => x.Key),
-                    competencies
+                    competenciesBeforeDateFilter
                         .Where(x => x.Grade == 7)
                         .SelectMany(x => x.Assessments)
                         .Where(x => x.PersonId == selectedPerson?.PersonId)

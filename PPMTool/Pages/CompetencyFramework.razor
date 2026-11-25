@@ -65,7 +65,7 @@ SPDX-License-Identifier: apache-2.0
                     @foreach (var comp in competencyGroups)
                     {
                         <PathwayGaugeComponent AssessmentsForGradeAndPerson="@comp.CompetencyAssessments"
-                                               TotalNumberOfCompetenciesInGrade="@comp.Total"
+                                               TotalNumberOfCompetenciesInGrade="@competenciesBeforeDateFilter.Count(x => x.Grade == comp.Grade)"
                                                Title="@comp.Description" />
                     }
                 </RadzenStack>
@@ -91,7 +91,7 @@ SPDX-License-Identifier: apache-2.0
         </div>
         <div class="row">
             <div class="col">
-                <RadzenText Text="Complete your assessment by expanding each category. You can edit previous assessments or add new ones to keep track of your journey. You can also filter on particular competencies through the search or just the unmet ones with the switches."        
+                <RadzenText Text="Complete your assessment by expanding each category. You can edit previous assessments or add new ones to keep track of your journey. You can also filter on particular competencies through the search, just the unmet ones with the switches, or those last assessed within a date range."
                             TextStyle="TextStyle.Body2" />
             </div>
         </div>
@@ -110,6 +110,14 @@ SPDX-License-Identifier: apache-2.0
                                   Click="@ClearSearch"
                                   MouseEnter="@(args => ShowTooltip(args, "Clear"))"
                                   Disabled="@Loading" />
+                </RadzenStack>
+            </div>
+            <div class="col-auto">
+                <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="AlignItems.Center" Style="margin-top: -0.3rem">
+                    <RadzenText Text="Last Assessed:" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
+                    <RadzenDatePicker @bind-Value="@assessedFrom" DateFormat="dd/MM/yyyy" AllowClear="true" Disabled="@Loading" Change="@(async () => await LoadDataAsync())" />
+                    <RadzenText Text="to" TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0" />
+                    <RadzenDatePicker @bind-Value="@assessedTo" DateFormat="dd/MM/yyyy" AllowClear="true" Disabled="@Loading" Change="@(async () => await LoadDataAsync())" />
                 </RadzenStack>
             </div>
         </div>
