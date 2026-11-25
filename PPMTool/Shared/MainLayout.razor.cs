@@ -48,6 +48,9 @@ namespace PPMTool.Shared
         private SkillTagService SkillTagService { get; set; }
 
         [Inject]
+        private CompetencyService CompetencyService { get; set; }
+
+        [Inject]
         private ILocalStorageService LocalStorage { get; set; }
 
         [Inject]
@@ -82,6 +85,7 @@ namespace PPMTool.Shared
         private int totalTimesheetIssues;
         private int totalTimesheetCodesToDeactivate;
         private int totalIncompleteSkills;
+        private int totalUnassessedCompetencies;
         private bool adminMenuItemExpanded = false;
         private int? activeUserPersonId;
         private RoleType activeUserRoleType;
@@ -240,22 +244,42 @@ namespace PPMTool.Shared
             {
                 using (var context = ContextFactory.CreateDbContext())
                 {
-                    // Update timesheet badge
+                    // Only query for the badges of features that are enabled
                     var oldTimesheetIssuesValue = totalTimesheetIssues;
-                    totalTimesheetIssues = await TimesheetService.GetIssueCountAsync(context, activeUserPersonId ?? 0);
-
-                    // Update timesheet code badge
                     var oldTimesheetCodeIssuesValue = totalTimesheetCodesToDeactivate;
-                    totalTimesheetCodesToDeactivate = (await InnateCodeService.GetCodesToDeactivateAsync(context)).Count();
-
-                    // Update skills badge
                     var oldIncompleteSkillsValue = totalIncompleteSkills;
-                    totalIncompleteSkills = await SkillTagService.GetIncompleteRecordCountAsync(context, activeUserPersonId ?? 0);
+                    var oldUnassessedCompetenciesValue = totalUnassessedCompetencies;
+                    totalTimesheetIssues = 0;
+                    totalTimesheetCodesToDeactivate = 0;
+                    totalIncompleteSkills = 0;
+                    totalUnassessedCompetencies = 0;
+
+                    if (FeatureService.IsFeatureEnabled(FeatureType.Timesheets))
+                    {
+                        // Update timesheet badge
+                        totalTimesheetIssues = await TimesheetService.GetIssueCountAsync(context, activeUserPersonId ?? 0);
+
+                        // Update timesheet code badge
+                        totalTimesheetCodesToDeactivate = (await InnateCodeService.GetCodesToDeactivateAsync(context)).Count();
+                    }
+
+                    if (FeatureService.IsFeatureEnabled(FeatureType.Skills))
+                    {
+                        // Update skills badge
+                        totalIncompleteSkills = await SkillTagService.GetIncompleteRecordCountAsync(context, activeUserPersonId ?? 0);
+                    }
+
+                    if (FeatureService.IsFeatureEnabled(FeatureType.DevelopmentJourney) && activeUserPersonId != null)
+                    {
+                        // Update competencies badge (only for users associated with a person)
+                        totalUnassessedCompetencies = await CompetencyService.GetUnassessedCountAsync(context, activeUserPersonId.Value);
+                    }
 
                     // Only call state has changed when something has changed
                     if (oldTimesheetCodeIssuesValue != totalTimesheetCodesToDeactivate ||
                         oldTimesheetIssuesValue != totalTimesheetIssues ||
-                        oldIncompleteSkillsValue != totalIncompleteSkills)
+                        oldIncompleteSkillsValue != totalIncompleteSkills ||
+                        oldUnassessedCompetenciesValue != totalUnassessedCompetencies)
                     {
                         // Only expand the Admin menu item if SuperUser accessing the page and there are codes to be deactivated
                         adminMenuItemExpanded = totalTimesheetCodesToDeactivate > 0 && loginView.ActiveUser.RoleType == RoleType.Superuser;

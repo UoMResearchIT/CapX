@@ -498,6 +498,26 @@ namespace PPMTool.Pages
         }
 
         /// <summary>
+        /// Gets the IDs of the competencies the active user has no assessment of any kind against.
+        /// Returns no IDs when viewing someone else's journey.
+        /// </summary>
+        /// <returns></returns>
+        private List<string> GetUnassessedCompetencyIds()
+        {
+            if (Loading || competencies == null || selectedPerson == null || selectedPerson.PersonId != activeUserId)
+            {
+                return new List<string>();
+            }
+            return competencies
+                .Where(x => !x.Assessments.Any(a => a.PersonId == activeUserId))
+                .OrderBy(x => x.Grade)
+                .ThenBy(x => x.Category)
+                .ThenBy(x => x.Number)
+                .Select(x => x.GetHierarchyId())
+                .ToList();
+        }
+
+        /// <summary>
         /// Method to create a background task for loading the available people dropdown
         /// </summary>
         /// <returns></returns>
@@ -692,6 +712,11 @@ namespace PPMTool.Pages
                     CompetencyService.UpdateAssessment(Context, assessment) :
                     CompetencyService.AddAssessment(Context, assessment);
                     UpdateMet();
+                    // Refresh the sidebar badge without navigating away after adding your own assessment
+                    if (!isUpdate && assessment.PersonId == activeUserId)
+                    {
+                        Layout?.Render();
+                    }
                     StateHasChanged();
                     return string.Empty;
                 }

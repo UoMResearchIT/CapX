@@ -82,6 +82,19 @@ namespace PPMTool.Services
                 .Where(x => x.IsActive);
         }
 
+        /// <summary>
+        /// Returns the number of active competencies the given person has no assessment of any kind against
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="personId"></param>
+        /// <returns></returns>
+        public async Task<int> GetUnassessedCountAsync(PPMToolContext context, int personId)
+        {
+            return await context.Competencies
+                .Where(x => x.IsActive && !x.Assessments.Any(a => a.PersonId == personId))
+                .CountAsync();
+        }
+
         /// <inheritdoc />
         public override int Update(PPMToolContext context, Competency entity, bool commitChanges = true)
         {
