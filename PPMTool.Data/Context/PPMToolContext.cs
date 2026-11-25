@@ -79,6 +79,12 @@ namespace PPMTool.Data.Context
                 .HasForeignKey(x => x.CostValueSetId)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            // Give the join table a meaningful name
+            modelBuilder.Entity<Project>()
+                .HasMany(x => x.InterestedPeople)
+                .WithMany(x => x.InterestedProjects)
+                .UsingEntity("ProjectInterest");
+
             modelBuilder.Entity<FinancialReferenceValue>()
                 .HasOne(x => x.FinancialReferenceValueSet)
                 .WithMany()
