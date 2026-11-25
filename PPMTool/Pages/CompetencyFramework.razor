@@ -56,10 +56,10 @@ SPDX-License-Identifier: apache-2.0
             </RadzenStack>
             @{
                 var unassessedIds = GetUnassessedCompetencyIds();
-            }
-            @if (unassessedIds.Count > 0)
-            {
-                <StatusMessageComponent Message="@(new StatusMessage($"You have not assessed the following competencies: {string.Join(", ", unassessedIds)}", StatusMessage.MessageType.Warning))" />
+                if (unassessedIds.Count > 0)
+                {
+                    <StatusMessageComponent Message="@(new StatusMessage($"You have not assessed the following competencies: {string.Join(", ", unassessedIds)}", StatusMessage.MessageType.Warning))" />
+                }
             }
             
             @if (Loading)
