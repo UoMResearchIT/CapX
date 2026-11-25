@@ -205,5 +205,30 @@ namespace PPMTool.Pages
             selectedSkillTags = values ?? Enumerable.Empty<int>();
             FilterProjects();
         }
+
+        /// <summary>
+        /// Whether the active user has expressed an interest in the project
+        /// </summary>
+        /// <param name="project"></param>
+        /// <returns></returns>
+        private bool IsInterested(Project project)
+        {
+            return project.InterestedPeople.Contains(ActiveUser?.Person);
+        }
+
+        /// <summary>
+        /// Toggle the active user's interest by adding or removing them from the project's interested people
+        /// </summary>
+        /// <param name="project"></param>
+        private void ToggleInterest(Project project)
+        {
+            var person = ActiveUser?.Person;
+            if (person == null) return;
+
+            var withdrawn = project.InterestedPeople.Remove(person);
+            if (!withdrawn) project.InterestedPeople.Add(person);
+            ProjectService.CommitChanges(Context);
+            LogInformation($"{(withdrawn ? "Withdrew" : "Expressed")} interest in project {project.GetSensibleObjectName()}");
+        }
     }
 }

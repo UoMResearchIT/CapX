@@ -87,6 +87,9 @@ SPDX-License-Identifier: apache-2.0
                                                       FilterEndDate="@endDate"
                                                       SkillsList="@project.Skills"
                                                       ResourceNames="@project.AssignedResourceNames"
+                                                      IsInterested="@IsInterested(project.Project)"
+                                                      CanExpressInterest="@(ActiveUser?.Person != null)"
+                                                      OnToggleInterest="@(() => ToggleInterest(project.Project))"
                                                       DisplayUnmetDemand="@(viewMode == ViewMode.Unmet)" />
                     }
                 </RadzenStack>
@@ -104,6 +107,9 @@ SPDX-License-Identifier: apache-2.0
                                                   FilterEndDate="@endDate"
                                                   SkillsList="@project.Skills"
                                                   ResourceNames="@project.AssignedResourceNames"
+                                                  IsInterested="@IsInterested(project.Project)"
+                                                  CanExpressInterest="@(ActiveUser?.Person != null)"
+                                                  OnToggleInterest="@(() => ToggleInterest(project.Project))"
                                                   DisplayUnmetDemand="@(viewMode == ViewMode.Unmet)" />
                 }
             </RadzenStack>
