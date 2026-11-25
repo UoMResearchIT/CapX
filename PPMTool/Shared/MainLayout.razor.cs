@@ -244,23 +244,36 @@ namespace PPMTool.Shared
             {
                 using (var context = ContextFactory.CreateDbContext())
                 {
-                    // Update timesheet badge
+                    // Only query for the badges of features that are enabled
                     var oldTimesheetIssuesValue = totalTimesheetIssues;
-                    totalTimesheetIssues = await TimesheetService.GetIssueCountAsync(context, activeUserPersonId ?? 0);
-
-                    // Update timesheet code badge
                     var oldTimesheetCodeIssuesValue = totalTimesheetCodesToDeactivate;
-                    totalTimesheetCodesToDeactivate = (await InnateCodeService.GetCodesToDeactivateAsync(context)).Count();
-
-                    // Update skills badge
                     var oldIncompleteSkillsValue = totalIncompleteSkills;
-                    totalIncompleteSkills = await SkillTagService.GetIncompleteRecordCountAsync(context, activeUserPersonId ?? 0);
-
-                    // Update competencies badge (only for users associated with a person)
                     var oldUnassessedCompetenciesValue = totalUnassessedCompetencies;
-                    totalUnassessedCompetencies = activeUserPersonId == null
-                        ? 0
-                        : await CompetencyService.GetUnassessedCountAsync(context, activeUserPersonId.Value);
+                    totalTimesheetIssues = 0;
+                    totalTimesheetCodesToDeactivate = 0;
+                    totalIncompleteSkills = 0;
+                    totalUnassessedCompetencies = 0;
+
+                    if (FeatureService.IsFeatureEnabled(FeatureType.Timesheets))
+                    {
+                        // Update timesheet badge
+                        totalTimesheetIssues = await TimesheetService.GetIssueCountAsync(context, activeUserPersonId ?? 0);
+
+                        // Update timesheet code badge
+                        totalTimesheetCodesToDeactivate = (await InnateCodeService.GetCodesToDeactivateAsync(context)).Count();
+                    }
+
+                    if (FeatureService.IsFeatureEnabled(FeatureType.Skills))
+                    {
+                        // Update skills badge
+                        totalIncompleteSkills = await SkillTagService.GetIncompleteRecordCountAsync(context, activeUserPersonId ?? 0);
+                    }
+
+                    if (FeatureService.IsFeatureEnabled(FeatureType.DevelopmentJourney) && activeUserPersonId != null)
+                    {
+                        // Update competencies badge (only for users associated with a person)
+                        totalUnassessedCompetencies = await CompetencyService.GetUnassessedCountAsync(context, activeUserPersonId.Value);
+                    }
 
                     // Only call state has changed when something has changed
                     if (oldTimesheetCodeIssuesValue != totalTimesheetCodesToDeactivate ||
