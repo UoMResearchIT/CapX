@@ -712,6 +712,11 @@ namespace PPMTool.Pages
                     CompetencyService.UpdateAssessment(Context, assessment) :
                     CompetencyService.AddAssessment(Context, assessment);
                     UpdateMet();
+                    // Refresh the sidebar badge without navigating away after adding your own assessment
+                    if (!isUpdate && assessment.PersonId == activeUserId)
+                    {
+                        Layout?.Render();
+                    }
                     StateHasChanged();
                     return string.Empty;
                 }
