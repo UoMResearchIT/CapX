@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: apache-2.0
 
-using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using PPMTool.Data;
@@ -22,36 +21,12 @@ namespace PPMTool.Pages
         [Inject]
         private HtmlContentSanitizerService HtmlContentSanitizer { get; set; }
 
+        [Inject]
+        private PrivacyNoticeService PrivacyNoticeService { get; set; }
+
         private string logo;
 
-        private bool PrivacyNoticeSettingsAreComplete
-        {
-            get
-            {
-                var content = SettingsService.GetSetting(SettingType.PrivacyNoticeContent);
-                var url = SettingsService.GetSetting(SettingType.PrivacyNoticeUrl);
-                var date = SettingsService.GetSetting(SettingType.PrivacyNoticeDate);
-
-                return !string.IsNullOrWhiteSpace(content) &&
-                    IsValidPrivacyNoticeUrl(url) &&
-                    !string.IsNullOrWhiteSpace(url) &&
-                    IsValidPrivacyNoticeDate(date) &&
-                    !string.IsNullOrWhiteSpace(date);
-            }
-        }
-
-        private static bool IsValidPrivacyNoticeUrl(string value)
-        {
-            return string.IsNullOrWhiteSpace(value) ||
-                (Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
-                 (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps));
-        }
-
-        private static bool IsValidPrivacyNoticeDate(string value)
-        {
-            return string.IsNullOrWhiteSpace(value) ||
-                DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
-        }
+        private bool PrivacyNoticeSettingsAreComplete => PrivacyNoticeService.GetConfiguredNotice() != null;
 
         protected override async Task OnInitializedAsync()
         {
@@ -84,14 +59,16 @@ namespace PPMTool.Pages
             {
                 entity.SettingValue = HtmlContentSanitizer.Sanitize(entity.SettingValue);
             }
-            else if (entity.SettingType == SettingType.PrivacyNoticeUrl && !IsValidPrivacyNoticeUrl(entity.SettingValue))
+            else if (entity.SettingType == SettingType.PrivacyNoticeUrl && !PPMTool.Services.PrivacyNoticeService.IsValidPrivacyNoticeUrl(entity.SettingValue))
             {
                 SetErrorMessage(new StatusMessage("The privacy notice URL must be an absolute HTTP or HTTPS URL, or blank.", StatusMessage.MessageType.Error));
                 MarkRowSaveFailed();
                 StateHasChanged();
                 return;
             }
-            else if (entity.SettingType == SettingType.PrivacyNoticeDate && !IsValidPrivacyNoticeDate(entity.SettingValue))
+            else if (entity.SettingType == SettingType.PrivacyNoticeDate &&
+                !string.IsNullOrWhiteSpace(entity.SettingValue) &&
+                !PPMTool.Services.PrivacyNoticeService.TryParsePrivacyNoticeDate(entity.SettingValue, out _))
             {
                 SetErrorMessage(new StatusMessage("The privacy notice date must use yyyy-MM-dd format, or be blank.", StatusMessage.MessageType.Error));
                 MarkRowSaveFailed();

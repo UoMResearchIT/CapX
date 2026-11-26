@@ -90,7 +90,7 @@ SPDX-License-Identifier: apache-2.0
                             }
                             else if (setting.SettingType == SettingType.PrivacyNoticeDate)
                             {
-                                <RadzenTextBox class="no-margin" @bind-Value="setting.SettingValue" Placeholder="yyyy-MM-dd" />
+                                <input class="form-control" type="date" value="@setting.SettingValue" @onchange="@(args => setting.SettingValue = args.Value?.ToString() ?? string.Empty)" aria-label="Current privacy notice date" />
                             }
                             else if (setting.SettingType.IsOrganisationLogo())
                             {
