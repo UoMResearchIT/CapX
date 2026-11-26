@@ -15,6 +15,9 @@ namespace PPMTool.Services
     /// <summary>
     /// The institution's configured in-app privacy notice.
     /// </summary>
+    /// <param name="Content">The sanitized HTML content to display.</param>
+    /// <param name="Url">The absolute HTTP or HTTPS URL for the full institutional notice.</param>
+    /// <param name="Date">The calendar date identifying this version of the notice.</param>
     public sealed record PrivacyNoticeConfiguration(string Content, string Url, DateOnly Date);
 
     /// <summary>
@@ -26,6 +29,12 @@ namespace PPMTool.Services
         private readonly HtmlContentSanitizerService htmlContentSanitizer;
         private readonly IDbContextFactory<PPMToolContext> contextFactory;
 
+        /// <summary>
+        /// Creates a service for loading the configured privacy notice and saving user acknowledgements.
+        /// </summary>
+        /// <param name="settingsService">The service that reads the configured privacy notice settings.</param>
+        /// <param name="htmlContentSanitizer">The sanitizer used for notice content.</param>
+        /// <param name="contextFactory">The factory used to create database contexts for acknowledgement updates.</param>
         public PrivacyNoticeService(
             SettingsService settingsService,
             HtmlContentSanitizerService htmlContentSanitizer,
@@ -60,6 +69,8 @@ namespace PPMTool.Services
         /// Determines whether the current notice must be presented to the user.
         /// The date is compared for equality, not as an ordered version number.
         /// </summary>
+        /// <param name="user">The user whose acknowledgement is being checked.</param>
+        /// <param name="notice">The currently configured notice.</param>
         public static bool RequiresAcknowledgement(User user, PrivacyNoticeConfiguration notice)
         {
             return user.PrivacyNoticeAcknowledgedAt == null ||
@@ -69,6 +80,7 @@ namespace PPMTool.Services
         /// <summary>
         /// Validates an optional absolute HTTP or HTTPS privacy notice URL.
         /// </summary>
+        /// <param name="value">The URL to validate, or a blank value when no URL is configured.</param>
         public static bool IsValidPrivacyNoticeUrl(string? value)
         {
             return string.IsNullOrWhiteSpace(value) ||
@@ -79,6 +91,9 @@ namespace PPMTool.Services
         /// <summary>
         /// Validates an optional ISO-8601 calendar date.
         /// </summary>
+        /// <param name="value">The date string to parse, in yyyy-MM-dd format.</param>
+        /// <param name="date">The parsed calendar date, or the default value if parsing fails.</param>
+        /// <returns>True when the value contains a valid date in the required format; otherwise, false.</returns>
         public static bool TryParsePrivacyNoticeDate(string? value, out DateOnly date)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -98,6 +113,9 @@ namespace PPMTool.Services
         /// <summary>
         /// Records the date shown and the time at which this user acknowledged it.
         /// </summary>
+        /// <param name="userId">The ID of the user who acknowledged the notice.</param>
+        /// <param name="noticeDate">The calendar date identifying the notice that was shown.</param>
+        /// <returns>The local date and time at which the acknowledgement was recorded.</returns>
         public async Task<DateTime> AcknowledgeAsync(int userId, DateOnly noticeDate)
         {
             await using var context = await contextFactory.CreateDbContextAsync();

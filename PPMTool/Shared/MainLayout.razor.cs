@@ -273,6 +273,9 @@ namespace PPMTool.Shared
             }
         }
 
+        /// <summary>
+        /// Displays the configured privacy notice when the active user has not acknowledged its current date.
+        /// </summary>
         private async Task ShowPrivacyNoticeIfRequiredAsync()
         {
             var activeUser = loginView?.ActiveUser;
