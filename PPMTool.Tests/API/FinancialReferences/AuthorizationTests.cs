@@ -15,5 +15,15 @@ namespace PPMTool.Tests.API.FinancialReferences
                 Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
             }
         }
+
+        [Test]
+        public async Task GetFinancialReferenceByFinancialYearAsNonManagerShouldReturnUnauthorised()
+        {
+            using (var client = GetClientAsDeveloper())
+            {
+                var response = await client.GetAsync($"financialReferences/getByFinancialYear?financialYear={FinancialYear}");
+                Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
+            }
+        }
     }
 }
