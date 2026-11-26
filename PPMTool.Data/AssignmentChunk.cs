@@ -81,6 +81,11 @@ namespace PPMTool.Data
         public string AssignmentType { get; set; } = Duty.ProjectWork.GetDescription();
 
         /// <summary>
+        /// Gets or sets a value indicating whether the item is provisional.
+        /// </summary>
+        public bool IsProvisional { get; set; }
+
+        /// <summary>
         /// This is the unique key which identifies the resource from which this chunk was defined
         /// </summary>
         public string UniqueResourceKey { get; }
@@ -117,6 +122,7 @@ namespace PPMTool.Data
             FundingSourceDescription = taskToCopy.FundingSourceDescription;
             PlannedCost = taskToCopy.PlannedCost;
             AssignmentType = taskToCopy.AssignmentType;
+            IsProvisional = taskToCopy.IsProvisional;
             UniqueResourceKey = taskToCopy.UniqueResourceKey;
         }
 
