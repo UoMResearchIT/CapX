@@ -137,6 +137,7 @@ namespace PPMTool.Data.Helpers
                     FundingSourceDescription = string.IsNullOrWhiteSpace(fundingSource?.Description)
                             ? "None"
                             : fundingSource.Description,
+                    IsProvisional = resource.IsProvisional,
                     AssignmentType = task.TaskDuty.GetDescription()
                 };
 

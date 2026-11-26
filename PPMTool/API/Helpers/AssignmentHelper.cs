@@ -134,6 +134,7 @@ namespace PPMTool.API.Helpers
                     TaskName: chunk.TaskName,
                     StartDate: chunk.StartDate,
                     EndDate: chunk.EndDate,
+                    IsProvisional: chunk.IsProvisional,
                     AssignmentType: chunk.AssignmentType
                 );
             }).ToList();
