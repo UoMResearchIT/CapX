@@ -76,6 +76,7 @@ SPDX-License-Identifier: apache-2.0
     private bool queryRunning;
     private int totalRowsOnChart;
     private Dictionary<Person, IEnumerable<SkillTag>> matchedSkills;
+    private List<Person> interestedPeople;
 
     protected override void OnInitialized()
     {
@@ -188,6 +189,10 @@ SPDX-License-Identifier: apache-2.0
             Logger.LogInformation("Looking for resource suggestions...");
 
             var context = DbContextFactory.CreateDbContext();
+            interestedPeople = context.People
+                .Include(x => x.WorkloadModelChanges)
+                .Where(x => x.InterestedProjects.Any(project => project.ProjectId == TaskModel.OwningProject.ProjectId))
+                .ToList();
             IEnumerable<Person> candidatePeople;
 
             // Different logic for leadership vs non-leadership tasks when getting candidate people
@@ -199,9 +204,10 @@ SPDX-License-Identifier: apache-2.0
             }
             else
             {
-                // For non-leadership tasks, find people with at least one matching skill tag
-                candidatePeople = SkillTagService.GetPeopleWithAtLeastOneMatch(context, TaskModel.SkillsRequired);
-                Debug.WriteLine($"** Found {candidatePeople.Count()} people with at least one matching skill");
+                // For non-leadership tasks, include people with matching skills or interest in this project
+                candidatePeople = SkillTagService.GetPeopleWithAtLeastOneMatch(context, TaskModel.SkillsRequired)
+                    .UnionBy(interestedPeople, x => x.PersonId);
+                Debug.WriteLine($"** Found {candidatePeople.Count()} people with matching skills or project interest");
             }
 
             // Get projects that run during this task
@@ -392,7 +398,10 @@ SPDX-License-Identifier: apache-2.0
         {
             numberMatched = matches.Count();
         }
-        var message = $"{numberMatched} Matched Skill(s): ";
+        var message = interestedPeople.Any(x => x.PersonId == person.PersonId)
+            ? "<div>Has expressed an interest in this project</div>"
+            : string.Empty;
+        message += $"{numberMatched} Matched Skill(s): ";
         if (numberMatched > 0)
         {
             foreach (var skill in matches)
