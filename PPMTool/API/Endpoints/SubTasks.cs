@@ -24,7 +24,7 @@ namespace PPMTool.API.Endpoints
         /// <param name="context"></param>
         /// <param name="logger"></param>
         /// <param name="http"></param>
-        /// <param name="projectId">The project ID.</param>
+        /// <param name="projectId">The project ID (primary key).</param>
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SubTaskDTO>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
