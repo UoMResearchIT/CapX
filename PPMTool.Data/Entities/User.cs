@@ -57,6 +57,16 @@ namespace PPMTool.Data.Entities
         public string? LastLoggedIn { get; set; }
 
         /// <summary>
+        /// Local date and time when the user acknowledged the current privacy notice.
+        /// </summary>
+        public DateTime? PrivacyNoticeAcknowledgedAt { get; set; }
+
+        /// <summary>
+        /// Date of the privacy notice the user acknowledged, compared for equality with the current notice date.
+        /// </summary>
+        public DateOnly? PrivacyNoticeAcknowledgedDate { get; set; }
+
+        /// <summary>
         /// Comma separated list of email addresses for this user
         /// </summary>
         [Required]
