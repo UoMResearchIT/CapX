@@ -46,5 +46,15 @@ namespace PPMTool.Tests.API.Skills
                 Assert.That(response.IsSuccessStatusCode);
             }
         }
+
+        [Test]
+        public async Task GetAllSkillsForProjectShouldReturnOK()
+        {
+            using (var client = GetClientAsManager())
+            {
+                var response = await client.GetAsync($"skills/getAllForProject?projectId={ProjectId}");
+                Assert.That(response.IsSuccessStatusCode);
+            }
+        }
     }
 }
