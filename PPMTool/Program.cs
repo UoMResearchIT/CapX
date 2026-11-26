@@ -330,6 +330,7 @@ var api = app.MapGroup("/api");
 api.MapGet("/skills/getAll", Skills.GetAllSkillTagsAsync);
 api.MapGet("/skills/getAllForPerson", Skills.GetAllSkillsTagsForPersonAsync);
 api.MapGet("/skills/getAllGrouped", Skills.GetAllPeopleWithSkillTagsAsync);
+api.MapGet("skills/getAllForSubTask", Skills.GetAllSkillTagsForSubTaskAsync);
 api.MapGet("/timesheets/getEntries", Timesheets.GetTimesheetEntriesForPersonForDateRange);
 api.MapGet("/timesheets/getByCodeTask", Timesheets.GetTimesheetBookingsByCodeAndTask);
 api.MapGet("/wlm/getAnalysis", WorkloadModels.GetWorkloadAnalysisData);

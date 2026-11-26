@@ -167,4 +167,50 @@ public static class Skills
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+
+    /// <summary>
+    /// Get skills tags associated with the provided subtask.
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="logger"></param>
+    /// <param name="subTaskId">The sub-task ID.</param>
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SkillTagDTO>))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public static async Task<IResult> GetAllSkillTagsForSubTaskAsync(
+        PPMToolContext context,
+        ILogger logger,
+        [FromQuery] int? subTaskId)
+    {
+        try
+        {
+            if (!subTaskId.HasValue || subTaskId.Value <= 0)
+            {
+                logger.LogWarning(
+                    "API: GetAllSkillTagsForSubTask: Invalid subTaskId {SubTaskId}",
+                    subTaskId);
+
+                return Results.BadRequest("Sub-task ID must be greater than zero.");
+            }
+
+            var tags = await context.SkillTags
+                .AsNoTracking()
+                .ToListAsync();
+
+            // Map the database entities to DTOs
+            var tagDtos = tags.Select(t => new SkillTagDTO(
+                SkillTagId: t.SkillTagId,
+                Name: t.Name
+            ));
+
+            logger.LogInformation("API: GetAllSkillsTags: Count = {Count}", tagDtos.Count());
+            return Results.Json(tagDtos);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "API: GetAllSkillsTags error");
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
 }
