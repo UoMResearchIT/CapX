@@ -47,6 +47,9 @@ namespace PPMTool.Pages
         [Inject]
         private SubTaskService SubTaskService { get; set; }
 
+        [Inject]
+        private DialogService DialogService { get; set; }
+
         private IEnumerable<ProjectWithAdditionalData> projectsToShow;
         private IEnumerable<IGrouping<ProjectStatus, ProjectWithAdditionalData>> projectsToShowGrouped;
         private IList<ProjectWithAdditionalData> allProjectsNotCancelled;
@@ -220,15 +223,26 @@ namespace PPMTool.Pages
         /// Toggle the active user's interest by adding or removing them from the project's interested people
         /// </summary>
         /// <param name="project"></param>
-        private void ToggleInterest(Project project)
+        private async Task ToggleInterest(Project project)
         {
             var person = ActiveUser?.Person;
             if (person == null) return;
 
-            var withdrawn = project.InterestedPeople.Remove(person);
-            if (!withdrawn) project.InterestedPeople.Add(person);
+            var isWithdrawing = IsInterested(project);
+            var message = isWithdrawing
+                ? $"You are about to withdraw your interest in {ProjectService.GetFullName(project)}."
+                : $"You are about to express an interest in working on {ProjectService.GetFullName(project)}.";
+
+            var confirmed = await DialogService.Confirm(message, isWithdrawing ? "Withdraw Interest" : "Express Interest") ?? false;
+            if (!confirmed) return;
+
+            if (isWithdrawing)
+                project.InterestedPeople.Remove(person);
+            else
+                project.InterestedPeople.Add(person);
+
             ProjectService.CommitChanges(Context);
-            LogInformation($"{(withdrawn ? "Withdrew" : "Expressed")} interest in project {project.GetSensibleObjectName()}");
+            LogInformation($"{(isWithdrawing ? "Withdrew" : "Expressed")} interest in project {project.GetSensibleObjectName()}");
         }
     }
 }
