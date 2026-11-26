@@ -15,5 +15,15 @@ namespace PPMTool.Tests.API.People
                 Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
             }
         }
+
+        [Test]
+        public async Task GetPersonByIdAsNonManagerShouldReturnUnauthorised()
+        {
+            using (var client = GetClientAsDeveloper())
+            {
+                var response = await client.GetAsync($"people/getById?personId={PersonId}");
+                Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
+            }
+        }
     }
 }

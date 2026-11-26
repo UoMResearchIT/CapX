@@ -15,5 +15,15 @@ namespace PPMTool.Tests.API.SubTasks
                 Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
             }
         }
+
+        [Test]
+        public async Task GetSubTaskByIdAsNonManagerShouldReturnUnauthorised()
+        {
+            using (var client = GetClientAsDeveloper())
+            {
+                var response = await client.GetAsync($"subTasks/getById?subTaskId={SubTaskId}");
+                Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
+            }
+        }
     }
 }

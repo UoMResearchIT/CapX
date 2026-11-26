@@ -24,7 +24,7 @@ namespace PPMTool.API.Endpoints
         /// <param name="context"></param>
         /// <param name="logger"></param>
         /// <param name="http"></param>
-        /// <param name="projectId">The project ID.</param>
+        /// <param name="projectId">The project ID (primary key).</param>
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SubTaskDTO>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -169,7 +169,7 @@ namespace PPMTool.API.Endpoints
         }
 
         /// <summary>
-        /// Create a fixed-duration task on an existing Project. See <see cref="WriteSubTaskDTO"/>.
+        /// Create a fixed-duration task on an existing Project.
         /// </summary>
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WriteSubTaskResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
@@ -205,7 +205,6 @@ namespace PPMTool.API.Endpoints
 
         /// <summary>
         /// Update a task's name, duty, dates or demand, identified by SubTaskId.
-        /// See <see cref="UpdateSubTaskRequestDTO"/>.
         /// </summary>
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateSubTaskResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]

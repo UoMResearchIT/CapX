@@ -15,5 +15,25 @@ namespace PPMTool.Tests.API.Resources
                 Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
             }
         }
+
+        [Test]
+        public async Task GetResourceByIdAsNonManagerShouldReturnUnauthorised()
+        {
+            using (var client = GetClientAsDeveloper())
+            {
+                var response = await client.GetAsync($"resources/getById?resourceId={ResourceId}");
+                Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
+            }
+        }
+
+        [Test]
+        public async Task GetAllResourcesForProjectAsNonManagerShouldReturnUnauthorised()
+        {
+            using (var client = GetClientAsDeveloper())
+            {
+                var response = await client.GetAsync($"resources/getAllForProject?projectId={ProjectId}");
+                Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
+            }
+        }
     }
 }

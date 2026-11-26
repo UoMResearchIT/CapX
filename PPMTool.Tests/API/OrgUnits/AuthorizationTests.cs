@@ -17,11 +17,31 @@ namespace PPMTool.Tests.API.OrgUnits
         }
 
         [Test]
+        public async Task GetSchoolByIdAsNonManagerShouldReturnUnauthorised()
+        {
+            using (var client = GetClientAsDeveloper())
+            {
+                var response = await client.GetAsync($"schools/getById?schoolId={SchoolId}");
+                Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
+            }
+        }
+
+        [Test]
         public async Task GetAllFacultiesAsNonManagerShouldReturnUnauthorised()
         {
             using (var client = GetClientAsDeveloper())
             {
                 var response = await client.GetAsync("faculties/getAll");
+                Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
+            }
+        }
+
+        [Test]
+        public async Task GetFacultyByIdAsNonManagerShouldReturnUnauthorised()
+        {
+            using (var client = GetClientAsDeveloper())
+            {
+                var response = await client.GetAsync($"faculties/getById?facultyId={FacultyId}");
                 Assert.That(response.StatusCode == System.Net.HttpStatusCode.Unauthorized);
             }
         }

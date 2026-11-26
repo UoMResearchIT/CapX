@@ -278,8 +278,7 @@ namespace PPMTool.API.Endpoints
         }
 
         /// <summary>
-        /// Create or update a person's workload model change. See
-        /// <see cref="WriteWorkloadModelChangeDTO"/>.
+        /// Create or update a person's workload model change.
         /// </summary>
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(WriteWorkloadModelChangeResponseDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(WriteErrorDTO))]
