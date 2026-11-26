@@ -1095,6 +1095,21 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                     b.ToTable("PersonProject");
                 });
 
+            modelBuilder.Entity("ProjectInterest", b =>
+                {
+                    b.Property<int>("InterestedPeoplePersonId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InterestedProjectsProjectId")
+                        .HasColumnType("int");
+
+                    b.HasKey("InterestedPeoplePersonId", "InterestedProjectsProjectId");
+
+                    b.HasIndex("InterestedProjectsProjectId");
+
+                    b.ToTable("ProjectInterest");
+                });
+
             modelBuilder.Entity("SkillTagSubTask", b =>
                 {
                     b.Property<int>("SkillsRequiredSkillTagId")
@@ -1435,6 +1450,21 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                     b.HasOne("PPMTool.Data.Entities.Person", null)
                         .WithMany()
                         .HasForeignKey("FollowersPersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ProjectInterest", b =>
+                {
+                    b.HasOne("PPMTool.Data.Entities.Person", null)
+                        .WithMany()
+                        .HasForeignKey("InterestedPeoplePersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PPMTool.Data.Entities.Project", null)
+                        .WithMany()
+                        .HasForeignKey("InterestedProjectsProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

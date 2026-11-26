@@ -88,6 +88,12 @@ namespace PPMTool.Data.Entities
         public virtual ICollection<Project> FollowedProjects { get; set; } = new List<Project>();
 
         /// <summary>
+        /// List of projects this person has expressed an interest in working on
+        /// </summary>
+        [InverseProperty(nameof(Project.InterestedPeople))]
+        public virtual ICollection<Project> InterestedProjects { get; set; } = new List<Project>();
+
+        /// <summary>
         /// List of projects this person manages
         /// </summary>
         [InverseProperty("ProjectManager")]

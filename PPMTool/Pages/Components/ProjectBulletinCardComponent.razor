@@ -39,18 +39,27 @@ SPDX-License-Identifier: apache-2.0
             }
         </RadzenStack>
 
-        @if (ShowDetails)
+        @if (ShowDetails || ShowInterestButton)
         {
-            <!-- Request doc & Project detail buttons -->
+            <!-- Interest, Request doc & Project detail buttons -->
             <div>
                 <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.2rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
-                    <RadzenButton Text=@(Project.HasNoRequestDocLink() ? "No Request Doc Link" : "Request Doc")
-                    Icon="description" Click="@(args => ViewRequestDocClickedAsync(Project))"
-                    ButtonStyle=@(Project.HasNoRequestDocLink() ? ButtonStyle.Light : ButtonStyle.Primary)
-                    Disabled=@Project.HasNoRequestDocLink() />
-                    <RadzenButton Text="View Project Details"
-                    Icon="info" Click="@(args => ViewDetails(Project.ProjectId))"
-                    ButtonStyle=ButtonStyle.Primary />
+                    @if (ShowInterestButton)
+                    {
+                        <RadzenButton Text=@(IsInterested ? "Withdraw Interest" : "I'm Interested")
+                        Icon=@(IsInterested ? "close" : "front_hand") Click="@OnToggleInterest"
+                        ButtonStyle=@(IsInterested ? ButtonStyle.Light : ButtonStyle.Primary) />
+                    }
+                    @if (ShowDetails)
+                    {
+                        <RadzenButton Text=@(Project.HasNoRequestDocLink() ? "No Request Doc Link" : "Request Doc")
+                        Icon="description" Click="@(args => ViewRequestDocClickedAsync(Project))"
+                        ButtonStyle=@(Project.HasNoRequestDocLink() ? ButtonStyle.Light : ButtonStyle.Primary)
+                        Disabled=@Project.HasNoRequestDocLink() />
+                        <RadzenButton Text="View Project Details"
+                        Icon="info" Click="@(args => ViewDetails(Project.ProjectId))"
+                        ButtonStyle=ButtonStyle.Primary />
+                    }
                 </RadzenStack>
             </div>
         }
@@ -147,6 +156,15 @@ SPDX-License-Identifier: apache-2.0
     public IEnumerable<string> ResourceNames { get; set; }
 
     [Parameter]
+    public bool IsInterested { get; set; }
+
+    [Parameter]
+    public bool CanExpressInterest { get; set; }
+
+    [Parameter]
+    public EventCallback OnToggleInterest { get; set; }
+
+    [Parameter]
     public bool DisplayUnmetDemand { get; set; }
 
     private double maxDemand;
@@ -156,6 +174,9 @@ SPDX-License-Identifier: apache-2.0
     private string windowDatesFormatted;
 
     private bool skillsEnabled;
+
+    // Interest can be expressed in projects with unmet demand and withdrawn at any time
+    private bool ShowInterestButton => CanExpressInterest && (IsInterested || Project.HasUnmetDemandInWindow());
 
     protected override void OnInitialized()
     {
