@@ -530,3 +530,29 @@ span.mention {
     flex: 1;
     min-height: 0;
 }
+
+.privacy-notice-dialog-wrapper {
+    align-items: flex-end !important;
+    padding-bottom: 1rem;
+}
+
+.privacy-notice-dialog {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.privacy-notice-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.privacy-notice-content h2,
+.privacy-notice-content p {
+    margin: 0;
+}
+
+.privacy-notice-message {
+    max-height: 45vh;
+    overflow-y: auto;
+}
