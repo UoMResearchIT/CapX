@@ -1,0 +1,78 @@
+﻿@*
+SPDX-FileCopyrightText: 2026 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+*@
+
+@using PPMTool.Services
+@using Radzen
+@inject DialogService DialogService
+@inject HtmlContentSanitizerService HtmlContentSanitizer
+@inject ILogger<PrivacyNoticeDialog> Logger
+
+<div class="privacy-notice-content" aria-labelledby="privacy-notice-title">
+    <h2 id="privacy-notice-title">Privacy Notice</h2>
+
+    <div class="privacy-notice-message">
+        @((MarkupString)HtmlContentSanitizer.Sanitize(NoticeContent))
+    </div>
+
+    <p>
+        <a href="@NoticeUrl" target="_blank" rel="noopener noreferrer">Read the full institutional privacy notice</a>
+    </p>
+
+    @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+    {
+        <RadzenText Text="@ErrorMessage" Style="color: var(--rz-danger);" role="alert" />
+    }
+
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="Radzen.JustifyContent.End">
+        <RadzenButton Text="@(Saving ? "Saving..." : "Acknowledge and continue")"
+                      Icon="@(Saving ? null : "check")"
+                      ButtonStyle="ButtonStyle.Primary"
+                      ButtonType="ButtonType.Button"
+                      Click="AcknowledgeAsync"
+                      Disabled="@Saving" />
+    </RadzenStack>
+</div>
+
+@code {
+    [Parameter]
+    public string NoticeContent { get; set; } = string.Empty;
+
+    [Parameter]
+    public string NoticeUrl { get; set; } = string.Empty;
+
+    [Parameter]
+    public Func<Task> OnAcknowledge { get; set; } = null!;
+
+    private bool Saving { get; set; }
+
+    private string ErrorMessage { get; set; } = string.Empty;
+
+    private async Task AcknowledgeAsync()
+    {
+        if (Saving)
+        {
+            return;
+        }
+
+        Saving = true;
+        ErrorMessage = null;
+
+        try
+        {
+            await OnAcknowledge();
+            DialogService.Close(true);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to save privacy notice acknowledgement.");
+            ErrorMessage = "Your acknowledgement could not be saved. Please try again.";
+        }
+        finally
+        {
+            Saving = false;
+        }
+    }
+}

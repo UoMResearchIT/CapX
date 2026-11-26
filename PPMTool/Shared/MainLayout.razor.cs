@@ -59,6 +59,9 @@ namespace PPMTool.Shared
         [Inject]
         private DialogService DialogService { get; set; }
 
+        [Inject]
+        private PrivacyNoticeService PrivacyNoticeService { get; set; }
+
         /// <summary>
         /// Whether there are any buttons or error messages to show in the action bar.
         /// </summary>
@@ -87,6 +90,7 @@ namespace PPMTool.Shared
         private RoleType activeUserRoleType;
         private int activeUserId;
         private AIChatComponent chatComponent;
+        private bool privacyNoticeDialogOpen;
 
         /// <summary>
         /// Method to toggle the AI chat component.
@@ -219,6 +223,8 @@ namespace PPMTool.Shared
                 await ThemeService.SetDarkLightAsync(useDarkMode, SettingsService, CssVariableService);
             }
 
+            await ShowPrivacyNoticeIfRequiredAsync();
+
             // Set the person ID to show the skills tab
             if (activeUserPersonId == null)
             {
@@ -264,6 +270,56 @@ namespace PPMTool.Shared
                         StateHasChanged();
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Displays the configured privacy notice when the active user has not acknowledged its current date.
+        /// </summary>
+        private async Task ShowPrivacyNoticeIfRequiredAsync()
+        {
+            var activeUser = loginView?.ActiveUser;
+            var notice = PrivacyNoticeService.GetConfiguredNotice();
+
+            if (activeUser == null ||
+                notice == null ||
+                !PPMTool.Services.PrivacyNoticeService.RequiresAcknowledgement(activeUser, notice) ||
+                privacyNoticeDialogOpen)
+            {
+                return;
+            }
+
+            privacyNoticeDialogOpen = true;
+            try
+            {
+                await DialogService.OpenAsync<PrivacyNoticeDialog>(
+                    "Privacy notice",
+                    new Dictionary<string, object>
+                    {
+                        [nameof(PrivacyNoticeDialog.NoticeContent)] = notice.Content,
+                        [nameof(PrivacyNoticeDialog.NoticeUrl)] = notice.Url,
+                        [nameof(PrivacyNoticeDialog.OnAcknowledge)] = async () =>
+                        {
+                            var acknowledgedAt = await PrivacyNoticeService.AcknowledgeAsync(activeUser.UserId, notice.Date);
+                            activeUser.PrivacyNoticeAcknowledgedAt = acknowledgedAt;
+                            activeUser.PrivacyNoticeAcknowledgedDate = notice.Date;
+                        }
+                    },
+                    new DialogOptions
+                    {
+                        ShowTitle = false,
+                        ShowClose = false,
+                        CloseDialogOnEsc = false,
+                        CloseDialogOnOverlayClick = false,
+                        Width = "min(95vw, 48rem)",
+                        CssClass = "privacy-notice-dialog",
+                        WrapperCssClass = "privacy-notice-dialog-wrapper",
+                        AriaLabel = "Privacy notice"
+                    });
+            }
+            finally
+            {
+                privacyNoticeDialogOpen = false;
             }
         }
 

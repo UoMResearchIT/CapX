@@ -74,6 +74,7 @@ builder.Services.AddScoped<IAIChatService, CapXAIChatService>();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<InnateCodeService>();
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<PrivacyNoticeService>();
 builder.Services.AddScoped<PersonService>();
 builder.Services.AddScoped<ProjectService>();
 builder.Services.AddScoped<SubTaskService>();

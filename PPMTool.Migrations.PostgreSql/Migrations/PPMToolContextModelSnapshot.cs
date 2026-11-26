@@ -1014,6 +1014,12 @@ namespace PPMTool.Migrations.PostgreSql.Migrations
                     b.Property<int?>("PersonId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("PrivacyNoticeAcknowledgedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateOnly?>("PrivacyNoticeAcknowledgedDate")
+                        .HasColumnType("date");
+
                     b.Property<int>("RoleType")
                         .HasColumnType("integer");
 

@@ -6,6 +6,7 @@ SPDX-License-Identifier: apache-2.0
 
 @page "/managesettings"
 @inherits DataGridPage<Setting>
+@using PPMTool.Data
 @using PPMTool.Data.Entities
 @using PPMTool.Data.Enums
 @using PPMTool.Pages.Components
@@ -24,6 +25,10 @@ SPDX-License-Identifier: apache-2.0
             <RadzenText Text="Manage settings, values, strings and colours used in the app." />
         </div>
     </div>
+    @if (!PrivacyNoticeSettingsAreComplete)
+    {
+        <StatusMessageComponent Message="@(new StatusMessage("The privacy notice is not configured. Set its URL and notice date before using CapX with staff.", StatusMessage.MessageType.Warning))" />
+    }
     @if (ErrorMessage != null)
     {
         <StatusMessageComponent Message="ErrorMessage" />
@@ -53,7 +58,11 @@ SPDX-License-Identifier: apache-2.0
                     <RadzenDataGridColumn TItem="Setting" Property="SettingTypeAsText" Title="Name" MinWidth="10px" Width="15rem" />
                     <RadzenDataGridColumn TItem="Setting" Property="SettingValue" Title="Value" MinWidth="10px" Width="20rem">
                         <Template Context="settingView">
-                            @if (settingView.SettingType.IsOrganisationLogo())
+                            @if (settingView.SettingType == SettingType.PrivacyNoticeContent)
+                            {
+                                @((MarkupString)HtmlContentSanitizer.Sanitize(settingView.SettingValue))
+                            }
+                            else if (settingView.SettingType.IsOrganisationLogo())
                             {
                                 @if (!string.IsNullOrWhiteSpace(settingView.SettingValue))
                                 {
@@ -73,7 +82,17 @@ SPDX-License-Identifier: apache-2.0
                             }
                         </Template>
                         <EditTemplate Context="setting">
-                            @if (setting.SettingType.IsOrganisationLogo())
+                            @if (setting.SettingType == SettingType.PrivacyNoticeContent)
+                            {
+                                <RadzenHtmlEditor @bind-Value="setting.SettingValue"
+                                                  Placeholder="Enter the in-app privacy notice message..."
+                                                  Style="min-height: 15rem; width: 100%" />
+                            }
+                            else if (setting.SettingType == SettingType.PrivacyNoticeDate)
+                            {
+                                <input class="form-control" type="date" value="@setting.SettingValue" @onchange="@(args => setting.SettingValue = args.Value?.ToString() ?? string.Empty)" aria-label="Current privacy notice date" />
+                            }
+                            else if (setting.SettingType.IsOrganisationLogo())
                             {
                                 <RadzenFileInput Title="Organisation Logo"
                                                  Placeholder="Upload your logo..."

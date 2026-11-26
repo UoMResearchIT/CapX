@@ -4,6 +4,7 @@
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using PPMTool.Data;
 using PPMTool.Data.Entities;
 using PPMTool.Data.Enums;
 using PPMTool.Services;
@@ -17,7 +18,15 @@ namespace PPMTool.Pages
         [Inject]
         private CssVariableService CssVariableService { get; set; }
 
+        [Inject]
+        private HtmlContentSanitizerService HtmlContentSanitizer { get; set; }
+
+        [Inject]
+        private PrivacyNoticeService PrivacyNoticeService { get; set; }
+
         private string logo;
+
+        private bool PrivacyNoticeSettingsAreComplete => PrivacyNoticeService.GetConfiguredNotice() != null;
 
         protected override async Task OnInitializedAsync()
         {
@@ -46,6 +55,27 @@ namespace PPMTool.Pages
         /// <param name="entity">The setting entity that has been updated. Must not be null.</param>
         protected override async void OnUpdateRow(Setting entity)
         {
+            if (entity.SettingType == SettingType.PrivacyNoticeContent)
+            {
+                entity.SettingValue = HtmlContentSanitizer.Sanitize(entity.SettingValue);
+            }
+            else if (entity.SettingType == SettingType.PrivacyNoticeUrl && !PPMTool.Services.PrivacyNoticeService.IsValidPrivacyNoticeUrl(entity.SettingValue))
+            {
+                SetErrorMessage(new StatusMessage("The privacy notice URL must be an absolute HTTP or HTTPS URL, or blank.", StatusMessage.MessageType.Error));
+                MarkRowSaveFailed();
+                StateHasChanged();
+                return;
+            }
+            else if (entity.SettingType == SettingType.PrivacyNoticeDate &&
+                !string.IsNullOrWhiteSpace(entity.SettingValue) &&
+                !PPMTool.Services.PrivacyNoticeService.TryParsePrivacyNoticeDate(entity.SettingValue, out _))
+            {
+                SetErrorMessage(new StatusMessage("The privacy notice date must use yyyy-MM-dd format, or be blank.", StatusMessage.MessageType.Error));
+                MarkRowSaveFailed();
+                StateHasChanged();
+                return;
+            }
+
             base.OnUpdateRow(entity);
 
             // If successful update then do further processing

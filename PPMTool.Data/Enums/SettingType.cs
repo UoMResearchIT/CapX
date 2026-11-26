@@ -114,6 +114,18 @@ namespace PPMTool.Data.Enums
 
         [Description("Whether the write endpoints (POST and PUT methods) are enabled on the API, along with the notes read beside them. Default: false: Superuser API key required.")]
         [DefaultSettingValue("false")]
-        WriteApiEndpointsEnabled = 25
+        WriteApiEndpointsEnabled = 25,
+
+        [Description("Rich-text message displayed in the first-login privacy notice.")]
+        [DefaultSettingValue("<p>Please review the privacy notice for information about how your organisation processes personal data when you use CapX.</p>")]
+        PrivacyNoticeContent = 26,
+
+        [Description("URL of the institution's full privacy notice.")]
+        [DefaultSettingValue("")]
+        PrivacyNoticeUrl = 27,
+
+        [Description("Date of the current privacy notice, in yyyy-MM-dd format. Update this when the notice changes materially.")]
+        [DefaultSettingValue("")]
+        PrivacyNoticeDate = 28
     }
 }

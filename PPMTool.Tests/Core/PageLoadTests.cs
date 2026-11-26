@@ -240,6 +240,7 @@ namespace PPMTool.Tests.Core
         public async Task ManageSettingsPageShouldLoadWithCorrectTitleAndNoCrashBanner()
         {
             await VerifyPageLoaded("/managesettings", "Manage Settings - CapX");
+            await Expect(Page.GetByText("The privacy notice is not configured.")).ToBeVisibleAsync();
         }
 
         [Test]
