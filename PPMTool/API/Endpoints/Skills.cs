@@ -196,6 +196,8 @@ public static class Skills
 
             var tags = await context.SkillTags
                 .AsNoTracking()
+                .Include(x => x.TasksNeedingThisSkill)
+                .Where(x => x.TasksNeedingThisSkill.Any(x => x.SubTaskId == subTaskId))
                 .ToListAsync();
 
             // Map the database entities to DTOs
