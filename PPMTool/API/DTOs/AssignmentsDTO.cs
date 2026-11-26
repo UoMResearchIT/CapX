@@ -21,6 +21,7 @@ namespace PPMTool.API.DTOs
     /// <param name="StartDate">The start date of the assignment.</param>
     /// <param name="EndDate">The end date of the assignment.</param>
     /// <param name="AssignmentType">The duty of the assignment.</param>
+    /// <param name="IsProvisional">Whehter assignment is provisional</param>
     public sealed record AssignmentDTO(
         int ProjectId,
         string ProjectName,
@@ -33,5 +34,6 @@ namespace PPMTool.API.DTOs
         string TaskName,
         DateTime StartDate,
         DateTime EndDate,
-        string AssignmentType);
+        string AssignmentType,
+        bool IsProvisional);
 }
