@@ -957,6 +957,12 @@ namespace PPMTool.Migrations.Sqlite.Migrations
                     b.Property<int?>("PersonId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("PrivacyNoticeAcknowledgedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly?>("PrivacyNoticeAcknowledgedDate")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("RoleType")
                         .HasColumnType("INTEGER");
 

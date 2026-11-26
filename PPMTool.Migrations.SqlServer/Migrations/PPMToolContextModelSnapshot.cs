@@ -1014,6 +1014,12 @@ namespace PPMTool.Migrations.SqlServer.Migrations
                     b.Property<int?>("PersonId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("PrivacyNoticeAcknowledgedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly?>("PrivacyNoticeAcknowledgedDate")
+                        .HasColumnType("date");
+
                     b.Property<int>("RoleType")
                         .HasColumnType("int");
 
